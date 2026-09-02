@@ -103,44 +103,52 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RECON-01 | TBD | Pending |
-| RECON-02 | TBD | Pending |
-| RECON-03 | TBD | Pending |
-| DETECT-01 | TBD | Pending |
-| DETECT-02 | TBD | Pending |
-| DETECT-03 | TBD | Pending |
-| DETECT-04 | TBD | Pending |
-| TINT-01 | TBD | Pending |
-| TINT-02 | TBD | Pending |
-| TINT-03 | TBD | Pending |
-| TINT-04 | TBD | Pending |
-| TINT-05 | TBD | Pending |
-| LIVE-01 | TBD | Pending |
-| LIVE-02 | TBD | Pending |
-| LIVE-03 | TBD | Pending |
-| LIVE-04 | TBD | Pending |
-| LIVE-05 | TBD | Pending |
-| FAIL-01 | TBD | Pending |
-| FAIL-02 | TBD | Pending |
-| FAIL-03 | TBD | Pending |
-| FAIL-04 | TBD | Pending |
-| FAIL-05 | TBD | Pending |
-| CTRL-01 | TBD | Pending |
-| CTRL-02 | TBD | Pending |
-| CTRL-03 | TBD | Pending |
-| CTRL-04 | TBD | Pending |
-| STORE-01 | TBD | Pending |
-| STORE-02 | TBD | Pending |
-| STORE-03 | TBD | Pending |
-| STORE-04 | TBD | Pending |
-| STORE-05 | TBD | Pending |
-| STORE-06 | TBD | Pending |
+| RECON-01 | Phase 1 | Pending |
+| RECON-02 | Phase 1 | Pending |
+| RECON-03 | Phase 1 | Pending |
+| DETECT-01 | Phase 2 | Pending |
+| DETECT-02 | Phase 2 | Pending |
+| DETECT-03 | Phase 3 | Pending |
+| DETECT-04 | Phase 3 | Pending |
+| TINT-01 | Phase 2 | Pending |
+| TINT-02 | Phase 2 | Pending |
+| TINT-03 | Phase 2 | Pending |
+| TINT-04 | Phase 2 | Pending |
+| TINT-05 | Phase 2 | Pending |
+| LIVE-01 | Phase 3 | Pending |
+| LIVE-02 | Phase 3 | Pending |
+| LIVE-03 | Phase 3 | Pending |
+| LIVE-04 | Phase 3 | Pending |
+| LIVE-05 | Phase 3 | Pending |
+| FAIL-01 | Phase 4 | Pending |
+| FAIL-02 | Phase 4 | Pending |
+| FAIL-03 | Phase 4 | Pending |
+| FAIL-04 | Phase 3 | Pending |
+| FAIL-05 | Phase 4 | Pending |
+| CTRL-01 | Phase 2 | Pending |
+| CTRL-02 | Phase 4 | Pending |
+| CTRL-03 | Phase 4 | Pending |
+| CTRL-04 | Phase 4 | Pending |
+| STORE-01 | Phase 5 | Pending |
+| STORE-02 | Phase 2 | Pending |
+| STORE-03 | Phase 2 | Pending |
+| STORE-04 | Phase 5 | Pending |
+| STORE-05 | Phase 2 | Pending |
+| STORE-06 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 32 total
-- Mapped to phases: 0
-- Unmapped: 32 ⚠️ (filled during roadmap creation)
+- Mapped to phases: 32
+- Unmapped: 0 ✓
+
+| Phase | Requirements | Count |
+|-------|--------------|-------|
+| Phase 1 — DOM Recon Spike | RECON-01, RECON-02, RECON-03 | 3 |
+| Phase 2 — First Tint on a Real View | DETECT-01, DETECT-02, TINT-01, TINT-02, TINT-03, TINT-04, TINT-05, CTRL-01, STORE-02, STORE-03, STORE-05 | 11 |
+| Phase 3 — The Tint Survives Everything | DETECT-03, DETECT-04, LIVE-01, LIVE-02, LIVE-03, LIVE-04, LIVE-05, FAIL-04 | 8 |
+| Phase 4 — Honest Failure and an Off Switch | FAIL-01, FAIL-02, FAIL-03, FAIL-05, CTRL-02, CTRL-03, CTRL-04 | 7 |
+| Phase 5 — Published | STORE-01, STORE-04, STORE-06 | 3 |
 
 ---
 *Requirements defined: 2026-09-02*
-*Last updated: 2026-09-02 after initial definition*
+*Last updated: 2026-09-02 after roadmap creation (traceability mapped)*
