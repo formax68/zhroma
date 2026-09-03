@@ -8,9 +8,12 @@ import {
 
 const denylist = ['Private Person', 'Internal Organization'];
 
-function rejectionFor(content, options = { denylist }) {
+function rejectionFor(content, ...optionArguments) {
   try {
-    scanSensitiveContent(content, options);
+    scanSensitiveContent(
+      content,
+      ...(optionArguments.length > 0 ? optionArguments : [{ denylist }]),
+    );
   } catch (error) {
     assert.ok(error instanceof SensitiveFixtureError);
     return error;

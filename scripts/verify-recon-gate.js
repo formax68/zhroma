@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const ENTRY_HEADING = /^## Ledger Entry:\s*(.+?)\s*$/gm;
+const QUESTION_HEADING = /^## Recon Question:\s*(.+?)\s*$/gm;
 const VERDICT_HEADING = /^## Final Verdict\s*$/gm;
 const FIELD_LINE = /^- ([a-z][a-z-]*):\s*(.*)$/gm;
 
@@ -10,6 +11,19 @@ const REQUIRED_ENTRY_FIELDS = Object.freeze([
   'question',
   'scope',
   'status',
+  'probe',
+  'evidence',
+  'interpretation',
+  'fallback',
+  'scenario',
+]);
+
+const REQUIRED_QUESTION_FIELDS = Object.freeze([
+  'id',
+  'question',
+  'scope',
+  'status',
+  'assumption',
   'probe',
   'evidence',
   'interpretation',
@@ -35,13 +49,19 @@ function unwrapCode(value) {
 
 function collectSections(markdown, headingPattern) {
   const matches = [...markdown.matchAll(headingPattern)];
-  return matches.map((match, index) => ({
-    heading: match[1]?.trim() ?? null,
-    body: markdown.slice(
-      match.index + match[0].length,
-      matches[index + 1]?.index ?? markdown.length,
-    ),
-  }));
+  return matches.map((match) => {
+    const bodyStart = match.index + match[0].length;
+    const remaining = markdown.slice(bodyStart);
+    const nextHeadingOffset = remaining.search(/^##\s+/m);
+    const bodyEnd = nextHeadingOffset === -1
+      ? markdown.length
+      : bodyStart + nextHeadingOffset;
+
+    return {
+      heading: match[1]?.trim() ?? null,
+      body: markdown.slice(bodyStart, bodyEnd),
+    };
+  });
 }
 
 function parseFields(body, label) {
@@ -59,9 +79,7 @@ function parseFields(body, label) {
 }
 
 function parseEntries(markdown) {
-  const verdictStart = markdown.search(VERDICT_HEADING);
-  const ledgerText = verdictStart === -1 ? markdown : markdown.slice(0, verdictStart);
-  const sections = collectSections(ledgerText, ENTRY_HEADING);
+  const sections = collectSections(markdown, ENTRY_HEADING);
 
   if (sections.length === 0) {
     throw new Error('ledger must contain at least one Ledger Entry section');
@@ -111,10 +129,51 @@ function parseEntries(markdown) {
   return entries;
 }
 
+function parseOpenQuestions(markdown) {
+  const sections = collectSections(markdown, QUESTION_HEADING);
+  const ids = new Set();
+
+  return sections.map((section) => {
+    const label = `recon question ${section.heading}`;
+    const fields = parseFields(section.body, label);
+
+    for (const field of REQUIRED_QUESTION_FIELDS) {
+      if (!fields.get(field)) {
+        throw new Error(`${label} is missing required field: ${field}`);
+      }
+    }
+
+    const id = fields.get('id');
+    if (section.heading !== id) {
+      throw new Error(`${label} heading and id field disagree`);
+    }
+    if (ids.has(id)) {
+      throw new Error(`duplicate recon question id: ${id}`);
+    }
+    ids.add(id);
+
+    if (fields.get('scope') !== 'English path') {
+      throw new Error(`${label} must use English path scope`);
+    }
+    if (fields.get('status') !== 'unresolved' || fields.get('assumption') !== 'unresolved') {
+      throw new Error(`${label} must remain visibly unresolved until evidence admission`);
+    }
+
+    return id;
+  });
+}
+
 function parseVerdict(markdown) {
+  const headings = [...markdown.matchAll(VERDICT_HEADING)];
   const sections = collectSections(markdown, VERDICT_HEADING);
   if (sections.length !== 1) {
     throw new Error('final mode requires exactly one Final Verdict section');
+  }
+  const afterVerdictHeading = markdown.slice(
+    headings[0].index + headings[0][0].length,
+  );
+  if (/^##\s+/m.test(afterVerdictHeading)) {
+    throw new Error('Final Verdict must be the final level-two section');
   }
 
   const fields = parseFields(sections[0].body, 'Final Verdict');
@@ -147,18 +206,13 @@ export function verifyReconLedger(markdown, { mode } = {}) {
   }
 
   const entries = parseEntries(markdown);
-  const unresolvedEnglish = entries.filter(
-    (entry) => entry.scope === 'English path' && !TERMINAL_STATUSES.has(entry.status),
-  );
-  if (unresolvedEnglish.length > 0) {
-    throw new Error(
-      `English-path entries are unresolved: ${unresolvedEnglish.map(({ id }) => id).join(', ')}`,
-    );
-  }
+  const openQuestions = parseOpenQuestions(markdown);
 
   const verdict = mode === 'final' ? parseVerdict(markdown) : null;
-  if (verdict === 'proceed' && unresolvedEnglish.length > 0) {
-    throw new Error('proceed is forbidden while an English-path entry is unresolved');
+  if (verdict === 'proceed' && openQuestions.length > 0) {
+    throw new Error(
+      'proceed is forbidden while an English-path question is unresolved',
+    );
   }
 
   return { entryCount: entries.length, verdict };
