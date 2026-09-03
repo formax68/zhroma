@@ -121,11 +121,24 @@ test('final mode requires one explicit recognized verdict', () => {
 });
 
 test('an unresolved English-path item cannot produce proceed', () => {
-  const markdown = withVerdict(completeEntry({ status: 'unresolved' }));
+  const unresolvedQuestion = `## Recon Question: live-dom-question
+
+- id: \`live-dom-question\`
+- question: What does the live DOM contain?
+- scope: \`English path\`
+- status: \`unresolved\`
+- assumption: \`unresolved\`
+- probe: \`document.querySelector('[data-live-probe]')\`
+- evidence: Pending sanitized live evidence.
+- interpretation: Pending live evidence.
+- fallback: Block until the question has terminal evidence.
+- scenario: \`priority-present-ungrouped\`
+`;
+  const markdown = withVerdict(`${completeEntry()}\n${unresolvedQuestion}`);
 
   assert.throws(
     () => verifyReconLedger(markdown, { mode: 'final' }),
-    /unrecognized status: unresolved/,
+    /proceed is forbidden while an English-path question is unresolved/,
   );
 });
 
