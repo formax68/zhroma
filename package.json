@@ -1,0 +1,13 @@
+{
+  "name": "zhroma",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:recon": "node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js"
+  },
+  "devDependencies": {
+    "happy-dom": "20.13.1",
+    "vitest": "4.1.11"
+  }
+}
