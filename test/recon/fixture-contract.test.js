@@ -175,14 +175,17 @@ function assertScenario(entry, document) {
     const groupRow = purposeNodes.get('group-row');
     const duplicateHeader = purposeNodes.get('duplicate-or-sticky-header');
     const scrollContainer = purposeNodes.get('scroll-container');
+    const sameTableStickyHeader = duplicateHeader === ticketTable
+      && ticketTable.contains(headerRow);
+    const separateDuplicateHeader = duplicateHeader !== ticketTable
+      && scrollContainer?.contains(duplicateHeader)
+      && duplicateHeader.contains(headerRow);
     if (
       !groupRow
       || !duplicateHeader
       || !scrollContainer
-      || duplicateHeader === ticketTable
       || !scrollContainer.contains(ticketTable)
-      || !scrollContainer.contains(duplicateHeader)
-      || !duplicateHeader.contains(headerRow)
+      || !(sameTableStickyHeader || separateDuplicateHeader)
       || groupRow.closest('table, [role="table"]') !== ticketTable
     ) {
       throw contractError('grouped-long-topology-mismatch');
@@ -321,7 +324,7 @@ function priorityAbsentFixture() {
 }
 
 function groupedLongFixture() {
-  return '<div data-test-id="scroll-container" role="region"><table data-test-id="sticky-header" role="table"><thead><tr data-test-id="header-row"><th>TEXT-001</th></tr></thead></table><table data-test-id="ticket-table" role="table"><tbody><tr data-test-id="group-row"><th>TEXT-002</th></tr><tr data-test-id="ticket-row"><td>Urgent</td></tr></tbody></table></div>';
+  return '<div data-test-id="scroll-container" role="region"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th>TEXT-001</th></tr></thead><tbody><tr data-test-id="group-row"><th>TEXT-002</th></tr><tr data-test-id="ticket-row"><td>Urgent</td></tr></tbody></table></div>';
 }
 
 function assertionsFor(scenario) {
@@ -349,7 +352,7 @@ function assertionsFor(scenario) {
     {
       kind: 'selector-present',
       purpose: 'duplicate-or-sticky-header',
-      selector: '[data-test-id="sticky-header"]',
+      selector: '[data-test-id="ticket-table"]',
     },
     {
       kind: 'selector-present',

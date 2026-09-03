@@ -21,10 +21,6 @@ const REQUIRED_LIVE_IDS = [
   'current-host-coverage',
 ];
 
-const OPEN_INTERACTION_IDS = new Set([
-  'interaction-and-sticky-states',
-]);
-
 const completeEntry = ({
   id = 'tracer-english-path',
   status = 'verified',
@@ -124,7 +120,7 @@ test('final mode requires one explicit recognized verdict', () => {
   );
 });
 
-test('an unresolved English-path item cannot produce proceed', () => {
+test('an unresolved English-path item fails evidence and final modes', () => {
   const unresolvedQuestion = `## Recon Question: live-dom-question
 
 - id: \`live-dom-question\`
@@ -142,7 +138,11 @@ test('an unresolved English-path item cannot produce proceed', () => {
 
   assert.throws(
     () => verifyReconLedger(markdown, { mode: 'final' }),
-    /proceed is forbidden while an English-path question is unresolved/,
+    /English-path question remains unresolved: live-dom-question/,
+  );
+  assert.throws(
+    () => verifyReconLedger(markdown, { mode: 'evidence' }),
+    /English-path question remains unresolved: live-dom-question/,
   );
 });
 
@@ -170,27 +170,21 @@ test('rejects an unsupported validator mode', () => {
   );
 });
 
-test('repository ledger admits static evidence and keeps only pending interaction evidence unresolved', async () => {
+test('repository ledger admits terminal evidence for every English-path question', async () => {
   const markdown = await readFile(
     new URL('../../SELECTORS.md', import.meta.url),
     'utf8',
   );
 
   for (const id of REQUIRED_LIVE_IDS) {
-    const isOpen = OPEN_INTERACTION_IDS.has(id);
-    const heading = `## ${isOpen ? 'Recon Question' : 'Ledger Entry'}: ${id}`;
+    const heading = `## Ledger Entry: ${id}`;
     const start = markdown.indexOf(heading);
     assert.notEqual(start, -1, `missing live evidence section ${id}`);
     const next = markdown.indexOf('\n## ', start + heading.length);
     const section = markdown.slice(start, next === -1 ? undefined : next);
 
-    if (isOpen) {
-      assert.match(section, /^- status: `unresolved`$/m);
-      assert.match(section, /^- assumption: `unresolved`$/m);
-    } else {
-      assert.match(section, /^- status: `(verified|disproved)`$/m);
-      assert.doesNotMatch(section, /^- assumption: `unresolved`$/m);
-    }
+    assert.match(section, /^- status: `(verified|disproved)`$/m);
+    assert.doesNotMatch(section, /^- assumption: `unresolved`$/m);
 
     assert.match(section, /^- question: .+$/m);
     assert.match(section, /^- probe: .+$/m);
@@ -200,7 +194,7 @@ test('repository ledger admits static evidence and keeps only pending interactio
     assert.match(section, /^- scenario: .+$/m);
   }
 
-  assert.match(markdown, /^- state: marker-staged$/m);
+  assert.match(markdown, /^- state: interaction-evidence-complete$/m);
   assert.match(markdown, /^- post-action-state: interactions-complete$/m);
 });
 

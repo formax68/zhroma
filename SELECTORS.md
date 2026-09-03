@@ -10,7 +10,7 @@ The three live scenarios are named only by their structural purpose:
 
 - `priority-present-grouped-long`: Priority present, one group row, long/scrollable.
 - `priority-present-ungrouped`: Priority present, no group row, long/scrollable.
-- `priority-absent-grouped-short`: Priority absent, one group row, not vertically scrollable.
+- `priority-absent`: Priority absent, no group row, long/scrollable.
 
 ## Ledger Entry: tracer-english-path
 
@@ -34,7 +34,7 @@ The three live scenarios are named only by their structural purpose:
 - evidence: On 2026-09-03 all three scenarios were open in the current Agent Workspace, returned `filterPath: true`, `topFrame: true`, and `htmlLang: "en"`. The account-plan label was unknown/not shared.
 - interpretation: These findings are bounded to the observed English current shell and do not establish behavior for another plan, shell, or locale.
 - fallback: Re-run this matrix for any materially different shell, plan, or locale before relying on these selectors.
-- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
+- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent`
 
 ## Ledger Entry: top-document-reachability
 
@@ -46,7 +46,7 @@ The three live scenarios are named only by their structural purpose:
 - evidence: Each scenario returned `consoleIsTopFrame: true`, `selectedNodeOwnerIsConsoleDocument: true`, `reachableFromConsoleDocument: true`, and `ownerFrameTag: null` for a ticket row selected from its ticket table.
 - interpretation: The observed ticket tables are directly reachable in the top document and are not hosted in a child frame.
 - fallback: If any future shell returns a frame or owner-document mismatch, resolve and document that frame boundary before querying or styling rows.
-- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
+- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent`
 
 ## Ledger Entry: root-chain
 
@@ -58,7 +58,7 @@ The three live scenarios are named only by their structural purpose:
 - evidence: All three selected rows returned the complete root chain `[{ type: "Document" }]`; `row.ownerDocument === document` and `document.contains(row) === true` were also true in every scenario.
 - interpretation: No open or closed ShadowRoot lies between the observed ticket row and its owner document. This conclusion uses the selected node's root chain and reachability, not `host.shadowRoot === null`.
 - fallback: Any future `ShadowRoot` entry must record its mode and host; a closed root blocks the Phase 2 design.
-- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
+- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent`
 
 ## Ledger Entry: stable-identifiers
 
@@ -67,10 +67,10 @@ The three live scenarios are named only by their structural purpose:
 - scope: `English path`
 - status: `verified`
 - probe: `([...boundary.querySelectorAll('[data-garden-id], [data-test-id]')].reduce((out, element) => { for (const name of ['data-garden-id','data-test-id']) { const value=element.getAttribute(name); if(value) out[name][value]=(out[name][value]||0)+1; } return out; }, {'data-garden-id':{},'data-test-id':{}}))`
-- evidence: No ancestor exposed a dedicated stable table-container test identifier. The nearest complete stable boundary was therefore the table itself: `table[data-garden-id="tables.table"][data-test-id="generic-table"]`; its ancestor chain later exposed `data-garden-id="pane.content"`, `data-garden-id="pane"`, and `data-test-id="views_views-pane-div"`. The table's own header was `[data-garden-id="tables.head"][data-test-id="generic-table-head"]`; the body was `[data-garden-id="tables.body"][data-test-id="generic-table-body"]`; ticket rows were `[data-garden-id="tables.row"][data-test-id="generic-table-row"]`; group rows were `[data-garden-id="tables.group_row"][data-test-id="generic-table-rows-group-by"]`; direct cells used `data-garden-id="tables.cell"`; and header cells used `data-garden-id="tables.header_cell"`. Counts were: grouped-long `table 1 / head 1 / body 1 / header_cell 15 / row 30 / group_row 1 / cell 451`; ungrouped `1 / 1 / 1 / 16 / 30 / 0 / 480`; absent-grouped-short `1 / 1 / 1 / 11 / 7 / 1 / 78`.
+- evidence: No ancestor exposed a dedicated stable table-container test identifier. The nearest complete stable boundary was therefore the table itself: `table[data-garden-id="tables.table"][data-test-id="generic-table"]`; its ancestor chain later exposed `data-garden-id="pane.content"`, `data-garden-id="pane"`, and `data-test-id="views_views-pane-div"`. The table's own header was `[data-garden-id="tables.head"][data-test-id="generic-table-head"]`; the body was `[data-garden-id="tables.body"][data-test-id="generic-table-body"]`; ticket rows were `[data-garden-id="tables.row"][data-test-id="generic-table-row"]`; group rows were `[data-garden-id="tables.group_row"][data-test-id="generic-table-rows-group-by"]`; direct cells used `data-garden-id="tables.cell"`; and header cells used `data-garden-id="tables.header_cell"`. Counts were: grouped-long `table 1 / head 1 / body 1 / header_cell 15 / row 30 / group_row 1 / cell 451`; ungrouped `1 / 1 / 1 / 16 / 30 / 0 / 480`; Priority-absent `1 / 1 / 1 / 6 / 30 / 0 / 180`.
 - interpretation: Rank Garden identifiers first, pair them with the matching test identifiers second, and use element-agnostic structural relationships only as a final fallback. A broad `tbody > tr` selector is unsafe because it includes group rows.
 - fallback: If Garden identifiers disappear, require the paired test identifiers across all three fixtures; if both disappear, block until a structural discriminator is proven across the matrix.
-- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
+- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent`
 
 ## Ledger Entry: header-topology
 
@@ -79,10 +79,10 @@ The three live scenarios are named only by their structural purpose:
 - scope: `English path`
 - status: `disproved`
 - probe: `(() => { const table=row.closest('table'); return { ownHead:Boolean(table.tHead), headerCount:table.querySelectorAll(':scope > thead [data-garden-id="tables.header_cell"]').length, siblingHeaderTables:[...table.parentElement.children].filter(element=>element!==table && element.matches?.('table')).length }; })()`
-- evidence: Each ticket table had its own `THEAD`; header counts were 15, 16, and 11 respectively, and no sibling header table was present at the observed table boundary.
+- evidence: Each ticket table had its own `THEAD`; header counts were 15, 16, and 6 respectively, and no sibling header table was present at the observed table boundary.
 - interpretation: The proposed sibling/duplicate-header topology is disproved for these scenarios. Header resolution must stay inside the same `generic-table` as the ticket rows.
 - fallback: If a later layout exposes a sibling table, bind it through the nearest shared table container and re-verify column alignment before reading Priority.
-- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
+- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent`
 
 ## Ledger Entry: priority-representation
 
@@ -103,10 +103,10 @@ The three live scenarios are named only by their structural purpose:
 - scope: `English path`
 - status: `verified`
 - probe: `(() => { const table=document.querySelector('table[data-garden-id="tables.table"][data-test-id="generic-table"]'); const headers=[...table.querySelectorAll('[data-garden-id="tables.header_cell"]')]; return { tableCount:document.querySelectorAll('table[data-garden-id="tables.table"][data-test-id="generic-table"]').length, ticketRows:table.querySelectorAll('[data-garden-id="tables.row"][data-test-id="generic-table-row"]').length, groupRows:table.querySelectorAll('[data-garden-id="tables.group_row"][data-test-id="generic-table-rows-group-by"]').length, headerCount:headers.length, hasPriority:headers.some(cell=>cell.textContent.trim()==='Priority') }; })()`
-- evidence: The dedicated absence scenario retained exactly one proven ticket table with 7 ticket rows, 1 group row, and 11 headers, while `hasPriority` was false. The two presence controls each returned `hasPriority: true` at header index 6.
+- evidence: The dedicated absence scenario retained exactly one proven ticket table with 30 ticket rows, 0 group rows, and 6 headers, while `hasPriority` was false. The two presence controls each returned `hasPriority: true` at header index 6.
 - interpretation: This is genuine column absence in the observed control, not a failed table selector. Absence is not generalized beyond this scenario.
 - fallback: Diagnose Priority as absent only after the proven ticket table and header collection succeed; otherwise report a structural/read failure.
-- scenario: `priority-absent-grouped-short`
+- scenario: `priority-absent`
 
 ## Ledger Entry: ticket-vs-group-rows
 
@@ -115,10 +115,10 @@ The three live scenarios are named only by their structural purpose:
 - scope: `English path`
 - status: `verified`
 - probe: `([...table.querySelectorAll('[data-garden-id="tables.row"], [data-garden-id="tables.group_row"]')].map(row=>({ tag:row.tagName, garden:row.getAttribute('data-garden-id'), test:row.getAttribute('data-test-id'), role:row.getAttribute('role'), cells:row.children.length })))`
-- evidence: Ticket rows were `TR`, `tables.row`, `generic-table-row`, role `row`, with 15 direct cells in the grouped-long scenario. The group row was `TR`, `tables.group_row`, `generic-table-rows-group-by`, no role, with 1 direct cell. The ungrouped scenario had 30 ticket rows and 0 group rows; the short grouped scenario had 7 ticket rows and 1 group row.
+- evidence: Ticket rows were `TR`, `tables.row`, `generic-table-row`, role `row`, with 15 direct cells in the grouped-long scenario. The group row was `TR`, `tables.group_row`, `generic-table-rows-group-by`, no role, with 1 direct cell. Both ungrouped scenarios had 30 ticket rows and 0 group rows; the Priority-absent scenario had 6 direct cells per ticket row.
 - interpretation: Select ticket rows positively with the paired row identifiers; do not infer row type from text or from position inside `TBODY`.
 - fallback: If the paired identifiers disappear, require a matrix-tested structural predicate that excludes one-cell group rows before applying any tint.
-- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
+- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent`
 
 ## Ledger Entry: scrolling-and-recycling
 
@@ -154,19 +154,18 @@ The three live scenarios are named only by their structural purpose:
 - evidence: Every observed header cell returned `position: sticky`, `top: 0px`, `z-index: 1`, and opaque white paint. The containing table retained its own `THEAD`; no duplicate header table appeared.
 - interpretation: Sticky geometry and paint belong to each header cell, not the row body or a sibling table. Ticket tint must not target header cells or their stacking context.
 - fallback: Restrict tint selectors to `TBODY` ticket rows and direct ticket cells; re-run geometry checks if header topology changes.
-- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
+- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent`
 
-## Recon Question: interaction-and-sticky-states
+## Ledger Entry: interaction-and-sticky-states
 
 - id: `interaction-and-sticky-states`
-- question: How do hover and selected-row states change computed paint and specificity?
+- question: Did the user-controlled interaction seam yield hover or selected-row computed-paint evidence sufficient to validate the proposed translucent tint?
 - scope: `English path`
-- status: `unresolved`
-- assumption: `unresolved`
-- probe: `Compare sanitized computed row/cell paint before hover, during user-held hover, and after user-controlled row selection; do not click or select from agent automation.`
-- evidence: The normal state is recorded above. No row was selected during the read-only pass, and agent automation did not induce authenticated hover or selection state.
-- interpretation: This interaction-specific question is intentionally handed to the blocking-human seam; it is not evidence that hover or selection has no visual treatment.
-- fallback: Preserve native states with a translucent cell layer and keep Phase 2 blocked until the interaction comparison is admitted.
+- status: `disproved`
+- probe: `(() => { const rows=[...table.querySelectorAll('[data-garden-id="tables.row"][data-test-id="generic-table-row"]')]; const selected=rows.filter(row=>row.getAttribute('aria-selected')==='true'); const hovered=rows.filter(row=>row.matches(':hover')); return { ticketRows:rows.length, selectedRows:selected.length, hoveredRows:hovered.length, selectedPaint:paint(selected[0]), hoveredPaint:paint(hovered[0]), normalPaint:paint(rows.find(row=>!selected.includes(row)&&!hovered.includes(row))) }; })()`
+- evidence: In the read-only post-action inspection, the 30-row grouped-long table had 0 selected rows and 0 hovered rows; `selectedPaint` and `hoveredPaint` were null. A normal ticket row and its first direct cell remained transparent with no background image. The user-confirmed action sequence therefore produced sort/refresh evidence but no retained hover or selection paint comparison.
+- interpretation: The proposition that the interaction seam supplied sufficient native hover/selection paint evidence is disproved. This does not claim that Zendesk lacks native hover or selected-row styling; it means Phase 1 did not establish how a translucent priority tint composes with those states.
+- fallback: Keep Phase 2 blocked until a separate safe, user-controlled comparison records sanitized hover and selected-row paint evidence, then re-run the selector and contrast checks.
 - scenario: `priority-present-grouped-long`
 
 ## Ledger Entry: inert-attribute-survival
@@ -191,7 +190,7 @@ The three live scenarios are named only by their structural purpose:
 - evidence: All three scenarios returned `htmlLang: "en"` and `bodyLang: null`; exact English `Priority`, `Urgent`, `High`, `Normal`, and `Low` labels remain a deliberately English-only fallback.
 - interpretation: `html[lang="en"]` is the observed shell signal. It does not establish locale-independent Priority parsing.
 - fallback: If `html.lang` is absent or not English, return unsupported/unreadable rather than interpreting English labels.
-- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
+- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent`
 
 ## Ledger Entry: current-host-coverage
 
@@ -203,7 +202,7 @@ The three live scenarios are named only by their structural purpose:
 - evidence: All three scenarios returned `https: true`, `zendeskSubdomain: true`, `agentFilterPath: true`, and `topFrame: true`. The hostname and opaque view identifier were not recorded.
 - interpretation: Coverage is proven only for the observed current Agent Workspace deployment shape.
 - fallback: Do not claim support for vanity domains, legacy shells, or different path shapes until separately observed.
-- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
+- scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent`
 
 ## Ledger Entry: translated-priority-strings
 
@@ -231,7 +230,7 @@ The three live scenarios are named only by their structural purpose:
 
 ## Authenticated Interaction Handoff
 
-- state: marker-staged
+- state: interaction-evidence-complete
 - post-action-state: interactions-complete
 - capture-date: `2026-09-03`
 - shell: `current Agent Workspace`
@@ -239,11 +238,21 @@ The three live scenarios are named only by their structural purpose:
 - scenario: `priority-present-grouped-long`
 - marker-selector: `[data-zhroma-probe="1"]`
 - baseline: Exactly one marker is attached to a connected ticket `TR` at sanitized zero-based row index 0; it has 15 direct cells, Priority header index 6, allowed Priority label `High`, the current owner document, and a direct Document root.
-- next-action-owner: `user`
-- next-action: In the disposable/non-operational marked view, compare the requested hover/selection state if comfortable, trigger the requested sort once, then trigger the requested refresh once. Do not edit tickets or view configuration. Leave the result open.
+- next-action-owner: `none`
+- next-action: The Plan 04 interaction seam is closed. Any future hover/selection comparison requires a new explicit human-controlled seam.
 - post-action-inspection: Marker count was 0 after the user-controlled sort and refresh. The refreshed table retained 15 headers, Priority at index 6, 30 ticket rows, 1 group row, and direct current-Document reachability. The temporary page-local marker therefore required no additional cleanup.
+- post-action-interaction-inspection: The current grouped-long table had 0 selected rows and 0 hovered rows, so no native hover/selection paint comparison was available for admission.
 - user-confirmation: `interactions complete — no operational view, ticket, or account configuration changed`
 - safety: The user alone performed the authenticated sort and refresh in the non-operational recon view; no ticket or account configuration was changed.
+
+## Admitted Fixture Corpus
+
+- capture scenarios: `priority-present-ungrouped`, `priority-absent`, and `grouped-long`.
+- boundary: Each fixture is a live-derived projection of the immediate overflow wrapper and its complete ticket table; navigation, sidebars, menus, pagination controls, and unrelated state are excluded.
+- structural fidelity: The canonical fixture retains 16 headers and 4 ticket-row topologies normalized to the four allowed Priority labels; the absence control retains 6 headers, 4 ticket rows, and no seventh header cell or allowed Priority value; the grouped-long fixture retains the same-table sticky-header topology, 1 group row, and 12 ordered ticket-row topologies from the observed 30-row scrollable table.
+- admission: `scripts/sanitize-fixture.js` processed each private, capture-specific-denylisted input into a new repository output. The private inputs were deleted after sanitization; no tenant identity, denylist literal, private path, raw DOM, or identifying text was admitted.
+- verification: `test/fixtures/manifest.json` binds the three scenario assertions and selectors to exact final-byte SHA-256 values. The repository corpus gate performs sensitive scanning before detached parsing, then checks selectors, topology, scenario invariants, and checksums.
+- scope: These fixtures cover only the English current Agent Workspace shell observed on 2026-09-03 with account plan unknown/not shared. They make no legacy-shell, vanity-domain, cross-plan, or localization claim.
 
 ## Execution Safety Note
 
