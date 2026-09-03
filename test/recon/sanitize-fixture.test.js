@@ -1,0 +1,268 @@
+import { execFile } from 'node:child_process';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+
+import { Window } from 'happy-dom';
+import { afterEach, describe, expect, test } from 'vitest';
+
+import {
+  sanitizeFixture,
+  SanitizationError,
+  sha256,
+} from '../../scripts/sanitize-fixture.js';
+
+const execFileAsync = promisify(execFile);
+const repositoryRoot = fileURLToPath(new URL('../..', import.meta.url));
+const sanitizerCli = join(repositoryRoot, 'scripts', 'sanitize-fixture.js');
+const temporaryDirectories = [];
+
+const denylistValues = [
+  'Private Person',
+  'Internal Organization',
+  'Tenant Subject',
+];
+
+function parseDetached(markup) {
+  const isolatedWindow = new Window({
+    settings: {
+      enableJavaScriptEvaluation: false,
+      disableJavaScriptFileLoading: true,
+      disableCSSFileLoading: true,
+      enableImageFileLoading: false,
+      navigation: {
+        disableMainFrameNavigation: true,
+        disableChildFrameNavigation: true,
+        disableChildPageNavigation: true,
+      },
+    },
+  });
+  return new isolatedWindow.DOMParser().parseFromString(markup, 'text/html');
+}
+
+function safeCapture() {
+  return `
+<div data-test-id="table-container" role="region" aria-rowcount="4">
+  <table data-garden-id="tables.table" data-test-id="ticket-table" role="table">
+    <thead data-test-id="table-header">
+      <tr role="row">
+        <th scope="col" data-test-id="subject-header">Subject</th>
+        <th scope="col" data-test-id="priority-header">Priority</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-test-id="ticket-row" role="row" aria-rowindex="1">
+        <td data-test-id="subject-cell">Tenant Subject for Private Person</td>
+        <td data-test-id="priority-cell">Urgent</td>
+      </tr>
+      <tr data-test-id="ticket-row" role="row" aria-rowindex="2">
+        <td data-test-id="subject-cell">requester@example.invalid at Internal Organization</td>
+        <td data-test-id="priority-cell">High</td>
+      </tr>
+      <tr data-test-id="ticket-row" role="row" aria-rowindex="3">
+        <td data-test-id="subject-cell">Ticket 987654321012345</td>
+        <td data-test-id="priority-cell">Normal</td>
+      </tr>
+      <tr data-test-id="ticket-row" role="row" aria-rowindex="4">
+        <td data-test-id="subject-cell">QWxwaGEyM0JldGExOURlbHRhNDU2R2FtbWE=</td>
+        <td data-test-id="priority-cell">Low</td>
+      </tr>
+    </tbody>
+  </table>
+</div>`;
+}
+
+async function createCase(source = safeCapture()) {
+  const directory = await mkdtemp(join(tmpdir(), 'zhroma-sanitizer-'));
+  temporaryDirectories.push(directory);
+
+  const inputPath = join(directory, 'private-input.html');
+  const outputPath = join(directory, 'sanitized-output.html');
+  const denylistPath = join(directory, 'private-denylist.txt');
+  await writeFile(inputPath, source, 'utf8');
+  await writeFile(denylistPath, `${denylistValues.join('\n')}\n`, 'utf8');
+
+  return { directory, inputPath, outputPath, denylistPath };
+}
+
+async function expectRejected(options, code) {
+  await expect(sanitizeFixture(options)).rejects.toMatchObject({
+    name: 'SanitizationError',
+    code,
+  });
+  await expect(readFile(options.outputPath, 'utf8')).rejects.toMatchObject({
+    code: 'ENOENT',
+  });
+}
+
+afterEach(async () => {
+  await Promise.all(temporaryDirectories.splice(0).map((directory) => (
+    rm(directory, { recursive: true, force: true })
+  )));
+});
+
+describe('sanitizeFixture', () => {
+  test('creates a deterministic, separate, topology-preserving output', async () => {
+    const first = await createCase();
+    const second = await createCase();
+    const original = await readFile(first.inputPath);
+
+    const firstResult = await sanitizeFixture(first);
+    const secondResult = await sanitizeFixture(second);
+    const firstBytes = await readFile(first.outputPath);
+    const secondBytes = await readFile(second.outputPath);
+
+    expect(firstBytes.equals(secondBytes)).toBe(true);
+    expect(await readFile(first.inputPath)).toEqual(original);
+    expect(firstResult).toEqual({
+      sha256: sha256(firstBytes),
+      bytes: firstBytes.byteLength,
+    });
+    expect(secondResult.sha256).toBe(firstResult.sha256);
+
+    const parsed = parseDetached(firstBytes.toString('utf8'));
+    expect(parsed.querySelector('[data-test-id="table-container"]')).not.toBeNull();
+    expect(parsed.querySelector('[data-garden-id="tables.table"]')).not.toBeNull();
+    expect(parsed.querySelectorAll('[data-test-id="ticket-row"]')).toHaveLength(4);
+    expect(parsed.querySelector('[role="region"]')?.getAttribute('aria-rowcount')).toBe('4');
+    expect(parsed.querySelector('th')?.getAttribute('scope')).toBe('col');
+
+    const text = parsed.body.textContent;
+    for (const priority of ['Urgent', 'High', 'Normal', 'Low']) {
+      expect(text).toContain(priority);
+    }
+    expect(text).toContain('TEXT-001');
+    expect(text).not.toMatch(/Subject|Priority|Tenant Subject|Private Person/i);
+    expect(text).not.toMatch(/requester@example|Internal Organization|987654321012345/);
+    expect(text).not.toContain('QWxwaGEyM0JldGExOURlbHRhNDU2R2FtbWE=');
+  });
+
+  test('preserves only exact standalone English priority labels', async () => {
+    const fixture = await createCase(
+      safeCapture().replace('Tenant Subject for Private Person', 'Urgent customer issue'),
+    );
+
+    await sanitizeFixture(fixture);
+    const output = await readFile(fixture.outputPath, 'utf8');
+
+    expect(output).not.toContain('Urgent customer issue');
+    expect(output.match(/>Urgent</g)).toHaveLength(1);
+    expect(output.match(/>High</g)).toHaveLength(1);
+    expect(output.match(/>Normal</g)).toHaveLength(1);
+    expect(output.match(/>Low</g)).toHaveLength(1);
+  });
+
+  test('rejects input from inside the Git worktree', async () => {
+    const fixture = await createCase();
+
+    await expectRejected({
+      inputPath: join(repositoryRoot, 'test', 'recon', 'sensitive-patterns.js'),
+      outputPath: fixture.outputPath,
+      denylistPath: fixture.denylistPath,
+    }, 'input-inside-worktree');
+  });
+
+  test('rejects an in-place output target without mutating the input', async () => {
+    const fixture = await createCase();
+    const original = await readFile(fixture.inputPath);
+
+    await expect(sanitizeFixture({
+      ...fixture,
+      outputPath: fixture.inputPath,
+    })).rejects.toMatchObject({ code: 'input-output-must-differ' });
+
+    expect(await readFile(fixture.inputPath)).toEqual(original);
+  });
+
+  test('rejects missing and empty capture-specific denylists before writing', async () => {
+    const missing = await createCase();
+    await rm(missing.denylistPath);
+    await expectRejected(missing, 'denylist-required');
+
+    const empty = await createCase();
+    await writeFile(empty.denylistPath, '  \n', 'utf8');
+    await expectRejected(empty, 'denylist-required');
+  });
+
+  test.each([
+    ['forbidden-element', '<script>globalThis.compromised = true</script>'],
+    ['forbidden-element', '<iframe title="foreign"></iframe>'],
+    ['forbidden-element', '<frame title="legacy">'],
+    ['inline-event-handler', '<button onclick="run()">Open</button>'],
+    ['resource-bearing-attribute', '<img src="/avatar.png">'],
+    ['resource-bearing-attribute', '<a href="#ticket">Ticket</a>'],
+    ['unsafe-attribute', '<div style="color: red">Styled</div>'],
+    ['unsafe-attribute', '<div data-ticket-id="123">Ticket</div>'],
+    ['unsafe-attribute', '<div id="private-person">Person</div>'],
+  ])('rejects unsafe markup with %s and writes no output', async (code, unsafe) => {
+    const fixture = await createCase(safeCapture().replace('</tbody>', `${unsafe}</tbody>`));
+    await expectRejected(fixture, code);
+  });
+
+  test('rejects a sensitive value that survives in an otherwise allowed attribute', async () => {
+    const fixture = await createCase(
+      safeCapture().replace('data-test-id="ticket-table"', 'data-test-id="private-person"'),
+    );
+
+    await expectRejected(fixture, 'sensitive-residual');
+  });
+
+  test.each([
+    '<div data-test-id="wrapper">No table here</div>',
+    `${safeCapture()}<div data-test-id="unrelated-root">Second root</div>`,
+  ])('rejects an unbounded or incomplete table capture', async (source) => {
+    const fixture = await createCase(source);
+    await expectRejected(fixture, 'table-boundary-required');
+  });
+
+  test('the CLI fails closed without printing paths or denylist values', async () => {
+    const fixture = await createCase();
+    const insideWorktree = join(repositoryRoot, 'test', 'recon', 'sensitive-patterns.js');
+
+    let output = '';
+    try {
+      await execFileAsync(process.execPath, [
+        sanitizerCli,
+        '--input', insideWorktree,
+        '--output', fixture.outputPath,
+        '--denylist', fixture.denylistPath,
+      ]);
+      expect.fail('expected sanitizer CLI to fail');
+    } catch (error) {
+      output = `${error.stdout ?? ''}${error.stderr ?? ''}`;
+      expect(error.code).not.toBe(0);
+    }
+
+    expect(output).toContain('SANITIZE_FIXTURE_REJECTED input-inside-worktree');
+    expect(output).not.toContain(insideWorktree);
+    expect(output).not.toContain(fixture.outputPath);
+    expect(output).not.toContain(fixture.denylistPath);
+    for (const value of denylistValues) {
+      expect(output).not.toContain(value);
+    }
+  });
+
+  test('the CLI rejects missing or duplicate flags without echoing arguments', async () => {
+    const fixture = await createCase();
+
+    await expect(execFileAsync(process.execPath, [
+      sanitizerCli,
+      '--input', fixture.inputPath,
+      '--input', fixture.inputPath,
+      '--output', fixture.outputPath,
+      '--denylist', fixture.denylistPath,
+    ])).rejects.toMatchObject({ code: expect.any(Number) });
+    await expect(readFile(fixture.outputPath, 'utf8')).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+  });
+});
+
+describe('sha256', () => {
+  test('hashes exact bytes rather than a normalized string', () => {
+    expect(sha256(Buffer.from('fixture\n'))).not.toBe(sha256(Buffer.from('fixture')));
+    expect(sha256(Buffer.from('fixture\n'))).toMatch(/^[a-f0-9]{64}$/);
+  });
+});
