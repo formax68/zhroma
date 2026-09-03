@@ -156,9 +156,9 @@ The three live scenarios are named only by their structural purpose:
 - fallback: Restrict tint selectors to `TBODY` ticket rows and direct ticket cells; re-run geometry checks if header topology changes.
 - scenario: `priority-present-grouped-long`, `priority-present-ungrouped`, `priority-absent-grouped-short`
 
-## Recon Question: hover-and-selection-states
+## Recon Question: interaction-and-sticky-states
 
-- id: `hover-and-selection-states`
+- id: `interaction-and-sticky-states`
 - question: How do hover and selected-row states change computed paint and specificity?
 - scope: `English path`
 - status: `unresolved`
@@ -169,16 +169,15 @@ The three live scenarios are named only by their structural purpose:
 - fallback: Preserve native states with a translucent cell layer and keep Phase 2 blocked until the interaction comparison is admitted.
 - scenario: `priority-present-grouped-long`
 
-## Recon Question: inert-attribute-survival
+## Ledger Entry: inert-attribute-survival
 
 - id: `inert-attribute-survival`
 - question: Does an inert `data-zhroma-probe` attribute survive row replacement triggered by sort or refresh?
 - scope: `English path`
-- status: `unresolved`
-- assumption: `unresolved`
-- probe: `const row=document.querySelector('[data-zhroma-probe="1"]'); ({ markerCount:document.querySelectorAll('[data-zhroma-probe="1"]').length, connected:document.contains(row), ownerDocumentMatches:row.ownerDocument===document, rootIsDocument:row.getRootNode()===document })`
-- evidence: Before interaction, exactly one marker exists on a connected `TR[data-garden-id="tables.row"][data-test-id="generic-table-row"]` at sanitized zero-based ticket-row index 0, with 15 direct cells, Priority header index 6, and allowed Priority label `High`; owner-document, containment, and Document-root checks were true. Survival is not yet claimed.
-- interpretation: The baseline is staged for the user-controlled sort and refresh. Post-action inspection must distinguish retained node, replacement node, and marker loss.
+- status: `disproved`
+- probe: `(() => { const table=document.querySelector('table[data-garden-id="tables.table"][data-test-id="generic-table"]'); const headers=[...table.querySelectorAll('[data-garden-id="tables.header_cell"]')]; const rows=[...table.querySelectorAll('[data-garden-id="tables.row"][data-test-id="generic-table-row"]')]; const first=rows[0]; return { markerCount:document.querySelectorAll('[data-zhroma-probe="1"]').length, headerCount:headers.length, priorityIndex:headers.findIndex(cell=>cell.textContent.trim()==='Priority'), ticketRows:rows.length, groupRows:table.querySelectorAll('[data-garden-id="tables.group_row"][data-test-id="generic-table-rows-group-by"]').length, firstRowCells:first.children.length, ownerDocumentMatches:first.ownerDocument===document, documentContains:document.contains(first), rootIsDocument:first.getRootNode()===document }; })()`
+- evidence: Before interaction, exactly one marker existed on a connected `TR[data-garden-id="tables.row"][data-test-id="generic-table-row"]` at sanitized zero-based ticket-row index 0, with 15 direct cells, Priority header index 6, and allowed Priority label `High`; owner-document, containment, and Document-root checks were true. After the user alone sorted Priority once and refreshed once, marker count was 0 while the current table remained structurally valid with 15 headers, Priority at index 6, 30 ticket rows, 1 group row, and a connected 15-cell first ticket row in the current Document. The user confirmed no operational view, ticket, or account configuration changed.
+- interpretation: Survival is disproved across the requested sort-plus-refresh sequence. The refresh removed the temporary page-local attribute, so there is no marker left to clean up and downstream logic must re-stamp from current DOM state rather than retain node identity.
 - fallback: Treat page-local attributes as ephemeral and stamp idempotently after child-list changes.
 - scenario: `priority-present-grouped-long`
 
@@ -233,6 +232,7 @@ The three live scenarios are named only by their structural purpose:
 ## Authenticated Interaction Handoff
 
 - state: marker-staged
+- post-action-state: interactions-complete
 - capture-date: `2026-09-03`
 - shell: `current Agent Workspace`
 - plan-label: `unknown/not shared`
@@ -241,8 +241,9 @@ The three live scenarios are named only by their structural purpose:
 - baseline: Exactly one marker is attached to a connected ticket `TR` at sanitized zero-based row index 0; it has 15 direct cells, Priority header index 6, allowed Priority label `High`, the current owner document, and a direct Document root.
 - next-action-owner: `user`
 - next-action: In the disposable/non-operational marked view, compare the requested hover/selection state if comfortable, trigger the requested sort once, then trigger the requested refresh once. Do not edit tickets or view configuration. Leave the result open.
-- post-action-inspection: A resumed agent will inspect whether the original marked node remained connected, whether the marker survived, and whether the row collection was replaced; it will then remove the temporary marker under the user-controlled cleanup seam.
-- safety: No operational view, ticket, or account configuration was intentionally modified during reconnaissance.
+- post-action-inspection: Marker count was 0 after the user-controlled sort and refresh. The refreshed table retained 15 headers, Priority at index 6, 30 ticket rows, 1 group row, and direct current-Document reachability. The temporary page-local marker therefore required no additional cleanup.
+- user-confirmation: `interactions complete — no operational view, ticket, or account configuration changed`
+- safety: The user alone performed the authenticated sort and refresh in the non-operational recon view; no ticket or account configuration was changed.
 
 ## Execution Safety Note
 
@@ -271,4 +272,4 @@ requirement. They remain inputs to the final Plan 05 admission/verdict gate.
 ## Final Verdict
 
 - verdict: `block`
-- rationale: Static evidence is terminal for the three English scenarios, but hover/selection behavior, inert-marker survival after the user-controlled sort and refresh, sanitized fixture admission, and the D-16 verdict remain intentionally unresolved for the interaction seam and Plan 05.
+- rationale: Static evidence is terminal for the three English scenarios and marker survival is disproved after the user-controlled sort-plus-refresh sequence. Hover/selection paint remains explicitly unresolved, and sanitized fixture admission plus the D-16 verdict remain owned by Plan 05.

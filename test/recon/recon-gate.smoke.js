@@ -4,7 +4,7 @@ import { test } from 'node:test';
 
 import { verifyReconLedger } from '../../scripts/verify-recon-gate.js';
 
-const REQUIRED_QUESTION_IDS = [
+const REQUIRED_LIVE_IDS = [
   'shell-metadata',
   'top-document-reachability',
   'root-chain',
@@ -20,6 +20,10 @@ const REQUIRED_QUESTION_IDS = [
   'english-language-signal',
   'current-host-coverage',
 ];
+
+const OPEN_INTERACTION_IDS = new Set([
+  'interaction-and-sticky-states',
+]);
 
 const completeEntry = ({
   id = 'tracer-english-path',
@@ -166,23 +170,38 @@ test('rejects an unsupported validator mode', () => {
   );
 });
 
-test('repository ledger inventories all minimum live observations as unresolved', async () => {
+test('repository ledger admits static evidence and keeps only pending interaction evidence unresolved', async () => {
   const markdown = await readFile(
     new URL('../../SELECTORS.md', import.meta.url),
     'utf8',
   );
 
-  for (const id of REQUIRED_QUESTION_IDS) {
-    const heading = `## Recon Question: ${id}`;
+  for (const id of REQUIRED_LIVE_IDS) {
+    const isOpen = OPEN_INTERACTION_IDS.has(id);
+    const heading = `## ${isOpen ? 'Recon Question' : 'Ledger Entry'}: ${id}`;
     const start = markdown.indexOf(heading);
-    assert.notEqual(start, -1, `missing recon question ${id}`);
+    assert.notEqual(start, -1, `missing live evidence section ${id}`);
     const next = markdown.indexOf('\n## ', start + heading.length);
     const section = markdown.slice(start, next === -1 ? undefined : next);
-    assert.match(section, /^- assumption: `unresolved`$/m);
+
+    if (isOpen) {
+      assert.match(section, /^- status: `unresolved`$/m);
+      assert.match(section, /^- assumption: `unresolved`$/m);
+    } else {
+      assert.match(section, /^- status: `(verified|disproved)`$/m);
+      assert.doesNotMatch(section, /^- assumption: `unresolved`$/m);
+    }
+
     assert.match(section, /^- question: .+$/m);
     assert.match(section, /^- probe: .+$/m);
+    assert.match(section, /^- evidence: .+$/m);
+    assert.match(section, /^- interpretation: .+$/m);
+    assert.match(section, /^- fallback: .+$/m);
     assert.match(section, /^- scenario: .+$/m);
   }
+
+  assert.match(markdown, /^- state: marker-staged$/m);
+  assert.match(markdown, /^- post-action-state: interactions-complete$/m);
 });
 
 test('all seven spec-less planning probes remain visibly unresolved', async () => {
