@@ -2,7 +2,6 @@ import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { Window } from 'happy-dom';
@@ -15,7 +14,7 @@ import {
 } from '../../scripts/sanitize-fixture.js';
 
 const execFileAsync = promisify(execFile);
-const repositoryRoot = fileURLToPath(new URL('../..', import.meta.url));
+const repositoryRoot = process.cwd();
 const sanitizerCli = join(repositoryRoot, 'scripts', 'sanitize-fixture.js');
 const temporaryDirectories = [];
 
@@ -44,7 +43,7 @@ function parseDetached(markup) {
 
 function safeCapture() {
   return `
-<div data-test-id="table-container" role="region" aria-rowcount="4">
+<div id="tenant-table" class="layout_hash" style="display: block" aria-label="Internal Organization tickets" data-test-id="table-container" role="region" aria-rowcount="4">
   <table data-garden-id="tables.table" data-test-id="ticket-table" role="table">
     <thead data-test-id="table-header">
       <tr role="row">
@@ -127,6 +126,10 @@ describe('sanitizeFixture', () => {
     expect(parsed.querySelector('[data-garden-id="tables.table"]')).not.toBeNull();
     expect(parsed.querySelectorAll('[data-test-id="ticket-row"]')).toHaveLength(4);
     expect(parsed.querySelector('[role="region"]')?.getAttribute('aria-rowcount')).toBe('4');
+    expect(parsed.querySelector('[role="region"]')?.getAttribute('aria-label')).toBe('ARIA-001');
+    expect(parsed.querySelector('[role="region"]')?.hasAttribute('id')).toBe(false);
+    expect(parsed.querySelector('[role="region"]')?.hasAttribute('class')).toBe(false);
+    expect(parsed.querySelector('[role="region"]')?.hasAttribute('style')).toBe(false);
     expect(parsed.querySelector('th')?.getAttribute('scope')).toBe('col');
 
     const text = parsed.body.textContent;
@@ -186,6 +189,21 @@ describe('sanitizeFixture', () => {
     await expectRejected(empty, 'denylist-required');
   });
 
+  test('rejects an empty capture before parsing or writing', async () => {
+    const fixture = await createCase('');
+    await expectRejected(fixture, 'input-size-out-of-bounds');
+  });
+
+  test('does not overwrite an existing sanitized output', async () => {
+    const fixture = await createCase();
+    await writeFile(fixture.outputPath, 'existing-safe-output', 'utf8');
+
+    await expect(sanitizeFixture(fixture)).rejects.toMatchObject({
+      code: 'output-write-failed',
+    });
+    expect(await readFile(fixture.outputPath, 'utf8')).toBe('existing-safe-output');
+  });
+
   test.each([
     ['forbidden-element', '<script>globalThis.compromised = true</script>'],
     ['forbidden-element', '<iframe title="foreign"></iframe>'],
@@ -193,9 +211,8 @@ describe('sanitizeFixture', () => {
     ['inline-event-handler', '<button onclick="run()">Open</button>'],
     ['resource-bearing-attribute', '<img src="/avatar.png">'],
     ['resource-bearing-attribute', '<a href="#ticket">Ticket</a>'],
-    ['unsafe-attribute', '<div style="color: red">Styled</div>'],
+    ['resource-bearing-attribute', '<div style="background: url(/avatar.png)">Styled</div>'],
     ['unsafe-attribute', '<div data-ticket-id="123">Ticket</div>'],
-    ['unsafe-attribute', '<div id="private-person">Person</div>'],
   ])('rejects unsafe markup with %s and writes no output', async (code, unsafe) => {
     const fixture = await createCase(safeCapture().replace('</tbody>', `${unsafe}</tbody>`));
     await expectRejected(fixture, code);
@@ -203,7 +220,7 @@ describe('sanitizeFixture', () => {
 
   test('rejects a sensitive value that survives in an otherwise allowed attribute', async () => {
     const fixture = await createCase(
-      safeCapture().replace('data-test-id="ticket-table"', 'data-test-id="private-person"'),
+      safeCapture().replace('data-test-id="ticket-table"', 'data-test-id="Private Person"'),
     );
 
     await expectRejected(fixture, 'sensitive-residual');

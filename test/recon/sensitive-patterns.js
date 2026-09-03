@@ -2,7 +2,7 @@ const GENERIC_RULES = Object.freeze([
   {
     category: 'active-markup',
     code: 'active-element',
-    pattern: /<\s*(?:script|iframe|object|embed|base|form)\b/i,
+    pattern: /<\s*(?:script|iframe|frame|frameset|object|embed|base|form|style|link|meta)\b/i,
   },
   {
     category: 'active-markup',
@@ -47,7 +47,7 @@ const GENERIC_RULES = Object.freeze([
   {
     category: 'resource-url',
     code: 'resource-bearing-attribute',
-    pattern: /\b(?:src|srcset|href|action|formaction|poster)\s*=\s*["']?\s*(?:https?:|blob:|data:|file:|\/\/)/i,
+    pattern: /\s(?:src|srcset|href|xlink:href|action|formaction|poster|srcdoc)\s*=/i,
   },
   {
     category: 'resource-url',

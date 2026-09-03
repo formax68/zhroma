@@ -75,6 +75,7 @@ function assertScenario(entry, document) {
   }
 
   const purposes = new Set();
+  const purposeNodes = new Map();
   for (const assertion of entry.assertions) {
     const purpose = requireNonEmptyString(
       assertion?.purpose,
@@ -87,9 +88,11 @@ function assertScenario(entry, document) {
     purposes.add(purpose);
 
     if (assertion.kind === 'selector-present') {
-      if (query(document, selector, 'assertion-selector-invalid') === null) {
+      const selectedNode = query(document, selector, 'assertion-selector-invalid');
+      if (selectedNode === null) {
         throw contractError('declared-selector-not-found');
       }
+      purposeNodes.set(purpose, selectedNode);
       continue;
     }
 
@@ -146,6 +149,45 @@ function assertScenario(entry, document) {
       throw contractError('canonical-priorities-required');
     }
   }
+
+  if (entry.scenario === 'priority-absent') {
+    const priorityTextSurvives = queryAll(document, '*', 'priority-absence-query-failed')
+      .some((node) => (
+        node.childElementCount === 0
+        && EXPECTED_PRIORITIES.includes(node.textContent.trim())
+      ));
+    if (priorityTextSurvives) {
+      throw contractError('priority-value-must-be-absent');
+    }
+  }
+
+  if (entry.scenario === 'grouped-long') {
+    const ticketTable = query(
+      document,
+      entry.selectors.ticketTable,
+      'ticket-table-selector-invalid',
+    );
+    const headerRow = query(
+      document,
+      entry.selectors.headerRow,
+      'header-row-selector-invalid',
+    );
+    const groupRow = purposeNodes.get('group-row');
+    const duplicateHeader = purposeNodes.get('duplicate-or-sticky-header');
+    const scrollContainer = purposeNodes.get('scroll-container');
+    if (
+      !groupRow
+      || !duplicateHeader
+      || !scrollContainer
+      || duplicateHeader === ticketTable
+      || !scrollContainer.contains(ticketTable)
+      || !scrollContainer.contains(duplicateHeader)
+      || !duplicateHeader.contains(headerRow)
+      || groupRow.closest('table, [role="table"]') !== ticketTable
+    ) {
+      throw contractError('grouped-long-topology-mismatch');
+    }
+  }
 }
 
 function safeRelativeFixturePath(manifestDirectory, file) {
@@ -190,7 +232,12 @@ export async function validateFixtureManifest(manifestPath, options = {}) {
     requireNonEmptyString(entry?.selectors?.ticketTable, 'ticket-table-selector-required');
     requireNonEmptyString(entry?.selectors?.headerRow, 'header-row-selector-required');
 
-    if (!/^\d{4}-\d{2}-\d{2}$/u.test(entry.captureDate)) {
+    const parsedCaptureDate = new Date(`${entry.captureDate}T00:00:00.000Z`);
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/u.test(entry.captureDate)
+      || Number.isNaN(parsedCaptureDate.valueOf())
+      || parsedCaptureDate.toISOString().slice(0, 10) !== entry.captureDate
+    ) {
       throw contractError('capture-date-invalid');
     }
     if (!/^[a-f0-9]{64}$/u.test(entry.sha256)) {
