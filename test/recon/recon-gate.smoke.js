@@ -1,7 +1,25 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
 import { verifyReconLedger } from '../../scripts/verify-recon-gate.js';
+
+const REQUIRED_QUESTION_IDS = [
+  'shell-metadata',
+  'top-document-reachability',
+  'root-chain',
+  'stable-identifiers',
+  'header-topology',
+  'priority-representation',
+  'priority-absence',
+  'ticket-vs-group-rows',
+  'scrolling-and-recycling',
+  'painting-element',
+  'interaction-and-sticky-states',
+  'inert-attribute-survival',
+  'english-language-signal',
+  'current-host-coverage',
+];
 
 const completeEntry = ({
   id = 'tracer-english-path',
@@ -133,4 +151,35 @@ test('rejects an unsupported validator mode', () => {
     () => verifyReconLedger(completeEntry(), { mode: 'draft' }),
     /mode must be evidence or final/,
   );
+});
+
+test('repository ledger inventories all minimum live observations as unresolved', async () => {
+  const markdown = await readFile(
+    new URL('../../SELECTORS.md', import.meta.url),
+    'utf8',
+  );
+
+  for (const id of REQUIRED_QUESTION_IDS) {
+    const heading = `## Recon Question: ${id}`;
+    const start = markdown.indexOf(heading);
+    assert.notEqual(start, -1, `missing recon question ${id}`);
+    const next = markdown.indexOf('\n## ', start + heading.length);
+    const section = markdown.slice(start, next === -1 ? undefined : next);
+    assert.match(section, /^- assumption: `unresolved`$/m);
+    assert.match(section, /^- question: .+$/m);
+    assert.match(section, /^- probe: .+$/m);
+    assert.match(section, /^- scenario: .+$/m);
+  }
+});
+
+test('all seven spec-less planning probes remain visibly unresolved', async () => {
+  const markdown = await readFile(
+    new URL('../../SELECTORS.md', import.meta.url),
+    'utf8',
+  );
+  const unresolvedRows = markdown.match(
+    /^\| RECON-(?:01|02|03) \| (?:unclassified|adjacency|empty|ordering) \| unresolved \|/gm,
+  );
+
+  assert.equal(unresolvedRows?.length, 7);
 });
