@@ -379,21 +379,19 @@ The agent may then guide inspection and capture. A missing scenario is not waive
 | A2 | `[ASSUMED]` The proposed attribute allowlist and deterministic text replacement can preserve enough topology for downstream tests. | Sanitization | The fixture may be safe but unusable; validate structural counts and selectors before admission. |
 | A3 | `[ASSUMED]` The two recently released test-package versions are acceptable after human legitimacy review. | Standard Stack | Pin an earlier reviewed version or use the existing approved project baseline if the checkpoint rejects either release. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Is the required authenticated scenario matrix available?**
    - What we know: D-06 requires three configurations and D-08 permits disposable views.
-   - What's unclear: Account access and view-management permissions were not available to this research run.
-   - Recommendation: Make this the first execution checkpoint after scaffolding probes/tests; no fallback can create trustworthy live evidence.
+   - Resolution: Availability is resolved procedurally, not asserted as a live fact. Plan 02 Task 3 is a blocking human-action checkpoint after the probe/test scaffold; it requires the user to confirm the authenticated English current Agent Workspace and all three scenarios. If access or any scenario is unavailable, the checkpoint remains open because no synthetic fallback can create trustworthy live evidence.
 
 2. **Will the raw capture be retained?**
    - What we know: Retention is optional, but any retained raw copy must be encrypted and invisible to project artifacts.
-   - What's unclear: The user's preferred private encrypted store.
-   - Recommendation: Default to deletion immediately after sanitized output passes; if retained, the user selects and controls the encrypted location.
+   - Resolution: Delete the raw capture immediately after its sanitized output passes by default. Retention occurs only if the user explicitly selects and controls encrypted-at-rest private storage; no project artifact may record that location, tenant identity, or identifying metadata.
 
 3. **Will current package releases pass the human legitimacy checkpoint?**
    - What we know: Both packages have official repositories, millions of weekly downloads, and no postinstall, but the seam flags their newest releases as too new.
-   - Recommendation: Review provenance before install; pin the accepted exact versions in `package-lock.json`.
+   - Resolution: Legitimacy is resolved procedurally through the separate blocking-human checkpoints in Plan 02 Tasks 1 and 2. Plan 03 may install and lock only the exact approved releases; rejection or missing approval halts installation and does not authorize a substitute version.
 
 ## Environment Availability
 
