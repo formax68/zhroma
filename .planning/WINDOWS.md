@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 4
+open_count: 5
 waived_count: 0
 fixed_count: 0
-total_count: 4
-last_updated: 2026-09-04T08:24:35.232Z
+total_count: 5
+last_updated: 2026-09-04T11:29:35.167Z
 ---
 
 # Broken Windows Ledger
@@ -19,6 +19,7 @@ last_updated: 2026-09-04T08:24:35.232Z
 | 2 | 01 | deviation | test/recon/sanitize-fixture.test.js |  | Kept the unsafe-attribute regression inside valid table markup | open |  | 2026-09-04T06:04:22.010Z |  |
 | 3 | 01 | deviation | .planning/STATE.md |  | Corrected the out-of-order state position after the SDK advance | open |  | 2026-09-04T06:04:22.078Z |  |
 | 4 | 01 | deviation | test/recon/interaction-evidence.smoke.js |  | Decoupled blocked-state coverage from the advancing repository interaction ledger | open |  | 2026-09-04T08:24:35.232Z |  |
+| 5 | 01 | deviation | test/recon/recon-gate.smoke.js | 242 | Repository final-gate smoke assertion hard-coded the pre-attestation block verdict. | open |  | 2026-09-04T11:29:35.167Z |  |
 
 ````json
 [
@@ -68,6 +69,18 @@ last_updated: 2026-09-04T08:24:35.232Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-04T08:24:35.232Z",
+    "resolved_at": null
+  },
+  {
+    "id": 5,
+    "kind": "deviation",
+    "phase": "01",
+    "file": "test/recon/recon-gate.smoke.js",
+    "line": 242,
+    "description": "Repository final-gate smoke assertion hard-coded the pre-attestation block verdict.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-04T11:29:35.167Z",
     "resolved_at": null
   }
 ]
