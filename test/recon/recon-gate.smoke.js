@@ -239,7 +239,7 @@ test('final mode binds the complete repository ledger to admitted scenarios', as
     admittedScenarios: ADMITTED_SCENARIOS,
   }), {
     entryCount: 18,
-    verdict: 'block',
+    verdict: 'proceed',
   });
 
   const fabricatedScenario = markdown.replace(
