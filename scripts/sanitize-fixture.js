@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { access, readFile, realpath, stat, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { Window } from 'happy-dom';
 
@@ -10,6 +11,7 @@ import {
 } from '../test/recon/sensitive-patterns.js';
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024;
+const MODULE_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const PRIORITY_LABELS = new Set(['Urgent', 'High', 'Normal', 'Low']);
 const FORBIDDEN_ELEMENT = /<\s*(?:script|iframe|frame|frameset|object|embed|base|form|style|link|meta)\b/iu;
 const INLINE_HANDLER = /\son[a-z][a-z0-9_-]*\s*=/iu;
@@ -324,7 +326,7 @@ export async function sanitizeFixture(options) {
   const denylistPath = requiredPath(options.denylistPath, 'denylist-required');
   const inputRealPath = await resolvedExistingPath(inputPath, 'input-readable-required');
   const outputRealPath = await resolvedOutputPath(outputPath);
-  const projectRealPath = await findGitWorktreeRoot(process.cwd());
+  const projectRealPath = await findGitWorktreeRoot(MODULE_DIRECTORY);
 
   if (inputRealPath === outputRealPath) {
     reject('input-output-must-differ');
@@ -409,7 +411,7 @@ async function runCli() {
 
 if (
   process.argv[1]
-  && resolve(process.argv[1]) === resolve(process.cwd(), 'scripts', 'sanitize-fixture.js')
+  && import.meta.url === pathToFileURL(resolve(process.argv[1])).href
 ) {
   await runCli();
 }
