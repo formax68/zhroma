@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+
+import { validateFixtureManifest } from './fixture-contract.js';
 
 const ENTRY_HEADING = /^## Ledger Entry:\s*(.+?)\s*$/gm;
 const QUESTION_HEADING = /^## Recon Question:\s*(.+?)\s*$/gm;
@@ -40,11 +40,6 @@ const TERMINAL_STATUSES = new Set([
 ]);
 
 const VERDICTS = new Set(['proceed', 'block']);
-const REQUIRED_FIXTURE_SCENARIOS = Object.freeze([
-  'priority-present-ungrouped',
-  'priority-absent',
-  'grouped-long',
-]);
 
 function unwrapCode(value) {
   const trimmed = value.trim();
@@ -226,54 +221,6 @@ export function verifyReconLedger(markdown, { mode } = {}) {
   return { entryCount: entries.length, verdict };
 }
 
-async function verifyManifestBytes(manifestPath) {
-  const absoluteManifestPath = resolve(manifestPath);
-  const manifestDirectory = dirname(absoluteManifestPath);
-  let manifest;
-  try {
-    manifest = JSON.parse(await readFile(absoluteManifestPath, 'utf8'));
-  } catch {
-    throw new Error('fixture manifest must be readable JSON');
-  }
-
-  if (!Array.isArray(manifest.fixtures) || manifest.fixtures.length !== 3) {
-    throw new Error('fixture manifest must enumerate exactly three fixtures');
-  }
-
-  const scenarios = new Set();
-  for (const entry of manifest.fixtures) {
-    if (
-      typeof entry?.scenario !== 'string'
-      || typeof entry?.file !== 'string'
-      || typeof entry?.sha256 !== 'string'
-      || isAbsolute(entry.file)
-      || entry.file.split(/[\\/]/u).includes('..')
-    ) {
-      throw new Error('fixture manifest entry is incomplete or unsafe');
-    }
-
-    const fixturePath = resolve(manifestDirectory, entry.file);
-    const fromManifest = relative(manifestDirectory, fixturePath);
-    if (fromManifest === '..' || fromManifest.startsWith(`..${sep}`)) {
-      throw new Error('fixture manifest path escapes its directory');
-    }
-
-    const bytes = await readFile(fixturePath);
-    const actualHash = createHash('sha256').update(bytes).digest('hex');
-    if (actualHash !== entry.sha256) {
-      throw new Error(`fixture checksum mismatch for scenario: ${entry.scenario}`);
-    }
-    scenarios.add(entry.scenario);
-  }
-
-  if (
-    scenarios.size !== REQUIRED_FIXTURE_SCENARIOS.length
-    || REQUIRED_FIXTURE_SCENARIOS.some((scenario) => !scenarios.has(scenario))
-  ) {
-    throw new Error('fixture manifest does not contain the complete scenario matrix');
-  }
-}
-
 async function runCli() {
   const [, , mode, ledgerPath = 'SELECTORS.md', manifestPath] = process.argv;
   try {
@@ -285,7 +232,9 @@ async function runCli() {
     }
 
     if (manifestPath) {
-      await verifyManifestBytes(manifestPath);
+      await validateFixtureManifest(manifestPath, {
+        requireCompleteScenarioMatrix: true,
+      });
     }
     process.stdout.write(`FINAL VERDICT: ${result.verdict}\n`);
   } catch (error) {

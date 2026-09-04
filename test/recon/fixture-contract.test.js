@@ -68,7 +68,7 @@ function assertionsFor(scenario) {
     {
       kind: 'selector-present',
       purpose: 'scroll-container',
-      selector: '[data-test-id="scroll-container"]',
+      selector: '[data-test-id="table-container"]',
     },
   ];
 }
@@ -219,7 +219,7 @@ describe('fixture corpus contract', () => {
 
     const falseAssertion = await createCorpus();
     await rewriteManifest(falseAssertion.manifestPath, (manifest) => {
-      manifest.fixtures[1].assertions[0].selector = '[data-test-id="subject-header"]';
+      manifest.fixtures[1].assertions[0].selector = '[data-test-id="header-cell"]';
     });
     await expect(validateFixtureManifest(falseAssertion.manifestPath)).rejects.toMatchObject({
       code: 'declared-selector-must-be-absent',
