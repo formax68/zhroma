@@ -40,6 +40,31 @@ const TERMINAL_STATUSES = new Set([
 ]);
 
 const VERDICTS = new Set(['proceed', 'block']);
+const SYNTHETIC_SCENARIOS = new Set(['synthetic-contract']);
+const LOCALIZATION_SCENARIOS = new Set(['not-run-localization-only']);
+const LEDGER_TO_MANIFEST_SCENARIO = Object.freeze({
+  'priority-present-grouped-long': 'grouped-long',
+  'priority-present-ungrouped': 'priority-present-ungrouped',
+  'priority-absent': 'priority-absent',
+});
+
+export const REQUIRED_LIVE_EVIDENCE_IDS = Object.freeze([
+  'shell-metadata',
+  'top-document-reachability',
+  'root-chain',
+  'stable-identifiers',
+  'header-topology',
+  'priority-representation',
+  'priority-absence',
+  'ticket-vs-group-rows',
+  'scrolling-and-recycling',
+  'painting-element',
+  'sticky-header-state',
+  'interaction-and-sticky-states',
+  'inert-attribute-survival',
+  'english-language-signal',
+  'current-host-coverage',
+]);
 
 function unwrapCode(value) {
   const trimmed = value.trim();
@@ -125,7 +150,7 @@ function parseEntries(markdown) {
       throw new Error(`${label}: non-English entry must be outside English-only scope`);
     }
 
-    entries.push({ id, scope, status });
+    entries.push({ id, scope, status, fields });
   }
 
   return entries;
@@ -190,7 +215,112 @@ function parseVerdict(markdown) {
     throw new Error('Final Verdict is missing required field: rationale');
   }
 
-  return verdict;
+  return { verdict, fields };
+}
+
+function parseScenarioList(value) {
+  return value.split(',').map((scenario) => (
+    scenario.replaceAll('`', '').trim()
+  )).filter(Boolean);
+}
+
+function requireFinalEvidence(entries, admittedScenarios) {
+  if (!Array.isArray(admittedScenarios)) {
+    throw new Error('final mode requires admitted corpus scenarios');
+  }
+  const admitted = new Set(admittedScenarios);
+  if (
+    admitted.size !== 3
+    || !admitted.has('priority-present-ungrouped')
+    || !admitted.has('priority-absent')
+    || !admitted.has('grouped-long')
+  ) {
+    throw new Error('final mode requires the complete admitted scenario matrix');
+  }
+
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  const missing = REQUIRED_LIVE_EVIDENCE_IDS.filter((id) => !byId.has(id));
+  if (missing.length > 0) {
+    throw new Error(`final ledger is missing required evidence: ${missing.join(', ')}`);
+  }
+
+  for (const entry of entries) {
+    const scenarios = parseScenarioList(entry.fields.get('scenario'));
+    for (const scenario of scenarios) {
+      if (entry.id === 'tracer-english-path' && SYNTHETIC_SCENARIOS.has(scenario)) {
+        continue;
+      }
+      if (entry.scope !== 'English path' && LOCALIZATION_SCENARIOS.has(scenario)) {
+        continue;
+      }
+      const manifestScenario = LEDGER_TO_MANIFEST_SCENARIO[scenario];
+      if (!manifestScenario || !admitted.has(manifestScenario)) {
+        throw new Error(
+          `ledger entry ${entry.id} scenario ${scenario} is not bound to the admitted corpus`,
+        );
+      }
+    }
+  }
+
+  return byId;
+}
+
+function positiveIntegerField(entry, field) {
+  const value = entry.fields.get(field);
+  return /^\d+$/u.test(value ?? '') && Number(value) > 0;
+}
+
+function collectBlockingPredicates(byId, verdictFields) {
+  const blockers = [];
+  const interaction = byId.get('interaction-and-sticky-states');
+  const paintSummaries = [
+    interaction?.fields.get('normal-paint'),
+    interaction?.fields.get('hover-paint'),
+    interaction?.fields.get('selected-paint'),
+  ];
+  if (
+    interaction?.status !== 'verified'
+    || !positiveIntegerField(interaction, 'selected-row-count')
+    || !positiveIntegerField(interaction, 'hovered-row-count')
+    || paintSummaries.some((summary) => !summary)
+    || new Set(paintSummaries).size !== paintSummaries.length
+    || interaction?.fields.get('interaction-owner') !== 'user'
+    || !['row', 'cell'].includes(interaction?.fields.get('actual-paint-owner'))
+  ) {
+    blockers.push('interaction-evidence-incomplete');
+  }
+
+  const rootChain = byId.get('root-chain');
+  if (
+    rootChain?.status !== 'verified'
+    || !rootChain.fields.get('evidence')?.includes('[{ type: "Document" }]')
+    || !rootChain.fields.get('interpretation')?.includes('No open or closed ShadowRoot')
+    || !verdictFields.get('closed-shadow-dom')?.startsWith('No.')
+  ) {
+    blockers.push('closed-root-not-ruled-out');
+  }
+
+  const identifiers = byId.get('stable-identifiers');
+  const identifiersPresent = identifiers?.status === 'verified'
+    && identifiers.fields.get('evidence')?.includes('data-garden-id="tables.table"')
+    && identifiers.fields.get('evidence')?.includes('data-test-id="generic-table"');
+  const fallbackMatrixProven = verdictFields.get('ranked-fallback')
+    ?.includes('complete three-scenario corpus');
+  if (
+    !identifiersPresent
+    && !fallbackMatrixProven
+  ) {
+    blockers.push('selector-fallback-not-matrix-proven');
+  }
+
+  if (!verdictFields.get('corpus-gates')?.startsWith('Passed')) {
+    blockers.push('corpus-disposition-incomplete');
+  }
+  if (verdictFields.get('prohibition-dispositions') !== 'passed') {
+    blockers.push('human-dispositions-incomplete');
+  }
+
+  return blockers;
 }
 
 /**
@@ -199,7 +329,7 @@ function parseVerdict(markdown) {
  * `evidence` validates all ledger entries without requiring a verdict.
  * `final` additionally requires exactly one explicit proceed/block verdict.
  */
-export function verifyReconLedger(markdown, { mode } = {}) {
+export function verifyReconLedger(markdown, { mode, admittedScenarios } = {}) {
   if (mode !== 'evidence' && mode !== 'final') {
     throw new Error('mode must be evidence or final');
   }
@@ -216,26 +346,50 @@ export function verifyReconLedger(markdown, { mode } = {}) {
     );
   }
 
-  const verdict = mode === 'final' ? parseVerdict(markdown) : null;
+  if (mode === 'evidence') {
+    return { entryCount: entries.length, verdict: null };
+  }
+
+  const { verdict, fields: verdictFields } = parseVerdict(markdown);
+  const byId = requireFinalEvidence(entries, admittedScenarios);
+  const blockers = collectBlockingPredicates(byId, verdictFields);
+  if (verdict === 'proceed' && blockers.length > 0) {
+    throw new Error(
+      `proceed verdict conflicts with blocking predicate: ${blockers.join(', ')}`,
+    );
+  }
 
   return { entryCount: entries.length, verdict };
 }
 
 async function runCli() {
-  const [, , mode, ledgerPath = 'SELECTORS.md', manifestPath] = process.argv;
   try {
+    const args = process.argv.slice(2);
+    const [mode, ledgerPath, manifestPath] = args;
+    if (
+      (mode === 'evidence' && args.length !== 2)
+      || (mode === 'final' && args.length !== 3)
+      || (mode !== 'evidence' && mode !== 'final')
+    ) {
+      throw new Error(
+        'Usage: verify-recon-gate.js evidence <ledger> | final <ledger> <manifest>',
+      );
+    }
+
     const markdown = await readFile(ledgerPath, 'utf8');
-    const result = verifyReconLedger(markdown, { mode });
     if (mode === 'evidence') {
+      const result = verifyReconLedger(markdown, { mode });
       process.stdout.write(`EVIDENCE READY: ${result.entryCount} terminal entries\n`);
       return;
     }
 
-    if (manifestPath) {
-      await validateFixtureManifest(manifestPath, {
-        requireCompleteScenarioMatrix: true,
-      });
-    }
+    const corpus = await validateFixtureManifest(manifestPath, {
+      requireCompleteScenarioMatrix: true,
+    });
+    const result = verifyReconLedger(markdown, {
+      mode,
+      admittedScenarios: corpus.scenarios,
+    });
     process.stdout.write(`FINAL VERDICT: ${result.verdict}\n`);
   } catch (error) {
     process.stderr.write(`Recon ledger rejected: ${error.message}\n`);

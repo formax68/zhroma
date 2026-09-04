@@ -9,7 +9,6 @@ import {
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -319,7 +318,7 @@ describe('fixture corpus contract', () => {
 });
 
 const selectedManifest = process.env.GSD_FIXTURE_MANIFEST
-  ?? fileURLToPath(new URL('../fixtures/manifest.json', import.meta.url));
+  ?? resolve('test/fixtures/manifest.json');
 
 test('the selected admitted corpus satisfies the complete non-vacuous contract', async () => {
   await access(resolve(selectedManifest));

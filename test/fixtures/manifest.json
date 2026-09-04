@@ -15,7 +15,19 @@
       "sha256": "256ea070bfd2fa3c71e9b05cf7873cd8e88bf29280ec753008313417cbedcc9c",
       "selectors": {
         "ticketTable": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"]",
-        "headerRow": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > thead[data-garden-id=\"tables.head\"][data-test-id=\"generic-table-head\"] > tr[data-garden-id=\"tables.header_row\"]"
+        "headerRow": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > thead[data-garden-id=\"tables.head\"][data-test-id=\"generic-table-head\"] > tr[data-garden-id=\"tables.header_row\"]",
+        "ticketRow": "[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"]",
+        "groupRow": "[data-garden-id=\"tables.group_row\"][data-test-id=\"generic-table-rows-group-by\"]",
+        "scrollContainer": "body > div"
+      },
+      "structure": {
+        "headerCellCount": 16,
+        "ticketRowCount": 4,
+        "ticketRowWidths": [16, 16, 16, 16],
+        "groupRowCount": 0,
+        "groupRowPositions": [],
+        "priorityIndex": 6,
+        "stickyHeaderRelationship": "same-table"
       },
       "assertions": [
         {
@@ -46,7 +58,19 @@
       "sha256": "8e79ca98ca55f1c0d39c3c80f244ddd4eb07180e2b89fd3b099dd0d99c79693f",
       "selectors": {
         "ticketTable": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"]",
-        "headerRow": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > thead[data-garden-id=\"tables.head\"][data-test-id=\"generic-table-head\"] > tr[data-garden-id=\"tables.header_row\"]"
+        "headerRow": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > thead[data-garden-id=\"tables.head\"][data-test-id=\"generic-table-head\"] > tr[data-garden-id=\"tables.header_row\"]",
+        "ticketRow": "[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"]",
+        "groupRow": "[data-garden-id=\"tables.group_row\"][data-test-id=\"generic-table-rows-group-by\"]",
+        "scrollContainer": "body > div"
+      },
+      "structure": {
+        "headerCellCount": 6,
+        "ticketRowCount": 4,
+        "ticketRowWidths": [6, 6, 6, 6],
+        "groupRowCount": 0,
+        "groupRowPositions": [],
+        "priorityIndex": null,
+        "stickyHeaderRelationship": "same-table"
       },
       "assertions": [
         {
@@ -71,7 +95,19 @@
       "sha256": "24c6a9bc9a6e4b7d9dd88dad48ba7103750b265f820e9b25ea6a27f68a107b58",
       "selectors": {
         "ticketTable": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"]",
-        "headerRow": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > thead[data-garden-id=\"tables.head\"][data-test-id=\"generic-table-head\"] > tr[data-garden-id=\"tables.header_row\"]"
+        "headerRow": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > thead[data-garden-id=\"tables.head\"][data-test-id=\"generic-table-head\"] > tr[data-garden-id=\"tables.header_row\"]",
+        "ticketRow": "[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"]",
+        "groupRow": "[data-garden-id=\"tables.group_row\"][data-test-id=\"generic-table-rows-group-by\"]",
+        "scrollContainer": "body > div"
+      },
+      "structure": {
+        "headerCellCount": 15,
+        "ticketRowCount": 12,
+        "ticketRowWidths": [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15],
+        "groupRowCount": 1,
+        "groupRowPositions": [0],
+        "priorityIndex": 6,
+        "stickyHeaderRelationship": "same-table"
       },
       "assertions": [
         {
