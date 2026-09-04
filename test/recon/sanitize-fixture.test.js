@@ -261,6 +261,46 @@ describe('sanitizeFixture', () => {
     }
   });
 
+  test('the CLI executes invalid invocations from outside the repository', async () => {
+    const fixture = await createCase();
+
+    let failure;
+    try {
+      await execFileAsync(process.execPath, [sanitizerCli, '--input'], {
+        cwd: fixture.directory,
+      });
+      expect.fail('expected sanitizer CLI to reject invalid arguments');
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure.code).not.toBe(0);
+    expect(failure.stdout).toBe('');
+    expect(failure.stderr).toBe('SANITIZE_FIXTURE_REJECTED cli-arguments-invalid\n');
+    expect(failure.stderr).not.toContain(fixture.directory);
+    await expect(readFile(fixture.outputPath, 'utf8')).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+  });
+
+  test('the CLI creates and checksums output from outside the repository', async () => {
+    const fixture = await createCase();
+    const original = await readFile(fixture.inputPath);
+
+    const result = await execFileAsync(process.execPath, [
+      sanitizerCli,
+      '--input', fixture.inputPath,
+      '--output', fixture.outputPath,
+      '--denylist', fixture.denylistPath,
+    ], { cwd: fixture.directory });
+    const output = await readFile(fixture.outputPath);
+
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe(`SANITIZE_FIXTURE_OK ${sha256(output)}\n`);
+    expect(result.stdout).not.toContain(fixture.directory);
+    expect(await readFile(fixture.inputPath)).toEqual(original);
+  });
+
   test('the CLI rejects missing or duplicate flags without echoing arguments', async () => {
     const fixture = await createCase();
 
