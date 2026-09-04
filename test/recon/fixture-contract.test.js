@@ -1,13 +1,22 @@
 import { createHash } from 'node:crypto';
-import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  access,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { join, resolve } from 'node:path';
 
-import { Window } from 'happy-dom';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
-  scanSensitiveContent,
+  REQUIRED_SCENARIOS,
+  validateFixtureManifest,
+} from '../../scripts/fixture-contract.js';
+import {
   SensitiveFixtureError,
 } from './sensitive-patterns.js';
 
@@ -15,305 +24,7 @@ const ADMISSION_DENYLIST = Object.freeze([
   '__private_capture_values_were_removed_before_admission__',
 ]);
 const EXPECTED_PRIORITIES = Object.freeze(['Urgent', 'High', 'Normal', 'Low']);
-const REQUIRED_SCENARIOS = Object.freeze([
-  'priority-present-ungrouped',
-  'priority-absent',
-  'grouped-long',
-]);
 const temporaryDirectories = [];
-
-function parseDetached(markup) {
-  const isolatedWindow = new Window({
-    settings: {
-      enableJavaScriptEvaluation: false,
-      disableJavaScriptFileLoading: true,
-      disableCSSFileLoading: true,
-      enableImageFileLoading: false,
-      navigation: {
-        disableMainFrameNavigation: true,
-        disableChildFrameNavigation: true,
-        disableChildPageNavigation: true,
-      },
-    },
-  });
-  return new isolatedWindow.DOMParser().parseFromString(markup, 'text/html');
-}
-
-function contractError(code) {
-  const error = new Error(`Fixture corpus contract rejected: ${code}`);
-  error.name = 'FixtureContractError';
-  error.code = code;
-  return error;
-}
-
-function requireNonEmptyString(value, code) {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw contractError(code);
-  }
-  return value;
-}
-
-function query(document, selector, code) {
-  try {
-    return document.querySelector(selector);
-  } catch {
-    throw contractError(code);
-  }
-}
-
-function queryAll(document, selector, code) {
-  try {
-    return [...document.querySelectorAll(selector)];
-  } catch {
-    throw contractError(code);
-  }
-}
-
-function assertScenario(entry, document) {
-  if (!Array.isArray(entry.assertions) || entry.assertions.length === 0) {
-    throw contractError('scenario-assertions-required');
-  }
-
-  const purposes = new Set();
-  const purposeNodes = new Map();
-  for (const assertion of entry.assertions) {
-    const purpose = requireNonEmptyString(
-      assertion?.purpose,
-      'assertion-purpose-required',
-    );
-    const selector = requireNonEmptyString(
-      assertion?.selector,
-      'assertion-selector-required',
-    );
-    purposes.add(purpose);
-
-    if (assertion.kind === 'selector-present') {
-      const selectedNode = query(document, selector, 'assertion-selector-invalid');
-      if (selectedNode === null) {
-        throw contractError('declared-selector-not-found');
-      }
-      purposeNodes.set(purpose, selectedNode);
-      continue;
-    }
-
-    if (assertion.kind === 'selector-absent') {
-      if (query(document, selector, 'assertion-selector-invalid') !== null) {
-        throw contractError('declared-selector-must-be-absent');
-      }
-      continue;
-    }
-
-    if (assertion.kind === 'exact-text-values') {
-      if (!Array.isArray(assertion.values) || assertion.values.length === 0) {
-        throw contractError('assertion-values-required');
-      }
-      const actual = new Set(queryAll(
-        document,
-        selector,
-        'assertion-selector-invalid',
-      ).map((node) => node.textContent.trim()));
-      const expected = new Set(assertion.values);
-      if (
-        actual.size !== expected.size
-        || [...actual].some((value) => !expected.has(value))
-      ) {
-        throw contractError('declared-text-values-mismatch');
-      }
-      continue;
-    }
-
-    throw contractError('assertion-kind-unsupported');
-  }
-
-  const requiredPurposes = {
-    'priority-present-ungrouped': ['priority-values'],
-    'priority-absent': ['priority-column-absent'],
-    'grouped-long': ['group-row', 'duplicate-or-sticky-header', 'scroll-container'],
-  }[entry.scenario];
-
-  if (!requiredPurposes) {
-    throw contractError('scenario-unsupported');
-  }
-  if (requiredPurposes.some((purpose) => !purposes.has(purpose))) {
-    throw contractError('scenario-invariant-missing');
-  }
-
-  if (entry.scenario === 'priority-present-ungrouped') {
-    const priorityAssertion = entry.assertions.find(
-      ({ purpose }) => purpose === 'priority-values',
-    );
-    if (
-      priorityAssertion.kind !== 'exact-text-values'
-      || JSON.stringify(priorityAssertion.values) !== JSON.stringify(EXPECTED_PRIORITIES)
-    ) {
-      throw contractError('canonical-priorities-required');
-    }
-  }
-
-  if (entry.scenario === 'priority-absent') {
-    const priorityTextSurvives = queryAll(document, '*', 'priority-absence-query-failed')
-      .some((node) => (
-        node.childElementCount === 0
-        && EXPECTED_PRIORITIES.includes(node.textContent.trim())
-      ));
-    if (priorityTextSurvives) {
-      throw contractError('priority-value-must-be-absent');
-    }
-  }
-
-  if (entry.scenario === 'grouped-long') {
-    const ticketTable = query(
-      document,
-      entry.selectors.ticketTable,
-      'ticket-table-selector-invalid',
-    );
-    const headerRow = query(
-      document,
-      entry.selectors.headerRow,
-      'header-row-selector-invalid',
-    );
-    const groupRow = purposeNodes.get('group-row');
-    const duplicateHeader = purposeNodes.get('duplicate-or-sticky-header');
-    const scrollContainer = purposeNodes.get('scroll-container');
-    const sameTableStickyHeader = duplicateHeader === ticketTable
-      && ticketTable.contains(headerRow);
-    const separateDuplicateHeader = duplicateHeader !== ticketTable
-      && scrollContainer?.contains(duplicateHeader)
-      && duplicateHeader.contains(headerRow);
-    if (
-      !groupRow
-      || !duplicateHeader
-      || !scrollContainer
-      || !scrollContainer.contains(ticketTable)
-      || !(sameTableStickyHeader || separateDuplicateHeader)
-      || groupRow.closest('table, [role="table"]') !== ticketTable
-    ) {
-      throw contractError('grouped-long-topology-mismatch');
-    }
-  }
-}
-
-function safeRelativeFixturePath(manifestDirectory, file) {
-  requireNonEmptyString(file, 'fixture-file-required');
-  if (isAbsolute(file) || file.split(/[\\/]/u).includes('..')) {
-    throw contractError('fixture-path-must-be-relative');
-  }
-
-  const fixturePath = resolve(manifestDirectory, file);
-  const fromManifest = relative(manifestDirectory, fixturePath);
-  if (fromManifest === '..' || fromManifest.startsWith(`..${sep}`)) {
-    throw contractError('fixture-path-must-be-contained');
-  }
-  return fixturePath;
-}
-
-export async function validateFixtureManifest(manifestPath, options = {}) {
-  const absoluteManifestPath = resolve(manifestPath);
-  let manifest;
-  try {
-    manifest = JSON.parse(await readFile(absoluteManifestPath, 'utf8'));
-  } catch {
-    throw contractError('manifest-readable-json-required');
-  }
-
-  if (!Array.isArray(manifest.fixtures) || manifest.fixtures.length === 0) {
-    throw contractError('manifest-fixtures-required');
-  }
-
-  const manifestDirectory = dirname(absoluteManifestPath);
-  const seenFiles = new Set();
-  const seenScenarios = new Set();
-
-  for (const entry of manifest.fixtures) {
-    requireNonEmptyString(entry?.scenario, 'scenario-required');
-    requireNonEmptyString(entry?.captureDate, 'capture-date-required');
-    requireNonEmptyString(entry?.workspace?.shell, 'workspace-shell-required');
-    requireNonEmptyString(entry?.workspace?.plan, 'workspace-plan-required');
-    requireNonEmptyString(entry?.domBoundary, 'dom-boundary-required');
-    requireNonEmptyString(entry?.sanitizationMethod, 'sanitization-method-required');
-    requireNonEmptyString(entry?.sha256, 'sha256-required');
-    requireNonEmptyString(entry?.selectors?.ticketTable, 'ticket-table-selector-required');
-    requireNonEmptyString(entry?.selectors?.headerRow, 'header-row-selector-required');
-
-    const parsedCaptureDate = new Date(`${entry.captureDate}T00:00:00.000Z`);
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/u.test(entry.captureDate)
-      || Number.isNaN(parsedCaptureDate.valueOf())
-      || parsedCaptureDate.toISOString().slice(0, 10) !== entry.captureDate
-    ) {
-      throw contractError('capture-date-invalid');
-    }
-    if (!/^[a-f0-9]{64}$/u.test(entry.sha256)) {
-      throw contractError('sha256-invalid');
-    }
-    if (seenFiles.has(entry.file) || seenScenarios.has(entry.scenario)) {
-      throw contractError('fixture-entry-duplicate');
-    }
-    seenFiles.add(entry.file);
-    seenScenarios.add(entry.scenario);
-
-    const fixturePath = safeRelativeFixturePath(manifestDirectory, entry.file);
-    let bytes;
-    try {
-      bytes = await readFile(fixturePath);
-    } catch {
-      throw contractError('fixture-readable-required');
-    }
-
-    const actualHash = createHash('sha256').update(bytes).digest('hex');
-    if (actualHash !== entry.sha256) {
-      throw contractError('fixture-checksum-mismatch');
-    }
-
-    scanSensitiveContent(bytes.toString('utf8'), {
-      denylist: ADMISSION_DENYLIST,
-    });
-
-    const detachedDocument = parseDetached(bytes.toString('utf8'));
-    if (!detachedDocument || detachedDocument === globalThis.document) {
-      throw contractError('detached-document-required');
-    }
-
-    const ticketTable = query(
-      detachedDocument,
-      entry.selectors.ticketTable,
-      'ticket-table-selector-invalid',
-    );
-    const headerRow = query(
-      detachedDocument,
-      entry.selectors.headerRow,
-      'header-row-selector-invalid',
-    );
-    if (
-      ticketTable === null
-      || !(
-        ticketTable.localName === 'table'
-        || ticketTable.getAttribute('role') === 'table'
-      )
-    ) {
-      throw contractError('declared-ticket-table-not-found');
-    }
-    if (headerRow === null) {
-      throw contractError('declared-header-row-not-found');
-    }
-
-    assertScenario(entry, detachedDocument);
-  }
-
-  if (options.requireCompleteScenarioMatrix) {
-    if (
-      seenScenarios.size !== REQUIRED_SCENARIOS.length
-      || REQUIRED_SCENARIOS.some((scenario) => !seenScenarios.has(scenario))
-    ) {
-      throw contractError('complete-scenario-matrix-required');
-    }
-  }
-
-  return {
-    fixtureCount: manifest.fixtures.length,
-    scenarios: [...seenScenarios],
-  };
-}
 
 function priorityPresentFixture() {
   return `<div data-test-id="table-container"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="priority-header">TEXT-001</th></tr></thead><tbody>${EXPECTED_PRIORITIES.map((priority) => `<tr data-test-id="ticket-row"><td data-test-id="priority-cell">${priority}</td></tr>`).join('')}</tbody></table></div>`;
@@ -523,6 +234,22 @@ describe('fixture corpus contract', () => {
     });
     await expect(validateFixtureManifest(duplicate.manifestPath)).rejects.toMatchObject({
       code: 'fixture-entry-duplicate',
+    });
+  });
+
+  test('rejects an in-corpus symlink whose canonical target is outside the corpus', async () => {
+    const corpus = await createCorpus();
+    const outsideDirectory = await mkdtemp(join(tmpdir(), 'zhroma-corpus-outside-'));
+    temporaryDirectories.push(outsideDirectory);
+    const outsidePath = join(outsideDirectory, 'external.html');
+    const linkedFixturePath = join(corpus.directory, corpus.fixtures[0].file);
+
+    await writeFile(outsidePath, priorityPresentFixture(), 'utf8');
+    await rm(linkedFixturePath);
+    await symlink(outsidePath, linkedFixturePath);
+
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({
+      code: 'fixture-path-must-be-contained',
     });
   });
 
