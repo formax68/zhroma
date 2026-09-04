@@ -11,9 +11,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 <!-- Zendesk publishes no DOM contract for the agent-view ticket table. These are gating deliverables, not user-facing features — everything downstream is built on assumptions until they are answered. -->
 
-- [ ] **RECON-01**: A captured `outerHTML` fixture of a real Zendesk agent view is committed to the repo and usable as a test fixture
-- [ ] **RECON-02**: Every DOM assumption in the research Verification Ledger is answered against a live instance, with answers recorded in the repo
-- [ ] **RECON-03**: The two terminal risks are explicitly ruled in or out — a closed Shadow DOM around the ticket list, and the absence of `data-garden-id` attributes in a current agent view
+- [x] **RECON-01**: A captured `outerHTML` fixture of a real Zendesk agent view is committed to the repo and usable as a test fixture
+- [x] **RECON-02**: Every English-path DOM assumption in the research Verification Ledger is answered against a live English instance, with answers recorded in the repo; localization-only items are explicitly marked unverified and outside Phase 1
+- [x] **RECON-03**: The two terminal risks are explicitly ruled in or out — a closed Shadow DOM around the ticket list, and the absence of `data-garden-id` attributes in a current agent view
 
 ### Detection
 
@@ -103,9 +103,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RECON-01 | Phase 1 | Pending |
-| RECON-02 | Phase 1 | Pending |
-| RECON-03 | Phase 1 | Pending |
+| RECON-01 | Phase 1 | Complete |
+| RECON-02 | Phase 1 | Complete |
+| RECON-03 | Phase 1 | Complete |
 | DETECT-01 | Phase 2 | Pending |
 | DETECT-02 | Phase 2 | Pending |
 | DETECT-03 | Phase 3 | Pending |
@@ -137,6 +137,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STORE-06 | Phase 5 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 32 total
 - Mapped to phases: 32
 - Unmapped: 0 ✓

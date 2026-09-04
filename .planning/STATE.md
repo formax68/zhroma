@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: DOM Recon Spike
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-09-03T08:26:40.805Z"
-last_activity: 2026-09-02
-last_activity_desc: Roadmap created; 32 v1 requirements mapped across 5 phases
-state_head: 7e56a727010dba8982ef010d3aaada6b09c5c9d1
+stopped_at: Completed 01-06-PLAN.md
+last_updated: "2026-09-04T08:25:17.244Z"
+last_activity: 2026-09-04
+last_activity_desc: Plan 01-06 complete; Plan 01-08 remains
+state_head: e8ab28d7d51c7a78302893962a684a44df3c334b
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 5
-  completed_plans: 0
+  total_plans: 8
+  completed_plans: 7
   percent: 0
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-02)
 
 **Core value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.
-**Current focus:** Phase 1
+**Current focus:** Phase 01 — DOM Recon Spike
 
 ## Current Position
 
-Phase: 01 (DOM Recon Spike) — READY TO EXECUTE
-Plan: 0 of TBD in current phase
-Status: Ready to execute
-Last activity: 2026-09-02 — Roadmap created; 32 v1 requirements mapped across 5 phases
+Phase: 01 (DOM Recon Spike) — EXECUTING
+Plan: 8 of 8
+Status: Plans 01-06 and 01-07 complete; Plan 01-08 remains
+Last activity: 2026-09-04 — Plan 01-06 complete; Plan 01-08 remains
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,14 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 12m | 2 tasks | 5 files |
+| Phase 01 P02 | 23min | 3 tasks | 2 files |
+| Phase 01 P07 | 8 min | 2 tasks | 3 files |
+| Phase 01 P06 | 2h 32m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -67,6 +75,18 @@ Recent decisions affecting current work:
 - Roadmap: English only in v1, but the three-way failure taxonomy (FAIL-01/02/03) ships in v1 so the hint never lies to a non-English agent.
 - Roadmap: No build step, no bundler — hand-written files, zipped. Shipped bytes equal repo bytes.
 - Roadmap: SPA route detection is an anti-requirement. A view switch is a DOM mutation the Phase 3 observer already handles.
+- [Phase 01]: Open live DOM facts remain Recon Question templates until sanitized terminal evidence is admitted.
+- [Phase 01]: The recon gate must report block while any English-path question remains unresolved.
+- [Phase 01]: Sensitive fixture diagnostics expose category and code only, never matched values or input locations.
+- [Phase 01]: Plan 01-02: Package legitimacy approvals remain exact-version, independent, and non-installing.
+- [Phase 01]: Plan 01-02: Bound live recon to current Agent Workspace with account plan unknown/not shared; make no cross-plan claim.
+- [Phase 01]: Resolve sanitizer CLI and worktree identity from the module URL, never the caller cwd.
+- [Phase 01]: Admit one owned table through a sibling-free wrapper chain before sanitization.
+- [Phase 01]: Classify ARIA explicitly and reject unknown names or invalid state values.
+- [Phase 01]: Preserve Priority labels only in positively resolved ticket-row Priority cells.
+- [Phase 01]: Native hover and selection paint belongs to the ticket row in the observed grouped-long tab; selection also adds an inset first-cell indicator.
+- [Phase 01]: Plan 01-06 leaves the final Phase 1 verdict blocked until Plan 01-08 evaluates every gate.
+- [Phase 01]: Interaction evidence remains limited to the English current Agent Workspace scenario and retains no screenshot or sensitive value.
 
 ### Pending Todos
 
@@ -92,6 +112,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-02T12:39:51.629Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-dom-recon-spike/01-CONTEXT.md
+Last session: 2026-09-04T08:25:17.233Z
+Stopped at: Completed 01-06-PLAN.md
+Resume file: None
