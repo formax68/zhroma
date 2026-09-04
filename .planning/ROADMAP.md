@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Anyone reading the repo can state, from the recorded answers alone, whether a closed Shadow DOM wraps the ticket list and whether `data-garden-id` is present on rows in a current agent view — the two answers that decide whether the project proceeds as designed.
   4. The recon was performed in the English agent UI only. `SELECTORS.md` records the observed page-language signal, but Phase 1 makes no claim that it works across UI languages.
 
-**Plans**: 8/8 plans executed
+**Plans**: 15 plans (8/8 executed; 7 gap-closure plans planned after verification found gaps)
 
 Plans:
 
@@ -62,6 +62,33 @@ Plans:
 **Wave 5** *(blocked on Wave 4 completion)*
 
 - [x] 01-05-PLAN.md — Admit sanitized fixtures and issue the explicit Phase 2 proceed/block verdict.
+
+#### Gap closure *(after 01-VERIFICATION.md recorded 10/15 and `gaps_found`)*
+
+**Gap Wave 1**
+
+- [ ] 01-09-PLAN.md — Tracer: one shared fail-closed sensitive-data policy seam under `scripts/`, Unicode-normalizing, with value-free CLI error codes (CR-02, CR-11, WR-01, WR-03).
+- [ ] 01-10-PLAN.md — Auditable exact-version package approval record for the uncertain truth 8.
+
+**Gap Wave 2** *(blocked on Gap Wave 1)*
+
+- [ ] 01-11-PLAN.md — Sanitizer fails closed on unfiltered-child Priority derivation and denylist custody; shared sanitized-output grammar extracted (CR-01, CR-03, CR-04 producer).
+
+**Gap Wave 3** *(blocked on Gap Wave 2)*
+
+- [ ] 01-12-PLAN.md — Re-admit the three committed fixtures to the current sanitizer contract and rewrite manifest provenance and hashes (CR-04 corpus).
+
+**Gap Wave 4** *(blocked on Gap Wave 3)*
+
+- [ ] 01-13-PLAN.md — Corpus admission proves Priority absence and three distinct canonical files (CR-04 enforcement, CR-05, CR-06, WR-02).
+
+**Gap Wave 5** *(blocked on Gap Wave 4)*
+
+- [ ] 01-14-PLAN.md — Per-ID evidence contract and production-owned interaction paint grammar (CR-07, CR-09).
+
+**Gap Wave 6** *(blocked on Gap Wave 5)*
+
+- [ ] 01-15-PLAN.md — Structured per-rung fallback evidence, parsed declared gate inputs, and a verdict with nothing contradicting it (CR-08, CR-10).
 
 ### Phase 2: First Tint on a Real View
 
