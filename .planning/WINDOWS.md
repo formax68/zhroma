@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 3
+open_count: 4
 waived_count: 0
 fixed_count: 0
-total_count: 3
-last_updated: 2026-09-04T06:04:22.078Z
+total_count: 4
+last_updated: 2026-09-04T08:24:35.232Z
 ---
 
 # Broken Windows Ledger
@@ -18,6 +18,7 @@ last_updated: 2026-09-04T06:04:22.078Z
 | 1 | 01 | deviation | scripts/sanitize-fixture.js |  | Removed the caller-cwd dependency from worktree discovery | open |  | 2026-09-04T06:04:21.943Z |  |
 | 2 | 01 | deviation | test/recon/sanitize-fixture.test.js |  | Kept the unsafe-attribute regression inside valid table markup | open |  | 2026-09-04T06:04:22.010Z |  |
 | 3 | 01 | deviation | .planning/STATE.md |  | Corrected the out-of-order state position after the SDK advance | open |  | 2026-09-04T06:04:22.078Z |  |
+| 4 | 01 | deviation | test/recon/interaction-evidence.smoke.js |  | Decoupled blocked-state coverage from the advancing repository interaction ledger | open |  | 2026-09-04T08:24:35.232Z |  |
 
 ````json
 [
@@ -55,6 +56,18 @@ last_updated: 2026-09-04T06:04:22.078Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-04T06:04:22.078Z",
+    "resolved_at": null
+  },
+  {
+    "id": 4,
+    "kind": "deviation",
+    "phase": "01",
+    "file": "test/recon/interaction-evidence.smoke.js",
+    "line": null,
+    "description": "Decoupled blocked-state coverage from the advancing repository interaction ledger",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-04T08:24:35.232Z",
     "resolved_at": null
   }
 ]
