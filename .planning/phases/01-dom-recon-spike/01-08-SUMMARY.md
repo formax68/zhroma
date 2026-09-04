@@ -19,7 +19,7 @@ affects: [phase-01-verification, phase-02, selector-strategy, fixture-corpus, se
 actuals:
   tokens: 16194
   tasks: 3
-  commits: 6
+  commits: 7
 
 tech-stack:
   added: []
@@ -85,7 +85,7 @@ coverage:
     human_judgment: true
     rationale: "Live fixture origin and control of authenticated actions cannot be established from sanitized repository bytes."
 
-duration: 2h 58m
+duration: 2h 59m
 completed: 2026-09-04
 status: complete
 ---
@@ -96,7 +96,7 @@ status: complete
 
 ## Performance
 
-- **Duration:** 2h 58m, including the blocking-human provenance/security checkpoint
+- **Duration:** 2h 59m, including the blocking-human provenance/security checkpoint
 - **Started:** 2026-09-04T08:32:31Z
 - **Completed:** 2026-09-04T11:30:00Z
 - **Tasks:** 3
@@ -150,10 +150,18 @@ Each TDD gate and completed task was committed atomically:
 - **Verification:** `npm --prefix . run test:recon` passes 30 Node smoke tests and 41 Vitest tests; the exact final command returns `FINAL VERDICT: proceed`.
 - **Committed in:** `7ef49f1`
 
+**2. [Rule 1 - Bug] Corrected stale last-plan STATE fields after the SDK update**
+- **Found during:** Plan closeout
+- **Issue:** `state.advance-plan` returned `ready_for_verification` and the SDK counted 8/8 summaries, but it left frontmatter status, current-position prose, last-activity text, and the old pre-recon blocker unchanged.
+- **Fix:** Preserved the SDK metrics, decisions, session data, and 8/8 count while aligning the canonical human-readable fields with “ready for independent verification.”
+- **Files modified:** `.planning/STATE.md`
+- **Verification:** STATE now distinguishes the passing plan-level gate from the still-stale independent `01-VERIFICATION.md`; ROADMAP remains `In Progress` pending re-verification.
+- **Committed in:** Sequential tracking commit after this summary
+
 ---
 
-**Total deviations:** 1 auto-fixed (1 Rule 1 bug).
-**Impact on plan:** The correction made the test suite reflect the planned post-checkpoint state without weakening any fail-closed path.
+**Total deviations:** 2 auto-fixed (2 Rule 1 bugs).
+**Impact on plan:** The corrections aligned tests and tracking with the planned post-checkpoint state without weakening any fail-closed path or claiming independent phase verification.
 
 ## Issues Encountered
 

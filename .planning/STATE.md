@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: DOM Recon Spike
-status: executing
-stopped_at: Completed 01-06-PLAN.md
-last_updated: "2026-09-04T08:25:17.244Z"
+status: ready_for_verification
+stopped_at: Completed 01-08-PLAN.md
+last_updated: "2026-09-04T11:31:46.394Z"
 last_activity: 2026-09-04
-last_activity_desc: Plan 01-06 complete; Plan 01-08 remains
-state_head: e8ab28d7d51c7a78302893962a684a44df3c334b
+last_activity_desc: Plan 01-08 complete; Phase 1 ready for independent verification
+state_head: 3844d0eb34e5e3e6d565faa15cca6f78402ca759
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 
 ## Current Position
 
-Phase: 01 (DOM Recon Spike) — EXECUTING
+Phase: 01 (DOM Recon Spike) — READY FOR VERIFICATION
 Plan: 8 of 8
-Status: Plans 01-06 and 01-07 complete; Plan 01-08 remains
-Last activity: 2026-09-04 — Plan 01-06 complete; Plan 01-08 remains
+Status: All 8 plans complete; independent Phase 1 verification pending
+Last activity: 2026-09-04 — Plan 01-08 complete; Phase 1 ready for independent verification
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P02 | 23min | 3 tasks | 2 files |
 | Phase 01 P07 | 8 min | 2 tasks | 3 files |
 | Phase 01 P06 | 2h 32m | 2 tasks | 3 files |
+| Phase 01 P08 | 2h 59m | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Native hover and selection paint belongs to the ticket row in the observed grouped-long tab; selection also adds an inset first-cell indicator.
 - [Phase 01]: Plan 01-06 leaves the final Phase 1 verdict blocked until Plan 01-08 evaluates every gate.
 - [Phase 01]: Interaction evidence remains limited to the English current Agent Workspace scenario and retains no screenshot or sensitive value.
+- [Phase 01]: Use one production-owned, canonical-path-safe, scan-before-parse fixture validator from both Vitest and final mode.
+- [Phase 01]: Authorize proceed only when the complete ledger, corpus, interaction, Shadow DOM, selector, and prohibition predicates all pass.
+- [Phase 01]: Accept the provenance and user-control judgments only within the named English current Agent Workspace scenarios and record no identifying content.
 
 ### Pending Todos
 
@@ -94,7 +98,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 1 is a hard gate. The Zendesk agent-view DOM is entirely unverified, and one possible finding — a closed Shadow DOM around the ticket list — is terminal for this approach. Do not plan Phase 2 in detail before Phase 1 reports.
+- Phase 1 remains a hard gate until independent verification is rerun. The plan-level evidence gate now reports `proceed`, but the existing `01-VERIFICATION.md` is the historical pre-gap-closure report.
 - Phase 4's scope depends on a Phase 1 finding: if a locale-independent priority signal exists on the row or cell, the locale work collapses to almost nothing.
 - Store submission has latency and the direct predecessor was delisted at this step. Register the developer account early; budget one rejection-and-resubmit cycle in Phase 5.
 
@@ -112,6 +116,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-04T08:25:17.233Z
-Stopped at: Completed 01-06-PLAN.md
+Last session: 2026-09-04T11:31:46.383Z
+Stopped at: Completed 01-08-PLAN.md
 Resume file: None

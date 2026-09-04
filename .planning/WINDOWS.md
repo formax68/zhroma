@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 5
+open_count: 6
 waived_count: 0
 fixed_count: 0
-total_count: 5
-last_updated: 2026-09-04T11:29:35.167Z
+total_count: 6
+last_updated: 2026-09-04T11:32:32.566Z
 ---
 
 # Broken Windows Ledger
@@ -20,6 +20,7 @@ last_updated: 2026-09-04T11:29:35.167Z
 | 3 | 01 | deviation | .planning/STATE.md |  | Corrected the out-of-order state position after the SDK advance | open |  | 2026-09-04T06:04:22.078Z |  |
 | 4 | 01 | deviation | test/recon/interaction-evidence.smoke.js |  | Decoupled blocked-state coverage from the advancing repository interaction ledger | open |  | 2026-09-04T08:24:35.232Z |  |
 | 5 | 01 | deviation | test/recon/recon-gate.smoke.js | 242 | Repository final-gate smoke assertion hard-coded the pre-attestation block verdict. | open |  | 2026-09-04T11:29:35.167Z |  |
+| 6 | 01 | deviation | .planning/STATE.md |  | Corrected stale last-plan STATE fields after the SDK update. | open |  | 2026-09-04T11:32:32.566Z |  |
 
 ````json
 [
@@ -81,6 +82,18 @@ last_updated: 2026-09-04T11:29:35.167Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-04T11:29:35.167Z",
+    "resolved_at": null
+  },
+  {
+    "id": 6,
+    "kind": "deviation",
+    "phase": "01",
+    "file": ".planning/STATE.md",
+    "line": null,
+    "description": "Corrected stale last-plan STATE fields after the SDK update.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-04T11:32:32.566Z",
     "resolved_at": null
   }
 ]
