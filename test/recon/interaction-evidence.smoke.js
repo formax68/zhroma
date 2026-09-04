@@ -184,7 +184,29 @@ const positiveEntry = `## Ledger Entry: interaction-and-sticky-states
 - scenario: \`priority-present-grouped-long\`
 `;
 
-test('keeps the current zero-row observation as an explicit interaction block', async () => {
+const blockedEntry = `## Ledger Entry: interaction-and-sticky-states
+
+- id: \`interaction-and-sticky-states\`
+- question: Did the user-controlled interaction seam yield hover and selected-row computed-paint evidence sufficient to validate the proposed translucent tint?
+- scope: \`English path\`
+- status: \`disproved\`
+- probe: \`rows.filter(row => row.matches(':hover'))\`
+- evidence: The prior inspection returned 0 selected rows and 0 hovered rows; selectedPaint was null and hoveredPaint was null.
+- interpretation: The prior seam did not establish native interaction paint.
+- fallback: Keep Phase 2 blocked until positive sanitized interaction evidence is admitted.
+- scenario: \`priority-present-grouped-long\`
+`;
+
+test('keeps a zero-row observation as an explicit interaction block', () => {
+  assert.deepEqual(assessInteractionEvidence(blockedEntry), {
+    id: ENTRY_ID,
+    status: 'disproved',
+    verdict: 'block',
+    reason: 'interaction-evidence-unavailable',
+  });
+});
+
+test('admits the repository interaction evidence after the human gate', async () => {
   const markdown = await readFile(
     new URL('../../SELECTORS.md', import.meta.url),
     'utf8',
@@ -192,9 +214,12 @@ test('keeps the current zero-row observation as an explicit interaction block', 
 
   assert.deepEqual(assessInteractionEvidence(markdown), {
     id: ENTRY_ID,
-    status: 'disproved',
-    verdict: 'block',
-    reason: 'interaction-evidence-unavailable',
+    status: 'verified',
+    verdict: 'evidence-ready',
+    scenario: 'priority-present-grouped-long',
+    selectedRowCount: 1,
+    hoveredRowCount: 1,
+    actualPaintOwner: 'row',
   });
 });
 
