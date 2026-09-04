@@ -87,10 +87,12 @@ async function createCase(source = safeCapture()) {
 }
 
 async function expectRejected(options, code) {
+  const original = await readFile(options.inputPath);
   await expect(sanitizeFixture(options)).rejects.toMatchObject({
     name: 'SanitizationError',
     code,
   });
+  expect(await readFile(options.inputPath)).toEqual(original);
   await expect(readFile(options.outputPath, 'utf8')).rejects.toMatchObject({
     code: 'ENOENT',
   });
@@ -212,7 +214,7 @@ describe('sanitizeFixture', () => {
     ['resource-bearing-attribute', '<img src="/avatar.png">'],
     ['resource-bearing-attribute', '<a href="#ticket">Ticket</a>'],
     ['resource-bearing-attribute', '<div style="background: url(/avatar.png)">Styled</div>'],
-    ['unsafe-attribute', '<div data-ticket-id="123">Ticket</div>'],
+    ['unsafe-attribute', '<tr data-ticket-id="123"><td>Ticket</td><td>Low</td></tr>'],
   ])('rejects unsafe markup with %s and writes no output', async (code, unsafe) => {
     const fixture = await createCase(safeCapture().replace('</tbody>', `${unsafe}</tbody>`));
     await expectRejected(fixture, code);
@@ -257,26 +259,53 @@ describe('sanitizeFixture', () => {
   });
 
   test('rewrites textual ARIA, removes references, and preserves validated state', async () => {
+    const textualAttributes = [
+      'aria-braillelabel',
+      'aria-brailleroledescription',
+      'aria-colindextext',
+      'aria-description',
+      'aria-keyshortcuts',
+      'aria-placeholder',
+      'aria-roledescription',
+      'aria-rowindextext',
+      'aria-valuetext',
+    ];
+    const referenceAttributes = [
+      'aria-activedescendant',
+      'aria-controls',
+      'aria-describedby',
+      'aria-details',
+      'aria-errormessage',
+      'aria-flowto',
+      'aria-labelledby',
+      'aria-owns',
+    ];
+    const addedAttributes = [
+      ...textualAttributes.map((name) => `${name}="High"`),
+      ...referenceAttributes.map((name) => `${name}="private-heading"`),
+      'aria-expanded="FALSE"',
+    ].join(' ');
     const fixture = await createCase(safeCapture().replace(
       'aria-rowcount="4"',
-      'aria-rowcount="4" aria-placeholder="High" aria-braillelabel="Urgent" aria-keyshortcuts="Control+Low" aria-labelledby="private-heading" aria-expanded="FALSE"',
+      `aria-rowcount="4" ${addedAttributes}`,
     ));
 
     await sanitizeFixture(fixture);
     const parsed = parseDetached(await readFile(fixture.outputPath, 'utf8'));
     const root = parsed.querySelector('[data-test-id="table-container"]');
 
-    expect(root?.getAttribute('aria-placeholder')).toMatch(/^ARIA-\d{3}$/u);
-    expect(root?.getAttribute('aria-braillelabel')).toMatch(/^ARIA-\d{3}$/u);
-    expect(root?.getAttribute('aria-keyshortcuts')).toMatch(/^ARIA-\d{3}$/u);
-    expect(root?.hasAttribute('aria-labelledby')).toBe(false);
+    for (const name of ['aria-label', ...textualAttributes]) {
+      expect(root?.getAttribute(name)).toMatch(/^ARIA-\d{3}$/u);
+    }
+    for (const name of referenceAttributes) {
+      expect(root?.hasAttribute(name)).toBe(false);
+    }
     expect(root?.getAttribute('aria-expanded')).toBe('false');
     expect(root?.getAttribute('aria-rowcount')).toBe('4');
   });
 
   test.each([
     ['unsafe-aria-attribute', 'aria-private-note="Private Person"'],
-    ['aria-attribute-invalid', 'aria-rowcount="four"'],
     ['aria-attribute-invalid', 'aria-selected="Private Person"'],
   ])('rejects unclassified or invalid ARIA with %s', async (code, attribute) => {
     const fixture = await createCase(safeCapture().replace(
@@ -285,6 +314,15 @@ describe('sanitizeFixture', () => {
     ));
 
     await expectRejected(fixture, code);
+  });
+
+  test('rejects an invalid numeric ARIA value', async () => {
+    const fixture = await createCase(safeCapture().replace(
+      'aria-rowcount="4"',
+      'aria-rowcount="four"',
+    ));
+
+    await expectRejected(fixture, 'aria-attribute-invalid');
   });
 
   test('preserves Priority words only inside resolved ticket-row Priority cells', async () => {

@@ -37,20 +37,68 @@ const PRESERVED_ATTRIBUTES = new Set([
   'data-zhroma-probe',
 ]);
 const TEXTUAL_ARIA_ATTRIBUTES = new Set([
+  'aria-braillelabel',
+  'aria-brailleroledescription',
+  'aria-colindextext',
   'aria-label',
   'aria-description',
+  'aria-keyshortcuts',
+  'aria-placeholder',
   'aria-roledescription',
+  'aria-rowindextext',
   'aria-valuetext',
 ]);
 const REFERENCE_ATTRIBUTES = new Set([
-  'aria-labelledby',
-  'aria-describedby',
-  'aria-controls',
-  'aria-owns',
   'aria-activedescendant',
+  'aria-controls',
+  'aria-describedby',
+  'aria-details',
+  'aria-errormessage',
+  'aria-flowto',
+  'aria-labelledby',
+  'aria-owns',
   'headers',
   'for',
 ]);
+const ARIA_ENUM_ATTRIBUTES = new Map([
+  ['aria-atomic', new Set(['true', 'false'])],
+  ['aria-autocomplete', new Set(['none', 'inline', 'list', 'both'])],
+  ['aria-busy', new Set(['true', 'false'])],
+  ['aria-checked', new Set(['true', 'false', 'mixed'])],
+  ['aria-current', new Set(['false', 'true', 'page', 'step', 'location', 'date', 'time'])],
+  ['aria-disabled', new Set(['true', 'false'])],
+  ['aria-expanded', new Set(['true', 'false'])],
+  ['aria-haspopup', new Set(['false', 'true', 'menu', 'listbox', 'tree', 'grid', 'dialog'])],
+  ['aria-hidden', new Set(['true', 'false'])],
+  ['aria-invalid', new Set(['false', 'true', 'grammar', 'spelling'])],
+  ['aria-live', new Set(['off', 'polite', 'assertive'])],
+  ['aria-modal', new Set(['true', 'false'])],
+  ['aria-multiline', new Set(['true', 'false'])],
+  ['aria-multiselectable', new Set(['true', 'false'])],
+  ['aria-orientation', new Set(['horizontal', 'vertical', 'undefined'])],
+  ['aria-pressed', new Set(['true', 'false', 'mixed'])],
+  ['aria-readonly', new Set(['true', 'false'])],
+  ['aria-required', new Set(['true', 'false'])],
+  ['aria-selected', new Set(['true', 'false'])],
+  ['aria-sort', new Set(['none', 'ascending', 'descending', 'other'])],
+]);
+const ARIA_INTEGER_ATTRIBUTES = new Map([
+  ['aria-colcount', (value) => value === -1 || value >= 1],
+  ['aria-colindex', (value) => value >= 1],
+  ['aria-colspan', (value) => value >= 1],
+  ['aria-level', (value) => value >= 1],
+  ['aria-posinset', (value) => value >= 1],
+  ['aria-rowcount', (value) => value === -1 || value >= 1],
+  ['aria-rowindex', (value) => value >= 1],
+  ['aria-rowspan', (value) => value >= 1],
+  ['aria-setsize', (value) => value === -1 || value >= 1],
+]);
+const ARIA_NUMBER_ATTRIBUTES = new Set([
+  'aria-valuemax',
+  'aria-valuemin',
+  'aria-valuenow',
+]);
+const ARIA_RELEVANT_VALUES = new Set(['additions', 'removals', 'text', 'all']);
 const REMOVABLE_ATTRIBUTES = new Set([
   'id',
   'class',
@@ -228,15 +276,107 @@ function parseBoundedCapture(markup) {
   }
 
   const root = rootElements[0];
-  const table = root.matches('table, [role="table"]')
-    ? root
-    : root.querySelector('table, [role="table"]');
-  const header = root.querySelector('thead tr, [role="columnheader"], th');
-  const bodyRow = root.querySelector('tbody tr, [role="row"]');
-  if (!table || !header || !bodyRow) {
+  const tables = [
+    ...(root.matches('table, [role="table"]') ? [root] : []),
+    ...root.querySelectorAll('table, [role="table"]'),
+  ];
+  if (tables.length !== 1) {
     reject('table-boundary-required');
   }
-  return root;
+
+  const table = tables[0];
+  let boundaryElement = table;
+  while (boundaryElement !== root) {
+    const parent = boundaryElement.parentElement;
+    const hasSiblingElement = !parent
+      || parent.children.length !== 1
+      || parent.children[0] !== boundaryElement;
+    const hasSiblingText = parent
+      ? [...parent.childNodes].some((node) => node.nodeType === 3 && node.data.trim().length > 0)
+      : true;
+    if (hasSiblingElement || hasSiblingText) {
+      reject('table-boundary-required');
+    }
+    boundaryElement = parent;
+  }
+
+  const ownedRows = [...table.querySelectorAll('tr, [role="row"]')]
+    .filter((row) => row.closest('table, [role="table"]') === table);
+  const headerRows = ownedRows.filter((row) => (
+    [...row.children].some((cell) => cell.matches('th, [role="columnheader"]'))
+  ));
+  if (headerRows.length !== 1) {
+    reject('table-boundary-required');
+  }
+
+  const headerCells = [...headerRows[0].children]
+    .filter((cell) => cell.matches('th, [role="columnheader"]'));
+  const priorityIndexes = headerCells
+    .map((cell, index) => (cell.textContent.trim() === 'Priority' ? index : -1))
+    .filter((index) => index >= 0);
+  if (headerCells.length === 0 || priorityIndexes.length > 1) {
+    reject('table-boundary-required');
+  }
+
+  const ticketRows = ownedRows.filter((row) => {
+    const body = row.closest('tbody');
+    const testId = row.getAttribute('data-test-id');
+    const gardenId = row.getAttribute('data-garden-id');
+    return body?.closest('table, [role="table"]') === table
+      && (gardenId === 'tables.row' || testId === 'generic-table-row' || testId === 'ticket-row');
+  });
+  if (ticketRows.length === 0) {
+    reject('table-boundary-required');
+  }
+
+  const priorityCells = new Set();
+  for (const row of ticketRows) {
+    const cells = [...row.children].filter((cell) => cell.matches('td, [role="cell"]'));
+    if (cells.length !== headerCells.length) {
+      reject('table-boundary-required');
+    }
+    if (priorityIndexes.length === 1) {
+      priorityCells.add(cells[priorityIndexes[0]]);
+    }
+  }
+
+  return { root, priorityCells };
+}
+
+function normalizedAriaValue(name, value) {
+  const normalized = value.trim().toLocaleLowerCase('en-US');
+
+  const allowedValues = ARIA_ENUM_ATTRIBUTES.get(name);
+  if (allowedValues) {
+    return allowedValues.has(normalized) ? normalized : null;
+  }
+
+  const integerRule = ARIA_INTEGER_ATTRIBUTES.get(name);
+  if (integerRule) {
+    if (!/^-?(?:0|[1-9][0-9]*)$/u.test(normalized)) {
+      return null;
+    }
+    const integer = Number(normalized);
+    return Number.isSafeInteger(integer) && integerRule(integer) ? String(integer) : null;
+  }
+
+  if (ARIA_NUMBER_ATTRIBUTES.has(name)) {
+    if (!/^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/u.test(normalized)) {
+      return null;
+    }
+    const number = Number(normalized);
+    return Number.isFinite(number) ? String(number) : null;
+  }
+
+  if (name === 'aria-relevant') {
+    const tokens = normalized.split(/\s+/u).filter(Boolean);
+    if (tokens.length === 0 || tokens.some((token) => !ARIA_RELEVANT_VALUES.has(token))) {
+      return null;
+    }
+    return [...new Set(tokens)].sort().join(' ');
+  }
+
+  return undefined;
 }
 
 function sanitizeAttributes(root) {
@@ -265,7 +405,18 @@ function sanitizeAttributes(root) {
         element.setAttribute(attribute.name, `ARIA-${String(ariaCounter).padStart(3, '0')}`);
         continue;
       }
-      if (name.startsWith('aria-') || PRESERVED_ATTRIBUTES.has(name)) {
+      if (name.startsWith('aria-')) {
+        const normalized = normalizedAriaValue(name, attribute.value);
+        if (normalized === undefined) {
+          reject('unsafe-aria-attribute');
+        }
+        if (normalized === null) {
+          reject('aria-attribute-invalid');
+        }
+        element.setAttribute(attribute.name, normalized);
+        continue;
+      }
+      if (PRESERVED_ATTRIBUTES.has(name)) {
         continue;
       }
 
@@ -274,7 +425,7 @@ function sanitizeAttributes(root) {
   }
 }
 
-function sanitizeTextAndComments(root) {
+function sanitizeTextAndComments(root, priorityCells) {
   let textCounter = 0;
 
   function visit(node) {
@@ -285,10 +436,13 @@ function sanitizeTextAndComments(root) {
       }
       if (child.nodeType === 3) {
         const trimmed = child.data.trim();
-        if (trimmed.length > 0 && !PRIORITY_LABELS.has(trimmed)) {
+        const allowedPriorityCell = [...priorityCells].find((cell) => cell.contains(child));
+        const preservePriority = PRIORITY_LABELS.has(trimmed)
+          && allowedPriorityCell?.textContent.trim() === trimmed;
+        if (trimmed.length > 0 && !preservePriority) {
           textCounter += 1;
           child.data = `TEXT-${String(textCounter).padStart(3, '0')}`;
-        } else if (PRIORITY_LABELS.has(trimmed)) {
+        } else if (preservePriority) {
           child.data = trimmed;
         }
         continue;
@@ -300,9 +454,9 @@ function sanitizeTextAndComments(root) {
   visit(root);
 }
 
-function finalMarkup(root, denylist) {
+function finalMarkup(root, priorityCells, denylist) {
   sanitizeAttributes(root);
-  sanitizeTextAndComments(root);
+  sanitizeTextAndComments(root, priorityCells);
   const output = `${root.outerHTML}\n`;
 
   try {
@@ -351,8 +505,8 @@ export async function sanitizeFixture(options) {
 
   const source = decodeUtf8(inputBytes, 'input-utf8-required');
   assertSafeToParse(source);
-  const root = parseBoundedCapture(source);
-  const output = finalMarkup(root, denylist);
+  const { root, priorityCells } = parseBoundedCapture(source);
+  const output = finalMarkup(root, priorityCells, denylist);
   const outputBytes = Buffer.from(output, 'utf8');
 
   try {
