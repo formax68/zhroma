@@ -27,15 +27,15 @@ const EXPECTED_PRIORITIES = Object.freeze(['Urgent', 'High', 'Normal', 'Low']);
 const temporaryDirectories = [];
 
 function priorityPresentFixture() {
-  return `<div data-test-id="table-container"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="priority-header">TEXT-001</th></tr></thead><tbody>${EXPECTED_PRIORITIES.map((priority) => `<tr data-test-id="ticket-row"><td data-test-id="priority-cell">${priority}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div data-test-id="table-container"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="header-cell">TEXT-001</th></tr></thead><tbody>${EXPECTED_PRIORITIES.map((priority) => `<tr data-test-id="ticket-row"><td data-test-id="priority-cell">${priority}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function priorityAbsentFixture() {
-  return '<div data-test-id="table-container"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="subject-header">TEXT-001</th></tr></thead><tbody><tr data-test-id="ticket-row"><td>TEXT-002</td></tr></tbody></table></div>';
+  return '<div data-test-id="table-container"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="header-cell">TEXT-001</th></tr></thead><tbody><tr data-test-id="ticket-row"><td>TEXT-002</td></tr></tbody></table></div>';
 }
 
 function groupedLongFixture() {
-  return '<div data-test-id="scroll-container" role="region"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th>TEXT-001</th></tr></thead><tbody><tr data-test-id="group-row"><th>TEXT-002</th></tr><tr data-test-id="ticket-row"><td>Urgent</td></tr></tbody></table></div>';
+  return '<div data-test-id="table-container" role="region"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="header-cell">TEXT-001</th></tr></thead><tbody><tr data-test-id="group-row"><th>TEXT-002</th></tr><tr data-test-id="ticket-row"><td data-test-id="priority-cell">Urgent</td></tr></tbody></table></div>';
 }
 
 function assertionsFor(scenario) {
@@ -100,6 +100,21 @@ async function createCorpus() {
       selectors: {
         ticketTable: '[data-test-id="ticket-table"]',
         headerRow: '[data-test-id="header-row"]',
+        headerCell: '[data-test-id="header-cell"]',
+        ticketRow: '[data-test-id="ticket-row"]',
+        groupRow: '[data-test-id="group-row"]',
+        scrollContainer: '[data-test-id="table-container"]',
+      },
+      structure: {
+        headerCellCount: 1,
+        ticketRowCount: scenario === 'priority-present-ungrouped' ? 4 : 1,
+        ticketRowWidths: scenario === 'priority-present-ungrouped'
+          ? [1, 1, 1, 1]
+          : [1],
+        groupRowCount: scenario === 'grouped-long' ? 1 : 0,
+        groupRowPositions: scenario === 'grouped-long' ? [0] : [],
+        priorityIndex: scenario === 'priority-absent' ? null : 0,
+        stickyHeaderRelationship: 'same-table',
       },
       assertions: assertionsFor(scenario),
     });
@@ -216,6 +231,41 @@ describe('fixture corpus contract', () => {
     });
     await expect(validateFixtureManifest(incomplete.manifestPath)).rejects.toMatchObject({
       code: 'scenario-invariant-missing',
+    });
+  });
+
+  test('rejects incomplete or inaccurate structural scenario facts', async () => {
+    const incomplete = await createCorpus();
+    delete incomplete.fixtures[0].structure.ticketRowWidths;
+    await rewriteManifest(incomplete.manifestPath, (manifest) => {
+      delete manifest.fixtures[0].structure.ticketRowWidths;
+    });
+    await expect(validateFixtureManifest(incomplete.manifestPath)).rejects.toMatchObject({
+      code: 'scenario-structure-required',
+    });
+
+    const wrongWidth = await createCorpus();
+    await rewriteManifest(wrongWidth.manifestPath, (manifest) => {
+      manifest.fixtures[0].structure.ticketRowWidths = [2, 2, 2, 2];
+    });
+    await expect(validateFixtureManifest(wrongWidth.manifestPath)).rejects.toMatchObject({
+      code: 'ticket-row-widths-mismatch',
+    });
+
+    const wrongGroupPosition = await createCorpus();
+    await rewriteManifest(wrongGroupPosition.manifestPath, (manifest) => {
+      manifest.fixtures[2].structure.groupRowPositions = [1];
+    });
+    await expect(validateFixtureManifest(wrongGroupPosition.manifestPath)).rejects.toMatchObject({
+      code: 'group-row-positions-mismatch',
+    });
+
+    const wrongPriorityIndex = await createCorpus();
+    await rewriteManifest(wrongPriorityIndex.manifestPath, (manifest) => {
+      manifest.fixtures[0].structure.priorityIndex = null;
+    });
+    await expect(validateFixtureManifest(wrongPriorityIndex.manifestPath)).rejects.toMatchObject({
+      code: 'priority-index-mismatch',
     });
   });
 
