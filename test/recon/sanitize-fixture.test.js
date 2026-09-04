@@ -234,6 +234,95 @@ describe('sanitizeFixture', () => {
     await expectRejected(fixture, 'table-boundary-required');
   });
 
+  test('rejects an app root containing unrelated sibling UI', async () => {
+    const fixture = await createCase(`
+      <main data-test-id="app-root">
+        <aside data-test-id="private-nav">High</aside>
+        ${safeCapture()}
+      </main>
+    `);
+
+    await expectRejected(fixture, 'table-boundary-required');
+  });
+
+  test('rejects mixed table ownership instead of combining a header and row', async () => {
+    const fixture = await createCase(`
+      <div>
+        <table data-test-id="row-table"><tbody><tr data-test-id="ticket-row"><td>Urgent</td></tr></tbody></table>
+        <table data-test-id="header-table"><thead><tr><th>Priority</th></tr></thead></table>
+      </div>
+    `);
+
+    await expectRejected(fixture, 'table-boundary-required');
+  });
+
+  test('rewrites textual ARIA, removes references, and preserves validated state', async () => {
+    const fixture = await createCase(safeCapture().replace(
+      'aria-rowcount="4"',
+      'aria-rowcount="4" aria-placeholder="High" aria-braillelabel="Urgent" aria-keyshortcuts="Control+Low" aria-labelledby="private-heading" aria-expanded="FALSE"',
+    ));
+
+    await sanitizeFixture(fixture);
+    const parsed = parseDetached(await readFile(fixture.outputPath, 'utf8'));
+    const root = parsed.querySelector('[data-test-id="table-container"]');
+
+    expect(root?.getAttribute('aria-placeholder')).toMatch(/^ARIA-\d{3}$/u);
+    expect(root?.getAttribute('aria-braillelabel')).toMatch(/^ARIA-\d{3}$/u);
+    expect(root?.getAttribute('aria-keyshortcuts')).toMatch(/^ARIA-\d{3}$/u);
+    expect(root?.hasAttribute('aria-labelledby')).toBe(false);
+    expect(root?.getAttribute('aria-expanded')).toBe('false');
+    expect(root?.getAttribute('aria-rowcount')).toBe('4');
+  });
+
+  test.each([
+    ['unsafe-aria-attribute', 'aria-private-note="Private Person"'],
+    ['aria-attribute-invalid', 'aria-rowcount="four"'],
+    ['aria-attribute-invalid', 'aria-selected="Private Person"'],
+  ])('rejects unclassified or invalid ARIA with %s', async (code, attribute) => {
+    const fixture = await createCase(safeCapture().replace(
+      'aria-rowcount="4"',
+      `aria-rowcount="4" ${attribute}`,
+    ));
+
+    await expectRejected(fixture, code);
+  });
+
+  test('preserves Priority words only inside resolved ticket-row Priority cells', async () => {
+    const source = safeCapture()
+      .replace('aria-label="Internal Organization tickets"', 'aria-label="Normal"')
+      .replace('Tenant Subject for Private Person', '<span>Urgent</span>')
+      .replace('requester@example.invalid at Internal Organization', 'High')
+      .replace(
+        '<tr data-test-id="ticket-row" role="row" aria-rowindex="3">',
+        '<tr data-test-id="group-row" role="row"><td colspan="2"><span>Normal</span></td></tr><tr data-test-id="ticket-row" role="row" aria-rowindex="3">',
+      )
+      .replace('Ticket 987654321012345', '<span>Low</span>');
+    const fixture = await createCase(source);
+
+    await sanitizeFixture(fixture);
+    const parsed = parseDetached(await readFile(fixture.outputPath, 'utf8'));
+    const ticketRows = [...parsed.querySelectorAll('[data-test-id="ticket-row"]')];
+
+    expect(ticketRows.map((row) => row.children[1]?.textContent)).toEqual([
+      'Urgent',
+      'High',
+      'Normal',
+      'Low',
+    ]);
+    for (const row of ticketRows) {
+      expect(row.children[0]?.textContent).not.toMatch(/^(Urgent|High|Normal|Low)$/u);
+    }
+    expect(parsed.querySelector('[data-test-id="group-row"]')?.textContent)
+      .not.toMatch(/^(Urgent|High|Normal|Low)$/u);
+    expect(parsed.querySelector('[data-test-id="table-container"]')?.getAttribute('aria-label'))
+      .toMatch(/^ARIA-\d{3}$/u);
+
+    const output = parsed.body.innerHTML;
+    for (const priority of ['Urgent', 'High', 'Normal', 'Low']) {
+      expect(output.match(new RegExp(`>${priority}<`, 'gu'))).toHaveLength(1);
+    }
+  });
+
   test('the CLI fails closed without printing paths or denylist values', async () => {
     const fixture = await createCase();
     const insideWorktree = join(repositoryRoot, 'test', 'recon', 'sensitive-patterns.js');
