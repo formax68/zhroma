@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   access,
+  copyFile,
   mkdtemp,
   readFile,
   rm,
@@ -132,6 +133,26 @@ async function rewriteManifest(manifestPath, mutate) {
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
 }
 
+async function copyCommittedCorpus() {
+  const directory = await mkdtemp(join(tmpdir(), 'zhroma-committed-contract-'));
+  temporaryDirectories.push(directory);
+  const source = join(process.cwd(), 'test', 'fixtures');
+  const manifest = JSON.parse(await readFile(join(source, 'manifest.json'), 'utf8'));
+  for (const entry of manifest.fixtures) await copyFile(join(source, entry.file), join(directory, entry.file));
+  const manifestPath = join(directory, 'manifest.json');
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  return { directory, manifestPath, fixtures: manifest.fixtures };
+}
+
+async function mutateFixture(corpus, index, mutate) {
+  const path = join(corpus.directory, corpus.fixtures[index].file);
+  const markup = mutate(await readFile(path, 'utf8'));
+  await writeFile(path, markup);
+  await rewriteManifest(corpus.manifestPath, (manifest) => {
+    manifest.fixtures[index].sha256 = createHash('sha256').update(markup).digest('hex');
+  });
+}
+
 afterEach(async () => {
   vi.restoreAllMocks();
   await Promise.all(temporaryDirectories.splice(0).map((directory) => (
@@ -140,6 +161,53 @@ afterEach(async () => {
 });
 
 describe('fixture corpus contract', () => {
+  test.each(['selector-present', 'exact-text-values', 'invented-kind'])(
+    'rejects an absence purpose with the wrong kind %s', async (kind) => {
+      const corpus = await copyCommittedCorpus();
+      await rewriteManifest(corpus.manifestPath, (manifest) => {
+        const assertion = manifest.fixtures[1].assertions[0];
+        assertion.kind = kind;
+        assertion.selector = '[data-garden-id="tables.header_cell"]';
+        assertion.values = ['TEXT-001'];
+      });
+      await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'priority-absence-assertion-required' });
+    },
+  );
+
+  test('binds the absence selector to the declared table and header topology', async () => {
+    const corpus = await copyCommittedCorpus();
+    await rewriteManifest(corpus.manifestPath, (manifest) => {
+      manifest.fixtures[1].assertions[0].selector = '[data-garden-id="tables.header_cell"]';
+    });
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'priority-absence-topology-mismatch' });
+  });
+
+  test('rejects a Priority header concealed by an irrelevant absence selector', async () => {
+    const corpus = await copyCommittedCorpus();
+    await mutateFixture(corpus, 1, (markup) => markup.replace('TEXT-006', 'Priority'));
+    await rewriteManifest(corpus.manifestPath, (manifest) => {
+      manifest.fixtures[1].assertions[0].selector = '[data-test-id="irrelevant-missing"]';
+    });
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'priority-column-must-be-absent' });
+  });
+
+  test.each([0, 2])('binds the non-null Priority header index for corpus entry %s', async (index) => {
+    for (const value of [null, -1, 0, 999, 6.5]) {
+      const corpus = await copyCommittedCorpus();
+      await rewriteManifest(corpus.manifestPath, (manifest) => { manifest.fixtures[index].priorityHeaderIndex = value; });
+      await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'priority-header-index-mismatch' });
+    }
+    const corpus = await copyCommittedCorpus();
+    await mutateFixture(corpus, index, (markup) => markup.replace('>Priority<', '>TEXT-007<'));
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'priority-header-index-mismatch' });
+  });
+
+  test('requires a null header index for the null Priority value index', async () => {
+    const corpus = await copyCommittedCorpus();
+    await rewriteManifest(corpus.manifestPath, (manifest) => { manifest.fixtures[1].priorityHeaderIndex = 0; });
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'priority-header-index-mismatch' });
+  });
+
   test('normalizes a canonical generic-rule hit and scans before any detached parse', async () => {
     const corpus = await createCorpus();
     // Kelvin sign canonically decomposes to ASCII K. No new generic rule is needed.
