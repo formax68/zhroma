@@ -5,7 +5,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { Window } from 'happy-dom';
 
 import { scanSensitiveContent } from './sensitive-patterns.js';
-import { PRIORITY_HEADER_LABEL } from './sanitized-output-contract.js';
+import { PRIORITY_HEADER_LABEL, validateSanitizedOutput, SanitizedOutputError } from './sanitized-output-contract.js';
 
 const ADMISSION_DENYLIST = Object.freeze([
   '__private_capture_values_were_removed_before_admission__',
@@ -168,6 +168,7 @@ function assertScenario(entry, document, ticketTable, headerRow) {
     throw contractError('scenario-assertions-required');
   }
 
+  assertStructure(entry, document, ticketTable, headerRow);
   const purposes = new Set();
   const purposeNodes = new Map();
   const requiredKinds = {
@@ -293,7 +294,6 @@ function assertScenario(entry, document, ticketTable, headerRow) {
     }
   }
 
-  assertStructure(entry, document, ticketTable, headerRow);
 }
 
 function pathIsContained(parent, child) {
@@ -344,7 +344,8 @@ export async function validateFixtureManifest(manifestPath, options = {}) {
   }
 
   const manifestDirectory = dirname(absoluteManifestPath);
-  const seenFiles = new Set();
+  const seenCanonicalFiles = new Set();
+  const canonicalEntries = [];
   const seenScenarios = new Set();
 
   for (const entry of manifest.fixtures) {
@@ -369,13 +370,18 @@ export async function validateFixtureManifest(manifestPath, options = {}) {
     if (!/^[a-f0-9]{64}$/u.test(entry.sha256)) {
       throw contractError('sha256-invalid');
     }
-    if (seenFiles.has(entry.file) || seenScenarios.has(entry.scenario)) {
+    if (seenScenarios.has(entry.scenario)) {
       throw contractError('fixture-entry-duplicate');
     }
-    seenFiles.add(entry.file);
     seenScenarios.add(entry.scenario);
 
     const fixturePath = await safeRelativeFixturePath(manifestDirectory, entry.file);
+    if (seenCanonicalFiles.has(fixturePath)) throw contractError('fixture-canonical-duplicate');
+    seenCanonicalFiles.add(fixturePath);
+    canonicalEntries.push({ entry, fixturePath });
+  }
+
+  for (const { entry, fixturePath } of canonicalEntries) {
     let bytes;
     try {
       bytes = await readFile(fixturePath);
@@ -390,6 +396,12 @@ export async function validateFixtureManifest(manifestPath, options = {}) {
 
     const markup = bytes.toString('utf8');
     scanSensitiveContent(markup, { denylist: ADMISSION_DENYLIST });
+    try {
+      validateSanitizedOutput(markup);
+    } catch (error) {
+      if (error instanceof SanitizedOutputError) throw contractError('admitted-bytes-contract-violated');
+      throw error;
+    }
 
     const detachedDocument = parseDetached(markup);
     if (!detachedDocument || detachedDocument === globalThis.document) {

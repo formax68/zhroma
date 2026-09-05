@@ -235,7 +235,7 @@ describe('fixture corpus contract', () => {
       await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'priority-header-index-mismatch' });
     }
     const corpus = await copyCommittedCorpus();
-    await mutateFixture(corpus, index, (markup) => markup.replace('>Priority<', '>TEXT-007<'));
+    await mutateFixture(corpus, index, (markup) => markup.replace('>Priority<', '>TEXT-007<').replace(/>(Urgent|High|Normal|Low)</g, '>TEXT-999<'));
     await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'priority-header-index-mismatch' });
   });
 
