@@ -86,6 +86,18 @@ async function createCase(source = safeCapture()) {
   return { directory, inputPath, outputPath, denylistPath };
 }
 
+function wideCapture() {
+  const headers = Array.from({ length: 16 }, (_, index) => (
+    `<th>${index === 6 ? 'Priority' : 'Private header'}</th>`
+  )).join('');
+  const rows = ['Urgent', 'High', 'Normal', 'Low'].map((priority) => (
+    `<tr data-test-id="ticket-row">${Array.from({ length: 16 }, (_, index) => (
+      `<td>${index === 6 ? priority : 'Urgent'}</td>`
+    )).join('')}</tr>`
+  )).join('');
+  return `<div><table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
 async function expectRejected(options, code) {
   const original = await readFile(options.inputPath);
   await expect(sanitizeFixture(options)).rejects.toMatchObject({
@@ -105,6 +117,44 @@ afterEach(async () => {
 });
 
 describe('sanitizeFixture', () => {
+  test('rejects a mixed td/th header before it can preserve wrong-column Priority text', async () => {
+    const fixture = await createCase('<table><thead><tr><td>Subject</td><th>Priority</th></tr></thead><tbody><tr data-test-id="ticket-row"><td>Urgent</td></tr></tbody></table>');
+    await expectRejected(fixture, 'row-children-must-be-cells');
+    await expect(execFileAsync(process.execPath, [
+      sanitizerCli, '--input', fixture.inputPath, '--output', fixture.outputPath,
+      '--denylist', fixture.denylistPath,
+    ])).rejects.toMatchObject({ code: 1, stderr: 'SANITIZE_FIXTURE_REJECTED row-children-must-be-cells\n' });
+  });
+
+  test.each(['<th>Urgent</th>', '<span>Urgent</span>'])(
+    'rejects a non-body-cell direct ticket child: %s', async (child) => {
+      const fixture = await createCase(safeCapture().replace(
+        '<td data-test-id="priority-cell">Urgent</td>', child,
+      ));
+      await expectRejected(fixture, 'row-children-must-be-cells');
+    },
+  );
+
+  test('keeps width and duplicate-Priority-header rejections', async () => {
+    const width = await createCase(safeCapture().replace('<td data-test-id="priority-cell">Urgent</td>', ''));
+    await expectRejected(width, 'table-boundary-required');
+    const duplicate = await createCase(safeCapture().replace('>Subject</th>', '>Priority</th>'));
+    await expectRejected(duplicate, 'table-boundary-required');
+  });
+
+  test('resolves Priority at unfiltered index 6 in a 16-column capture', async () => {
+    const fixture = await createCase(wideCapture());
+    await sanitizeFixture(fixture);
+    const parsed = parseDetached(await readFile(fixture.outputPath, 'utf8'));
+    const rows = [...parsed.querySelectorAll('[data-test-id="ticket-row"]')];
+    expect(rows.map((row) => row.children[6].textContent)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+    for (const row of rows) {
+      [...row.children].forEach((cell, index) => {
+        if (index !== 6) expect(cell.textContent).toMatch(/^TEXT-\d{3,}$/);
+      });
+    }
+  });
+
   test('rejects a canonically decomposed denylist attribute before writing, including CLI', async () => {
     const fixture = await createCase(safeCapture().replace(
       'data-test-id="ticket-table"', 'data-test-id="Jose\u0301"',
