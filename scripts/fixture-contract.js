@@ -339,6 +339,9 @@ export async function validateFixtureManifest(manifestPath, options = {}) {
     throw contractError('manifest-readable-json-required');
   }
 
+  if (manifest === null || typeof manifest !== 'object' || Array.isArray(manifest)) {
+    throw contractError('manifest-object-required');
+  }
   if (!Array.isArray(manifest.fixtures) || manifest.fixtures.length === 0) {
     throw contractError('manifest-fixtures-required');
   }
