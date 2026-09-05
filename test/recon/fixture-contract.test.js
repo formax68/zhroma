@@ -162,6 +162,42 @@ afterEach(async () => {
 });
 
 describe('fixture corpus contract', () => {
+  test.each(['relative', 'symlink'])('rejects canonical file aliases via %s before admitting scenarios', async (kind) => {
+    const corpus = await copyCommittedCorpus();
+    const original = corpus.fixtures[0].file;
+    if (kind === 'symlink') await symlink(join(corpus.directory, original), join(corpus.directory, 'alias.html'));
+    await rewriteManifest(corpus.manifestPath, (manifest) => {
+      manifest.fixtures[1].file = kind === 'relative' ? `./${original}` : 'alias.html';
+      manifest.fixtures[2].file = `.//${original}`;
+      for (const entry of manifest.fixtures) entry.sha256 = manifest.fixtures[0].sha256;
+    });
+    await expect(validateFixtureManifest(corpus.manifestPath, { requireCompleteScenarioMatrix: true }))
+      .rejects.toMatchObject({ code: 'fixture-canonical-duplicate' });
+  });
+
+  test('rejects three relative aliases of a single multi-table file', async () => {
+    const corpus = await copyCommittedCorpus();
+    const combined = (await Promise.all(corpus.fixtures.map((entry) => readFile(join(corpus.directory, entry.file), 'utf8')))).join('');
+    await writeFile(join(corpus.directory, 'combo.html'), combined);
+    await rewriteManifest(corpus.manifestPath, (manifest) => {
+      manifest.fixtures.forEach((entry, index) => {
+        entry.file = ['combo.html', './combo.html', './/combo.html'][index];
+        entry.sha256 = createHash('sha256').update(combined).digest('hex');
+      });
+    });
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'fixture-canonical-duplicate' });
+  });
+
+  test.each([
+    ['two tables', (markup) => `${markup}<table></table>`],
+    ['residual text', (markup) => markup.replace('TEXT-001', 'Unrecognized residual')],
+    ['invalid ARIA', (markup) => markup.replace('aria-checked="false"', 'aria-checked="ARIA-STATE"')],
+  ])('rejects hash-matching admitted bytes with %s', async (_label, mutate) => {
+    const corpus = await copyCommittedCorpus();
+    await mutateFixture(corpus, 0, mutate);
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'admitted-bytes-contract-violated' });
+  });
+
   test.each(['selector-present', 'exact-text-values', 'invented-kind'])(
     'rejects an absence purpose with the wrong kind %s', async (kind) => {
       const corpus = await copyCommittedCorpus();
