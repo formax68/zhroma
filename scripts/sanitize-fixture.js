@@ -3,7 +3,12 @@ import { access, readFile, realpath, stat, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { Window } from 'happy-dom';
+import {
+  PRIORITY_LABELS, PRIORITY_HEADER_LABEL, PRESERVED_ATTRIBUTES,
+  TEXTUAL_ARIA_ATTRIBUTES, REFERENCE_ATTRIBUTES, REMOVABLE_ATTRIBUTES,
+  normalizedAriaValue, assertSafeToParse, parseBoundedCapture,
+  validateSanitizedOutput, SanitizedOutputError,
+} from './sanitized-output-contract.js';
 
 import {
   scanSensitiveContent,
@@ -12,123 +17,6 @@ import {
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024;
 const MODULE_DIRECTORY = dirname(fileURLToPath(import.meta.url));
-const PRIORITY_LABELS = new Set(['Urgent', 'High', 'Normal', 'Low']);
-const FORBIDDEN_ELEMENT = /<\s*(?:script|iframe|frame|frameset|object|embed|base|form|style|link|meta)\b/iu;
-const INLINE_HANDLER = /\son[a-z][a-z0-9_-]*\s*=/iu;
-const RESOURCE_ATTRIBUTE = /\s(?:src|srcset|href|xlink:href|action|formaction|poster|srcdoc)\s*=/iu;
-const CSS_RESOURCE = /\sstyle\s*=\s*(?:"[^"]*\burl\s*\(|'[^']*\burl\s*\(|[^\s>]*\burl\s*\()/iu;
-const PRESERVED_ATTRIBUTES = new Set([
-  'role',
-  'scope',
-  'colspan',
-  'rowspan',
-  'tabindex',
-  'lang',
-  'dir',
-  'type',
-  'disabled',
-  'hidden',
-  'checked',
-  'selected',
-  'multiple',
-  'readonly',
-  'data-garden-id',
-  'data-test-id',
-  'data-zhroma-probe',
-]);
-const TEXTUAL_ARIA_ATTRIBUTES = new Set([
-  'aria-braillelabel',
-  'aria-brailleroledescription',
-  'aria-colindextext',
-  'aria-label',
-  'aria-description',
-  'aria-keyshortcuts',
-  'aria-placeholder',
-  'aria-roledescription',
-  'aria-rowindextext',
-  'aria-valuetext',
-]);
-const REFERENCE_ATTRIBUTES = new Set([
-  'aria-activedescendant',
-  'aria-controls',
-  'aria-describedby',
-  'aria-details',
-  'aria-errormessage',
-  'aria-flowto',
-  'aria-labelledby',
-  'aria-owns',
-  'headers',
-  'for',
-]);
-const ARIA_ENUM_ATTRIBUTES = new Map([
-  ['aria-atomic', new Set(['true', 'false'])],
-  ['aria-autocomplete', new Set(['none', 'inline', 'list', 'both'])],
-  ['aria-busy', new Set(['true', 'false'])],
-  ['aria-checked', new Set(['true', 'false', 'mixed'])],
-  ['aria-current', new Set(['false', 'true', 'page', 'step', 'location', 'date', 'time'])],
-  ['aria-disabled', new Set(['true', 'false'])],
-  ['aria-expanded', new Set(['true', 'false'])],
-  ['aria-haspopup', new Set(['false', 'true', 'menu', 'listbox', 'tree', 'grid', 'dialog'])],
-  ['aria-hidden', new Set(['true', 'false'])],
-  ['aria-invalid', new Set(['false', 'true', 'grammar', 'spelling'])],
-  ['aria-live', new Set(['off', 'polite', 'assertive'])],
-  ['aria-modal', new Set(['true', 'false'])],
-  ['aria-multiline', new Set(['true', 'false'])],
-  ['aria-multiselectable', new Set(['true', 'false'])],
-  ['aria-orientation', new Set(['horizontal', 'vertical', 'undefined'])],
-  ['aria-pressed', new Set(['true', 'false', 'mixed'])],
-  ['aria-readonly', new Set(['true', 'false'])],
-  ['aria-required', new Set(['true', 'false'])],
-  ['aria-selected', new Set(['true', 'false'])],
-  ['aria-sort', new Set(['none', 'ascending', 'descending', 'other'])],
-]);
-const ARIA_INTEGER_ATTRIBUTES = new Map([
-  ['aria-colcount', (value) => value === -1 || value >= 1],
-  ['aria-colindex', (value) => value >= 1],
-  ['aria-colspan', (value) => value >= 1],
-  ['aria-level', (value) => value >= 1],
-  ['aria-posinset', (value) => value >= 1],
-  ['aria-rowcount', (value) => value === -1 || value >= 1],
-  ['aria-rowindex', (value) => value >= 1],
-  ['aria-rowspan', (value) => value >= 1],
-  ['aria-setsize', (value) => value === -1 || value >= 1],
-]);
-const ARIA_NUMBER_ATTRIBUTES = new Set([
-  'aria-valuemax',
-  'aria-valuemin',
-  'aria-valuenow',
-]);
-const ARIA_RELEVANT_VALUES = new Set(['additions', 'removals', 'text', 'all']);
-const REMOVABLE_ATTRIBUTES = new Set([
-  'id',
-  'class',
-  'style',
-  'title',
-  'name',
-  'value',
-  'placeholder',
-  'alt',
-  'datetime',
-  'xmlns',
-  'viewbox',
-  'd',
-  'fill',
-  'stroke',
-  'width',
-  'height',
-  'cx',
-  'cy',
-  'r',
-  'x',
-  'y',
-  'x1',
-  'x2',
-  'y1',
-  'y2',
-  'points',
-  'transform',
-  'focusable',
-]);
 
 export class SanitizationError extends Error {
   constructor(code) {
@@ -233,158 +121,6 @@ function parseDenylist(bytes) {
   return values;
 }
 
-function assertSafeToParse(markup) {
-  if (FORBIDDEN_ELEMENT.test(markup)) {
-    reject('forbidden-element');
-  }
-  if (INLINE_HANDLER.test(markup)) {
-    reject('inline-event-handler');
-  }
-  if (RESOURCE_ATTRIBUTE.test(markup) || CSS_RESOURCE.test(markup)) {
-    reject('resource-bearing-attribute');
-  }
-}
-
-function createInertParser() {
-  const isolatedWindow = new Window({
-    settings: {
-      enableJavaScriptEvaluation: false,
-      disableJavaScriptFileLoading: true,
-      disableCSSFileLoading: true,
-      enableImageFileLoading: false,
-      navigation: {
-        disableMainFrameNavigation: true,
-        disableChildFrameNavigation: true,
-        disableChildPageNavigation: true,
-      },
-    },
-  });
-  return new isolatedWindow.DOMParser();
-}
-
-function parseBoundedCapture(markup) {
-  let parsed;
-  try {
-    parsed = createInertParser().parseFromString(markup, 'text/html');
-  } catch {
-    reject('parse-failed');
-  }
-
-  const rootElements = [...parsed.body.children];
-  if (rootElements.length !== 1) {
-    reject('table-boundary-required');
-  }
-
-  const root = rootElements[0];
-  const tables = [
-    ...(root.matches('table, [role="table"]') ? [root] : []),
-    ...root.querySelectorAll('table, [role="table"]'),
-  ];
-  if (tables.length !== 1) {
-    reject('table-boundary-required');
-  }
-
-  const table = tables[0];
-  let boundaryElement = table;
-  while (boundaryElement !== root) {
-    const parent = boundaryElement.parentElement;
-    const hasSiblingElement = !parent
-      || parent.children.length !== 1
-      || parent.children[0] !== boundaryElement;
-    const hasSiblingText = parent
-      ? [...parent.childNodes].some((node) => node.nodeType === 3 && node.data.trim().length > 0)
-      : true;
-    if (hasSiblingElement || hasSiblingText) {
-      reject('table-boundary-required');
-    }
-    boundaryElement = parent;
-  }
-
-  const ownedRows = [...table.querySelectorAll('tr, [role="row"]')]
-    .filter((row) => row.closest('table, [role="table"]') === table);
-  const ticketRows = ownedRows.filter((row) => {
-    const body = row.closest('tbody');
-    const testId = row.getAttribute('data-test-id');
-    const gardenId = row.getAttribute('data-garden-id');
-    return body?.closest('table, [role="table"]') === table
-      && (gardenId === 'tables.row' || testId === 'generic-table-row' || testId === 'ticket-row');
-  });
-  if (ticketRows.length === 0) {
-    reject('table-boundary-required');
-  }
-
-  const headerRows = ownedRows.filter((row) => (
-    !ticketRows.includes(row)
-    && [...row.children].some((cell) => cell.matches('th, [role="columnheader"]'))
-  ));
-  if (headerRows.length !== 1) {
-    reject('table-boundary-required');
-  }
-
-  const headerCells = [...headerRows[0].children];
-  if (headerCells.some((cell) => !cell.matches('th, [role="columnheader"]'))) {
-    reject('row-children-must-be-cells');
-  }
-  const priorityIndexes = headerCells
-    .map((cell, index) => (cell.textContent.trim() === 'Priority' ? index : -1))
-    .filter((index) => index >= 0);
-  if (headerCells.length === 0 || priorityIndexes.length > 1) {
-    reject('table-boundary-required');
-  }
-
-
-  const priorityCells = new Set();
-  for (const row of ticketRows) {
-    const cells = [...row.children];
-    if (cells.some((cell) => !cell.matches('td, [role="cell"]'))) {
-      reject('row-children-must-be-cells');
-    }
-    if (cells.length !== headerCells.length) {
-      reject('table-boundary-required');
-    }
-    if (priorityIndexes.length === 1) {
-      priorityCells.add(cells[priorityIndexes[0]]);
-    }
-  }
-
-  return { root, priorityCells };
-}
-
-function normalizedAriaValue(name, value) {
-  const normalized = value.trim().toLocaleLowerCase('en-US');
-
-  const allowedValues = ARIA_ENUM_ATTRIBUTES.get(name);
-  if (allowedValues) {
-    return allowedValues.has(normalized) ? normalized : null;
-  }
-
-  const integerRule = ARIA_INTEGER_ATTRIBUTES.get(name);
-  if (integerRule) {
-    if (!/^-?(?:0|[1-9][0-9]*)$/u.test(normalized)) {
-      return null;
-    }
-    const integer = Number(normalized);
-    return Number.isSafeInteger(integer) && integerRule(integer) ? String(integer) : null;
-  }
-
-  if (ARIA_NUMBER_ATTRIBUTES.has(name)) {
-    if (!/^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/u.test(normalized)) {
-      return null;
-    }
-    const number = Number(normalized);
-    return Number.isFinite(number) ? String(number) : null;
-  }
-
-  if (name === 'aria-relevant') {
-    const tokens = normalized.split(/\s+/u).filter(Boolean);
-    if (tokens.length === 0 || tokens.some((token) => !ARIA_RELEVANT_VALUES.has(token))) {
-      return null;
-    }
-    return [...new Set(tokens)].sort().join(' ');
-  }
-
-  return undefined;
-}
 
 function sanitizeAttributes(root) {
   let ariaCounter = 0;
@@ -432,7 +168,7 @@ function sanitizeAttributes(root) {
   }
 }
 
-function sanitizeTextAndComments(root, priorityCells) {
+function sanitizeTextAndComments(root, priorityCells, priorityHeaderCell) {
   let textCounter = 0;
 
   function visit(node) {
@@ -446,10 +182,13 @@ function sanitizeTextAndComments(root, priorityCells) {
         const allowedPriorityCell = [...priorityCells].find((cell) => cell.contains(child));
         const preservePriority = PRIORITY_LABELS.has(trimmed)
           && allowedPriorityCell?.textContent.trim() === trimmed;
-        if (trimmed.length > 0 && !preservePriority) {
+        const preserveHeader = trimmed === PRIORITY_HEADER_LABEL
+          && priorityHeaderCell?.contains(child)
+          && priorityHeaderCell.textContent.trim() === PRIORITY_HEADER_LABEL;
+        if (trimmed.length > 0 && !preservePriority && !preserveHeader) {
           textCounter += 1;
           child.data = `TEXT-${String(textCounter).padStart(3, '0')}`;
-        } else if (preservePriority) {
+        } else if (preservePriority || preserveHeader) {
           child.data = trimmed;
         }
         continue;
@@ -461,9 +200,9 @@ function sanitizeTextAndComments(root, priorityCells) {
   visit(root);
 }
 
-function finalMarkup(root, priorityCells, denylist) {
+function finalMarkup(root, priorityCells, priorityHeaderCell, denylist) {
   sanitizeAttributes(root);
-  sanitizeTextAndComments(root, priorityCells);
+  sanitizeTextAndComments(root, priorityCells, priorityHeaderCell);
   const output = `${root.outerHTML}\n`;
 
   try {
@@ -473,6 +212,11 @@ function finalMarkup(root, priorityCells, denylist) {
       reject('sensitive-residual');
     }
     throw error;
+  }
+  try {
+    validateSanitizedOutput(output);
+  } catch {
+    reject('output-contract-violated');
   }
   return output;
 }
@@ -518,9 +262,16 @@ export async function sanitizeFixture(options) {
   const inputBytes = await readRequiredBytes(inputRealPath, 'input-readable-required');
 
   const source = decodeUtf8(inputBytes, 'input-utf8-required');
-  assertSafeToParse(source);
-  const { root, priorityCells } = parseBoundedCapture(source);
-  const output = finalMarkup(root, priorityCells, denylist);
+  let capture;
+  try {
+    assertSafeToParse(source);
+    capture = parseBoundedCapture(source);
+  } catch (error) {
+    if (error instanceof SanitizedOutputError) reject(error.code);
+    throw error;
+  }
+  const { root, priorityCells, priorityHeaderCell } = capture;
+  const output = finalMarkup(root, priorityCells, priorityHeaderCell, denylist);
   const outputBytes = Buffer.from(output, 'utf8');
 
   try {

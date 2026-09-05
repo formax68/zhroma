@@ -276,7 +276,8 @@ describe('sanitizeFixture', () => {
       expect(text).toContain(priority);
     }
     expect(text).toContain('TEXT-001');
-    expect(text).not.toMatch(/Subject|Priority|Tenant Subject|Private Person/i);
+    expect(text).not.toMatch(/Subject|Tenant Subject|Private Person/i);
+    expect(parsed.querySelectorAll('th')[1].textContent.trim()).toBe('Priority');
     expect(text).not.toMatch(/requester@example|Internal Organization|987654321012345/);
     expect(text).not.toContain('QWxwaGEyM0JldGExOURlbHRhNDU2R2FtbWE=');
   });
