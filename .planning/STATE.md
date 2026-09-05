@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
 current_phase: 01
-current_phase_name: dom-recon-spike
-status: ready_for_verification
-stopped_at: Completed 01-08-PLAN.md
-last_updated: "2026-09-04T13:55:04.121Z"
-last_activity: 2026-09-04
-last_activity_desc: Plan 01-08 complete; Phase 1 ready for independent verification
-state_head: cc309e70534d6ff34c31372375e818dc794f2b4b
+current_phase_name: DOM Recon Spike
+status: awaiting_human_input
+stopped_at: "Plan 01-10 Task 1: awaiting historical vitest approval attestation (question 1 of 3)"
+last_updated: "2026-09-05T13:02:22.028Z"
+last_activity: 2026-09-05
+last_activity_desc: Plan 01-09 complete; Plan 01-10 awaits historical approval attestation
+state_head: 69002bc82f9e27c096926ae63fb93164d34a9a48
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 15
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 
 ## Current Position
 
-Phase: 01 (dom-recon-spike) — READY TO EXECUTE
-Plan: 8 of 8
-Status: All 8 plans complete; independent Phase 1 verification pending
-Last activity: 2026-09-04 — Plan 01-08 complete; Phase 1 ready for independent verification
+Phase: 01 (DOM Recon Spike) — HUMAN CHECKPOINT
+Plan: 10 of 15 (9 complete)
+Status: Plan 01-10 Task 1 pending; awaiting question 1 of 3, no answers recorded
+Last activity: 2026-09-05 — Completed 01-09; 80 tests pass; awaiting historical vitest approval attestation
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P07 | 8 min | 2 tasks | 3 files |
 | Phase 01 P06 | 2h 32m | 2 tasks | 3 files |
 | Phase 01 P08 | 2h 59m | 3 tasks | 9 files |
+| Phase 01 P09 | 6 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ Recent decisions affecting current work:
 - [Phase 01]: Open live DOM facts remain Recon Question templates until sanitized terminal evidence is admitted.
 - [Phase 01]: The recon gate must report block while any English-path question remains unresolved.
 - [Phase 01]: Sensitive fixture diagnostics expose category and code only, never matched values or input locations.
+- [Phase 01]: Plan 01-09 normalizes the production scanner to NFC before case folding; recon CLI details require ZHROMA_RECON_DEBUG=1.
 - [Phase 01]: Plan 01-02: Package legitimacy approvals remain exact-version, independent, and non-installing.
 - [Phase 01]: Plan 01-02: Bound live recon to current Agent Workspace with account plan unknown/not shared; make no cross-plan claim.
 - [Phase 01]: Resolve sanitizer CLI and worktree identity from the module URL, never the caller cwd.
@@ -98,7 +100,8 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 1 remains a hard gate until independent verification is rerun. The plan-level evidence gate now reports `proceed`, but the existing `01-VERIFICATION.md` is the historical pre-gap-closure report.
+- Phase 1 remains `gaps_found`; 01-09 is complete, but 01-10 through 01-15 and independent verification remain pending. Phase 2 is closed.
+- Plan 01-10 Task 1 is `blocking-human`: ask separately whether vitest@4.1.11 was approved before installation, whether happy-dom@20.13.1 was approved before installation, and whether the approvals were independent. No answers have been recorded; question 1 is pending.
 - Phase 4's scope depends on a Phase 1 finding: if a locale-independent priority signal exists on the row or cell, the locale work collapses to almost nothing.
 - Store submission has latency and the direct predecessor was delisted at this step. Register the developer account early; budget one rejection-and-resubmit cycle in Phase 5.
 
@@ -116,6 +119,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-04T11:31:46.383Z
-Stopped at: Completed 01-08-PLAN.md
-Resume file: None
+Last session: 2026-09-05T13:02:22.012Z
+Stopped at: Plan 01-10 Task 1: awaiting historical vitest approval attestation (question 1 of 3)
+Resume file: .planning/phases/01-dom-recon-spike/01-10-PLAN.md
