@@ -8,6 +8,20 @@ import {
 
 const denylist = ['Private Person', 'Internal Organization'];
 
+for (const [label, content, token] of [
+  ['NFD content against NFC denylist', 'Jose\u0301', 'Jos\u00e9'],
+  ['NFC content against NFD denylist', 'Jos\u00e9', 'Jose\u0301'],
+  ['case folding after normalization', 'JOSE\u0301', 'jos\u00e9'],
+]) {
+  test(`rejects ${label} with value-free findings`, () => {
+    const error = rejectionFor(`<div data-test-id="${content}">`, { denylist: [token] });
+    assert.deepEqual(error.findings, [
+      { category: 'capture-denylist', code: 'capture-denylist-token' },
+    ]);
+    assert.equal(error.message, 'Sensitive fixture admission rejected');
+  });
+}
+
 function rejectionFor(content, ...optionArguments) {
   try {
     scanSensitiveContent(

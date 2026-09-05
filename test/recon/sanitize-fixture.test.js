@@ -105,6 +105,21 @@ afterEach(async () => {
 });
 
 describe('sanitizeFixture', () => {
+  test('rejects a canonically decomposed denylist attribute before writing, including CLI', async () => {
+    const fixture = await createCase(safeCapture().replace(
+      'data-test-id="ticket-table"', 'data-test-id="Jose\u0301"',
+    ));
+    await writeFile(fixture.denylistPath, 'Jos\u00e9\n', 'utf8');
+    await expectRejected(fixture, 'sensitive-residual');
+    await expect(execFileAsync(process.execPath, [
+      sanitizerCli, '--input', fixture.inputPath,
+      '--output', fixture.outputPath, '--denylist', fixture.denylistPath,
+    ])).rejects.toMatchObject({
+      code: 1, stdout: '', stderr: 'SANITIZE_FIXTURE_REJECTED sensitive-residual\n',
+    });
+    await expect(readFile(fixture.outputPath)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
   test('creates a deterministic, separate, topology-preserving output', async () => {
     const first = await createCase();
     const second = await createCase();

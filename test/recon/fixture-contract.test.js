@@ -11,6 +11,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
+import { DOMParser } from 'happy-dom';
 
 import {
   REQUIRED_SCENARIOS,
@@ -139,6 +140,22 @@ afterEach(async () => {
 });
 
 describe('fixture corpus contract', () => {
+  test('normalizes a canonical generic-rule hit and scans before any detached parse', async () => {
+    const corpus = await createCorpus();
+    // Kelvin sign canonically decomposes to ASCII K. No new generic rule is needed.
+    const unsafe = '<div>\u212a@example.invalid</div>';
+    await writeFile(join(corpus.directory, corpus.fixtures[0].file), unsafe, 'utf8');
+    await rewriteManifest(corpus.manifestPath, (manifest) => {
+      manifest.fixtures[0].sha256 = createHash('sha256').update(unsafe).digest('hex');
+    });
+    const parseSpy = vi.spyOn(DOMParser.prototype, 'parseFromString');
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({
+      name: 'SensitiveFixtureError',
+      findings: [{ category: 'email', code: 'email-address' }],
+    });
+    expect(parseSpy).not.toHaveBeenCalled();
+  });
+
   test('validates exact bytes, provenance, selectors, and all scenario invariants', async () => {
     const corpus = await createCorpus();
     const activeDocumentMarkup = document.documentElement.outerHTML;
