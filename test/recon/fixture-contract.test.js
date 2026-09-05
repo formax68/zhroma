@@ -162,6 +162,26 @@ afterEach(async () => {
 });
 
 describe('fixture corpus contract', () => {
+  test.each([null, 3, 'scalar', true, []])('rejects malformed manifest root %j with a stable code', async (root) => {
+    const corpus = await copyCommittedCorpus();
+    await writeFile(corpus.manifestPath, JSON.stringify(root));
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ name: 'FixtureContractError', code: 'manifest-object-required' });
+  });
+
+  test.each([{}, { fixtures: null }, { fixtures: {} }, { fixtures: [] }])('rejects missing, invalid, or empty fixture lists: %j', async (root) => {
+    const corpus = await copyCommittedCorpus();
+    await writeFile(corpus.manifestPath, JSON.stringify(root));
+    await expect(validateFixtureManifest(corpus.manifestPath)).rejects.toMatchObject({ code: 'manifest-fixtures-required' });
+  });
+
+  test('specifies a single valid fixture with and without complete-matrix mode', async () => {
+    const corpus = await copyCommittedCorpus();
+    await rewriteManifest(corpus.manifestPath, (manifest) => { manifest.fixtures = manifest.fixtures.slice(0, 1); });
+    await expect(validateFixtureManifest(corpus.manifestPath)).resolves.toMatchObject({ fixtureCount: 1 });
+    await expect(validateFixtureManifest(corpus.manifestPath, { requireCompleteScenarioMatrix: true }))
+      .rejects.toMatchObject({ code: 'complete-scenario-matrix-required' });
+  });
+
   test.each(['relative', 'symlink'])('rejects canonical file aliases via %s before admitting scenarios', async (kind) => {
     const corpus = await copyCommittedCorpus();
     const original = corpus.fixtures[0].file;
