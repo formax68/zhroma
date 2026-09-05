@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -118,6 +118,43 @@ afterEach(async () => {
 });
 
 describe('sanitizeFixture', () => {
+  test('rejects a denylist inside the worktree, directly or through an outside symlink', async () => {
+    const fixture = await createCase();
+    await expectRejected({ ...fixture, denylistPath: join(repositoryRoot, 'package.json') }, 'denylist-inside-worktree');
+    const linkPath = join(fixture.directory, 'denylist-link.txt');
+    await symlink(join(repositoryRoot, 'package.json'), linkPath);
+    await expectRejected({ ...fixture, denylistPath: linkPath }, 'denylist-inside-worktree');
+  });
+
+  test('checks denylist custody before reporting an absent capture, with value-free stderr', async () => {
+    const fixture = await createCase();
+    await rm(fixture.inputPath);
+    await expect(execFileAsync(process.execPath, [
+      sanitizerCli, '--input', fixture.inputPath, '--output', fixture.outputPath,
+      '--denylist', join(repositoryRoot, 'package.json'),
+    ])).rejects.toMatchObject({
+      code: 1, stdout: '', stderr: 'SANITIZE_FIXTURE_REJECTED denylist-inside-worktree\n',
+    });
+    await expect(readFile(fixture.outputPath)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  test('rejects a denylist aliasing the capture or output without changing their bytes', async () => {
+    const fixture = await createCase();
+    await expectRejected({ ...fixture, denylistPath: fixture.inputPath }, 'denylist-inside-worktree');
+    const original = await readFile(fixture.denylistPath);
+    await expect(sanitizeFixture({ ...fixture, outputPath: fixture.denylistPath }))
+      .rejects.toMatchObject({ code: 'denylist-inside-worktree' });
+    expect(await readFile(fixture.denylistPath)).toEqual(original);
+  });
+
+  test('accepts a symlink to a genuinely external denylist', async () => {
+    const fixture = await createCase();
+    const linkPath = join(fixture.directory, 'denylist-link.txt');
+    await symlink(fixture.denylistPath, linkPath);
+    await expect(sanitizeFixture({ ...fixture, denylistPath: linkPath }))
+      .resolves.toMatchObject({ sha256: expect.stringMatching(/^[a-f0-9]{64}$/) });
+  });
+
   test('rejects a mixed td/th header before it can preserve wrong-column Priority text', async () => {
     const fixture = await createCase('<table><thead><tr><td>Subject</td><th>Priority</th></tr></thead><tbody><tr data-test-id="ticket-row"><td>Urgent</td></tr></tbody></table>');
     await expectRejected(fixture, 'row-children-must-be-cells');
