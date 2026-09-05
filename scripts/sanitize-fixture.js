@@ -302,22 +302,6 @@ function parseBoundedCapture(markup) {
 
   const ownedRows = [...table.querySelectorAll('tr, [role="row"]')]
     .filter((row) => row.closest('table, [role="table"]') === table);
-  const headerRows = ownedRows.filter((row) => (
-    [...row.children].some((cell) => cell.matches('th, [role="columnheader"]'))
-  ));
-  if (headerRows.length !== 1) {
-    reject('table-boundary-required');
-  }
-
-  const headerCells = [...headerRows[0].children]
-    .filter((cell) => cell.matches('th, [role="columnheader"]'));
-  const priorityIndexes = headerCells
-    .map((cell, index) => (cell.textContent.trim() === 'Priority' ? index : -1))
-    .filter((index) => index >= 0);
-  if (headerCells.length === 0 || priorityIndexes.length > 1) {
-    reject('table-boundary-required');
-  }
-
   const ticketRows = ownedRows.filter((row) => {
     const body = row.closest('tbody');
     const testId = row.getAttribute('data-test-id');
@@ -329,9 +313,32 @@ function parseBoundedCapture(markup) {
     reject('table-boundary-required');
   }
 
+  const headerRows = ownedRows.filter((row) => (
+    !ticketRows.includes(row)
+    && [...row.children].some((cell) => cell.matches('th, [role="columnheader"]'))
+  ));
+  if (headerRows.length !== 1) {
+    reject('table-boundary-required');
+  }
+
+  const headerCells = [...headerRows[0].children];
+  if (headerCells.some((cell) => !cell.matches('th, [role="columnheader"]'))) {
+    reject('row-children-must-be-cells');
+  }
+  const priorityIndexes = headerCells
+    .map((cell, index) => (cell.textContent.trim() === 'Priority' ? index : -1))
+    .filter((index) => index >= 0);
+  if (headerCells.length === 0 || priorityIndexes.length > 1) {
+    reject('table-boundary-required');
+  }
+
+
   const priorityCells = new Set();
   for (const row of ticketRows) {
-    const cells = [...row.children].filter((cell) => cell.matches('td, [role="cell"]'));
+    const cells = [...row.children];
+    if (cells.some((cell) => !cell.matches('td, [role="cell"]'))) {
+      reject('row-children-must-be-cells');
+    }
     if (cells.length !== headerCells.length) {
       reject('table-boundary-required');
     }

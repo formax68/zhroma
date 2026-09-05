@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
-import { Window } from 'happy-dom';
-import { afterEach, describe, expect, test } from 'vitest';
+import { DOMParser, Window } from 'happy-dom';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
   sanitizeFixture,
@@ -111,6 +111,7 @@ async function expectRejected(options, code) {
 }
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await Promise.all(temporaryDirectories.splice(0).map((directory) => (
     rm(directory, { recursive: true, force: true })
   )));
@@ -126,7 +127,7 @@ describe('sanitizeFixture', () => {
     ])).rejects.toMatchObject({ code: 1, stderr: 'SANITIZE_FIXTURE_REJECTED row-children-must-be-cells\n' });
   });
 
-  test.each(['<th>Urgent</th>', '<span>Urgent</span>'])(
+  test.each(['<th>Urgent</th>'])(
     'rejects a non-body-cell direct ticket child: %s', async (child) => {
       const fixture = await createCase(safeCapture().replace(
         '<td data-test-id="priority-cell">Urgent</td>', child,
@@ -140,6 +141,17 @@ describe('sanitizeFixture', () => {
     await expectRejected(width, 'table-boundary-required');
     const duplicate = await createCase(safeCapture().replace('>Subject</th>', '>Priority</th>'));
     await expectRejected(duplicate, 'table-boundary-required');
+  });
+
+  test('rejects a non-cell direct child retained in the parsed ticket row', async () => {
+    const fixture = await createCase();
+    const parse = DOMParser.prototype.parseFromString;
+    vi.spyOn(DOMParser.prototype, 'parseFromString').mockImplementation(function (...args) {
+      const parsed = parse.apply(this, args);
+      parsed.querySelector('[data-test-id="ticket-row"]').appendChild(parsed.createElement('span'));
+      return parsed;
+    });
+    await expectRejected(fixture, 'row-children-must-be-cells');
   });
 
   test('resolves Priority at unfiltered index 6 in a 16-column capture', async () => {
