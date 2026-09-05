@@ -29,7 +29,7 @@ const EXPECTED_PRIORITIES = Object.freeze(['Urgent', 'High', 'Normal', 'Low']);
 const temporaryDirectories = [];
 
 function priorityPresentFixture() {
-  return `<div data-test-id="table-container"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="header-cell">TEXT-001</th></tr></thead><tbody>${EXPECTED_PRIORITIES.map((priority) => `<tr data-test-id="ticket-row"><td data-test-id="priority-cell">${priority}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div data-test-id="table-container"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="header-cell">Priority</th></tr></thead><tbody>${EXPECTED_PRIORITIES.map((priority) => `<tr data-test-id="ticket-row"><td data-test-id="priority-cell">${priority}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function priorityAbsentFixture() {
@@ -37,7 +37,7 @@ function priorityAbsentFixture() {
 }
 
 function groupedLongFixture() {
-  return '<div data-test-id="table-container" role="region"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="header-cell">TEXT-001</th></tr></thead><tbody><tr data-test-id="group-row"><th>TEXT-002</th></tr><tr data-test-id="ticket-row"><td data-test-id="priority-cell">Urgent</td></tr></tbody></table></div>';
+  return '<div data-test-id="table-container" role="region"><table data-test-id="ticket-table" role="table"><thead><tr data-test-id="header-row"><th data-test-id="header-cell">Priority</th></tr></thead><tbody><tr data-test-id="group-row"><td>TEXT-001</td></tr><tr data-test-id="ticket-row"><td data-test-id="priority-cell">Urgent</td></tr></tbody></table></div>';
 }
 
 function assertionsFor(scenario) {
@@ -90,6 +90,7 @@ async function createCorpus() {
     await writeFile(join(directory, file), markup, 'utf8');
     fixtures.push({
       scenario,
+      priorityHeaderIndex: scenario === 'priority-absent' ? null : 0,
       captureDate: '2026-09-03',
       workspace: {
         shell: 'current Agent Workspace',
@@ -307,7 +308,7 @@ describe('fixture corpus contract', () => {
       manifest.fixtures[1].assertions[0].selector = '[data-test-id="header-cell"]';
     });
     await expect(validateFixtureManifest(falseAssertion.manifestPath)).rejects.toMatchObject({
-      code: 'declared-selector-must-be-absent',
+      code: 'priority-absence-topology-mismatch',
     });
 
     const incomplete = await createCorpus();

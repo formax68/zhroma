@@ -5,6 +5,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { Window } from 'happy-dom';
 
 import { scanSensitiveContent } from './sensitive-patterns.js';
+import { PRIORITY_HEADER_LABEL } from './sanitized-output-contract.js';
 
 const ADMISSION_DENYLIST = Object.freeze([
   '__private_capture_values_were_removed_before_admission__',
@@ -151,6 +152,15 @@ function assertStructure(entry, document, ticketTable, headerRow) {
   ) {
     throw contractError('sticky-scroll-relationship-mismatch');
   }
+
+  const index = entry.priorityHeaderIndex;
+  if (structure.priorityIndex === null) {
+    if (index !== null) throw contractError('priority-header-index-mismatch');
+  } else if (!requireNonNegativeInteger(index) || index >= structure.headerCellCount
+    || index !== structure.priorityIndex
+    || headerRow.children[index]?.textContent.trim() !== PRIORITY_HEADER_LABEL) {
+    throw contractError('priority-header-index-mismatch');
+  }
 }
 
 function assertScenario(entry, document, ticketTable, headerRow) {
@@ -160,6 +170,17 @@ function assertScenario(entry, document, ticketTable, headerRow) {
 
   const purposes = new Set();
   const purposeNodes = new Map();
+  const requiredKinds = {
+    'priority-values': 'exact-text-values',
+    'priority-column-absent': 'selector-absent',
+    'group-row': 'selector-present',
+    'duplicate-or-sticky-header': 'selector-present',
+    'scroll-container': 'selector-present',
+  };
+  if (entry.scenario === 'priority-absent'
+    && [...headerRow.children].some((cell) => cell.textContent.trim() === PRIORITY_HEADER_LABEL)) {
+    throw contractError('priority-column-must-be-absent');
+  }
   for (const assertion of entry.assertions) {
     const purpose = requireNonEmptyString(
       assertion?.purpose,
@@ -170,6 +191,15 @@ function assertScenario(entry, document, ticketTable, headerRow) {
       'assertion-selector-required',
     );
     purposes.add(purpose);
+    if (requiredKinds[purpose] && assertion.kind !== requiredKinds[purpose]) {
+      throw contractError(purpose === 'priority-column-absent'
+        ? 'priority-absence-assertion-required' : 'scenario-invariant-missing');
+    }
+    if (purpose === 'priority-column-absent'
+      && (query(ticketTable, selector, 'assertion-selector-invalid')
+        || query(headerRow, selector, 'assertion-selector-invalid'))) {
+      throw contractError('priority-absence-topology-mismatch');
+    }
 
     if (assertion.kind === 'selector-present') {
       const selectedNode = query(document, selector, 'assertion-selector-invalid');
