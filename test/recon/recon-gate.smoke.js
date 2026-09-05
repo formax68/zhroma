@@ -49,6 +49,65 @@ const REPOSITORY_MANIFEST = join(
 );
 const { verifyReconLedger } = reconGate;
 
+function runGate(args, debug) {
+  const env = { ...process.env };
+  delete env.ZHROMA_RECON_DEBUG;
+  if (debug !== undefined) env.ZHROMA_RECON_DEBUG = debug;
+  return spawnSync(process.execPath, [GATE_SCRIPT, ...args], {
+    cwd: REPOSITORY_ROOT, encoding: 'utf8', env,
+  });
+}
+
+test('CLI never echoes a supplied private ledger path unless debug is exactly 1', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'zhroma-private-ledger-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const privatePath = join(directory, 'PRIVATE-PERSON-NAME-missing.md');
+  for (const debug of [undefined, '', '0', 'true', '2']) {
+    const result = runGate(['final', privatePath, REPOSITORY_MANIFEST], debug);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, 'RECON_GATE_REJECTED ledger-readable-required\n');
+    assert.ok(!result.stderr.includes(privatePath));
+    assert.ok(!result.stderr.includes('PRIVATE-PERSON-NAME'));
+  }
+  const debugResult = runGate(['final', privatePath, REPOSITORY_MANIFEST], '1');
+  assert.equal(debugResult.status, 1);
+  assert.ok(debugResult.stderr.startsWith('RECON_GATE_REJECTED ledger-readable-required\n'));
+  assert.ok(debugResult.stderr.includes(privatePath));
+});
+
+test('CLI emits stable codes without echoing an unknown status or duplicate id', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'zhroma-private-field-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const ledgerPath = join(directory, 'ledger.md');
+  for (const [markdown, code] of [
+    [completeEntry({ status: 'PRIVATE-STATUS-VALUE' }), 'entry-status-unrecognized'],
+    [`${completeEntry({ id: 'private-person-id' })}\n${completeEntry({ id: 'private-person-id' })}`, 'entry-id-duplicate'],
+  ]) {
+    await writeFile(ledgerPath, markdown);
+    const result = runGate(['evidence', ledgerPath]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, `RECON_GATE_REJECTED ${code}\n`);
+    assert.doesNotMatch(result.stderr, /PRIVATE-STATUS-VALUE|private-person-id/);
+  }
+});
+
+test('CLI rejects an unknown mode with a value-free argument code', () => {
+  const result = runGate(['PRIVATE-MODE', REPOSITORY_LEDGER]);
+  assert.equal(result.status, 1);
+  assert.equal(result.stderr, 'RECON_GATE_REJECTED cli-arguments-invalid\n');
+});
+
+test('in-process failures are ReconGateError instances with a fixed message and code', () => {
+  assert.equal(typeof reconGate.ReconGateError, 'function');
+  assert.throws(() => verifyReconLedger('', { mode: 'evidence' }), (error) => (
+    error instanceof reconGate.ReconGateError
+    && error.code === 'ledger-markdown-required'
+    && error.message === 'Recon ledger rejected'
+  ));
+});
+
 const completeEntry = ({
   id = 'tracer-english-path',
   status = 'verified',
@@ -85,7 +144,7 @@ test('accepts a complete synthetic entry in evidence mode only', () => {
       mode: 'final',
       admittedScenarios: ADMITTED_SCENARIOS,
     }),
-    /final ledger is missing required evidence/,
+    { name: 'ReconGateError', code: 'evidence-missing' },
   );
 });
 
@@ -103,15 +162,15 @@ test('rejects missing required fields, unknown statuses, and absent scenarios', 
 
   assert.throws(
     () => verifyReconLedger(missingEvidence, { mode: 'evidence' }),
-    /missing required field: evidence/,
+    { name: 'ReconGateError', code: 'entry-field-missing' },
   );
   assert.throws(
     () => verifyReconLedger(unknownStatus, { mode: 'evidence' }),
-    /unrecognized status: pending/,
+    { name: 'ReconGateError', code: 'entry-status-unrecognized' },
   );
   assert.throws(
     () => verifyReconLedger(absentScenario, { mode: 'evidence' }),
-    /missing required field: scenario/,
+    { name: 'ReconGateError', code: 'entry-field-missing' },
   );
 });
 
@@ -124,11 +183,11 @@ test('rejects duplicate entry ids and entries whose heading disagrees with id', 
 
   assert.throws(
     () => verifyReconLedger(duplicate, { mode: 'evidence' }),
-    /duplicate entry id: tracer-english-path/,
+    { name: 'ReconGateError', code: 'entry-id-duplicate' },
   );
   assert.throws(
     () => verifyReconLedger(mismatched, { mode: 'evidence' }),
-    /heading and id field disagree/,
+    { name: 'ReconGateError', code: 'entry-heading-id-mismatch' },
   );
 });
 
@@ -139,15 +198,15 @@ test('final mode requires one explicit recognized verdict', () => {
 
   assert.throws(
     () => verifyReconLedger(missing, { mode: 'final' }),
-    /exactly one Final Verdict section/,
+    { name: 'ReconGateError', code: 'verdict-section-required' },
   );
   assert.throws(
     () => verifyReconLedger(unknown, { mode: 'final' }),
-    /unrecognized verdict: maybe/,
+    { name: 'ReconGateError', code: 'verdict-unrecognized' },
   );
   assert.throws(
     () => verifyReconLedger(duplicate, { mode: 'final' }),
-    /exactly one Final Verdict section/,
+    { name: 'ReconGateError', code: 'verdict-section-required' },
   );
 });
 
@@ -169,11 +228,11 @@ test('an unresolved English-path item fails evidence and final modes', () => {
 
   assert.throws(
     () => verifyReconLedger(markdown, { mode: 'final' }),
-    /English-path question remains unresolved: live-dom-question/,
+    { name: 'ReconGateError', code: 'question-unresolved' },
   );
   assert.throws(
     () => verifyReconLedger(markdown, { mode: 'evidence' }),
-    /English-path question remains unresolved: live-dom-question/,
+    { name: 'ReconGateError', code: 'question-unresolved' },
   );
 });
 
@@ -186,7 +245,7 @@ test('outside-scope status is reserved for explicitly non-English work', () => {
 
   assert.throws(
     () => verifyReconLedger(invalid, { mode: 'evidence' }),
-    /English-path entry cannot be outside English-only scope/,
+    { name: 'ReconGateError', code: 'entry-scope-status-conflict' },
   );
   assert.equal(
     verifyReconLedger(valid, { mode: 'evidence' }).entryCount,
@@ -197,7 +256,7 @@ test('outside-scope status is reserved for explicitly non-English work', () => {
 test('rejects an unsupported validator mode', () => {
   assert.throws(
     () => verifyReconLedger(completeEntry(), { mode: 'draft' }),
-    /mode must be evidence or final/,
+    { name: 'ReconGateError', code: 'mode-invalid' },
   );
 });
 
@@ -251,7 +310,7 @@ test('final mode binds the complete repository ledger to admitted scenarios', as
       mode: 'final',
       admittedScenarios: ADMITTED_SCENARIOS,
     }),
-    /is not bound to the admitted corpus/,
+    { name: 'ReconGateError', code: 'scenario-not-admitted' },
   );
 });
 
@@ -265,7 +324,7 @@ test('final proceed fails closed when interaction paint evidence is not positive
       mode: 'final',
       admittedScenarios: ADMITTED_SCENARIOS,
     }),
-    /proceed verdict conflicts with blocking predicate: interaction-evidence-incomplete/,
+    { name: 'ReconGateError', code: 'proceed-conflicts-with-blockers' },
   );
 });
 
@@ -288,7 +347,7 @@ test('CLI rejects omitted and extra arguments for evidence and final modes', () 
 
   for (const result of [missingManifest, extraManifest, extraEvidence]) {
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Usage:/);
+    assert.equal(result.stderr, 'RECON_GATE_REJECTED cli-arguments-invalid\n');
   }
 });
 
@@ -311,7 +370,7 @@ test('final CLI rejects active hash-matching fixtures through the shared validat
     { cwd: REPOSITORY_ROOT, encoding: 'utf8' },
   );
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Sensitive fixture admission rejected/);
+  assert.equal(result.stderr, 'RECON_GATE_REJECTED unexpected-error\n');
 });
 
 test('final CLI rejects an in-corpus symlink to an external fixture', async (t) => {
@@ -346,7 +405,7 @@ test('final CLI rejects an in-corpus symlink to an external fixture', async (t) 
     { cwd: REPOSITORY_ROOT, encoding: 'utf8' },
   );
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /fixture-path-must-be-contained/);
+  assert.equal(result.stderr, 'RECON_GATE_REJECTED fixture-path-must-be-contained\n');
 });
 
 test('all seven spec-less planning probes remain visibly unresolved', async () => {
