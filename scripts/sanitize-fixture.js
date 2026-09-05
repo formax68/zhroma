@@ -485,9 +485,16 @@ export async function sanitizeFixture(options) {
   const inputPath = requiredPath(options.inputPath, 'input-required');
   const outputPath = requiredPath(options.outputPath, 'output-required');
   const denylistPath = requiredPath(options.denylistPath, 'denylist-required');
+  const projectRealPath = await findGitWorktreeRoot(MODULE_DIRECTORY);
+  const denylistRealPath = await resolvedExistingPath(denylistPath, 'denylist-required');
+  if (isWithin(projectRealPath, denylistRealPath)) {
+    reject('denylist-inside-worktree');
+  }
   const inputRealPath = await resolvedExistingPath(inputPath, 'input-readable-required');
   const outputRealPath = await resolvedOutputPath(outputPath);
-  const projectRealPath = await findGitWorktreeRoot(MODULE_DIRECTORY);
+  if (denylistRealPath === inputRealPath || denylistRealPath === outputRealPath) {
+    reject('denylist-inside-worktree');
+  }
 
   if (inputRealPath === outputRealPath) {
     reject('input-output-must-differ');
@@ -496,12 +503,12 @@ export async function sanitizeFixture(options) {
     reject('input-inside-worktree');
   }
 
-  await assertFileSize(denylistPath, {
+  await assertFileSize(denylistRealPath, {
     minimum: 1,
     maximum: 64 * 1024,
     code: 'denylist-required',
   });
-  const denylistBytes = await readRequiredBytes(denylistPath, 'denylist-required');
+  const denylistBytes = await readRequiredBytes(denylistRealPath, 'denylist-required');
   const denylist = parseDenylist(denylistBytes);
   await assertFileSize(inputRealPath, {
     minimum: 1,
