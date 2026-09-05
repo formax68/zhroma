@@ -8,7 +8,7 @@ import { Window } from 'happy-dom';
 import {
   scanSensitiveContent,
   SensitiveFixtureError,
-} from '../test/recon/sensitive-patterns.js';
+} from './sensitive-patterns.js';
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024;
 const MODULE_DIRECTORY = dirname(fileURLToPath(import.meta.url));

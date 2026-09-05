@@ -178,7 +178,7 @@ describe('sanitizeFixture', () => {
     const fixture = await createCase();
 
     await expectRejected({
-      inputPath: join(repositoryRoot, 'test', 'recon', 'sensitive-patterns.js'),
+      inputPath: join(repositoryRoot, 'scripts', 'sensitive-patterns.js'),
       outputPath: fixture.outputPath,
       denylistPath: fixture.denylistPath,
     }, 'input-inside-worktree');
@@ -378,7 +378,7 @@ describe('sanitizeFixture', () => {
 
   test('the CLI fails closed without printing paths or denylist values', async () => {
     const fixture = await createCase();
-    const insideWorktree = join(repositoryRoot, 'test', 'recon', 'sensitive-patterns.js');
+    const insideWorktree = join(repositoryRoot, 'scripts', 'sensitive-patterns.js');
 
     let output = '';
     try {

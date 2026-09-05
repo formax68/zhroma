@@ -4,7 +4,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 
 import { Window } from 'happy-dom';
 
-import { scanSensitiveContent } from '../test/recon/sensitive-patterns.js';
+import { scanSensitiveContent } from './sensitive-patterns.js';
 
 const ADMISSION_DENYLIST = Object.freeze([
   '__private_capture_values_were_removed_before_admission__',

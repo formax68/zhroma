@@ -19,7 +19,7 @@ import {
 } from '../../scripts/fixture-contract.js';
 import {
   SensitiveFixtureError,
-} from './sensitive-patterns.js';
+} from '../../scripts/sensitive-patterns.js';
 
 const ADMISSION_DENYLIST = Object.freeze([
   '__private_capture_values_were_removed_before_admission__',

@@ -79,13 +79,17 @@ function rejectPolicy(code) {
   throw new SensitiveFixtureError([{ category: 'policy', code }]);
 }
 
+function fold(value) {
+  return value.normalize('NFC').toLocaleLowerCase('en-US');
+}
+
 function normalizedDenylist(denylist) {
   if (!Array.isArray(denylist) || denylist.length === 0) {
     rejectPolicy('capture-denylist-required');
   }
 
   const normalized = denylist.map((token) => (
-    typeof token === 'string' ? token.trim().toLocaleLowerCase('en-US') : ''
+    typeof token === 'string' ? fold(token.trim()) : ''
   ));
   if (normalized.some((token) => token.length === 0)) {
     rejectPolicy('capture-denylist-required');
@@ -104,14 +108,14 @@ export function scanSensitiveContent(content, options = {}) {
     rejectPolicy('content-string-required');
   }
 
+  const foldedContent = fold(content);
   const genericFindings = new Map();
   for (const { category, code, pattern } of GENERIC_RULES) {
-    if (pattern.test(content)) {
+    if (pattern.test(foldedContent)) {
       genericFindings.set(`${category}:${code}`, { category, code });
     }
   }
 
-  const foldedContent = content.toLocaleLowerCase('en-US');
   const denylistFindings = denylist
     .filter((token) => foldedContent.includes(token))
     .map(() => ({

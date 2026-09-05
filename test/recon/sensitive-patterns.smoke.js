@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import {
   scanSensitiveContent,
   SensitiveFixtureError,
-} from './sensitive-patterns.js';
+} from '../../scripts/sensitive-patterns.js';
 
 const denylist = ['Private Person', 'Internal Organization'];
 
