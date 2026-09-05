@@ -66,6 +66,14 @@ export const REQUIRED_LIVE_EVIDENCE_IDS = Object.freeze([
   'current-host-coverage',
 ]);
 
+export class ReconGateError extends Error {
+  constructor(code, options) {
+    super('Recon ledger rejected', options);
+    this.name = 'ReconGateError';
+    this.code = code;
+  }
+}
+
 function unwrapCode(value) {
   const trimmed = value.trim();
   if (trimmed.startsWith('`') && trimmed.endsWith('`')) {
@@ -91,13 +99,13 @@ function collectSections(markdown, headingPattern) {
   });
 }
 
-function parseFields(body, label) {
+function parseFields(body) {
   const fields = new Map();
 
   for (const match of body.matchAll(FIELD_LINE)) {
     const [, name, rawValue] = match;
     if (fields.has(name)) {
-      throw new Error(`${label} has duplicate field: ${name}`);
+      throw new ReconGateError('entry-field-duplicate');
     }
     fields.set(name, unwrapCode(rawValue));
   }
@@ -109,45 +117,44 @@ function parseEntries(markdown) {
   const sections = collectSections(markdown, ENTRY_HEADING);
 
   if (sections.length === 0) {
-    throw new Error('ledger must contain at least one Ledger Entry section');
+    throw new ReconGateError('ledger-entries-required');
   }
 
   const ids = new Set();
   const entries = [];
 
   for (const section of sections) {
-    const label = `ledger entry ${section.heading}`;
-    const fields = parseFields(section.body, label);
+    const fields = parseFields(section.body);
 
     for (const field of REQUIRED_ENTRY_FIELDS) {
       if (!fields.get(field)) {
-        throw new Error(`${label} is missing required field: ${field}`);
+        throw new ReconGateError('entry-field-missing');
       }
     }
 
     const id = fields.get('id');
     if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) {
-      throw new Error(`${label} has invalid id: ${id}`);
+      throw new ReconGateError('entry-id-invalid');
     }
     if (section.heading !== id) {
-      throw new Error(`${label} heading and id field disagree`);
+      throw new ReconGateError('entry-heading-id-mismatch');
     }
     if (ids.has(id)) {
-      throw new Error(`duplicate entry id: ${id}`);
+      throw new ReconGateError('entry-id-duplicate');
     }
     ids.add(id);
 
     const status = fields.get('status');
     if (!TERMINAL_STATUSES.has(status)) {
-      throw new Error(`${label} has unrecognized status: ${status}`);
+      throw new ReconGateError('entry-status-unrecognized');
     }
 
     const scope = fields.get('scope');
     if (scope === 'English path' && status === 'outside English-only scope') {
-      throw new Error(`${label}: English-path entry cannot be outside English-only scope`);
+      throw new ReconGateError('entry-scope-status-conflict');
     }
     if (scope !== 'English path' && status !== 'outside English-only scope') {
-      throw new Error(`${label}: non-English entry must be outside English-only scope`);
+      throw new ReconGateError('entry-scope-status-conflict');
     }
 
     entries.push({ id, scope, status, fields });
@@ -161,29 +168,28 @@ function parseOpenQuestions(markdown) {
   const ids = new Set();
 
   return sections.map((section) => {
-    const label = `recon question ${section.heading}`;
-    const fields = parseFields(section.body, label);
+    const fields = parseFields(section.body);
 
     for (const field of REQUIRED_QUESTION_FIELDS) {
       if (!fields.get(field)) {
-        throw new Error(`${label} is missing required field: ${field}`);
+        throw new ReconGateError('question-field-missing');
       }
     }
 
     const id = fields.get('id');
     if (section.heading !== id) {
-      throw new Error(`${label} heading and id field disagree`);
+      throw new ReconGateError('question-heading-id-mismatch');
     }
     if (ids.has(id)) {
-      throw new Error(`duplicate recon question id: ${id}`);
+      throw new ReconGateError('question-id-duplicate');
     }
     ids.add(id);
 
     if (fields.get('scope') !== 'English path') {
-      throw new Error(`${label} must use English path scope`);
+      throw new ReconGateError('question-scope-invalid');
     }
     if (fields.get('status') !== 'unresolved' || fields.get('assumption') !== 'unresolved') {
-      throw new Error(`${label} must remain visibly unresolved until evidence admission`);
+      throw new ReconGateError('question-unresolved');
     }
 
     return id;
@@ -194,25 +200,25 @@ function parseVerdict(markdown) {
   const headings = [...markdown.matchAll(VERDICT_HEADING)];
   const sections = collectSections(markdown, VERDICT_HEADING);
   if (sections.length !== 1) {
-    throw new Error('final mode requires exactly one Final Verdict section');
+    throw new ReconGateError('verdict-section-required');
   }
   const afterVerdictHeading = markdown.slice(
     headings[0].index + headings[0][0].length,
   );
   if (/^##\s+/m.test(afterVerdictHeading)) {
-    throw new Error('Final Verdict must be the final level-two section');
+    throw new ReconGateError('verdict-not-final-section');
   }
 
-  const fields = parseFields(sections[0].body, 'Final Verdict');
+  const fields = parseFields(sections[0].body);
   const verdict = fields.get('verdict');
   if (!verdict) {
-    throw new Error('Final Verdict is missing required field: verdict');
+    throw new ReconGateError('verdict-field-missing');
   }
   if (!VERDICTS.has(verdict)) {
-    throw new Error(`Final Verdict has unrecognized verdict: ${verdict}`);
+    throw new ReconGateError('verdict-unrecognized');
   }
   if (!fields.get('rationale')) {
-    throw new Error('Final Verdict is missing required field: rationale');
+    throw new ReconGateError('verdict-field-missing');
   }
 
   return { verdict, fields };
@@ -226,7 +232,7 @@ function parseScenarioList(value) {
 
 function requireFinalEvidence(entries, admittedScenarios) {
   if (!Array.isArray(admittedScenarios)) {
-    throw new Error('final mode requires admitted corpus scenarios');
+    throw new ReconGateError('admitted-scenarios-required');
   }
   const admitted = new Set(admittedScenarios);
   if (
@@ -235,13 +241,13 @@ function requireFinalEvidence(entries, admittedScenarios) {
     || !admitted.has('priority-absent')
     || !admitted.has('grouped-long')
   ) {
-    throw new Error('final mode requires the complete admitted scenario matrix');
+    throw new ReconGateError('scenario-matrix-required');
   }
 
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
   const missing = REQUIRED_LIVE_EVIDENCE_IDS.filter((id) => !byId.has(id));
   if (missing.length > 0) {
-    throw new Error(`final ledger is missing required evidence: ${missing.join(', ')}`);
+    throw new ReconGateError('evidence-missing');
   }
 
   for (const entry of entries) {
@@ -255,9 +261,7 @@ function requireFinalEvidence(entries, admittedScenarios) {
       }
       const manifestScenario = LEDGER_TO_MANIFEST_SCENARIO[scenario];
       if (!manifestScenario || !admitted.has(manifestScenario)) {
-        throw new Error(
-          `ledger entry ${entry.id} scenario ${scenario} is not bound to the admitted corpus`,
-        );
+        throw new ReconGateError('scenario-not-admitted');
       }
     }
   }
@@ -331,19 +335,17 @@ function collectBlockingPredicates(byId, verdictFields) {
  */
 export function verifyReconLedger(markdown, { mode, admittedScenarios } = {}) {
   if (mode !== 'evidence' && mode !== 'final') {
-    throw new Error('mode must be evidence or final');
+    throw new ReconGateError('mode-invalid');
   }
   if (typeof markdown !== 'string' || markdown.trim() === '') {
-    throw new Error('ledger markdown must be a non-empty string');
+    throw new ReconGateError('ledger-markdown-required');
   }
 
   const entries = parseEntries(markdown);
   const openQuestions = parseOpenQuestions(markdown);
 
   if (openQuestions.length > 0) {
-    throw new Error(
-      `English-path question remains unresolved: ${openQuestions.join(', ')}`,
-    );
+    throw new ReconGateError('question-unresolved');
   }
 
   if (mode === 'evidence') {
@@ -354,9 +356,7 @@ export function verifyReconLedger(markdown, { mode, admittedScenarios } = {}) {
   const byId = requireFinalEvidence(entries, admittedScenarios);
   const blockers = collectBlockingPredicates(byId, verdictFields);
   if (verdict === 'proceed' && blockers.length > 0) {
-    throw new Error(
-      `proceed verdict conflicts with blocking predicate: ${blockers.join(', ')}`,
-    );
+    throw new ReconGateError('proceed-conflicts-with-blockers');
   }
 
   return { entryCount: entries.length, verdict };
@@ -371,12 +371,15 @@ async function runCli() {
       || (mode === 'final' && args.length !== 3)
       || (mode !== 'evidence' && mode !== 'final')
     ) {
-      throw new Error(
-        'Usage: verify-recon-gate.js evidence <ledger> | final <ledger> <manifest>',
-      );
+      throw new ReconGateError('cli-arguments-invalid');
     }
 
-    const markdown = await readFile(ledgerPath, 'utf8');
+    let markdown;
+    try {
+      markdown = await readFile(ledgerPath, 'utf8');
+    } catch (cause) {
+      throw new ReconGateError('ledger-readable-required', { cause });
+    }
     if (mode === 'evidence') {
       const result = verifyReconLedger(markdown, { mode });
       process.stdout.write(`EVIDENCE READY: ${result.entryCount} terminal entries\n`);
@@ -392,7 +395,14 @@ async function runCli() {
     });
     process.stdout.write(`FINAL VERDICT: ${result.verdict}\n`);
   } catch (error) {
-    process.stderr.write(`Recon ledger rejected: ${error.message}\n`);
+    const code = (error instanceof ReconGateError || error?.name === 'FixtureContractError')
+      && /^[a-z]+(?:-[a-z]+)*$/u.test(error.code ?? '')
+      ? error.code
+      : 'unexpected-error';
+    process.stderr.write(`RECON_GATE_REJECTED ${code}\n`);
+    if (process.env.ZHROMA_RECON_DEBUG === '1') {
+      process.stderr.write(`${error?.cause?.stack ?? error?.stack ?? String(error)}\n`);
+    }
     process.exitCode = 1;
   }
 }
