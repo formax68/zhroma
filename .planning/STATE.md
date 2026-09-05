@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: DOM Recon Spike
-status: executing
-stopped_at: "Plan 01-10 Task 1: awaiting approval independence attestation (question 3 of 3)"
-last_updated: "2026-09-05T13:09:35Z"
+status: awaiting_human_input
+stopped_at: "Plan 01-12 Task 1: awaiting corpus-source and provenance decisions"
+last_updated: "2026-09-05T13:27:39.509Z"
 last_activity: 2026-09-05
-last_activity_desc: Plan 01-09 complete; Plan 01-10 awaits historical approval attestation
-state_head: 69002bc82f9e27c096926ae63fb93164d34a9a48
+last_activity_desc: Plan 01-11 complete; Plan 01-12 preview found deterministic placeholder renumbering
+state_head: f39124165e3c35cfb20011d3723fe62335c14896
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 15
-  completed_plans: 9
+  completed_plans: 11
   percent: 0
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 
 ## Current Position
 
-Phase: 01 (DOM Recon Spike) — EXECUTING
-Plan: 11 of 15 (10 complete)
-Status: Plan 01-11 executing; 01-10 approval record complete with independence not-attested
-Last activity: 2026-09-05 — Completed 01-09; 80 tests pass; awaiting approval independence attestation
+Phase: 01 (DOM Recon Spike) — HUMAN CHECKPOINT
+Plan: 12 of 15 (11 complete)
+Status: Plans 01-10 and 01-11 complete; Plan 01-12 awaits corpus-source and provenance decisions
+Last activity: 2026-09-05 — Completed 01-11; 114 tests pass; Plan 01-12 preview ready for decision
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -64,6 +64,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P06 | 2h 32m | 2 tasks | 3 files |
 | Phase 01 P08 | 2h 59m | 3 tasks | 9 files |
 | Phase 01 P09 | 6 min | 3 tasks | 10 files |
+| Phase 01 P10 | 6 min | 2 tasks | 3 files |
+| Phase 01 P11 | 8 min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -100,7 +102,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 1 remains `gaps_found`; 01-09 and 01-10 are complete, but 01-11 through 01-15 and independent verification remain pending. Phase 2 is closed.
+- Plan 01-12 preview found only deterministic placeholder renumbering beyond the two planned edits (62 canonical, 170 grouped). Corpus remains untouched. Source/provenance decisions are pending; originals are verified recoverable from Git.
+
+- Phase 1 remains `gaps_found`; 01-09 through 01-11 are complete, but 01-12 through 01-15 and independent verification remain pending. Phase 2 is closed.
 - Historical approval independence remains not-attested: the user answered "I don't remember, it should be fine". Preserve verification truth 8 uncertainty.
 - Phase 4's scope depends on a Phase 1 finding: if a locale-independent priority signal exists on the row or cell, the locale work collapses to almost nothing.
 - Store submission has latency and the direct predecessor was delisted at this step. Register the developer account early; budget one rejection-and-resubmit cycle in Phase 5.
@@ -119,6 +123,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-05T13:02:22.012Z
-Stopped at: Plan 01-10 Task 1: awaiting approval independence attestation (question 3 of 3)
-Resume file: .planning/phases/01-dom-recon-spike/01-10-CHECKPOINT.md
+Last session: 2026-09-05T13:27:39.495Z
+Stopped at: Plan 01-12 Task 1: awaiting corpus-source and provenance decisions
+Resume file: .planning/phases/01-dom-recon-spike/01-12-READMISSION-PREVIEW.md
