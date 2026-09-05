@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
-import { DOMParser, Window } from 'happy-dom';
+import { DOMParser, Element, Window } from 'happy-dom';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -118,6 +118,29 @@ afterEach(async () => {
 });
 
 describe('sanitizeFixture', () => {
+  test('preserves the Priority header at index 6 and re-sanitizes to byte-identical output', async () => {
+    const fixture = await createCase(wideCapture());
+    const first = await sanitizeFixture(fixture);
+    const bytes = await readFile(fixture.outputPath);
+    const header = parseDetached(bytes.toString()).querySelector('thead tr');
+    expect(header.children[6].textContent).toBe('Priority');
+    [...header.children].forEach((cell, index) => {
+      if (index !== 6) expect(cell.textContent).toMatch(/^TEXT-\d{3,}$/);
+    });
+    const repeat = await createCase(bytes.toString());
+    expect(await sanitizeFixture(repeat)).toEqual(first);
+    expect(await readFile(repeat.outputPath)).toEqual(bytes);
+  });
+
+  test('validates its own serialized product before any write', async () => {
+    const fixture = await createCase();
+    const getHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'outerHTML').get;
+    vi.spyOn(Element.prototype, 'outerHTML', 'get').mockImplementation(function () {
+      return getHTML.call(this).replace('TEXT-001', 'Unrecognized residual');
+    });
+    await expectRejected(fixture, 'output-contract-violated');
+  });
+
   test('rejects a denylist inside the worktree, directly or through an outside symlink', async () => {
     const fixture = await createCase();
     await expectRejected({ ...fixture, denylistPath: join(repositoryRoot, 'package.json') }, 'denylist-inside-worktree');
