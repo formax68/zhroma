@@ -7,8 +7,8 @@ import { sanitizeFixture, sha256 } from '../../scripts/sanitize-fixture.js';
 import { REQUIRED_SCENARIOS } from '../../scripts/fixture-contract.js';
 import { validateSanitizedOutput, PRIORITY_LABELS, PRIORITY_HEADER_LABEL } from '../../scripts/sanitized-output-contract.js';
 
-const fixtureRoot = new URL('../fixtures/', import.meta.url);
-const manifest = JSON.parse(await readFile(new URL('manifest.json', fixtureRoot), 'utf8'));
+const fixtureRoot = join(process.cwd(), 'test', 'fixtures');
+const manifest = JSON.parse(await readFile(join(fixtureRoot, 'manifest.json'), 'utf8'));
 const directories = [];
 afterEach(async () => {
   await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
@@ -32,7 +32,7 @@ test('provenance coverage includes exactly the admitted scenario matrix', () => 
 
 for (const entry of manifest.fixtures) {
   test(`${entry.scenario}: committed bytes satisfy the shared grammar and provenance declaration`, async () => {
-    const bytes = await readFile(new URL(entry.file, fixtureRoot));
+    const bytes = await readFile(join(fixtureRoot, entry.file));
     expect(validateSanitizedOutput(bytes.toString())).toMatchObject({ tableCount: 1 });
     expect(sha256(bytes)).toBe(entry.sha256);
     expect(entry.sanitizationMethod).toMatch(/Re-admitted.*previously sanitized repository bytes/);
@@ -40,14 +40,14 @@ for (const entry of manifest.fixtures) {
   });
 
   test(`${entry.scenario}: re-sanitization preserves exact bytes and manifest hash`, async () => {
-    const bytes = await readFile(new URL(entry.file, fixtureRoot));
+    const bytes = await readFile(join(fixtureRoot, entry.file));
     const result = await roundTrip(bytes);
     expect(result.output).toEqual(bytes);
     expect(result.sha256).toBe(entry.sha256);
   });
 
   test(`${entry.scenario}: Priority header and values match the declared presence or absence`, async () => {
-    const bytes = await readFile(new URL(entry.file, fixtureRoot));
+    const bytes = await readFile(join(fixtureRoot, entry.file));
     const isolated = new Window({ settings: { enableJavaScriptEvaluation: false, disableJavaScriptFileLoading: true, disableCSSFileLoading: true, enableImageFileLoading: false } });
     const document = new isolated.DOMParser().parseFromString(bytes.toString(), 'text/html');
     const header = document.querySelector(entry.selectors.headerRow);
@@ -68,7 +68,7 @@ for (const entry of manifest.fixtures) {
 
 test('a mutated stand-in fails exact parity and hash agreement', async () => {
   const entry = manifest.fixtures[0];
-  const bytes = await readFile(new URL(entry.file, fixtureRoot));
+  const bytes = await readFile(join(fixtureRoot, entry.file));
   const mutated = Buffer.from(bytes.toString().replace('TEXT-001', 'TEXT-001x'));
   const result = await roundTrip(mutated);
   expect(result.output).not.toEqual(mutated);
