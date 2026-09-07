@@ -50,22 +50,177 @@ const LEDGER_TO_MANIFEST_SCENARIO = Object.freeze({
   'priority-absent': 'priority-absent',
 });
 
-export const REQUIRED_LIVE_EVIDENCE_IDS = Object.freeze([
-  'shell-metadata',
-  'top-document-reachability',
-  'root-chain',
-  'stable-identifiers',
-  'header-topology',
-  'priority-representation',
-  'priority-absence',
-  'ticket-vs-group-rows',
-  'scrolling-and-recycling',
-  'painting-element',
-  'sticky-header-state',
-  'interaction-and-sticky-states',
-  'inert-attribute-survival',
-  'english-language-signal',
-  'current-host-coverage',
+export const REQUIRED_LIVE_EVIDENCE = Object.freeze(Object.fromEntries(
+  Object.entries({
+  "shell-metadata": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped",
+      "priority-absent"
+    ]
+  },
+  "top-document-reachability": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped",
+      "priority-absent"
+    ]
+  },
+  "root-chain": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped",
+      "priority-absent"
+    ]
+  },
+  "stable-identifiers": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped",
+      "priority-absent"
+    ]
+  },
+  "header-topology": {
+    "scope": "English path",
+    "statuses": [
+      "disproved"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped",
+      "priority-absent"
+    ]
+  },
+  "priority-representation": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped"
+    ]
+  },
+  "priority-absence": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-absent"
+    ]
+  },
+  "ticket-vs-group-rows": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped",
+      "priority-absent"
+    ]
+  },
+  "scrolling-and-recycling": {
+    "scope": "English path",
+    "statuses": [
+      "disproved"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long"
+    ]
+  },
+  "painting-element": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long"
+    ]
+  },
+  "sticky-header-state": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped",
+      "priority-absent"
+    ]
+  },
+  "interaction-and-sticky-states": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long"
+    ]
+  },
+  "inert-attribute-survival": {
+    "scope": "English path",
+    "statuses": [
+      "disproved"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long"
+    ]
+  },
+  "english-language-signal": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped",
+      "priority-absent"
+    ]
+  },
+  "current-host-coverage": {
+    "scope": "English path",
+    "statuses": [
+      "verified"
+    ],
+    "scenarios": [
+      "priority-present-grouped-long",
+      "priority-present-ungrouped",
+      "priority-absent"
+    ]
+  }
+}).map(([id, contract]) => [id, Object.freeze({
+    ...contract, statuses: Object.freeze(contract.statuses), scenarios: Object.freeze(contract.scenarios),
+  })]),
+));
+
+const BLOCKER_ORDER = Object.freeze([
+  "required-evidence-scope-mismatch",
+  "required-evidence-status-inadmissible",
+  "required-evidence-scenario-mismatch",
+  "interaction-grammar-violated",
+  "interaction-evidence-incomplete",
+  "closed-root-not-ruled-out",
+  "selector-fallback-not-matrix-proven",
+  "corpus-disposition-incomplete",
+  "human-dispositions-incomplete"
 ]);
 
 export class ReconGateError extends Error {
@@ -73,6 +228,7 @@ export class ReconGateError extends Error {
     super('Recon ledger rejected', options);
     this.name = 'ReconGateError';
     this.code = code;
+    this.blockers = Object.freeze([...(options?.blockers ?? [])]);
   }
 }
 
@@ -247,13 +403,28 @@ function requireFinalEvidence(entries, admittedScenarios) {
   }
 
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
-  const missing = REQUIRED_LIVE_EVIDENCE_IDS.filter((id) => !byId.has(id));
+  const missing = Object.keys(REQUIRED_LIVE_EVIDENCE).filter((id) => !byId.has(id));
   if (missing.length > 0) {
     throw new ReconGateError('evidence-missing');
   }
 
+  const blockers = [];
   for (const entry of entries) {
+    const contract = REQUIRED_LIVE_EVIDENCE[entry.id];
+    if (contract && entry.scope !== contract.scope) {
+      blockers.push('required-evidence-scope-mismatch');
+      continue;
+    }
+    if (contract && !contract.statuses.includes(entry.status)) {
+      blockers.push('required-evidence-status-inadmissible');
+    }
     const scenarios = parseScenarioList(entry.fields.get('scenario'));
+    if (contract && (scenarios.length !== contract.scenarios.length
+      || new Set(scenarios).size !== scenarios.length
+      || contract.scenarios.some(scenario => !scenarios.includes(scenario)))) {
+      blockers.push('required-evidence-scenario-mismatch');
+      continue;
+    }
     for (const scenario of scenarios) {
       if (entry.id === 'tracer-english-path' && SYNTHETIC_SCENARIOS.has(scenario)) {
         continue;
@@ -268,7 +439,7 @@ function requireFinalEvidence(entries, admittedScenarios) {
     }
   }
 
-  return byId;
+  return { byId, blockers };
 }
 
 function positiveIntegerField(entry, field) {
@@ -361,10 +532,11 @@ export function verifyReconLedger(markdown, { mode, admittedScenarios } = {}) {
   }
 
   const { verdict, fields: verdictFields } = parseVerdict(markdown);
-  const byId = requireFinalEvidence(entries, admittedScenarios);
-  const blockers = collectBlockingPredicates(byId, verdictFields, markdown);
+  const { byId, blockers: evidenceBlockers } = requireFinalEvidence(entries, admittedScenarios);
+  const found = new Set([...evidenceBlockers, ...collectBlockingPredicates(byId, verdictFields, markdown)]);
+  const blockers = BLOCKER_ORDER.filter(code => found.has(code));
   if (verdict === 'proceed' && blockers.length > 0) {
-    throw new ReconGateError('proceed-conflicts-with-blockers');
+    throw new ReconGateError('proceed-conflicts-with-blockers', { blockers });
   }
 
   return { entryCount: entries.length, verdict };

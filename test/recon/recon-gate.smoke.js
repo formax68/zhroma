@@ -266,7 +266,7 @@ test('repository ledger admits terminal evidence for every English-path question
     'utf8',
   );
 
-  assert.deepEqual(reconGate.REQUIRED_LIVE_EVIDENCE_IDS, EXPECTED_LIVE_IDS);
+  assert.deepEqual(Object.keys(reconGate.REQUIRED_LIVE_EVIDENCE), EXPECTED_LIVE_IDS);
 
   for (const id of EXPECTED_LIVE_IDS) {
     const heading = `## Ledger Entry: ${id}`;
@@ -310,7 +310,7 @@ test('final mode binds the complete repository ledger to admitted scenarios', as
       mode: 'final',
       admittedScenarios: ADMITTED_SCENARIOS,
     }),
-    { name: 'ReconGateError', code: 'scenario-not-admitted' },
+    { name: 'ReconGateError', code: 'proceed-conflicts-with-blockers' },
   );
 });
 
