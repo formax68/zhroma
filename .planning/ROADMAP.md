@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Anyone reading the repo can state, from the recorded answers alone, whether a closed Shadow DOM wraps the ticket list and whether `data-garden-id` is present on rows in a current agent view — the two answers that decide whether the project proceeds as designed.
   4. The recon was performed in the English agent UI only. `SELECTORS.md` records the observed page-language signal, but Phase 1 makes no claim that it works across UI languages.
 
-**Plans**: 14/15 plans executed (8/8 executed; 7 gap-closure plans planned after verification found gaps)
+**Plans**: 15/15 plans executed (8/8 executed; 7 gap-closure plans planned after verification found gaps)
 
 Plans:
 
@@ -88,7 +88,7 @@ Plans:
 
 **Gap Wave 6** *(blocked on Gap Wave 5)*
 
-- [ ] 01-15-PLAN.md — Structured per-rung fallback evidence, parsed declared gate inputs, and a verdict with nothing contradicting it (CR-08, CR-10).
+- [x] 01-15-PLAN.md — Structured per-rung fallback evidence, parsed declared gate inputs, and a verdict with nothing contradicting it (CR-08, CR-10).
 
 ### Phase 2: First Tint on a Real View
 
@@ -162,7 +162,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. DOM Recon Spike | 14/15 | In Progress|  |
+| 1. DOM Recon Spike | 15/15 | In Progress|  |
 | 2. First Tint on a Real View | 0/TBD | Not started | - |
 | 3. The Tint Survives Everything | 0/TBD | Not started | - |
 | 4. Honest Failure and an Off Switch | 0/TBD | Not started | - |

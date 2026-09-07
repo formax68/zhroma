@@ -71,3 +71,12 @@ This summary records implementation completion, not independent acceptance. Code
 ## Self-Check: PASSED
 
 All task commits, owned files, and approval record exist; active tests pass without todos. No dependency installation or version change occurred.
+
+## Independent Audit Remediation
+
+The first independent review of source `83d2be6` reproduced residual CR-05 (a body row could impersonate a header), CR-08 (unrelated existing test files could prove fallback), CR-09 (arbitrary words inside CSS functions), and new metadata grammar gaps. Those results were not erased by the initial green suite.
+
+- RED `7e97418`: four Node regressions fail and the new header-identity Vitest regression fails.
+- GREEN `8572685`: shared structural parser binds actual header identity; numeric CSS color/gradient productions reject arbitrary words; a validator-owned per-rung proof registry replaces mere file existence; unproven proof and flagged metadata use closed tokens. The final paint-owner vocabulary now uses `direct-cells`, matching the shared assessor.
+- Full suite after remediation: **64 Node + 108 Vitest = 172 passed**, no failures, skips, or todos. Positive numeric color-space/gradient and direct-cell owner cases prevent a reject-everything workaround.
+- Fresh independent rechecks and the canonical phase verification report determine final acceptance; this addendum does not self-certify those gates.
