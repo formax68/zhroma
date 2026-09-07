@@ -419,3 +419,35 @@ test('all seven spec-less planning probes remain visibly unresolved', async () =
 
   assert.equal(unresolvedRows?.length, 7);
 });
+
+function mutateEntry(markdown, id, transform) {
+  const heading = `## Ledger Entry: ${id}\n`;
+  const start = markdown.indexOf(heading);
+  assert.notEqual(start, -1);
+  const next = markdown.indexOf('\n## ', start + heading.length);
+  const end = next === -1 ? markdown.length : next;
+  return markdown.slice(0, start) + transform(markdown.slice(start, end)) + markdown.slice(end);
+}
+
+function finalCheck(markdown) {
+  return verifyReconLedger(markdown, { mode: 'final', admittedScenarios: ADMITTED_SCENARIOS });
+}
+
+test('final gate rejects arbitrary private paint', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  const mutated = mutateEntry(markdown, 'interaction-and-sticky-states', section => section
+    .replace(/^- normal-paint:.*$/m, '- normal-paint: `PRIVATE-NORMAL`')
+    .replace(/^- hover-paint:.*$/m, '- hover-paint: `PRIVATE-HOVER`')
+    .replace(/^- selected-paint:.*$/m, '- selected-paint: `PRIVATE-SELECTED`'));
+  assert.throws(() => finalCheck(mutated), { code: 'proceed-conflicts-with-blockers' });
+});
+
+test('final gate rejects paint differing only by whitespace and case', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  const mutated = mutateEntry(markdown, 'interaction-and-sticky-states', section => {
+    const normal = section.match(/^- normal-paint: `(.*)`$/m)[1];
+    return section.replace(/^- hover-paint:.*$/m,
+      `- hover-paint: \`${normal.replaceAll(', ', ',  ').replaceAll('rgb', 'RGB')}\``);
+  });
+  assert.throws(() => finalCheck(mutated), { code: 'proceed-conflicts-with-blockers' });
+});
