@@ -555,6 +555,6 @@ test('verdict authorization enums and fallback states are closed', async () => {
 
 test('null-shadowRoot alone does not rule out a closed root', async () => {
   const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
-  const changed = mutateEntry(markdown, 'root-chain', s => s + '\n- shadow-root-proof: `null-shadowRoot`\n');
+  const changed = mutateEntry(markdown, 'root-chain', s => s.replace(/^- shadow-root-proof:.*$/m, '- shadow-root-proof: `null-shadowRoot`'));
   expectBlockers(changed, ['closed-root-not-ruled-out']);
 });

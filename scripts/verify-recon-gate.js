@@ -1,3 +1,6 @@
+import { accessSync, realpathSync, statSync } from 'node:fs';
+import { relative, resolve, isAbsolute } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
@@ -5,10 +8,12 @@ import { assessInteractionEvidence, InteractionEvidenceError } from './interacti
 
 import { validateFixtureManifest } from './fixture-contract.js';
 
+const REPOSITORY_ROOT = realpathSync(fileURLToPath(new URL('..', import.meta.url)));
+
 const ENTRY_HEADING = /^## Ledger Entry:\s*(.+?)\s*$/gm;
 const QUESTION_HEADING = /^## Recon Question:\s*(.+?)\s*$/gm;
 const VERDICT_HEADING = /^## Final Verdict\s*$/gm;
-const FIELD_LINE = /^- ([a-z][a-z-]*):\s*(.*)$/gm;
+const FIELD_LINE = /^- ([a-z][a-z0-9-]*):\s*(.*)$/gm;
 
 const REQUIRED_ENTRY_FIELDS = Object.freeze([
   'id',
@@ -220,7 +225,9 @@ const BLOCKER_ORDER = Object.freeze([
   "closed-root-not-ruled-out",
   "selector-fallback-not-matrix-proven",
   "corpus-disposition-incomplete",
-  "human-dispositions-incomplete"
+  "human-dispositions-incomplete",
+  "verdict-field-not-structured",
+  "fallback-evidence-path-missing"
 ]);
 
 export class ReconGateError extends Error {
@@ -447,6 +454,20 @@ function positiveIntegerField(entry, field) {
   return /^\d+$/u.test(value ?? '') && Number(value) > 0;
 }
 
+function existingProof(proof) {
+  // Only canonical repository test files can serve as proof references.
+  if (!/^test\/recon\/[a-z0-9-]+\.(?:test|smoke)\.js$/.test(proof)) return false;
+  try {
+    const path = realpathSync(resolve(REPOSITORY_ROOT, proof));
+    const relativePath = relative(REPOSITORY_ROOT, path);
+    if (isAbsolute(relativePath) || relativePath.startsWith('..')) return false;
+    accessSync(path);
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
+
 function collectBlockingPredicates(byId, verdictFields, markdown) {
   const blockers = [];
   try {
@@ -473,30 +494,54 @@ function collectBlockingPredicates(byId, verdictFields, markdown) {
     blockers.push('interaction-evidence-incomplete');
   }
 
+  const enums = {
+    'closed-shadow-dom-state': ['ruled-out', 'present', 'inconclusive'],
+    'garden-identifier-state': ['present', 'absent'],
+    'corpus-gates-state': ['passed', 'failed'],
+    'interaction-gate-state': ['passed', 'failed'],
+  };
+  for (const [field, allowed] of Object.entries(enums)) {
+    if (!allowed.includes(verdictFields.get(field))) blockers.push('verdict-field-not-structured');
+  }
+  if (verdictFields.get('interaction-gate-state') !== 'passed') {
+    blockers.push('interaction-evidence-incomplete');
+  }
   const rootChain = byId.get('root-chain');
+  const reachability = byId.get('top-document-reachability');
   if (
     rootChain?.status !== 'verified'
-    || !rootChain.fields.get('evidence')?.includes('[{ type: "Document" }]')
-    || !rootChain.fields.get('interpretation')?.includes('No open or closed ShadowRoot')
-    || !verdictFields.get('closed-shadow-dom')?.startsWith('No.')
-  ) {
-    blockers.push('closed-root-not-ruled-out');
-  }
+    || reachability?.status !== 'verified'
+    || rootChain?.fields.get('root-terminus') !== 'Document'
+    || rootChain?.fields.get('shadow-root-proof') !== 'root-chain-plus-top-document-reachability'
+    || verdictFields.get('closed-shadow-dom-state') !== 'ruled-out'
+  ) blockers.push('closed-root-not-ruled-out');
 
-  const identifiers = byId.get('stable-identifiers');
-  const identifiersPresent = identifiers?.status === 'verified'
-    && identifiers.fields.get('evidence')?.includes('data-garden-id="tables.table"')
-    && identifiers.fields.get('evidence')?.includes('data-test-id="generic-table"');
-  const fallbackMatrixProven = verdictFields.get('ranked-fallback')
-    ?.includes('complete three-scenario corpus');
-  if (
-    !identifiersPresent
-    && !fallbackMatrixProven
-  ) {
-    blockers.push('selector-fallback-not-matrix-proven');
+  const identifiersPresent = byId.get('stable-identifiers')?.status === 'verified'
+    && verdictFields.get('garden-identifier-state') === 'present';
+  const rungIds = ['garden-pair', 'test-id-pair', 'structural'];
+  const proven = [];
+  for (const [index, id] of rungIds.entries()) {
+    const parts = (verdictFields.get(`fallback-rung-${index + 1}`) ?? '').split('|').map(s => s.trim());
+    const [identifier, state, proof] = parts;
+    if (parts.length !== 3 || identifier !== id || !['proven', 'unproven', 'disproved'].includes(state) || !proof) {
+      blockers.push('verdict-field-not-structured');
+      continue;
+    }
+    if (state !== 'proven') continue;
+    if (!existingProof(proof)) {
+      blockers.push('fallback-evidence-path-missing');
+      continue;
+    }
+    // The Garden rung is the same evidence as stable-identifiers; it cannot
+    // independently rescue a disproved observation of those identifiers.
+    if (id !== 'garden-pair' || identifiersPresent) proven.push(id);
   }
-
-  if (!verdictFields.get('corpus-gates')?.startsWith('Passed')) {
+  const authorization = identifiersPresent ? 'garden-pair' : proven[0];
+  if (!authorization) blockers.push('selector-fallback-not-matrix-proven');
+  if (verdictFields.get('selector-authorization') !== (authorization ?? 'none')) {
+    blockers.push('verdict-field-not-structured');
+  }
+  if (verdictFields.get('corpus-gates-state') !== 'passed') {
     blockers.push('corpus-disposition-incomplete');
   }
   if (verdictFields.get('prohibition-dispositions') !== 'passed') {

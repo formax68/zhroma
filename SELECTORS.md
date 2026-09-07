@@ -50,6 +50,9 @@ The three live scenarios are named only by their structural purpose:
 
 ## Ledger Entry: root-chain
 
+- root-terminus: `Document`
+- shadow-root-proof: `root-chain-plus-top-document-reachability`
+
 - id: `root-chain`
 - question: What is the complete root and host chain from a selected ticket row to its owner document, including every ShadowRoot mode?
 - scope: `English path`
@@ -286,6 +289,15 @@ requirement. They remain inputs to the final Plan 05 admission/verdict gate.
 | RECON-03 | ordering | unresolved | When elements compare equal, is output order specified and stable? |
 
 ## Final Verdict
+
+- closed-shadow-dom-state: `ruled-out`
+- garden-identifier-state: `present`
+- corpus-gates-state: `passed`
+- interaction-gate-state: `passed`
+- fallback-rung-1: `garden-pair | proven | test/recon/fixture-contract.test.js`
+- fallback-rung-2: `test-id-pair | unproven | none`
+- fallback-rung-3: `structural | unproven | none`
+- selector-authorization: `garden-pair`
 
 - verdict: `proceed`
 - closed-shadow-dom: No. Every sampled ticket row was directly contained by the current top document and its complete root chain ended at `Document` without any open or closed `ShadowRoot`.
