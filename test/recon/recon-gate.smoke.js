@@ -524,6 +524,37 @@ test('required evidence cannot be relabeled as localization-only', async () => {
   }
 });
 
-test.todo('CR-08: fallback proof must authorize selectors — owner Plan 01-15');
+test('CR-08: disproved identifiers with intact prose cannot authorize fallback', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  expectBlockers(mutateEntry(markdown, 'stable-identifiers', s => s.replace(
+    '- status: `verified`', '- status: `disproved`')), ['selector-fallback-not-matrix-proven']);
+});
 test.todo('CR-10: unresolved declared inputs must block — owner Plan 01-15');
+});
+
+function verdictField(markdown, name, value) {
+  const line = `- ${name}: \`${value}\``;
+  const pattern = new RegExp(`^- ${name}:.*$`, 'm');
+  return pattern.test(markdown) ? markdown.replace(pattern, line)
+    : markdown.replace('## Final Verdict\n', `## Final Verdict\n\n${line}\n`);
+}
+
+test('proven fallback requires an existing proof path', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  expectBlockers(verdictField(markdown, 'fallback-rung-1',
+    'garden-pair | proven | test/recon/does-not-exist.js'), ['fallback-evidence-path-missing']);
+});
+
+test('verdict authorization enums and fallback states are closed', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  for (const field of ['closed-shadow-dom-state', 'garden-identifier-state', 'corpus-gates-state', 'interaction-gate-state']) {
+    expectBlockers(verdictField(markdown, field, 'unknown'), ['verdict-field-not-structured']);
+  }
+  expectBlockers(verdictField(markdown, 'fallback-rung-3', 'structural | unknown | none'), ['verdict-field-not-structured']);
+});
+
+test('null-shadowRoot alone does not rule out a closed root', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  const changed = mutateEntry(markdown, 'root-chain', s => s + '\n- shadow-root-proof: `null-shadowRoot`\n');
+  expectBlockers(changed, ['closed-root-not-ruled-out']);
 });
