@@ -80,3 +80,9 @@ The first independent review of source `83d2be6` reproduced residual CR-05 (a bo
 - GREEN `8572685`: shared structural parser binds actual header identity; numeric CSS color/gradient productions reject arbitrary words; a validator-owned per-rung proof registry replaces mere file existence; unproven proof and flagged metadata use closed tokens. The final paint-owner vocabulary now uses `direct-cells`, matching the shared assessor.
 - Full suite after remediation: **64 Node + 108 Vitest = 172 passed**, no failures, skips, or todos. Positive numeric color-space/gradient and direct-cell owner cases prevent a reject-everything workaround.
 - Fresh independent rechecks and the canonical phase verification report determine final acceptance; this addendum does not self-certify those gates.
+
+### Final Paint Equivalence Recheck
+
+A second independent probe found that equivalent transparent colors in different CSS spellings could count as distinct states. RED `9d62f94` reproduced it; GREEN `1341022` now admits only the observed computed comma-RGB/RGBA/transparent serialization with `image:none`, bounds numeric channels and alpha, and compares canonical numeric colors (including all alpha-zero colors). Other color spaces and images fail closed until a future contract explicitly supports their canonicalization. This supersedes the preceding addendum's broader color/gradient support claim.
+
+Final suite after this correction: **65 Node + 108 Vitest = 173 passed**, no failures, skips, or todos. Recorded corpus and final verdict are unchanged.
