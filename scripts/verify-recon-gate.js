@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
+import { assessInteractionEvidence, InteractionEvidenceError } from './interaction-evidence.js';
+
 import { validateFixtureManifest } from './fixture-contract.js';
 
 const ENTRY_HEADING = /^## Ledger Entry:\s*(.+?)\s*$/gm;
@@ -274,8 +276,14 @@ function positiveIntegerField(entry, field) {
   return /^\d+$/u.test(value ?? '') && Number(value) > 0;
 }
 
-function collectBlockingPredicates(byId, verdictFields) {
+function collectBlockingPredicates(byId, verdictFields, markdown) {
   const blockers = [];
+  try {
+    assessInteractionEvidence(markdown);
+  } catch (error) {
+    if (!(error instanceof InteractionEvidenceError)) throw error;
+    blockers.push('interaction-grammar-violated');
+  }
   const interaction = byId.get('interaction-and-sticky-states');
   const paintSummaries = [
     interaction?.fields.get('normal-paint'),
@@ -354,7 +362,7 @@ export function verifyReconLedger(markdown, { mode, admittedScenarios } = {}) {
 
   const { verdict, fields: verdictFields } = parseVerdict(markdown);
   const byId = requireFinalEvidence(entries, admittedScenarios);
-  const blockers = collectBlockingPredicates(byId, verdictFields);
+  const blockers = collectBlockingPredicates(byId, verdictFields, markdown);
   if (verdict === 'proceed' && blockers.length > 0) {
     throw new ReconGateError('proceed-conflicts-with-blockers');
   }
