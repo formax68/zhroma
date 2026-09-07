@@ -169,6 +169,10 @@ export function parseBoundedCapture(markup) {
     reject('parse-failed');
   }
 
+  return resolveBoundedDocument(parsed);
+}
+
+export function resolveBoundedDocument(parsed) {
   const rootElements = [...parsed.body.children];
   if (rootElements.length !== 1 || parsed.head.childNodes.length > 0
     || [...parsed.body.childNodes].some((node) => node.nodeType === 3 && node.data.trim())) {
@@ -247,7 +251,7 @@ export function parseBoundedCapture(markup) {
     }
   }
 
-  return { root, priorityCells, priorityHeaderCell: headerCells[priorityIndexes[0]] ?? null,
+  return { root, table, headerRow: headerRows[0], priorityCells, priorityHeaderCell: headerCells[priorityIndexes[0]] ?? null,
     priorityIndex: priorityIndexes[0] ?? null, ticketRowCount: ticketRows.length };
 }
 

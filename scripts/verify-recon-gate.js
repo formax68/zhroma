@@ -510,6 +510,9 @@ function parseAssumptionRows(markdown) {
 function assumptionBlockers(markdown, verdictFields) {
   const blockers = [];
   const flagged = (verdictFields.get('flagged-assumptions') ?? '').split(',').map(s => s.trim());
+  if (flagged.length !== 1 || !['none', 'RECON-01/unclassified'].includes(flagged[0])) {
+    blockers.push('verdict-field-not-structured');
+  }
   for (const row of parseAssumptionRows(markdown)) {
     if (row.gating === 'non-gating') {
       if (!flagged.includes(row.id)) blockers.push('flagged-assumption-not-surfaced');
@@ -528,6 +531,22 @@ function assumptionBlockers(markdown, verdictFields) {
       })) blockers.push('declared-input-evidence-missing');
   }
   return blockers;
+}
+
+// Only a strategy with an admitted, validator-owned proof contract may authorize.
+// No test-id-pair or structural proof has been admitted; an existing file alone
+// cannot promote either strategy to proven.
+const FALLBACK_PROOFS = Object.freeze({
+  'garden-pair': Object.freeze({
+    path: 'test/recon/fixture-contract.test.js',
+    case: 'validates exact bytes, provenance, selectors, and all scenario invariants',
+  }),
+});
+
+function fallbackProof(id, proof) {
+  const contract = FALLBACK_PROOFS[id];
+  return !!contract && proof === contract.path && existingProof(proof)
+    && readFileSync(resolve(REPOSITORY_ROOT, proof), 'utf8').includes(contract.case);
 }
 
 function existingProof(proof) {
@@ -565,7 +584,7 @@ function collectBlockingPredicates(byId, verdictFields, markdown) {
     || paintSummaries.some((summary) => !summary)
     || new Set(paintSummaries).size !== paintSummaries.length
     || interaction?.fields.get('interaction-owner') !== 'user'
-    || !['row', 'cell'].includes(interaction?.fields.get('actual-paint-owner'))
+    || !['row', 'direct-cells'].includes(interaction?.fields.get('actual-paint-owner'))
   ) {
     blockers.push('interaction-evidence-incomplete');
   }
@@ -603,8 +622,11 @@ function collectBlockingPredicates(byId, verdictFields, markdown) {
       blockers.push('verdict-field-not-structured');
       continue;
     }
-    if (state !== 'proven') continue;
-    if (!existingProof(proof)) {
+    if (state !== 'proven') {
+      if (proof !== 'none') blockers.push('verdict-field-not-structured');
+      continue;
+    }
+    if (!fallbackProof(id, proof)) {
       blockers.push('fallback-evidence-path-missing');
       continue;
     }

@@ -620,3 +620,10 @@ test('audit: new verdict metadata uses closed identifiers and proof tokens', asy
     ['flagged-assumptions', 'RECON-01/unclassified, private person'],
   ]) expectBlockers(verdictField(markdown, field, value), ['verdict-field-not-structured']);
 });
+
+test('final interaction owner vocabulary matches row and direct-cell support', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  const directCells = mutateEntry(markdown, 'interaction-and-sticky-states', s => s.replace(
+    '- actual-paint-owner: `row`', '- actual-paint-owner: `direct-cells`'));
+  assert.equal(finalCheck(directCells).verdict, 'proceed');
+});

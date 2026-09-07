@@ -32,8 +32,14 @@ const POSITIVE_FIELDS = Object.freeze([
 
 const ALLOWED_FIELDS = new Set([...STANDARD_FIELDS, ...POSITIVE_FIELDS]);
 const PAINT_OWNER = /^(?:row|direct-cells|pane|mixed)$/;
-const COLOR = String.raw`(?:transparent|rgba?\([0-9.,% /+-]+\)|color\([a-z0-9.,% /+-]+\)|#[0-9a-f]{3,8})`;
-const IMAGE = String.raw`(?:none|(?:linear|radial)-gradient\([a-z0-9#.,%() /+-]+\))`;
+const NUMBER = String.raw`[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)`;
+const CHANNEL = String.raw`${NUMBER}%?`;
+const RGB_ARGS = String.raw`(?:${CHANNEL}\s*,\s*${CHANNEL}\s*,\s*${CHANNEL}(?:\s*,\s*${CHANNEL})?|${CHANNEL}\s+${CHANNEL}\s+${CHANNEL}(?:\s*/\s*${CHANNEL})?)`;
+const COLOR_SPACE = '(?:srgb|srgb-linear|display-p3|a98-rgb|prophoto-rgb|rec2020|xyz|xyz-d50|xyz-d65)';
+const COLOR = String.raw`(?:transparent|rgba?\(\s*${RGB_ARGS}\s*\)|color\(\s*${COLOR_SPACE}\s+${CHANNEL}\s+${CHANNEL}\s+${CHANNEL}(?:\s*/\s*${CHANNEL})?\s*\)|#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{4}|[0-9a-f]{3}))`;
+const STOP = String.raw`${COLOR}(?:\s+${CHANNEL})?`;
+const DIRECTION = String.raw`(?:${NUMBER}(?:deg|grad|rad|turn)|to\s+(?:left|right|top|bottom)(?:\s+(?:left|right|top|bottom))?)`;
+const IMAGE = String.raw`(?:none|linear-gradient\(\s*(?:${DIRECTION}\s*,\s*)?${STOP}(?:\s*,\s*${STOP})+\s*\)|radial-gradient\(\s*(?:(?:circle|ellipse)\s*,\s*)?${STOP}(?:\s*,\s*${STOP})+\s*\))`;
 const PAINT_SUMMARY = new RegExp(
   String.raw`^row=color:${COLOR},image:${IMAGE}\|direct-cells=color:${COLOR},image:${IMAGE}\|pane=color:${COLOR},image:${IMAGE}$`,
   'i',

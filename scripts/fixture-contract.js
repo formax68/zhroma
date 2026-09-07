@@ -5,7 +5,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { Window } from 'happy-dom';
 
 import { scanSensitiveContent } from './sensitive-patterns.js';
-import { PRIORITY_HEADER_LABEL, validateSanitizedOutput, SanitizedOutputError } from './sanitized-output-contract.js';
+import { PRIORITY_HEADER_LABEL, resolveBoundedDocument, validateSanitizedOutput, SanitizedOutputError } from './sanitized-output-contract.js';
 
 const ADMISSION_DENYLIST = Object.freeze([
   '__private_capture_values_were_removed_before_admission__',
@@ -430,7 +430,8 @@ export async function validateFixtureManifest(manifestPath, options = {}) {
     ) {
       throw contractError('declared-ticket-table-not-found');
     }
-    if (headerRow === null || !ownedByTable(headerRow, ticketTable)) {
+    if (headerRow === null || !ownedByTable(headerRow, ticketTable)
+      || headerRow !== resolveBoundedDocument(detachedDocument).headerRow) {
       throw contractError('declared-header-row-not-found');
     }
 
