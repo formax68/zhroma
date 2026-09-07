@@ -1,4 +1,4 @@
-import { accessSync, realpathSync, statSync } from 'node:fs';
+import { accessSync, realpathSync, statSync, readFileSync } from 'node:fs';
 import { relative, resolve, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
@@ -227,7 +227,10 @@ const BLOCKER_ORDER = Object.freeze([
   "corpus-disposition-incomplete",
   "human-dispositions-incomplete",
   "verdict-field-not-structured",
-  "fallback-evidence-path-missing"
+  "fallback-evidence-path-missing",
+  "declared-input-unresolved",
+  "declared-input-evidence-missing",
+  "flagged-assumption-not-surfaced"
 ]);
 
 export class ReconGateError extends Error {
@@ -454,6 +457,79 @@ function positiveIntegerField(entry, field) {
   return /^\d+$/u.test(value ?? '') && Number(value) > 0;
 }
 
+const ASSUMPTION_PROOFS = Object.freeze({
+  "RECON-02/adjacency": [
+    "test/recon/fixture-contract.test.js#fixture-canonical-duplicate",
+    "test/recon/sensitive-patterns.smoke.js#NFD content against NFC denylist"
+  ],
+  "RECON-02/empty": [
+    "test/recon/fixture-contract.test.js#manifest-object-required"
+  ],
+  "RECON-02/ordering": [
+    "test/recon/sensitive-patterns.smoke.js#deduplicates overlapping matches and returns findings in stable order",
+    "test/recon/recon-gate.smoke.js#blocker ordering does not depend on ledger section order"
+  ],
+  "RECON-03/adjacency": [
+    "test/recon/fixture-contract.test.js#binds the absence selector to the declared table and header topology",
+    "test/recon/sanitized-output-contract.test.js#two tables"
+  ],
+  "RECON-03/empty": [
+    "test/recon/recon-gate.smoke.js#empty ledgers and blank required fields reject with stable codes"
+  ],
+  "RECON-03/ordering": [
+    "test/recon/recon-gate.smoke.js#blocker ordering does not depend on ledger section order"
+  ]
+});
+
+function parseAssumptionRows(markdown) {
+  const sections = collectSections(markdown, /^## Spec-less Planning Assumptions\s*$/gm);
+  if (sections.length !== 1) throw new ReconGateError('assumption-table-required');
+  const lines = sections[0].body.split('\n').filter(line => line.trim().startsWith('|'));
+  if (lines.length < 3) throw new ReconGateError('assumption-table-required');
+  const cells = line => line.trim().split('|').slice(1, -1).map(s => s.trim());
+  if (cells(lines[0]).join(',') !== 'Requirement,Category,Status,Gating,Evidence,Probe'
+    || cells(lines[1]).length !== 6 || cells(lines[1]).some(s => !/^:?-{3,}:?$/.test(s))) {
+    throw new ReconGateError('assumption-row-invalid');
+  }
+  const seen = new Set();
+  const rows = lines.slice(2).map(line => {
+    const values = cells(line);
+    const [requirement, category, status, gating, evidence, probe] = values;
+    const id = `${requirement}/${category}`;
+    const expectedGating = id === 'RECON-01/unclassified' ? 'non-gating' : 'gating';
+    if (values.length !== 6 || (!Object.hasOwn(ASSUMPTION_PROOFS, id) && id !== 'RECON-01/unclassified')
+      || seen.has(id) || !['resolved', 'unresolved'].includes(status)
+      || gating !== expectedGating || !probe) throw new ReconGateError('assumption-row-invalid');
+    seen.add(id);
+    return { id, status, gating, evidence };
+  });
+  if (seen.size !== 7) throw new ReconGateError('assumption-row-invalid');
+  return rows;
+}
+
+function assumptionBlockers(markdown, verdictFields) {
+  const blockers = [];
+  const flagged = (verdictFields.get('flagged-assumptions') ?? '').split(',').map(s => s.trim());
+  for (const row of parseAssumptionRows(markdown)) {
+    if (row.gating === 'non-gating') {
+      if (!flagged.includes(row.id)) blockers.push('flagged-assumption-not-surfaced');
+      continue;
+    }
+    if (row.status === 'unresolved') {
+      blockers.push('declared-input-unresolved');
+      continue;
+    }
+    const references = row.evidence.split(';').map(s => s.trim());
+    const expected = ASSUMPTION_PROOFS[row.id];
+    if (references.length !== expected.length || expected.some(ref => !references.includes(ref))
+      || references.some(ref => {
+        const [path, anchor] = ref.split('#');
+        return !existingProof(path) || !anchor || !readFileSync(resolve(REPOSITORY_ROOT, path), 'utf8').includes(anchor);
+      })) blockers.push('declared-input-evidence-missing');
+  }
+  return blockers;
+}
+
 function existingProof(proof) {
   // Only canonical repository test files can serve as proof references.
   if (!/^test\/recon\/[a-z0-9-]+\.(?:test|smoke)\.js$/.test(proof)) return false;
@@ -578,7 +654,7 @@ export function verifyReconLedger(markdown, { mode, admittedScenarios } = {}) {
 
   const { verdict, fields: verdictFields } = parseVerdict(markdown);
   const { byId, blockers: evidenceBlockers } = requireFinalEvidence(entries, admittedScenarios);
-  const found = new Set([...evidenceBlockers, ...collectBlockingPredicates(byId, verdictFields, markdown)]);
+  const found = new Set([...evidenceBlockers, ...collectBlockingPredicates(byId, verdictFields, markdown), ...assumptionBlockers(markdown, verdictFields)]);
   const blockers = BLOCKER_ORDER.filter(code => found.has(code));
   if (verdict === 'proceed' && blockers.length > 0) {
     throw new ReconGateError('proceed-conflicts-with-blockers', { blockers });

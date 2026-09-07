@@ -260,8 +260,8 @@ The three live scenarios are named only by their structural purpose:
 - capture scenarios: `priority-present-ungrouped`, `priority-absent`, and `grouped-long`.
 - boundary: Each fixture is a live-derived projection of the immediate overflow wrapper and its complete ticket table; navigation, sidebars, menus, pagination controls, and unrelated state are excluded.
 - structural fidelity: The canonical fixture retains 16 headers and 4 ticket-row topologies normalized to the four allowed Priority labels; the absence control retains 6 headers, 4 ticket rows, and no seventh header cell or allowed Priority value; the grouped-long fixture retains the same-table sticky-header topology, 1 group row, and 12 ordered ticket-row topologies from the observed 30-row scrollable table.
-- admission: `scripts/sanitize-fixture.js` processed each private, capture-specific-denylisted input into a new repository output. The private inputs were deleted after sanitization; no tenant identity, denylist literal, private path, raw DOM, or identifying text was admitted.
-- verification: `test/fixtures/manifest.json` binds the three scenario assertions and selectors to exact final-byte SHA-256 values. The repository corpus gate performs sensitive scanning before detached parsing, then checks selectors, topology, scenario invariants, and checksums.
+- admission: The corpus was re-admitted through `scripts/sanitize-fixture.js` from previously sanitized repository bytes; this was not a fresh live capture. The prior admission record states that private inputs were deleted. Re-admission removed invalid ARIA stand-ins, restored the recorded Priority header in two fixtures, and renumbered deterministic text tokens with user approval. Original bytes and hashes remain in Git history; every re-admitted fixture passed an identical second sanitizer pass.
+- verification: `test/fixtures/manifest.json` binds the three scenario assertions and selectors to exact final-byte SHA-256 values. The repository corpus gate performs sensitive scanning before detached parsing, then enforces shared sanitized-output grammar, canonical file uniqueness, selectors, topology, scenario invariants, and checksums. Each manifest entry also has a byte-identical sanitizer round-trip test.
 - scope: These fixtures cover only the English current Agent Workspace shell observed on 2026-09-03 with account plan unknown/not shared. They make no legacy-shell, vanity-domain, cross-plan, or localization claim.
 
 ## Execution Safety Note
@@ -276,19 +276,23 @@ paint chain above supplied textual evidence without retaining a visual capture.
 ## Spec-less Planning Assumptions
 
 These planner-generated probes are not live DOM conclusions and do not waive a
-requirement. They remain inputs to the final Plan 05 admission/verdict gate.
+requirement. Six resolved gating rows cite repository test evidence. The unresolved
+RECON-01/unclassified probe is explicitly non-gating under the approved Plan 01-15
+contract and must remain named in the Final Verdict until a specification resolves it.
 
-| Requirement | Category | Status | Probe |
-|-------------|----------|--------|-------|
-| RECON-01 | unclassified | unresolved | Review manually; no spec-derived edge contract is available. |
-| RECON-02 | adjacency | unresolved | When two things are exactly equal or just touch, do they merge, collide, or separate? |
-| RECON-02 | empty | unresolved | What is the result for empty, single-element, or null input? |
-| RECON-02 | ordering | unresolved | When elements compare equal, is output order specified and stable? |
-| RECON-03 | adjacency | unresolved | When two things are exactly equal or just touch, do they merge, collide, or separate? |
-| RECON-03 | empty | unresolved | What is the result for empty, single-element, or null input? |
-| RECON-03 | ordering | unresolved | When elements compare equal, is output order specified and stable? |
+| Requirement | Category | Status | Gating | Evidence | Probe |
+|-------------|----------|--------|--------|----------|-------|
+| RECON-01 | unclassified | unresolved | non-gating | No Phase 1 SPEC.md exists from which to derive an edge contract; surfaced explicitly in the verdict. | Review manually; no spec-derived edge contract is available. |
+| RECON-02 | adjacency | resolved | gating | test/recon/fixture-contract.test.js#fixture-canonical-duplicate; test/recon/sensitive-patterns.smoke.js#NFD content against NFC denylist | When two things are exactly equal or just touch, do they merge, collide, or separate? |
+| RECON-02 | empty | resolved | gating | test/recon/fixture-contract.test.js#manifest-object-required | What is the result for empty, single-element, or null input? |
+| RECON-02 | ordering | resolved | gating | test/recon/sensitive-patterns.smoke.js#deduplicates overlapping matches and returns findings in stable order; test/recon/recon-gate.smoke.js#blocker ordering does not depend on ledger section order | When elements compare equal, is output order specified and stable? |
+| RECON-03 | adjacency | resolved | gating | test/recon/fixture-contract.test.js#binds the absence selector to the declared table and header topology; test/recon/sanitized-output-contract.test.js#two tables | When two things are exactly equal or just touch, do they merge, collide, or separate? |
+| RECON-03 | empty | resolved | gating | test/recon/recon-gate.smoke.js#empty ledgers and blank required fields reject with stable codes | What is the result for empty, single-element, or null input? |
+| RECON-03 | ordering | resolved | gating | test/recon/recon-gate.smoke.js#blocker ordering does not depend on ledger section order | When elements compare equal, is output order specified and stable? |
 
 ## Final Verdict
+
+- flagged-assumptions: `RECON-01/unclassified`
 
 - closed-shadow-dom-state: `ruled-out`
 - garden-identifier-state: `present`
@@ -308,4 +312,4 @@ requirement. They remain inputs to the final Plan 05 admission/verdict gate.
 - interaction-gate: Passed. The user-controlled grouped-long comparison produced one selected row, one distinct hovered row, and a separate normal row; their sanitized paint summaries are distinct, and the ticket row is the observed native paint owner.
 - prohibition-dispositions: `passed`
 - scope: This verdict applies only to the English current Agent Workspace shell observed on 2026-09-03 with account plan unknown/not shared. It makes no localization, legacy-shell, vanity-domain, or cross-plan compatibility claim; localization remains outside Phase 1.
-- rationale: Phase 2 may proceed because the complete English-path ledger, positive interaction evidence, direct-Document root-chain proof, current Garden identifiers, admitted three-scenario corpus, and all five test-or-judgment prohibition dispositions pass. This authorization remains limited to the observed English current Agent Workspace scope and must fail quiet if its selectors, language signal, or structural predicates no longer hold.
+- rationale: The repository gate authorizes proceed because the complete English-path ledger, positive interaction evidence, direct-Document root-chain proof, current Garden identifiers, admitted three-scenario corpus, and all five test-or-judgment prohibition dispositions pass. Independent phase verification and historical dependency approval independence remain separate acceptance questions. RECON-01/unclassified remains an explicitly flagged, non-gating specification gap. This authorization remains limited to the observed English current Agent Workspace scope and must fail quiet if its selectors, language signal, or structural predicates no longer hold.
