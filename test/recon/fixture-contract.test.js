@@ -469,3 +469,16 @@ test('the selected admitted corpus satisfies the complete non-vacuous contract',
   });
   expect(result.fixtureCount).toBe(3);
 });
+
+test('audit: a body-row header selector cannot conceal the real Priority header', async () => {
+  const corpus = await copyCommittedCorpus();
+  const index = corpus.fixtures.findIndex(entry => entry.scenario === 'priority-absent');
+  await mutateFixture(corpus, index, markup => markup.replace('TEXT-006', 'Priority'));
+  await rewriteManifest(corpus.manifestPath, manifest => {
+    const entry = manifest.fixtures[index];
+    entry.selectors.headerRow = `${entry.selectors.ticketRow}:first-child`;
+    entry.assertions.find(assertion => assertion.purpose === 'priority-column-absent').selector = '[data-test-id="irrelevant-missing"]';
+  });
+  await expect(validateFixtureManifest(corpus.manifestPath, { requireCompleteScenarioMatrix: true }))
+    .rejects.toMatchObject({ code: 'declared-header-row-not-found' });
+});

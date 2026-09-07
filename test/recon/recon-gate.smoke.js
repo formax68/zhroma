@@ -592,3 +592,31 @@ test('assumption section and table shape are required', async () => {
     cells => { cells[2] = 'unknown'; },
   ]) assert.throws(() => finalCheck(mutateAssumption(markdown, 'RECON-02', 'empty', mutation)), { code: 'assumption-row-invalid' });
 });
+
+test('audit: private words inside CSS functions cannot satisfy paint evidence', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  for (const paint of [
+    'row=color:color(private person),image:none|direct-cells=color:rgb(1,2,3),image:none|pane=color:rgb(4,5,6),image:none',
+    'row=color:rgb(1,2,3),image:linear-gradient(private person)|direct-cells=color:rgb(1,2,3),image:none|pane=color:rgb(4,5,6),image:none',
+  ]) expectBlockers(mutateEntry(markdown, 'interaction-and-sticky-states', s => s.replace(/^- normal-paint:.*$/m,
+    `- normal-paint: \`${paint}\``)), ['interaction-grammar-violated']);
+});
+
+test('audit: existing unrelated test files cannot prove a fallback rung', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  for (const [number, id] of [[2, 'test-id-pair'], [3, 'structural']]) {
+    let changed = verdictField(markdown, 'garden-identifier-state', 'absent');
+    changed = verdictField(changed, `fallback-rung-${number}`, `${id} | proven | test/recon/dependency-approvals.smoke.js`);
+    changed = verdictField(changed, 'selector-authorization', id);
+    expectBlockers(changed, ['selector-fallback-not-matrix-proven']);
+  }
+});
+
+test('audit: new verdict metadata uses closed identifiers and proof tokens', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  for (const [field, value] of [
+    ['fallback-rung-3', 'structural | unproven | private person'],
+    ['fallback-rung-3', 'structural | unproven | /private/capture'],
+    ['flagged-assumptions', 'RECON-01/unclassified, private person'],
+  ]) expectBlockers(verdictField(markdown, field, value), ['verdict-field-not-structured']);
+});

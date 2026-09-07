@@ -183,3 +183,10 @@ test('canonicalizes whitespace and case before paint distinctness', () => {
     name: 'InteractionEvidenceError', code: 'paint-observations-not-distinct',
   });
 });
+
+test('paint functions reject arbitrary words inside otherwise recognized syntax', () => {
+  for (const replacement of ['color(private person)', 'rgb(1,2,3),image:linear-gradient(private person)']) {
+    const changed = positiveEntry.replace('rgba(0,0,0,0)', replacement);
+    assert.throws(() => assessInteractionEvidence(changed), { code: 'paint-summary-invalid' });
+  }
+});
