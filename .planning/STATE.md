@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: DOM Recon Spike
-status: awaiting_human_input
-stopped_at: "Plan 01-12 Task 1: awaiting corpus-source and provenance decisions"
+status: executing
+stopped_at: "Plan 01-13 complete; next Plan 01-14"
 last_updated: "2026-09-05T13:27:39.509Z"
 last_activity: 2026-09-05
 last_activity_desc: Plan 01-11 complete; Plan 01-12 preview found deterministic placeholder renumbering
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 
 ## Current Position
 
-Phase: 01 (DOM Recon Spike) — HUMAN CHECKPOINT
-Plan: 12 of 15 (11 complete)
-Status: Plans 01-10 and 01-11 complete; Plan 01-12 awaits corpus-source and provenance decisions
-Last activity: 2026-09-05 — Completed 01-11; 114 tests pass; Plan 01-12 preview ready for decision
+Phase: 01 (DOM Recon Spike) — EXECUTING
+Plan: 14 of 15 (13 complete)
+Status: Plans 01-09 through 01-13 complete; executing remaining gap plans
+Last activity: 2026-09-07 — Completed 01-13; 149 tests pass
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -102,9 +102,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- Plan 01-12 preview found only deterministic placeholder renumbering beyond the two planned edits (62 canonical, 170 grouped). Corpus remains untouched. Source/provenance decisions are pending; originals are verified recoverable from Git.
+- User approved Plan 01-12 source and provenance with "yes on both"; re-admission and second-pass parity are complete. Originals remain recoverable from Git.
 
-- Phase 1 remains `gaps_found`; 01-09 through 01-11 are complete, but 01-12 through 01-15 and independent verification remain pending. Phase 2 is closed.
+- Phase 1 remains `gaps_found`; 01-09 through 01-13 are complete, but 01-14 through 01-15 and independent verification remain pending. Phase 2 is closed.
 - Historical approval independence remains not-attested: the user answered "I don't remember, it should be fine". Preserve verification truth 8 uncertainty.
 - Phase 4's scope depends on a Phase 1 finding: if a locale-independent priority signal exists on the row or cell, the locale work collapses to almost nothing.
 - Store submission has latency and the direct predecessor was delisted at this step. Register the developer account early; budget one rejection-and-resubmit cycle in Phase 5.
@@ -124,5 +124,5 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-09-05T13:27:39.495Z
-Stopped at: Plan 01-12 Task 1: awaiting corpus-source and provenance decisions
-Resume file: .planning/phases/01-dom-recon-spike/01-12-READMISSION-PREVIEW.md
+Stopped at: Plan 01-13 complete; next Plan 01-14
+Resume file: .planning/phases/01-dom-recon-spike/01-14-PLAN.md
