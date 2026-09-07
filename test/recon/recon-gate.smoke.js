@@ -11,7 +11,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { test } from 'node:test';
+import { describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import * as reconGate from '../../scripts/verify-recon-gate.js';
@@ -58,23 +58,7 @@ function runGate(args, debug) {
   });
 }
 
-test('CLI never echoes a supplied private ledger path unless debug is exactly 1', async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), 'zhroma-private-ledger-'));
-  t.after(() => rm(directory, { recursive: true, force: true }));
-  const privatePath = join(directory, 'PRIVATE-PERSON-NAME-missing.md');
-  for (const debug of [undefined, '', '0', 'true', '2']) {
-    const result = runGate(['final', privatePath, REPOSITORY_MANIFEST], debug);
-    assert.equal(result.status, 1);
-    assert.equal(result.stdout, '');
-    assert.equal(result.stderr, 'RECON_GATE_REJECTED ledger-readable-required\n');
-    assert.ok(!result.stderr.includes(privatePath));
-    assert.ok(!result.stderr.includes('PRIVATE-PERSON-NAME'));
-  }
-  const debugResult = runGate(['final', privatePath, REPOSITORY_MANIFEST], '1');
-  assert.equal(debugResult.status, 1);
-  assert.ok(debugResult.stderr.startsWith('RECON_GATE_REJECTED ledger-readable-required\n'));
-  assert.ok(debugResult.stderr.includes(privatePath));
-});
+
 
 test('CLI emits stable codes without echoing an unknown status or duplicate id', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'zhroma-private-field-'));
@@ -433,24 +417,9 @@ function finalCheck(markdown) {
   return verifyReconLedger(markdown, { mode: 'final', admittedScenarios: ADMITTED_SCENARIOS });
 }
 
-test('final gate rejects arbitrary private paint', async () => {
-  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
-  const mutated = mutateEntry(markdown, 'interaction-and-sticky-states', section => section
-    .replace(/^- normal-paint:.*$/m, '- normal-paint: `PRIVATE-NORMAL`')
-    .replace(/^- hover-paint:.*$/m, '- hover-paint: `PRIVATE-HOVER`')
-    .replace(/^- selected-paint:.*$/m, '- selected-paint: `PRIVATE-SELECTED`'));
-  assert.throws(() => finalCheck(mutated), { code: 'proceed-conflicts-with-blockers' });
-});
 
-test('final gate rejects paint differing only by whitespace and case', async () => {
-  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
-  const mutated = mutateEntry(markdown, 'interaction-and-sticky-states', section => {
-    const normal = section.match(/^- normal-paint: `(.*)`$/m)[1];
-    return section.replace(/^- hover-paint:.*$/m,
-      `- hover-paint: \`${normal.replaceAll(', ', ',  ').replaceAll('rgb', 'RGB')}\``);
-  });
-  assert.throws(() => finalCheck(mutated), { code: 'proceed-conflicts-with-blockers' });
-});
+
+
 
 function expectBlockers(markdown, expected) {
   let caught;
@@ -461,16 +430,7 @@ function expectBlockers(markdown, expected) {
   return caught.blockers;
 }
 
-test('required evidence cannot be relabeled as localization-only', async () => {
-  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
-  for (const id of EXPECTED_LIVE_IDS) {
-    const changed = mutateEntry(markdown, id, section => section
-      .replace('- scope: `English path`', '- scope: `Localization only`')
-      .replace(/^- status:.*$/m, '- status: `outside English-only scope`')
-      .replace(/^- scenario:.*$/m, '- scenario: `not-run-localization-only`'));
-    expectBlockers(changed, ['required-evidence-scope-mismatch']);
-  }
-});
+
 
 test('required evidence rejects inadmissible statuses and scenario sets', async () => {
   const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
@@ -512,4 +472,58 @@ test('blocker ordering does not depend on ledger section order', async () => {
   const b = sections.find(s => s.startsWith('## Ledger Entry: painting-element\n'));
   const swapped = markdown.replace(a, 'SWAP-SECTION').replace(b, a).replace('SWAP-SECTION', b);
   assert.deepEqual(expectBlockers(swapped, before), before);
+});
+
+
+describe('final gate audit regressions', () => {
+test('CLI never echoes a supplied private ledger path unless debug is exactly 1', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'zhroma-private-ledger-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const privatePath = join(directory, 'PRIVATE-PERSON-NAME-missing.md');
+  for (const debug of [undefined, '', '0', 'true', '2']) {
+    const result = runGate(['final', privatePath, REPOSITORY_MANIFEST], debug);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, 'RECON_GATE_REJECTED ledger-readable-required\n');
+    assert.ok(!result.stderr.includes(privatePath));
+    assert.ok(!result.stderr.includes('PRIVATE-PERSON-NAME'));
+  }
+  const debugResult = runGate(['final', privatePath, REPOSITORY_MANIFEST], '1');
+  assert.equal(debugResult.status, 1);
+  assert.ok(debugResult.stderr.startsWith('RECON_GATE_REJECTED ledger-readable-required\n'));
+  assert.ok(debugResult.stderr.includes(privatePath));
+});
+
+test('final gate rejects arbitrary private paint', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  const mutated = mutateEntry(markdown, 'interaction-and-sticky-states', section => section
+    .replace(/^- normal-paint:.*$/m, '- normal-paint: `PRIVATE-NORMAL`')
+    .replace(/^- hover-paint:.*$/m, '- hover-paint: `PRIVATE-HOVER`')
+    .replace(/^- selected-paint:.*$/m, '- selected-paint: `PRIVATE-SELECTED`'));
+  expectBlockers(mutated, ['interaction-grammar-violated']);
+});
+
+test('final gate rejects paint differing only by whitespace and case', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  const mutated = mutateEntry(markdown, 'interaction-and-sticky-states', section => {
+    const normal = section.match(/^- normal-paint: `(.*)`$/m)[1];
+    return section.replace(/^- hover-paint:.*$/m,
+      `- hover-paint: \`${normal.replaceAll(', ', ',  ').replaceAll('rgb', 'RGB')}\``);
+  });
+  expectBlockers(mutated, ['interaction-grammar-violated']);
+});
+
+test('required evidence cannot be relabeled as localization-only', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  for (const id of EXPECTED_LIVE_IDS) {
+    const changed = mutateEntry(markdown, id, section => section
+      .replace('- scope: `English path`', '- scope: `Localization only`')
+      .replace(/^- status:.*$/m, '- status: `outside English-only scope`')
+      .replace(/^- scenario:.*$/m, '- scenario: `not-run-localization-only`'));
+    expectBlockers(changed, ['required-evidence-scope-mismatch']);
+  }
+});
+
+test.todo('CR-08: fallback proof must authorize selectors — owner Plan 01-15');
+test.todo('CR-10: unresolved declared inputs must block — owner Plan 01-15');
 });
