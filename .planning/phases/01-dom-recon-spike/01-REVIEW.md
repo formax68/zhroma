@@ -1,185 +1,113 @@
 ---
 phase: 01-dom-recon-spike
-reviewed: 2026-09-04T11:42:32Z
+reviewed: 2026-09-07T06:28:01Z
 depth: standard
-files_reviewed: 17
+source_snapshot: 1341022a96c4adbbb439c534ab48e1750129d83f
+files_reviewed: 23
 files_reviewed_list:
   - .gitignore
   - SELECTORS.md
+  - DEPENDENCY-APPROVALS.md
   - package.json
   - scripts/fixture-contract.js
+  - scripts/interaction-evidence.js
   - scripts/sanitize-fixture.js
+  - scripts/sanitized-output-contract.js
+  - scripts/sensitive-patterns.js
   - scripts/verify-recon-gate.js
   - test/fixtures/manifest.json
   - test/fixtures/zendesk-view-grouped-long.html
   - test/fixtures/zendesk-view-priority-absent.html
   - test/fixtures/zendesk-view-priority-present.html
+  - test/recon/corpus-provenance.test.js
+  - test/recon/dependency-approvals.smoke.js
   - test/recon/fixture-contract.test.js
   - test/recon/interaction-evidence.smoke.js
   - test/recon/recon-gate.smoke.js
   - test/recon/sanitize-fixture.test.js
-  - test/recon/sensitive-patterns.js
+  - test/recon/sanitized-output-contract.test.js
   - test/recon/sensitive-patterns.smoke.js
   - vitest.config.js
 findings:
-  critical: 11
-  warning: 3
+  critical: 0
+  warning: 0
   info: 0
-  total: 14
-status: issues_found
+  total: 0
+status: clean
 ---
 
 # Phase 1: Code Review Report
 
-**Reviewed:** 2026-09-04T11:42:32Z
+**Reviewed:** 2026-09-07T06:28:01Z
 **Depth:** standard
-**Files Reviewed:** 17
-**Status:** issues_found
-
-## Summary
-
-The revised implementation still has release-blocking privacy and admission failures. Direct adversarial probes showed that the sanitizer can preserve `High` from a non-Priority cell, canonically equivalent denylist text can evade scanning, the committed fixture corpus contains ARIA values the current sanitizer rejects, a manifest can replace the Priority-absence assertion with a presence assertion, and the final gate can return `proceed` after required live evidence is moved out of scope or interaction paint is replaced with raw private strings. `npm test` passed all 71 tests, demonstrating that the current suite does not cover these fail-open paths.
-
-`package-lock.json` was loaded as mandatory context but excluded from the reviewed-file count under the lock-file scope rule. No performance-only findings are included because performance is outside the v1 review scope.
+**Files Reviewed:** 23
+**Status:** clean
 
 ## Narrative Findings (AI reviewer)
 
-The findings below are ordered by severity. Every Critical issue is classified as a release **BLOCKER**; every Warning is classified as **WARNING**.
+No remaining actionable findings were established at standard depth after the focused re-review of `1341022a96c4adbbb439c534ab48e1750129d83f`. Within this review's scope, all reviewed files meet quality standards. No issues found.
 
-## Critical Issues
+The initial source snapshot, `a006e17bf9a2451734e9f1678f8f225aaf5a9898` (including implementation `83d2be6`), had four demonstrated blockers and one warning despite 165 passing tests. Fix `8572685` closed the false-header, fallback-proof, structured-metadata, and owner-vocabulary defects. Its paint change closed private-text injection but still admitted equivalent transparent colors as distinct states. Fix `1341022` closed that residual comparison defect. This report records those closures without erasing the initial findings.
 
-### CR-01: Filtered header indexes can preserve private text from the wrong column
+## Verification Evidence
 
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/sanitize-fixture.js:303-340`
-**Issue:** `headerCells` is filtered to header-like children and `priorityIndexes` is computed against that filtered array. Body cells are independently filtered, so malformed or mixed direct children shift the index. A direct reproduction with `<tr><td>Subject</td><th>Priority</th></tr>` and a one-cell ticket row preserved `High` from that row as if it were Priority. This defeats the one-way redaction boundary and can admit tenant text when it happens to equal an allowed priority label.
-**Fix:** Require every direct header child to be a header cell and every direct ticket-row child to be a body cell, then derive the Priority index from the unfiltered `headerRow.children` collection. Reject any mixed-child row before constructing `priorityCells`.
+- Fresh `npm test` on the final source: **65 Node + 108 Vitest = 173 passed**, zero failures, skips, or todos.
+- The exact false-absence reproduction now rejects with `declared-header-row-not-found`.
+- An existing dependency-approval test offered as selector-fallback proof now produces `selector-fallback-not-matrix-proven` and `fallback-evidence-path-missing`.
+- Private text inside `color(...)` and gradients now produces `interaction-grammar-violated`.
+- Private unproven proof paths and extra flagged-assumption text now produce `verdict-field-not-structured`.
+- `direct-cells` is now admitted consistently at the supported final interaction boundary.
+- The original equivalent-transparent-paint reproduction, plus admitted alpha-zero synonyms and numeric alpha spelling variants, all now produce `interaction-grammar-violated`.
+- The unchanged ledger returns `{ entryCount: 18, verdict: 'proceed' }`. The final CLI prints `FINAL VERDICT: proceed` after independently validating the complete manifest.
+- Scoped source `git diff --exit-code` was empty during both review snapshots and the final checks. The reviewer changed only this report. Temporary synthetic corpus copies were removed. No implementation edits or commits were made by the reviewer.
 
-```js
-const headerChildren = [...headerRows[0].children];
-if (
-  headerChildren.length === 0
-  || headerChildren.some((cell) => !cell.matches('th, [role="columnheader"]'))
-) reject('table-boundary-required');
+The paint contract is deliberately bounded to observed comma-separated RGB/RGBA values, `transparent`, and `image:none`. Channels and alpha are validated, and transparent/alpha-zero and opaque RGB/RGBA equivalence are canonicalized before comparison. Other CSS spaces or background images are rejected pending an explicit future contract extension. That is a supported-scope boundary, not an assertion of full CSS equivalence support.
 
-const priorityIndex = headerChildren.findIndex(
-  (cell) => cell.textContent.trim() === 'Priority',
-);
-// Also require each ticket row to contain only cells and exactly this width.
-```
+## Original Finding Closure Map
 
-### CR-02: Unicode-equivalent denylist values bypass sensitive-content admission
+The original report dated `2026-09-04T11:42:32Z` is recoverable verbatim with `git show a006e17:.planning/phases/01-dom-recon-spike/01-REVIEW.md`. Original identifiers are retained below; CR-12 and WR-04 were added by this review. All entries in this table are historical, closed findings and are excluded from current frontmatter counts.
 
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/test/recon/sensitive-patterns.js:80-95,111-115`
-**Issue:** Denylist tokens and content are case-folded but never Unicode-normalized. `scanSensitiveContent('<div data-test-id="Jose\u0301">', { denylist: ['José'] })` returned `{ accepted: true }`, even though the two names are canonically equivalent. Because `data-test-id` is preserved by the sanitizer, decomposed names or organizations can reach committed fixtures.
-**Fix:** Normalize both denylist tokens and scanned content to the same Unicode form before case folding, and add NFC/NFD regression cases in both scanner and sanitizer tests.
+| ID | Historical classification | Current disposition and evidence |
+| --- | --- | --- |
+| CR-01 | BLOCKER | Closed. Shared parser rejects mixed direct header/body children; index-6 and width regressions execute. |
+| CR-02 | BLOCKER | Closed. Production scanner normalizes NFC before case folding; bidirectional NFC/NFD and sanitizer CLI regressions execute. |
+| CR-03 | BLOCKER | Closed. Denylist canonicalization and current-worktree exclusion precede reads; alias/custody checks and ignore rules are present. |
+| CR-04 | BLOCKER | Closed. Both admission paths use the shared output contract; all three repository fixtures pass byte-identical second sanitizer passes. This is repository-byte re-admission, not fresh capture. |
+| CR-05 | BLOCKER | Closed after residual recheck. Wrong assertion kinds reject; `8572685` additionally binds the manifest header to the actual shared-parser header, defeating body-row substitution. |
+| CR-06 | BLOCKER | Closed. Canonical path uniqueness is checked before admission; relative/symlink aliases and multi-table bytes reject. |
+| CR-07 | BLOCKER | Closed. Required live IDs have exact scope/status/scenario contracts; relabeling regressions execute across all required IDs. |
+| CR-08 | BLOCKER | Closed after residual recheck. Authorization no longer reads prose; `8572685` allows only the registered Garden proof and rejects unsupported fallback rung promotions, even when their cited file exists. |
+| CR-09 | BLOCKER | Closed after two focused fixes. Shared production assessment rejects private function payloads; `1341022` bounds numeric paint and canonicalizes admitted color equivalence before distinctness. |
+| CR-10 | BLOCKER | Closed under the approved contract. Seven exact assumption identities and proof-reference sets are parsed; unresolved gating rows block; six resolved/gating rows and the flagged non-gating RECON-01 exception remain explicit. |
+| CR-11 | BLOCKER | Closed. CLI emits stable value-free codes by default; explicit local debug mode is separately tested. |
+| WR-01 | WARNING | Closed. Node range excludes Node 23: `^20.19.0 || ^22.12.0 || >=24.0.0`. |
+| WR-02 | WARNING | Closed. Non-object/null roots throw `manifest-object-required`; root-shape regressions execute. |
+| WR-03 | WARNING | Closed. Production scripts import `scripts/sensitive-patterns.js`; tests use the same module. |
+| CR-12 | BLOCKER | Closed. Non-proven fallback references must be `none`; flagged-assumption metadata has a closed token/set contract. |
+| WR-04 | WARNING | Closed. Final supported paint owners use `row` and `direct-cells`; the unreachable `cell` token was removed and final direct-cell coverage added. |
 
-```js
-const fold = (value) => value.normalize('NFC').toLocaleLowerCase('en-US');
-const normalized = denylist.map((token) => (
-  typeof token === 'string' ? fold(token.trim()) : ''
-));
-const foldedContent = fold(content);
-```
+## Residual Finding History and Reproductions
 
-### CR-03: The private capture denylist is allowed inside the Git worktree
+The following findings were demonstrated on `a006e17`, then rechecked against their fixes. Line references below name the original snapshot, not current source line numbers.
 
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/sanitize-fixture.js:478-498`
-**Issue:** The sanitizer canonicalizes and rejects an input capture inside the worktree, but it neither canonicalizes nor applies the same containment rule to `denylistPath`. The denylist is explicitly capture-specific and contains the exact private names/organizations being excluded; allowing it in a worktree where `.gitignore` only ignores `node_modules/` creates a direct source-control disclosure risk.
-**Fix:** Resolve the denylist with `realpath()`, reject it when it is inside the project root, and read/stat only the canonical path. Add a defense-in-depth ignore rule for the documented private capture/denylist location or filename convention.
+**CR-05 — false absence through a body-row header selector.** At `scripts/fixture-contract.js:417-430` and `151-181`, admission checked only table ownership of the selected header. In a temporary copy of the absence fixture, replacing `TEXT-006` with `Priority`, updating its hash, setting `selectors.headerRow = selectors.ticketRow + ':first-child'`, and choosing absence selector `[data-test-id=irrelevant-missing]` still admitted all three scenarios. Null Priority indexes and six-cell widths were unchanged. The fix binds header identity through `resolveBoundedDocument`. The exact reproduction now rejects.
 
-### CR-04: The corpus gate does not enforce the sanitizer output contract
+**CR-08 — unrelated file as selector proof.** At `scripts/verify-recon-gate.js:533-545` and `607-635`, an existing path alone proved a rung. Changing final Garden state to `absent`, rung 2 to `test-id-pair | proven | test/recon/dependency-approvals.smoke.js`, and selector authorization to `test-id-pair` returned `proceed` with stable-identifiers status still verified. The fix rejects unsupported rungs and binds the admitted Garden proof to a validator-owned path/case contract. The exact reproduction now blocks.
 
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/fixture-contract.js:320-392`; `/Users/mike/code/zhroma/test/fixtures/zendesk-view-priority-present.html:1`; `/Users/mike/code/zhroma/test/fixtures/zendesk-view-priority-absent.html:1`; `/Users/mike/code/zhroma/test/fixtures/zendesk-view-grouped-long.html:1`
-**Issue:** The validator checks only that `sanitizationMethod` is non-empty, runs the generic sensitive regexes, and then trusts the hash and selected topology. It never validates the sanitizer's attribute/value grammar. All committed fixtures contain `ARIA-STATE` in enum-valued ARIA attributes (`aria-autocomplete` or `aria-haspopup`), while the current sanitizer rejects those values as `aria-attribute-invalid`. Copying the admitted Priority-present fixture outside the worktree and passing it through the current sanitizer reproduced that rejection. The ledger's claim that these exact bytes were processed by the current sanitizer is therefore not enforced and is inconsistent with the accepted corpus.
-**Fix:** Extract a pure sanitized-output validator from `sanitize-fixture.js` and invoke it from both sanitization and corpus admission. Re-admit all three fixtures through the current contract and update their hashes; add a regression that every committed fixture satisfies the same attribute, ARIA, text, and one-table boundary grammar.
+**CR-09 — private paint and false distinctness.** At `scripts/interaction-evidence.js:36-41` and `147-155`, function arguments accepted arbitrary words. Replacing only the normal paint's row color with `color(private person)` returned `proceed`; private gradient text also fit the grammar. After the first fix, copying the normal summary to both other states while spelling row transparency as `rgb(0 0 0 / 0)` and `transparent` still returned `proceed`. The final fix uses the bounded computed-paint contract and canonical equality described above. Both reproductions now block. The initial report described `rgb(999,999,999)` as invalid CSS; that wording was inaccurate because CSS can clamp out-of-range channels. Its rejection now reflects the bounded computed-evidence contract, not a general CSS validity claim.
 
-### CR-05: A Priority-present column can be admitted as the Priority-absent scenario
+**CR-12 — unvalidated structured metadata.** At `scripts/verify-recon-gate.js:507-511` and `611-618`, independently changing rung 3 to `structural | unproven | /private/PRIVATE-PERSON` or flags to `RECON-01/unclassified, PRIVATE-PERSON` returned `proceed`. Validation now covers every rung state and the entire flagged-ID set. Both reproductions now block without echoing supplied values.
 
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/fixture-contract.js:156-245`
-**Issue:** `assertScenario()` requires only the purpose string `priority-column-absent`; it does not require that assertion's kind to be `selector-absent`. The separate check looks only for leaf text equal to a priority value, not column presence. A direct probe changed the absence assertion to `selector-present`, added a seventh header/cell column with redacted text, updated the declared widths/hash, and the complete matrix still validated. The absence control therefore does not mechanically prove absence.
-**Fix:** Resolve the required assertion by purpose and require `kind === 'selector-absent'`, then bind it to the declared ticket table/header topology. Reject a null `priorityIndex` when any declared Priority-column selector resolves.
+**WR-04 — owner vocabulary divergence.** At `scripts/interaction-evidence.js:35` and `scripts/verify-recon-gate.js:572`, the shared parser admitted `direct-cells` while final mode allowed `cell`, which the shared parser rejected. The supported final vocabulary now uses `direct-cells` and its integration test passes.
 
-```js
-const absence = entry.assertions.find(
-  ({ purpose }) => purpose === 'priority-column-absent',
-);
-if (absence?.kind !== 'selector-absent') {
-  throw contractError('priority-absence-assertion-required');
-}
-```
+## Review Boundaries
 
-### CR-06: Raw path aliases let one physical fixture satisfy the three-file matrix
+Context included the prior report, Plans/Summaries 01-09 through 01-15, current ledger, dependency record, source, and tests. No project AGENTS.md or local skill directories were present; the configured reviewer-skill query returned no injected skills. No structural pre-pass was supplied. Lock metadata was consulted through dependency tests and excluded from the source count. Performance-only issues are outside scope.
 
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/fixture-contract.js:316-348`
-**Issue:** Duplicate detection stores the raw manifest string before `safeRelativeFixturePath()` canonicalizes it. `combo.html`, `./combo.html`, and `.//combo.html` are treated as distinct files even though all resolve to the same canonical path. A direct probe used those aliases and one multi-table HTML file to satisfy all three required scenarios; `requireCompleteScenarioMatrix` returned success. This defeats the canonical-plus-variants corpus requirement and also lets a file impossible under the one-table sanitizer boundary pass as three independent captures.
-**Fix:** Add the canonical path returned by `safeRelativeFixturePath()` to a `seenCanonicalFiles` set and reject duplicates after resolution. The sanitizer-output validation from CR-04 must also reject multi-table fixture bytes.
-
-### CR-07: Required live evidence can be relabeled as localization-only and still authorize `proceed`
-
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/verify-recon-gate.js:227-265`
-**Issue:** Final mode requires evidence IDs, but it does not require each ID's expected scope, status, or scenario set. The generic scenario loop explicitly permits any non-English entry to use `not-run-localization-only`. Changing only `shell-metadata` to `scope: Localization only`, `status: outside English-only scope`, and that localization scenario still returned `{ verdict: 'proceed' }`. Required English-path evidence can therefore be made absent without blocking Phase 2.
-**Fix:** Replace the ID-only list with a per-entry contract containing required scope, admissible terminal outcome, and scenario coverage. Validate that contract before evaluating the final verdict.
-
-### CR-08: Selector fallback proof is inferred from an unstructured prose substring
-
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/verify-recon-gate.js:303-314`
-**Issue:** When stable identifiers are missing, any `ranked-fallback` sentence containing `complete three-scenario corpus` is accepted as proof. The current sentence says the fallback *must pass* that corpus in the future, yet it already satisfies the predicate. A direct probe changed `stable-identifiers` to `disproved` with evidence `No stable identifiers were found`; final mode still returned `proceed` because the prose happened to contain that phrase.
-**Fix:** Introduce a machine-readable fallback status and evidence reference, and set it only from a validator result. Do not derive authorization from prose substrings such as `startsWith('No.')`, `startsWith('Passed')`, or `includes(...)`.
-
-### CR-09: The real interaction gate accepts arbitrary private strings as paint evidence
-
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/verify-recon-gate.js:273-291`; `/Users/mike/code/zhroma/test/recon/interaction-evidence.smoke.js:30-36,92-165`
-**Issue:** Production final validation checks only that the three paint fields are non-empty and byte-distinct. The syntax/privacy validator in `interaction-evidence.smoke.js` exists only inside the test file and is never called by `verifyReconLedger()`. Replacing the three repository paint summaries with `PRIVATE-PERSON-NAME`, `PRIVATE-TENANT-NAME`, and `PRIVATE-ACCOUNT-NAME` still returned `proceed`. Whitespace-only variations of semantically identical paint would also satisfy the distinctness test.
-**Fix:** Move `assessInteractionEvidence()` into a production module, import that same function from the final gate and tests, strictly parse and canonicalize paint values before comparison, and reject any unrecognized field/value without echoing it. Run the sensitive-content policy over the complete ledger or enforce an equivalent closed grammar.
-
-### CR-10: Seven explicitly unresolved final-gate inputs are ignored
-
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/verify-recon-gate.js:159-191,340-356`; `/Users/mike/code/zhroma/SELECTORS.md:273-290`
-**Issue:** The ledger says the seven `Spec-less Planning Assumptions` remain inputs to the final admission/verdict gate, and the smoke suite asserts that all seven remain `unresolved`. `parseOpenQuestions()` inspects only `## Recon Question` sections, so table rows are invisible and the same document is accepted with `verdict: proceed`. The machine result contradicts the ledger's own gating statement.
-**Fix:** Represent every gating item in the parsed `Recon Question` schema, or add a strict parser for this table and reject `proceed` while any row is unresolved. If these rows are intentionally non-gating, remove the claim that they are final-gate inputs and test the revised contract explicitly.
-
-### CR-11: Recon CLI errors disclose private paths and untrusted field values
-
-**Classification:** BLOCKER
-**File:** `/Users/mike/code/zhroma/scripts/verify-recon-gate.js:128-143,394-396`
-**Issue:** The CLI prints `error.message` verbatim. A missing ledger at `/private/tmp/PRIVATE-PERSON-NAME-missing.md` produced the full path in stderr. Parser errors also interpolate untrusted IDs and status values. This conflicts with the repository's privacy boundary and can copy sensitive paths or accidentally pasted content into CI logs.
-**Fix:** Convert failures to stable error codes and print only those codes at the CLI boundary. Wrap ledger reads as `ledger-readable-required`; reserve full exception details for an explicitly local debug mode that is disabled by default.
-
-## Warnings
-
-### WR-01: The declared Node range includes a version rejected by locked Vitest
-
-**Classification:** WARNING
-**File:** `/Users/mike/code/zhroma/package.json:6-8`
-**Issue:** `^20.19.0 || >=22.12.0` includes Node 23.x, but locked `vitest@4.1.11` declares `^20.0.0 || ^22.0.0 || >=24.0.0`. A runtime accepted by the project can therefore be unsupported by the test runner.
-**Fix:** Declare the intersection of the locked tools' engine ranges, for example `^20.19.0 || ^22.12.0 || >=24.0.0`, and refresh lock metadata with the approved versions unchanged.
-
-### WR-02: A valid JSON `null` manifest escapes the stable contract error model
-
-**Classification:** WARNING
-**File:** `/Users/mike/code/zhroma/scripts/fixture-contract.js:303-313`
-**Issue:** `JSON.parse('null')` succeeds, then `manifest.fixtures` throws a raw `TypeError` with no stable `code`. A direct probe returned `TypeError: Cannot read properties of null`, unlike every other malformed-manifest path.
-**Fix:** Validate that the parsed root is a non-null, non-array object before dereferencing it, and throw `contractError('manifest-object-required')`. Add `null`, scalar, and array root cases.
-
-### WR-03: Production admission scripts depend on a module under the test tree
-
-**Classification:** WARNING
-**File:** `/Users/mike/code/zhroma/scripts/fixture-contract.js:7`; `/Users/mike/code/zhroma/scripts/sanitize-fixture.js:8-11`
-**Issue:** Both production scripts import the sensitive-admission primitive from `test/recon/sensitive-patterns.js`. Any packaging, reuse, or deployment that excludes tests breaks the sanitizer and final corpus gate at module load time, and it encourages the production/test divergence already present in CR-09.
-**Fix:** Move the scanner to a production module under `scripts/` or `src/`, then have all tests import that single implementation.
+No new live DOM evidence or human attestations were created. Historical dependency approval independence remains **not-attested**, exactly as recorded; exact-version attestations do not resolve it. The six-resolved/one-flagged assumption contract is treated as authorized, not as permission to invent specification or live evidence. This clean code review does not replace security review, independent goal verification, or human/product acceptance, and does not independently authorize Phase 2.
 
 ---
 
-_Reviewed: 2026-09-04T11:42:32Z_
-_Reviewer: the agent (gsd-code-reviewer)_
+_Reviewed: 2026-09-07T06:28:01Z_
+_Reviewer: gsd-code-reviewer_
 _Depth: standard_
