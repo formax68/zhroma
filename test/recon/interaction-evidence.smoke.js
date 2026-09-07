@@ -191,13 +191,12 @@ test('paint functions reject arbitrary words inside otherwise recognized syntax'
   }
 });
 
-test('admits numeric CSS color spaces and gradients within the closed grammar', () => {
-  for (const color of ['color(display-p3 0.1 0.2 0.3 / 0.5)', 'rgb(10 20 30 / 50%)', '#aabbccdd']) {
-    const changed = positiveEntry.replace('rgba(0,0,0,0)', color);
-    assert.equal(assessInteractionEvidence(changed).verdict, 'evidence-ready');
+test('bounds computed paint serialization and numeric channels', () => {
+  for (const color of ['color(display-p3 0.1 0.2 0.3 / 0.5)', 'rgb(10 20 30 / 50%)', '#aabbccdd', 'rgb(999,999,999)', 'rgba(0,0,0,2)']) {
+    assert.throws(() => assessInteractionEvidence(positiveEntry.replace('rgba(0,0,0,0)', color)), { code: 'paint-summary-invalid' });
   }
-  for (const image of ['linear-gradient(45deg, rgb(1,2,3) 0%, rgba(4,5,6,0.5) 100%)', 'radial-gradient(circle, #fff, transparent)']) {
-    const changed = positiveEntry.replace('image:none', `image:${image}`);
-    assert.equal(assessInteractionEvidence(changed).verdict, 'evidence-ready');
+  for (const image of ['linear-gradient(45deg, rgb(1,2,3), rgb(4,5,6))', 'radial-gradient(circle, #fff, transparent)']) {
+    assert.throws(() => assessInteractionEvidence(positiveEntry.replace('image:none', `image:${image}`)), { code: 'paint-summary-invalid' });
   }
+  assert.equal(assessInteractionEvidence(positiveEntry.replace('rgba(0,0,0,0)', 'rgba(10,20,30,0.5)')).verdict, 'evidence-ready');
 });

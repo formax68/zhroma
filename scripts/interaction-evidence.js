@@ -32,18 +32,26 @@ const POSITIVE_FIELDS = Object.freeze([
 
 const ALLOWED_FIELDS = new Set([...STANDARD_FIELDS, ...POSITIVE_FIELDS]);
 const PAINT_OWNER = /^(?:row|direct-cells|pane|mixed)$/;
-const NUMBER = String.raw`[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)`;
-const CHANNEL = String.raw`${NUMBER}%?`;
-const RGB_ARGS = String.raw`(?:${CHANNEL}\s*,\s*${CHANNEL}\s*,\s*${CHANNEL}(?:\s*,\s*${CHANNEL})?|${CHANNEL}\s+${CHANNEL}\s+${CHANNEL}(?:\s*/\s*${CHANNEL})?)`;
-const COLOR_SPACE = '(?:srgb|srgb-linear|display-p3|a98-rgb|prophoto-rgb|rec2020|xyz|xyz-d50|xyz-d65)';
-const COLOR = String.raw`(?:transparent|rgba?\(\s*${RGB_ARGS}\s*\)|color\(\s*${COLOR_SPACE}\s+${CHANNEL}\s+${CHANNEL}\s+${CHANNEL}(?:\s*/\s*${CHANNEL})?\s*\)|#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{4}|[0-9a-f]{3}))`;
-const STOP = String.raw`${COLOR}(?:\s+${CHANNEL})?`;
-const DIRECTION = String.raw`(?:${NUMBER}(?:deg|grad|rad|turn)|to\s+(?:left|right|top|bottom)(?:\s+(?:left|right|top|bottom))?)`;
-const IMAGE = String.raw`(?:none|linear-gradient\(\s*(?:${DIRECTION}\s*,\s*)?${STOP}(?:\s*,\s*${STOP})+\s*\)|radial-gradient\(\s*(?:(?:circle|ellipse)\s*,\s*)?${STOP}(?:\s*,\s*${STOP})+\s*\))`;
+// Admission is bounded to computed RGB/RGBA serialization observed in this
+// corpus. Other CSS spaces/images require an explicit canonicalization contract.
+const COLOR = String.raw`(?:transparent|rgb\(\s*[0-9]+\s*,\s*[0-9]+\s*,\s*[0-9]+\s*\)|rgba\(\s*[0-9]+\s*,\s*[0-9]+\s*,\s*[0-9]+\s*,\s*(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)\s*\))`;
+const IMAGE = 'none';
 const PAINT_SUMMARY = new RegExp(
   String.raw`^row=color:${COLOR},image:${IMAGE}\|direct-cells=color:${COLOR},image:${IMAGE}\|pane=color:${COLOR},image:${IMAGE}$`,
   'i',
 );
+
+function canonicalPaint(paint) {
+  return paint.toLowerCase().replace(/transparent|rgba?\([^)]*\)/g, color => {
+    if (color === 'transparent') return 'rgba(0,0,0,0)';
+    const channels = color.slice(color.indexOf('(') + 1, -1).split(',').map(Number);
+    const [red, green, blue, alpha = 1] = channels;
+    if (![red, green, blue].every(value => Number.isInteger(value) && value >= 0 && value <= 255)
+      || !Number.isFinite(alpha) || alpha < 0 || alpha > 1) reject('paint-summary-invalid');
+    if (alpha === 0) return 'rgba(0,0,0,0)';
+    return `rgba(${red},${green},${blue},${alpha})`;
+  });
+}
 
 function reject(code) {
   throw new InteractionEvidenceError(code);
@@ -156,7 +164,7 @@ export function assessInteractionEvidence(markdown) {
   if (paints.some((paint) => !PAINT_SUMMARY.test(paint))) {
     reject('paint-summary-invalid');
   }
-  if (new Set(paints.map(paint => paint.toLowerCase().replace(/\s+/g, ' ').replace(/\s*([(),|:=])\s*/g, '$1'))).size !== paints.length) {
+  if (new Set(paints.map(canonicalPaint)).size !== paints.length) {
     reject('paint-observations-not-distinct');
   }
   if (!PAINT_OWNER.test(fields.get('actual-paint-owner'))) {
