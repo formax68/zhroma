@@ -392,16 +392,11 @@ test('final CLI rejects an in-corpus symlink to an external fixture', async (t) 
   assert.equal(result.stderr, 'RECON_GATE_REJECTED fixture-path-must-be-contained\n');
 });
 
-test('all seven spec-less planning probes remain visibly unresolved', async () => {
-  const markdown = await readFile(
-    new URL('../../SELECTORS.md', import.meta.url),
-    'utf8',
-  );
-  const unresolvedRows = markdown.match(
-    /^\| RECON-(?:01|02|03) \| (?:unclassified|adjacency|empty|ordering) \| unresolved \|/gm,
-  );
-
-  assert.equal(unresolvedRows?.length, 7);
+test('assumptions contract preserves seven rows with six gating proofs and one flagged exception', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  assert.equal((markdown.match(/^\| RECON-0[23] \| (?:adjacency|empty|ordering) \| resolved \| gating \|/gm) ?? []).length, 6);
+  assert.match(markdown, /^\| RECON-01 \| unclassified \| unresolved \| non-gating \|/m);
+  assert.match(markdown, /^- flagged-assumptions: `RECON-01\/unclassified`$/m);
 });
 
 function mutateEntry(markdown, id, transform) {
@@ -529,7 +524,10 @@ test('CR-08: disproved identifiers with intact prose cannot authorize fallback',
   expectBlockers(mutateEntry(markdown, 'stable-identifiers', s => s.replace(
     '- status: `verified`', '- status: `disproved`')), ['selector-fallback-not-matrix-proven']);
 });
-test.todo('CR-10: unresolved declared inputs must block — owner Plan 01-15');
+test('CR-10: declared-input-unresolved blocks a gating row', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  expectBlockers(mutateAssumption(markdown, 'RECON-02', 'empty', cells => { cells[2] = 'unresolved'; }), ['declared-input-unresolved']);
+});
 });
 
 function verdictField(markdown, name, value) {
@@ -557,4 +555,40 @@ test('null-shadowRoot alone does not rule out a closed root', async () => {
   const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
   const changed = mutateEntry(markdown, 'root-chain', s => s.replace(/^- shadow-root-proof:.*$/m, '- shadow-root-proof: `null-shadowRoot`'));
   expectBlockers(changed, ['closed-root-not-ruled-out']);
+});
+
+function mutateAssumption(markdown, requirement, category, mutate) {
+  const pattern = new RegExp(`^\\| ${requirement} \\| ${category} \\|.*$`, 'm');
+  assert.match(markdown, pattern);
+  return markdown.replace(pattern, line => {
+    const cells = line.split('|').slice(1, -1).map(s => s.trim());
+    // Before the schema migration, create the proposed shape for RED probes.
+    if (cells.length === 4) cells.splice(3, 0, 'gating', '');
+    mutate(cells);
+    return '| ' + cells.join(' | ') + ' |';
+  });
+}
+
+test('resolved gating rows need bound proof references', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  for (const evidence of ['', 'test/recon/missing.test.js#missing', 'test/recon/recon-gate.smoke.js#nonexistent-case']) {
+    expectBlockers(mutateAssumption(markdown, 'RECON-02', 'empty', cells => {
+      cells[2] = 'resolved'; cells[4] = evidence;
+    }), ['declared-input-evidence-missing']);
+  }
+});
+
+test('the non-gating assumption must be surfaced by exact name', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  expectBlockers(verdictField(markdown, 'flagged-assumptions', 'none'), ['flagged-assumption-not-surfaced']);
+});
+
+test('assumption section and table shape are required', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  const noSection = markdown.replace(/^## Spec-less Planning Assumptions[\s\S]*?(?=^## Final Verdict)/m, '');
+  assert.throws(() => finalCheck(noSection), { code: 'assumption-table-required' });
+  for (const mutation of [
+    cells => { cells[3] = 'unknown'; },
+    cells => { cells[2] = 'unknown'; },
+  ]) assert.throws(() => finalCheck(mutateAssumption(markdown, 'RECON-02', 'empty', mutation)), { code: 'assumption-row-invalid' });
 });
