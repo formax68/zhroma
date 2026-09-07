@@ -451,3 +451,65 @@ test('final gate rejects paint differing only by whitespace and case', async () 
   });
   assert.throws(() => finalCheck(mutated), { code: 'proceed-conflicts-with-blockers' });
 });
+
+function expectBlockers(markdown, expected) {
+  let caught;
+  try { finalCheck(markdown); } catch (error) { caught = error; }
+  assert.ok(caught instanceof reconGate.ReconGateError);
+  assert.equal(caught.code, 'proceed-conflicts-with-blockers');
+  for (const code of expected) assert.ok(caught.blockers.includes(code), code);
+  return caught.blockers;
+}
+
+test('required evidence cannot be relabeled as localization-only', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  for (const id of EXPECTED_LIVE_IDS) {
+    const changed = mutateEntry(markdown, id, section => section
+      .replace('- scope: `English path`', '- scope: `Localization only`')
+      .replace(/^- status:.*$/m, '- status: `outside English-only scope`')
+      .replace(/^- scenario:.*$/m, '- scenario: `not-run-localization-only`'));
+    expectBlockers(changed, ['required-evidence-scope-mismatch']);
+  }
+});
+
+test('required evidence rejects inadmissible statuses and scenario sets', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  expectBlockers(mutateEntry(markdown, 'shell-metadata', s => s.replace(
+    '- status: `verified`', '- status: `disproved`')), ['required-evidence-status-inadmissible']);
+  for (const id of EXPECTED_LIVE_IDS) {
+    expectBlockers(mutateEntry(markdown, id, s => s.replace(/^- scenario:.*$/m,
+      '- scenario: `not-run-localization-only`')), ['required-evidence-scenario-mismatch']);
+  }
+});
+
+test('required contracts exactly match recorded evidence including disproved findings', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  assert.deepEqual(Object.keys(reconGate.REQUIRED_LIVE_EVIDENCE), EXPECTED_LIVE_IDS);
+  for (const id of EXPECTED_LIVE_IDS) {
+    mutateEntry(markdown, id, section => {
+      const field = name => section.match(new RegExp(`^- ${name}: (.*)$`, 'm'))[1].replaceAll('`', '');
+      assert.deepEqual(reconGate.REQUIRED_LIVE_EVIDENCE[id], {
+        scope: field('scope'), statuses: [field('status')], scenarios: field('scenario').split(',').map(s => s.trim()),
+      });
+      return section;
+    });
+  }
+});
+
+test('empty ledgers and blank required fields reject with stable codes', () => {
+  assert.throws(() => verifyReconLedger('# Empty ledger', { mode: 'evidence' }), { code: 'ledger-entries-required' });
+  assert.throws(() => verifyReconLedger(completeEntry().replace(/^- evidence:.*$/m, '- evidence: '),
+    { mode: 'evidence' }), { code: 'entry-field-missing' });
+});
+
+test('blocker ordering does not depend on ledger section order', async () => {
+  let markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  markdown = mutateEntry(markdown, 'shell-metadata', s => s.replace('- status: `verified`', '- status: `disproved`'));
+  markdown = mutateEntry(markdown, 'painting-element', s => s.replace(/^- scenario:.*$/m, '- scenario: `not-run-localization-only`'));
+  const before = expectBlockers(markdown, ['required-evidence-status-inadmissible', 'required-evidence-scenario-mismatch']);
+  const sections = markdown.match(/^## Ledger Entry: [\s\S]*?(?=^## |$(?![\s\S]))/gm);
+  const a = sections.find(s => s.startsWith('## Ledger Entry: shell-metadata\n'));
+  const b = sections.find(s => s.startsWith('## Ledger Entry: painting-element\n'));
+  const swapped = markdown.replace(a, 'SWAP-SECTION').replace(b, a).replace('SWAP-SECTION', b);
+  assert.deepEqual(expectBlockers(swapped, before), before);
+});
