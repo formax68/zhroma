@@ -627,3 +627,13 @@ test('final interaction owner vocabulary matches row and direct-cell support', a
     '- actual-paint-owner: `row`', '- actual-paint-owner: `direct-cells`'));
   assert.equal(finalCheck(directCells).verdict, 'proceed');
 });
+
+test('audit: equivalent transparent paint cannot masquerade as distinct states', async () => {
+  const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+  const changed = mutateEntry(markdown, 'interaction-and-sticky-states', section => {
+    const normal = section.match(/^- normal-paint: `(.*)`$/m)[1];
+    return section.replace(/^- hover-paint:.*$/m, `- hover-paint: \`${normal.replace('rgba(0, 0, 0, 0)', 'rgba(255, 255, 255, 0)')}\``)
+      .replace(/^- selected-paint:.*$/m, `- selected-paint: \`${normal.replace('rgba(0, 0, 0, 0)', 'transparent')}\``);
+  });
+  expectBlockers(changed, ['interaction-grammar-violated']);
+});
