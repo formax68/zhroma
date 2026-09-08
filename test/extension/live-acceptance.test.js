@@ -13,12 +13,57 @@ const currentHashes = Object.fromEntries(ASSETS.map((name) => [name,
   createHash('sha256').update(asset(name)).digest('hex')]));
 const reportURL = new URL('../../.planning/phases/02-first-tint-on-a-real-view/02-LIVE-ACCEPTANCE.md', import.meta.url);
 
-// RED baseline: deliberately permissive until the evidence contract is implemented.
+const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const nonempty = (value) => typeof value === 'string' && value.trim().length > 0;
+const sameKeys = (value, keys) => isObject(value)
+  && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
+const requireEvidence = (condition, code) => { if (!condition) throw new Error(`LIVE_ACCEPTANCE_REJECTED ${code}`); };
+
 function parseLiveAcceptance(markdown) {
-  return JSON.parse(markdown.match(/```json\n([\s\S]*?)\n```/)[1]);
+  const records = [...markdown.matchAll(/^```json\r?\n([\s\S]*?)\r?\n```\s*$/gm)];
+  requireEvidence(records.length === 1, 'single-record-required');
+  let record;
+  try { record = JSON.parse(records[0][1]); }
+  catch { throw new Error('LIVE_ACCEPTANCE_REJECTED invalid-json'); }
+  requireEvidence(isObject(record), 'object-required');
+  return record;
 }
 
-function validateLiveAcceptance(record, _currentHashes) {
+// Validates declared evidence consistency, never whether a person really saw it.
+function validateLiveAcceptance(record, hashes) {
+  requireEvidence(isObject(record) && record.schema_version === 1, 'schema');
+  requireEvidence(['human_needed', 'gaps_found', 'passed'].includes(record.status), 'status');
+  requireEvidence(sameKeys(record.scope, Object.keys(SCOPE))
+    && Object.entries(SCOPE).every(([key, value]) => record.scope[key] === value), 'scope');
+  requireEvidence(typeof record.loaded_from_repository === 'boolean', 'directory-confirmation');
+  requireEvidence(sameKeys(record.runtime_sha256, ASSETS) && sameKeys(hashes, ASSETS)
+    && ASSETS.every((name) => /^[a-f0-9]{64}$/.test(record.runtime_sha256[name])
+      && record.runtime_sha256[name] === hashes[name]), 'source-hashes');
+  requireEvidence(isObject(record.settings), 'settings');
+  requireEvidence(isObject(record.limitations)
+    && Array.isArray(record.limitations.unresolved_observed_defects)
+    && record.limitations.unresolved_observed_defects.every(nonempty), 'defect-inventory');
+  requireEvidence(Array.isArray(record.checks) && record.checks.length === REQUIRED_IDS.length
+    && REQUIRED_IDS.every((id) => record.checks.filter((check) => isObject(check) && check.id === id).length === 1), 'required-checks');
+  for (const check of record.checks) {
+    requireEvidence(sameKeys(check, ['id', 'status', 'evidence_kind', 'observed_on', 'evidence']), 'check-fields');
+    requireEvidence(['pending', 'pass', 'fail'].includes(check.status)
+      && ['pending', 'live', 'synthetic'].includes(check.evidence_kind), 'check-enums');
+    if (check.status === 'pending') {
+      requireEvidence(check.evidence_kind === 'pending' && check.observed_on === '' && check.evidence === '', 'pending-evidence');
+    } else {
+      requireEvidence(check.evidence_kind === 'live' && nonempty(check.evidence), 'live-observation');
+      requireEvidence(typeof check.observed_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(check.observed_on)
+        && Number.isFinite(Date.parse(check.observed_on))
+        && new Date(check.observed_on).toISOString().slice(0, 10) === check.observed_on, 'observation-date');
+      requireEvidence(record.loaded_from_repository, 'observed-source-unconfirmed');
+    }
+  }
+  const hasDefect = record.checks.some((check) => check.status === 'fail')
+    || record.limitations.unresolved_observed_defects.length > 0;
+  const complete = record.loaded_from_repository && record.checks.every((check) => check.status === 'pass');
+  const expected = hasDefect ? 'gaps_found' : complete ? 'passed' : 'human_needed';
+  requireEvidence(record.status === expected, 'disposition');
   return record.status;
 }
 
@@ -132,5 +177,5 @@ test('repository report is honest, current, and reports its actual acceptance st
   expect(record.settings.palette).toEqual(cssPalette);
   expect(Object.keys(cssPalette).sort()).toEqual(['High', 'Low', 'Normal', 'Urgent']);
   expect(record.checks.every((check) => !/SYNTHETIC TEST DATA/.test(check.evidence))).toBe(true);
-  console.log(`LIVE ACCEPTANCE STATUS: ${record.status}`);
+  process.stdout.write(`LIVE ACCEPTANCE STATUS: ${record.status}\n`);
 });
