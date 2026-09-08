@@ -92,7 +92,8 @@ Plans:
 
 ### Phase 2: First Tint on a Real View
 
-**Goal**: On a real Zendesk agent view, with nothing configured after install, every ticket row is tinted by its priority on first load — and the permission set, the palette and the styling seam are settled permanently.
+**Goal**: As a support agent using an English Zendesk view, I want to see every ticket row tinted by its priority on first load with no setup and the permission set, palette and styling seam settled, so that I can identify urgent work at a glance.
+**Goal scope (original wording retained)**: On a real Zendesk agent view, with nothing configured after install, every ticket row is tinted by its priority on first load — and the permission set, the palette and the styling seam are settled permanently.
 **Mode:** mvp
 **Depends on**: Phase 1
 **Requirements**: DETECT-01, DETECT-02, TINT-01, TINT-02, TINT-03, TINT-04, TINT-05, CTRL-01, STORE-02, STORE-03, STORE-05
@@ -104,7 +105,7 @@ Plans:
   4. Changing a product tint requires a stylesheet edit only. No shipped extension JavaScript contains product palette values or writes CSS. Recon evidence parsers/tests retain observed colour strings outside the runtime asset boundary.
   5. `manifest.json` has no `host_permissions` block, declares `storage` as its only permission, and matches `https://*.zendesk.com/agent/*` and nothing else; the loaded extension folder is byte-for-byte the repo source.
 
-**Plans**: 2/2 plans executed/prepared; product acceptance remains human_needed with eleven live observations pending and independent review gates outstanding
+**Plans**: 2/2 plans executed/prepared; goal verification human_needed (19/25); code review clean; eleven live checks and twelve explicit decisions pending; security has two open medium threats
 
 Plans:
 **Wave 1**

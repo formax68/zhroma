@@ -38,7 +38,7 @@ All planned threats have disposition `mitigate`. The duplicate T-02-SC in the tw
 | T-02-05 | Tampering | native appearance | medium | mitigate | Four background-only direct-cell rules and preservation tests exist. Authentic native-state and legibility checks remain pending in the live report | open — below high threshold (non-blocking) |
 | T-02-06 | Information disclosure | acceptance report | high | mitigate | Actual pending report inspected: scoped hashes/settings and empty observations contain no tenant/ticket/raw DOM/private-path evidence. Report privacy contract retained; validator is not represented as universal sanitization | closed |
 | T-02-07 | Tampering | authentic session actions | high | mitigate | No authentic account action occurred. Report explicitly assigns navigation/interactions to user and leaves missing states pending; runtime only changes owned markers/lifecycle state | closed — current exercised scope |
-| T-02-08 | Repudiation | acceptance/source linkage | medium | mitigate | Three hashes independently recomputed and match; freshness and false-pass controls present. Loaded-directory confirmation is false and dated live observations are absent. Code review also identified validator defects requiring repair before use | open — below high threshold (non-blocking) |
+| T-02-08 | Repudiation | acceptance/source linkage | medium | mitigate | Three hashes independently recomputed and match; freshness and false-pass controls present. Loaded-directory confirmation is false and dated live observations are absent. Code review identified two validator defects; fixes 0ddcc27/a58b826 were independently re-reviewed clean before use | open — below high threshold (non-blocking) |
 | T-02-09 | Tampering | CSS/startup tuning | medium | mitigate | Whole-table preflight, direct-cell styling and documented stale-evidence invalidation retained. No runtime tuning or existing live observations required invalidation | closed |
 | T-02-SC | Tampering | installed test tooling | high | mitigate | Installed Vitest 4.1.11 and happy-dom 20.13.1 independently checked against approved versions; dependency/approval diff from 608d98e is empty | closed |
 
@@ -66,3 +66,7 @@ The auditor independently inspected code/tests, checked installed versions and r
 - [ ] T-02-08 loaded-source confirmation and dated observations.
 
 **Approval:** Security threshold verified 2026-09-08; product acceptance remains `human_needed`.
+
+### Code-review repair and regression follow-up
+
+CR-01 and CR-02 were repaired in 0ddcc27/a58b826 and independently rechecked by the original reviewer: current code review is clean. Only the test-local acceptance validator changed; runtime assets and live report hashes are unchanged. Orchestrator regression on 2026-09-08: 301 tests passed (65 Node smoke + 236 Vitest), LIVE ACCEPTANCE STATUS: human_needed, final recon verdict proceed. T-02-08 remains open for genuine loaded-source confirmation and dated observations, and T-02-05 remains open for authentic appearance checks. No risk was waived.
