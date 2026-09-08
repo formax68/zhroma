@@ -107,7 +107,9 @@ No browser/account action, live capture, screenshot, ticket edit, saved-view cha
 
 ## Deviations from Plan
 
-None in the deliverables. The plan explicitly allows completion of preparation with unavailable observations retained as human_needed. Task 2 added no invented failing readiness test because no observed timing defect or runtime edit existed. Tracking must preserve this human gate even when the SDK counts two summaries as two executed plans; summary counts cannot mark Phase 2 or shared live requirements accepted.
+None in the deliverables. The plan explicitly allows completion of preparation with unavailable observations retained as human_needed. Task 2 added no invented failing readiness test because no observed timing defect or runtime edit existed.
+
+**[Rule 1 - Bug] Corrected the SDK's generated Phase complete wording.** During tracking, state.advance-plan correctly returned ready_for_verification but wrote “Phase complete” in the human-readable status. Replaced it with preparation complete, Phase 2 open and human_needed; refreshed stale activity/velocity text. ROADMAP keeps In Progress and explicitly distinguishes executed plans from acceptance. Eight shared live requirements remain pending rather than being auto-checked from summary counts. Files: STATE.md and ROADMAP.md; verification: read-back status and unchanged REQUIREMENTS.md.
 
 ## Issues Encountered
 

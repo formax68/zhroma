@@ -104,7 +104,7 @@ Plans:
   4. Changing a product tint requires a stylesheet edit only. No shipped extension JavaScript contains product palette values or writes CSS. Recon evidence parsers/tests retain observed colour strings outside the runtime asset boundary.
   5. `manifest.json` has no `host_permissions` block, declares `storage` as its only permission, and matches `https://*.zendesk.com/agent/*` and nothing else; the loaded extension folder is byte-for-byte the repo source.
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans executed/prepared; product acceptance remains human_needed with eleven live observations pending and independent review gates outstanding
 
 Plans:
 **Wave 1**
@@ -113,7 +113,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — Real-view palette/readiness validation with source-bound human acceptance (Wave 2; depends on 02-01).
+- [x] 02-02-PLAN.md — Source-bound acceptance preparation complete; real-view palette/readiness and all eleven live checks remain pending (Wave 2; depends on 02-01).
 
 **UI hint**: yes
 **Known gap**: sorting the view visibly clears the tint. Intentional and accepted here — closed in Phase 3.
@@ -173,7 +173,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. DOM Recon Spike | 15/15 | Complete    | 2026-09-08 |
-| 2. First Tint on a Real View | 1/2 | In Progress|  |
+| 2. First Tint on a Real View | 2/2 | In Progress|  |
 | 3. The Tint Survives Everything | 0/TBD | Not started | - |
 | 4. Honest Failure and an Off Switch | 0/TBD | Not started | - |
 | 5. Published | 0/TBD | Not started | - |

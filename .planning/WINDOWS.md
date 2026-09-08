@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 6
+open_count: 7
 waived_count: 0
 fixed_count: 0
-total_count: 6
-last_updated: 2026-09-04T11:32:32.566Z
+total_count: 7
+last_updated: 2026-09-08T12:22:33.410Z
 ---
 
 # Broken Windows Ledger
@@ -21,6 +21,7 @@ last_updated: 2026-09-04T11:32:32.566Z
 | 4 | 01 | deviation | test/recon/interaction-evidence.smoke.js |  | Decoupled blocked-state coverage from the advancing repository interaction ledger | open |  | 2026-09-04T08:24:35.232Z |  |
 | 5 | 01 | deviation | test/recon/recon-gate.smoke.js | 242 | Repository final-gate smoke assertion hard-coded the pre-attestation block verdict. | open |  | 2026-09-04T11:29:35.167Z |  |
 | 6 | 01 | deviation | .planning/STATE.md |  | Corrected stale last-plan STATE fields after the SDK update. | open |  | 2026-09-04T11:32:32.566Z |  |
+| 7 | 02 | unrun-verify | .planning/phases/02-first-tint-on-a-real-view/02-LIVE-ACCEPTANCE.md |  | End-of-phase live product gate has eleven pending observations; authentic appearance and source loading remain human_needed. | open |  | 2026-09-08T12:22:33.410Z |  |
 
 ````json
 [
@@ -94,6 +95,18 @@ last_updated: 2026-09-04T11:32:32.566Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-04T11:32:32.566Z",
+    "resolved_at": null
+  },
+  {
+    "id": 7,
+    "kind": "unrun-verify",
+    "phase": "02",
+    "file": ".planning/phases/02-first-tint-on-a-real-view/02-LIVE-ACCEPTANCE.md",
+    "line": null,
+    "description": "End-of-phase live product gate has eleven pending observations; authentic appearance and source loading remain human_needed.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-08T12:22:33.410Z",
     "resolved_at": null
   }
 ]
