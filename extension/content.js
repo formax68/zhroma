@@ -53,7 +53,14 @@
     const entries = [];
     let incomplete = false;
     for (const row of bodies[0].children) {
-      if (row.matches(GROUP)) continue;
+      if (row.matches(GROUP)) {
+        // Group paint is host-owned, but exclusion must not hide foreign topology.
+        const groupCells = [...row.children];
+        if (groupCells.length === 0 || groupCells.some((cell) => !cell.matches(CELL)
+          || cell.rowSpan !== 1 || cell.colSpan < 1 || cell.colSpan > headers.length
+          || cell.querySelector('tr, td, th, [role="row"], [role="cell"], [role="columnheader"]'))) return result('unsafe', table);
+        continue;
+      }
       if (!row.matches(ROW)) return result('unsafe', table);
       const cells = [...row.children];
       if (cells.some((cell) => malformedCell(cell, CELL)) || cells.length > headers.length) return result('unsafe', table);
