@@ -19,9 +19,38 @@ const sameKeys = (value, keys) => isObject(value)
   && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
 const requireEvidence = (condition, code) => { if (!condition) throw new Error(`LIVE_ACCEPTANCE_REJECTED ${code}`); };
 
+// Tokenize before JSON.parse can discard repeated members. Strings are opaque
+// tokens; each object gets its own decoded-name set, including inside arrays.
+// JSON.parse below remains responsible for the complete JSON grammar.
+function requireUniqueJsonMembers(json) {
+  const tokens = /"(?:\\["\\/bfnrt]|\\u[0-9a-fA-F]{4}|[^"\\\u0000-\u001f])*"|[{}\[\]:,]|-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null|[ \t\r\n]+/gy;
+  const containers = [];
+  let previous;
+  let offset = 0;
+  while (offset < json.length) {
+    const match = tokens.exec(json);
+    requireEvidence(match !== null, 'invalid-json');
+    offset = tokens.lastIndex;
+    const token = match[0];
+    if (/^[ \t\r\n]/.test(token)) continue;
+    if (token === '{') containers.push(new Set());
+    else if (token === '[') containers.push(null);
+    else if (token === '}' || token === ']') containers.pop();
+    else if (token === ':') {
+      const names = containers.at(-1);
+      requireEvidence(names instanceof Set && previous?.startsWith('"'), 'invalid-json');
+      const name = JSON.parse(previous);
+      requireEvidence(!names.has(name), 'duplicate-json-member');
+      names.add(name);
+    }
+    previous = token;
+  }
+}
+
 function parseLiveAcceptance(markdown) {
   const records = [...markdown.matchAll(/^```json\r?\n([\s\S]*?)\r?\n```\s*$/gm)];
   requireEvidence(records.length === 1, 'single-record-required');
+  requireUniqueJsonMembers(records[0][1]);
   let record;
   try { record = JSON.parse(records[0][1]); }
   catch { throw new Error('LIVE_ACCEPTANCE_REJECTED invalid-json'); }
@@ -161,6 +190,26 @@ describe('single fenced JSON record', () => {
   const markdown = () => `# Phase 02 Live Acceptance\n\n\`\`\`json\n${JSON.stringify(syntheticReport())}\n\`\`\`\n`;
   test('parses one fenced object', () => { expect(parseLiveAcceptance(markdown())).toEqual(syntheticReport()); });
   test('rejects multiple competing records', () => { expect(() => parseLiveAcceptance(markdown() + markdown())).toThrow(); });
+  test.each([
+    ['top-level status', '"status":"passed"', '"status":"gaps_found","status":"passed"'],
+    ['check status', '"status":"pass"', '"status":"fail","status":"pass"'],
+    ['defect inventory', '"unresolved_observed_defects":[]', '"unresolved_observed_defects":["SYNTHETIC TEST DATA: defect"],"unresolved_observed_defects":[]'],
+    ['escaped-equivalent key', '"status":"pass"', String.raw`"status":"fail","st\u0061tus":"pass"`],
+    ['deeply nested setting', '"Urgent":"rgb(220 38 38 / 0.14)"', '"Urgent":"contradiction","Urgent":"rgb(220 38 38 / 0.14)"'],
+  ])('rejects duplicate JSON members: %s', (_name, before, after) => {
+    const json = JSON.stringify(syntheticReport({ complete: true })).replace(before, after);
+    expect(json).toContain(after);
+    // Each contradictory record previously survived parsing and derived passed.
+    expect(() => validateLiveAcceptance(parseLiveAcceptance(`\`\`\`json\n${json}\n\`\`\``), currentHashes))
+      .toThrow('LIVE_ACCEPTANCE_REJECTED duplicate-json-member');
+  });
+  test('keeps repeated keys in separate objects and key-like text inside strings', () => {
+    const record = syntheticReport({ complete: true });
+    record.checks[0].evidence += ' "status":"fail","status":"pass" \\ { } [ ]';
+    const parsed = parseLiveAcceptance(`\`\`\`json\n${JSON.stringify(record)}\n\`\`\``);
+    expect(parsed).toEqual(record);
+    expect(validateLiveAcceptance(parsed, currentHashes)).toBe('passed');
+  });
   test.each(['no record', '```json\n{invalid}\n```', '```json\n[]\n```', '```json\nnull\n```'])('rejects malformed record %s', (input) => {
     expect(() => parseLiveAcceptance(input)).toThrow();
   });
