@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Zhroma",
+  "version": "0.1.0",
+  "permissions": ["storage"],
+  "content_scripts": [{
+    "matches": ["https://*.zendesk.com/agent/*"],
+    "js": ["content.js"],
+    "css": ["zhroma.css"],
+    "run_at": "document_idle",
+    "world": "ISOLATED",
+    "all_frames": false
+  }]
+}
