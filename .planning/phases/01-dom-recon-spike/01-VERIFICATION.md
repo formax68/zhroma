@@ -1,273 +1,309 @@
 ---
 phase: 01-dom-recon-spike
-verified: 2026-09-04T12:45:22Z
-status: gaps_found
-score: 10/15 must-haves verified
+verified: 2026-09-08T07:34:03Z
+source_snapshot: 1341022a96c4adbbb439c534ab48e1750129d83f
+head_at_verification: f73ea9f810c39a0614f9874d7f40d23eb5b55607
+status: human_needed
+score: 23/24 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
-next_action: "Gaps found. Plan the fixes, then re-run execute-phase before shipping."
-next_command: "$gsd-plan-phase 01 --gaps"
 decision_coverage:
   honored: 16
   total: 16
   not_honored: []
 re_verification:
   previous_status: gaps_found
-  previous_score: 7/14
+  previous_score: 10/15
+  previous_report: 01-VERIFICATION-HISTORY-2026-09-04.md
   gaps_closed:
-    - "Positive user-controlled hover and selection paint evidence is now recorded and checked by the interaction-evidence contract."
-    - "All five inherited prohibitions now have explicit test or judgment dispositions in 01-SECURITY.md."
-  gaps_remaining:
-    - "The sanitizer and sensitive-data admission boundary remains fail-open for reproduced adversarial inputs."
-    - "The production corpus validator does not prove that admitted bytes satisfy the sanitizer contract or represent three distinct, correctly classified scenarios."
-    - "The final gate still accepts relabeled, prose-only, private-string, or explicitly unresolved evidence as proceed."
-  regressions:
-    - "SELECTORS.md changed from the prior truthful block to proceed even though seven declared final-gate inputs remain unresolved and the execute-post defects remain reproducible."
-gaps:
-  - truth: "Private captures and admitted fixtures pass one fail-closed, one-way sensitive-data and sanitizer-output contract."
-    status: failed
-    reason: "Fresh probes reproduced CR-01 through CR-04 and CR-11: mixed header children preserve a wrong-column High value, Unicode-equivalent denylist text is accepted, a private denylist may be read from inside the worktree, every committed fixture is rejected by the current sanitizer grammar, and the recon CLI discloses a supplied private path."
-    artifacts:
-      - path: "scripts/sanitize-fixture.js"
-        issue: "Filtered header/body indexes, no worktree boundary for denylistPath, and no reusable sanitized-output validator leave the admission path fail-open."
-      - path: "test/recon/sensitive-patterns.js"
-        issue: "Denylist tokens and content are case-folded without Unicode normalization."
-      - path: "scripts/verify-recon-gate.js"
-        issue: "The CLI prints raw exception messages, including private paths and untrusted field values."
-      - path: "test/fixtures/*.html"
-        issue: "The committed files contain ARIA-STATE enum values that the current sanitizer rejects as aria-attribute-invalid."
-    missing:
-      - "Validate unfiltered direct header/body child structure before deriving the Priority index."
-      - "Normalize scanned content and denylist values to one Unicode form."
-      - "Canonicalize denylistPath and reject a capture-specific denylist inside the Git worktree."
-      - "Share a pure sanitizer-output validator with corpus admission, re-admit all fixtures, and update hashes."
-      - "Emit stable value-free recon CLI error codes."
-  - truth: "The admitted corpus mechanically proves a genuine Priority-absent control and three distinct canonical fixture files that satisfy the current sanitizer contract."
-    status: failed
-    reason: "Fresh probes reproduced CR-05 and CR-06. The validator accepted a seventh present column as the Priority-absent scenario when the assertion purpose was retained but its kind was changed to selector-present, and accepted combo.html, ./combo.html, and .//combo.html as three scenarios backed by one physical multi-table file."
-    artifacts:
-      - path: "scripts/fixture-contract.js"
-        issue: "Required assertion purposes are not bound to required kinds, duplicate detection runs on raw manifest strings before canonicalization, and sanitizer-output grammar is not enforced."
-      - path: "test/fixtures/manifest.json"
-        issue: "Current hashes and structural counts pass, but those facts do not prove sanitizer provenance, correct absence semantics, or canonical file uniqueness."
-    missing:
-      - "Require priority-column-absent to use selector-absent and bind it to the declared table/header."
-      - "Reject duplicate canonical fixture paths after realpath resolution."
-      - "Reject multi-table or otherwise sanitizer-invalid admitted bytes through the shared output validator."
-  - truth: "A proceed verdict is impossible while required English evidence is relabeled, fallback proof is only prose, interaction evidence contains private strings, or declared gate inputs remain unresolved."
-    status: failed
-    reason: "Fresh probes reproduced CR-07 through CR-10. Final validation returned proceed after shell-metadata was relabeled localization-only, after stable identifiers were disproved while the existing fallback prose remained, and after all three paint summaries were replaced by arbitrary private strings. The unchanged ledger also returns proceed with seven rows explicitly marked unresolved and described as final-gate inputs."
-    artifacts:
-      - path: "scripts/verify-recon-gate.js"
-        issue: "Required IDs have no per-entry scope/status/scenario contract; fallback and root decisions rely on prose substrings; paint values use only non-empty/distinct checks; the spec-less assumption table is not parsed."
-      - path: "test/recon/interaction-evidence.smoke.js"
-        issue: "Its stricter paint/privacy assessor is test-local and is not called by production final validation."
-      - path: "SELECTORS.md"
-        issue: "Lines 273-286 declare seven unresolved inputs to the final gate, while line 290 records proceed."
-    missing:
-      - "Define and enforce the expected scope, admissible status, and scenario matrix for every required evidence ID."
-      - "Replace prose-derived fallback authorization with structured validator-owned evidence."
-      - "Move paint syntax/privacy validation into production and share it with tests."
-      - "Parse and block on the seven declared inputs, or explicitly remove their claim to be gate inputs through a reviewed contract change."
+    - "Sanitizer and sensitive-data admission: shared production scanner, canonical Unicode matching, external denylist custody, unfiltered Priority indexing, shared output grammar, and value-free default diagnostics."
+    - "Corpus admission: actual header identity, required assertion kinds, canonical distinct files, exact hashes, shared grammar, and approved repository-byte re-admission."
+    - "Final gate: per-ID contracts, production paint validation, structured proof registry and metadata, parsed assumptions, and consistent evidence-derived verdict."
+  gaps_remaining: []
+  regressions: []
+  unresolved_human_items:
+    - "Truth 8: historical independence of the two exact-version dependency approvals remains not-attested."
+human_verification:
+  - test: "Resolve the historical independence of the original vitest@4.1.11 and happy-dom@20.13.1 approvals."
+    expected: "Provide a contemporaneous independent record or an explicit historical re-attestation based on recollection. If that fact cannot be established, an explicit governance disposition must preserve it as unproven and separately resolve the security gate."
+    why_human: "The developer affirmed approval of each exact release before installation but answered the separate independence question: I don't remember, it should be fine. Code, record-consistency tests, later execution approval, and plan completion cannot establish that historical event."
+security_gate:
+  status: blocked
+  open_threats: [T-01-05, T-01-SC]
+  distinct_issues: 1
+flagged_assumptions:
+  - id: RECON-01/unclassified
+    status: unresolved
+    gating: false
+    disposition: "Explicitly approved in 01-15-DECISION.md and surfaced in SELECTORS.md; no specification-derived edge contract is claimed."
 ---
 
 # Phase 1: DOM Recon Spike Verification Report
 
 **Phase Goal:** Every DOM assumption needed for the English-only v1 path is answered against a live English Zendesk agent view. Localization-specific assumptions are explicitly excluded from this spike, while the two terminal DOM risks are still ruled in or out before implementation begins.
-**Verified:** 2026-09-04T12:45:22Z
-**Status:** gaps_found
-**Re-verification:** Yes — after Plans 01-06 through 01-08
+
+**Verified:** 2026-09-08T07:34:03Z
+
+**Status:** human_needed
+
+**Re-verification:** Yes — Plans 01-09 through 01-15 and subsequent audit fixes.
+**Source:** 1341022a96c4adbbb439c534ab48e1750129d83f; HEAD f73ea9f contains only subsequent report changes.
 
 ## Goal Achievement
 
-Phase 1 has materially better evidence than the stale report: the native hover/selection observation now exists, all eight plans have summaries, exact fixtures load offline, and the two named terminal DOM risks are stated clearly. The phase goal is still not achieved as a trustworthy pre-implementation gate. The nominal 71-test suite and final command pass, but fresh adversarial probes independently reproduced every execute-post critical finding CR-01 through CR-11.
+The three prior technical gaps are closed at the inspected source. The recorded English DOM conclusions, safe offline corpus, and mechanical ledger gate have current code and focused behavioral evidence. The final CLI returns `FINAL VERDICT: proceed`; this is the repository DOM-evidence result, not overall phase acceptance.
 
-The user's acceptance of ten high-severity threats closes the separate security workflow gate. It is not remediation, is not a `VERIFICATION.md` must-have override, and does not make the affected privacy, corpus, or final-gate truths pass.
+One human fact remains unresolved: whether the two original exact-version dependency approvals were independent. Both exact releases were separately re-attested as approved before installation, but independence was expressly **not-attested**. Consequently truth 8 is **UNCERTAIN (WARNING)**, this report is **human_needed**, and the independent security report remains **blocked** by T-01-05 and T-01-SC, two IDs for that same fact. Phase 2 remains closed.
+
+The previous report is preserved verbatim in `01-VERIFICATION-HISTORY-2026-09-04.md`. Its historical risk acceptances are not must-have overrides and are not used to close any implementation gap.
+
+### Scope and Must-Have Reconciliation
+
+Read all fifteen PLAN and SUMMARY files, the prior verification, roadmap and requirements, CONTEXT, current code/security/UI reviews, dependency record, checkpoint 10, decisions 12 and 15, and SELECTORS. SUMMARY claims supplied an inventory, not verification evidence. No project AGENTS.md or project-local skill directory was found; the configured gsd-verifier skill query was empty. Runtime identity was confirmed as `@opengsd/gsd-core 1.12.0`.
+
+The four roadmap success criteria remain the first four truths below, with their contract wording retained. The previous fifteen truth identities are retained; their consolidated descriptions incorporate overlapping plan detail. Nine additional truths expose the new contracts in Plans 09–15 rather than silently keeping the old denominator. Repeated plan truths map as follows:
+
+| Plan | Truth coverage | Reconciliation |
+|---|---|---|
+| 01 | 1, 5–7, 16, 24 | Initial unresolved inventory has its planned terminal successor; scanner moved in 09. |
+| 02 | 4, 8–9 | Exact-version approvals are attested; historical independence remains uncertain. |
+| 03 | 6, 8, 10–11, 18–19 | Toolchain/admission implementation checked separately from approval history. |
+| 04 | 1, 3–4, 9, 12–13, 15 | Marker-staged handoff was consumed by 05; current state is interaction-evidence-complete. |
+| 05 | 1–4, 6, 11–15, 19 | Complete bounded corpus and explicit verdict; later re-admission is disclosed. |
+| 06 | 4, 5, 13, 22 | Positive human-observed interaction evidence and production enforcement. |
+| 07 | 6, 11, 19 | Cwd-independent CLI, bounded topology, ARIA classes, Priority-cell confinement. |
+| 08 | 5, 9–11, 14–15 | Shared corpus/final path and explicit provenance/prohibition dispositions. |
+| 09 | 16–18, 21 | Production ownership, Unicode matching, diagnostics, ordering, engine range. |
+| 10 | 8, 10, 15 | Truthful dependency record and drift guard; first affirmative independence truth remains uncertain. |
+| 11 | 6, 11, 19 | Unfiltered indexing, canonical denylist custody, shared grammar, header preservation/parity. |
+| 12 | 2, 11, 19 | Approved source/provenance and measured token renumbering; exact second-pass parity. |
+| 13 | 11, 20 | Assertion kind/topology, aliases, grammar, header index, malformed/empty roots. |
+| 14 | 5, 13, 16, 21–22 | Per-ID contract, shared paint grammar, stable ordering; temporary todos consumed by 15. |
+| 15 | 3, 14, 23–24 | Structured authorization, all seven assumption rows, and the explicitly tagged backstop truth. |
+
+The Plan 12 decision explicitly supersedes its incorrect first-pass equality/irreversible-history assumptions: only the disclosed 62/170 placeholder renumberings are permitted, followed by byte-identical second passes. The original bytes/hashes remain in Git. The Plan 15 decision explicitly approves six resolved gating rows and the surfaced non-gating RECON-01/unclassified row. Neither decision supplies dependency independence or new live evidence.
 
 ### Observable Truths
 
 | # | Truth | Status | Evidence |
 |---|---|---|---|
-| 1 | `SELECTORS.md` answers the English-path DOM ledger, including paint ownership and the absence of a locale-independent Priority signal. | ✓ VERIFIED | Entries `shell-metadata` through `current-host-coverage` are terminal; interaction evidence now records positive normal/hover/selected observations. |
-| 2 | A human-attested live-derived fixture corpus is committed and can be loaded offline to locate each ticket table and header. | ✓ VERIFIED | Three HTML files and `manifest.json` exist; the fresh 41-test Vitest run validates the committed manifest. This narrow truth does not certify safe admission. |
-| 3 | The repository plainly states whether a closed Shadow DOM wraps the list and whether Garden identifiers are present. | ✓ VERIFIED | `SELECTORS.md:51-73` records a direct `Document` root chain in all scenarios and current Garden/test identifiers; `SELECTORS.md:291-293` states both conclusions. |
-| 4 | The evidence is explicitly English-only and makes no localization, legacy-shell, vanity-domain, or cross-plan claim. | ✓ VERIFIED | `SELECTORS.md:3-13`, `190-236`, and `298-299` preserve the English current-Agent-Workspace boundary. |
-| 5 | The ledger contract cannot authorize proceed while declared English evidence inputs are unresolved or semantically unsafe. | ✗ FAILED | CR-07 through CR-10 reproduced: relabeled required evidence, prose-only fallback, arbitrary private paint strings, and seven unresolved table inputs all coexist with accepted `proceed`. |
-| 6 | Fixture sanitization and sensitive-data admission are one-way, bounded, and fail closed. | ✗ FAILED | CR-01 through CR-04 reproduced; the wrong-column value and Unicode denylist bypass were accepted, a worktree denylist was accepted, and current fixtures fail current sanitizer validation. |
-| 7 | The offline tracer proves a complete synthetic ledger path without asserting a live Zendesk fact. | ✓ VERIFIED | `test/recon/recon-gate.smoke.js` exercises the synthetic contract; the fresh Node smoke run passed. |
-| 8 | Both exact dependency releases were independently human-approved before installation. | ? UNCERTAIN | The installed versions and commit order are visible, but approval itself is asserted only in SUMMARY.md; no independent checkpoint record is present in the codebase. |
-| 9 | The authenticated scenario provenance and retained user control have explicit human judgment dispositions. | ✓ VERIFIED | `01-SECURITY.md` records the Plan 01-08 human approval for live origin and user-controlled authenticated actions without identifying data. |
-| 10 | Only `vitest@4.1.11` and `happy-dom@20.13.1` are exact development dependencies. | ✓ VERIFIED | `package.json:13-16` and the lockfile pin exactly those packages; there are no production dependencies. |
-| 11 | One production corpus validator proves scan-before-parse, detached parsing, checksum provenance, correct scenario semantics, and distinct canonical files. | ✗ FAILED | Wiring exists, but CR-04 through CR-06 reproduced sanitizer-contract divergence, false Priority absence, and one-file three-scenario aliasing. |
-| 12 | Static live evidence covers reachability, root chain, identifiers, headers, Priority representation/absence, row distinction, scrolling, paint owner, sticky ownership, language, and host scope. | ✓ VERIFIED | `SELECTORS.md:27-157` and `178-212` retain complete fields, probes, evidence, interpretation, fallback, and named scenarios. |
-| 13 | Positive normal, hovered, and selected-row paint evidence is recorded under the user-controlled interaction seam. | ✓ VERIFIED | `SELECTORS.md:159-176` records one selected row, one distinct hovered row, a normal row, distinct paints, row ownership, and `interaction-owner: user`; the interaction contract passes. |
-| 14 | The current `proceed` verdict is derived from all required evidence and corpus predicates. | ✗ FAILED | The nominal command prints proceed, but the same production function also prints/returns proceed for CR-07 through CR-10 adversarial variants. |
-| 15 | All five inherited must-NOT prohibitions have an auditable test or judgment disposition. | ✓ VERIFIED | `01-SECURITY.md` assigns every prohibition a tier, evidence reference, and disposition. Three technical prohibitions remain violated under accepted risk and therefore feed failed truths 5, 6, and 11. |
+| 1 | A `SELECTORS.md` in the repo answers every English-path DOM item with a yes/no, the evidence behind it, and the fallback if the answer is no — including which element actually paints the row background and whether a locale-independent priority signal exists on the row or cell. Localization-only ledger items are explicitly marked outside Phase 1 rather than presented as verified. | VERIFIED | Fifteen required live entries cover all named questions; exact probes, sanitized results, interpretations, fallbacks and scenarios are present. Same-table headers, no observed recycling, and marker non-survival are valid disproofs, not missing evidence. CLI admits 18 total entries including tracer and two excluded localization entries. |
+| 2 | A captured `outerHTML` fixture of a real agent view is committed under `test/fixtures/`, and a test can load it and locate the ticket table and its header row with no Zendesk account present. | VERIFIED | Three admitted structural projections; historical live-origin judgment retained in the security record; current source is explicitly approved repository-byte re-admission. The named committed-corpus test passes without a server/account. This does not claim all normalized priority values were observed live. |
+| 3 | Anyone reading the repo can state, from the recorded answers alone, whether a closed Shadow DOM wraps the ticket list and whether `data-garden-id` is present on rows in a current agent view — the two answers that decide whether the project proceeds as designed. | VERIFIED | SELECTORS root-chain/reachability record direct Document roots in all three observed scenarios; stable-identifiers lists actual Garden/test pairs. Plan 15 backstop is supported by those recorded direct observations and retained human disposition, plus a fresh named negative test rejecting null-shadowRoot-only proof. No current live-session or future-shell claim. |
+| 4 | The recon was performed in the English agent UI only. `SELECTORS.md` records the observed page-language signal, but Phase 1 makes no claim that it works across UI languages. | VERIFIED | Recorded `htmlLang: en`, current shell/date and unknown/not-shared plan; localization entries explicitly outside scope. Scope judgments were previously resolved and no new session occurred. |
+| 5 | The ledger contract cannot authorize proceed while required English evidence inputs are unresolved or semantically unsafe. | VERIFIED | `requireFinalEvidence`, `collectBlockingPredicates`, `assumptionBlockers` are called by final mode. Named relabeling, unresolved-gating and proof-reference regressions pass. Valid block remains a conservative result. |
+| 6 | Fixture sanitization and sensitive-data admission are one-way, bounded, and fail closed on the identified invalid inputs. | VERIFIED | `sanitizeFixture` canonicalizes custody, reads only external input/denylist, validates unfiltered owned cells and final output before exclusive write. Named mixed-child, custody, and corrupt-output/no-write tests pass. No broader arbitrary-OS-write-failure guarantee is inferred. |
+| 7 | The offline tracer proves a complete synthetic ledger path without asserting a live Zendesk fact. | VERIFIED | Explicit synthetic entry, evidence-mode contract, and final complete-matrix requirement; synthetic-only evidence cannot satisfy final mode. Earlier passed truth regression checked against current source/tests. |
+| 8 | Both exact dependency releases were independently human-approved before installation. | UNCERTAIN — WARNING | `01-10-CHECKPOINT.md` and `DEPENDENCY-APPROVALS.md` record two yes answers and the separate independence answer “I don't remember, it should be fine”. Independence remains not-attested. No override exists; not counted as verified. |
+| 9 | Authenticated scenario provenance and retained user control have explicit human judgment dispositions. | VERIFIED | Current security report retains the two Plan 08 judgments; historical report records them separately from technical risk acceptance. SELECTORS preserves the completed human interaction seam and the recovered read-only navigation incident. No new authenticated actions were taken. |
+| 10 | Only the two exact development dependencies are installed and the approval record cannot drift unnoticed from package/lock pins. | VERIFIED | `package.json`, lock resolutions and five freshly passing dependency smoke tests agree on vitest 4.1.11 and happy-dom 20.13.1; no runtime dependencies. Tests assert consistency, not the historical truth in row 8. |
+| 11 | One production corpus validator proves scan-before-parse, detached parsing, exact hashes, actual header identity, scenario semantics, and three distinct canonical files. | VERIFIED | `validateFixtureManifest` preflights canonical identity, scans, invokes shared grammar, parses detached, binds actual header via `resolveBoundedDocument`, then validates purpose/kind/topology. Named scan-order, alias, false-header and committed-corpus tests pass. |
+| 12 | Static recorded live evidence covers reachability, roots, identifiers, headers, Priority presence/absence, row distinction, scrolling, paint ownership, sticky ownership, language, and host scope. | VERIFIED | SELECTORS named evidence entries retain exact observed results and scenario bounds; source fields checked against the complete per-ID map. The historical scrolling/marker observations are recorded evidence, not a claim to have re-run Zendesk today. |
+| 13 | Positive normal, hovered, and selected-row paint evidence is recorded under the user-controlled seam. | VERIFIED | Recorded positive counts, distinct rows and paint summaries in `interaction-and-sticky-states`; prior human completion retained, current final CLI accepts production grammar. Existing no-state and wrong-owner cases remain active. |
+| 14 | The current repository verdict follows required evidence/corpus predicates and contains no unresolved gating contradiction. | VERIFIED | Fresh CLI returns proceed after real corpus validation. Seven exact assumption identities are parsed, six have bound tests, one approved exception is surfaced. Old zero-state handoff is historical and is superseded by the positive interaction entry; it is not current paint evidence. |
+| 15 | Every inherited and added must-NOT obligation has an auditable technical or existing human disposition. | VERIFIED | All 36 declarations across Plan 04 and Plans 09–15 are mapped into fourteen groups below; no automatic LLM-only judgment or unwired test-tier prohibition is silently passed. Dependency inability-to-attest is preserved rather than falsified. |
+| 16 | One production-owned scanner performs canonical Unicode matching and deterministically ordered value-free findings. | VERIFIED | Only `scripts/sensitive-patterns.js` defines the scanner; producer and consumer import it. NFC-before-case-fold applies to both sides and generic matching. Named NFC/NFD and stable-order tests pass; corpus scan-order test exercises the normalized production path. |
+| 17 | Default recon CLI failures emit stable codes without supplied private paths or untrusted values. | VERIFIED | Fresh missing-ledger CLI exits 1 with only `RECON_GATE_REJECTED ledger-readable-required`. CLI catch is code-only; detailed output requires the explicit Plan 09 `ZHROMA_RECON_DEBUG=1` opt-in. |
+| 18 | The declared Node range excludes unsupported Node 23 and the private-capture conventions are ignored. | VERIFIED | Package range is `^20.19.0 || ^22.12.0 || >=24.0.0`; pins unchanged. All three named capture/denylist conventions were reported ignored. Ignore rules are defense in depth behind custody enforcement. |
+| 19 | Shared output grammar preserves the proven Priority header, and every approved re-admitted fixture re-sanitizes identically without structural reclassification. | VERIFIED | Three separately named round-trip tests pass with exact bytes/hashes. Fresh object comparison against f391241 confirms all manifest fields except approved hash/method/header-index changes are identical. Current source declaration and decision disclose renumbering and no fresh capture. |
+| 20 | Malformed, empty and incomplete manifest inputs have stable, non-vacuous outcomes. | VERIFIED | Root guard precedes dereference; fresh named null-root test passes. Active parameterized scalar/array/list cases and explicit single-entry/matrix branches inspected. Existing root-shape failure cannot escape as raw TypeError. |
+| 21 | Every required ID has an exact scope/status/scenario contract and verdict blocker order is independent of ledger section order. | VERIFIED | Frozen fifteen-ID map, duplicate-scenario checks and `BLOCKER_ORDER`; fresh named all-ID relabeling and section-transposition tests pass. |
+| 22 | A single production paint assessor rejects private payloads and equivalent paint masquerading as distinct states. | VERIFIED | Both production gate and smoke suite import `assessInteractionEvidence`; bounded computed RGB/RGBA/transparent grammar, image:none, numeric bounds and canonical alpha/color equality. Fresh equivalent-transparency test passes; private-function and owner-vocabulary regressions inspected. |
+| 23 | Authorization uses closed enums and validator-owned per-rung proof contracts; unrelated files/unproven metadata cannot authorize fallback. | VERIFIED | `FALLBACK_PROOFS`, canonical test-path checks, registered case anchors, four enums and closed metadata tokens are actually used. Named unrelated-proof and metadata-injection tests pass. Only Garden-pair is currently admitted; other strategies remain unproven. |
+| 24 | All seven assumptions are parsed; unresolved gating rows or unbound proofs block, and the approved non-gating exception must be surfaced by exact name. | VERIFIED | Exact seven identities/classifications and proof sets in production; fresh unresolved-row and missing-proof tests pass. No silent row deletion, proof substitution, or unrecorded specification claim. |
 
-**Score:** 10/15 truths verified (0 present, behavior-unverified; 1 uncertain item needs human confirmation)
+**Score:** 23/24 truths verified; 0 present-but-behavior-unverified; 1 historical fact uncertain. There are no applied must-have overrides and no new regressions. The backstop tag in Plan 15 was evaluated explicitly; a parser token alone was not treated as proof of the external DOM fact.
 
 ### Required Artifacts
 
-| Artifact | Expected | Status | Details |
+| Artifact | Expected | Status | Substantive implementation and wiring |
 |---|---|---|---|
-| `SELECTORS.md` | Complete live ledger and explicit verdict | ⚠️ SUBSTANTIVE, INTERNALLY CONTRADICTORY | 299 lines and complete live entries, but seven declared final-gate inputs remain unresolved while the verdict is proceed. |
-| `scripts/verify-recon-gate.js` | Fail-closed evidence/final validator | ✗ FAILED CONTRACT | Exists, exported, and CLI-wired; CR-07 through CR-11 remain reproducible. |
-| `test/recon/sensitive-patterns.js` | Shared sensitive-data policy | ✗ FAILED CONTRACT | Substantive and used, but Unicode-equivalent denylist values bypass it. Production scripts also import it from the test tree. |
-| `package.json` / `package-lock.json` / `vitest.config.js` | Exact approved test toolchain | ✓ VERIFIED | Exact package versions and runnable configuration; engine range warning remains. |
-| `scripts/sanitize-fixture.js` | One-way topology-preserving sanitizer | ✗ FAILED CONTRACT | 571 substantive lines and CLI-wired, but CR-01, CR-03, and CR-04 remain reproducible. |
-| `scripts/fixture-contract.js` | Shared production corpus validator | ✗ FAILED CONTRACT | Imported by final mode and tests, but CR-04 through CR-06 show incomplete output, assertion-kind, and canonical-uniqueness enforcement. |
-| `test/recon/interaction-evidence.smoke.js` | Positive/negative interaction evidence contract | ⚠️ PARTIAL | The test-local assessor is stricter than production and is not shared with final validation. |
-| `test/recon/recon-gate.smoke.js` | Final-gate regression coverage | ⚠️ PARTIAL | Active and passing, but omits the four reproduced final-gate bypass classes. |
-| `test/recon/sanitize-fixture.test.js` | Sanitizer regression coverage | ⚠️ PARTIAL | Active and passing, but omits the reproduced mixed-child, Unicode, denylist-custody, and committed-output mismatch paths. |
-| `test/recon/fixture-contract.test.js` | Corpus contract coverage | ⚠️ PARTIAL | Active and passing, but omits required-kind and canonical-alias attacks and does not require current-sanitizer validity. |
-| Three `test/fixtures/*.html` files | Faithful three-scenario corpus | ⚠️ PARTIAL | Hashes and current structural assertions pass; every committed fixture is rejected by the current sanitizer with `aria-attribute-invalid`. |
-| `test/fixtures/manifest.json` | Provenance, selectors, assertions, hashes | ⚠️ PARTIAL | Contains exact current data, but the validator accepts a false absence assertion and three raw aliases of one canonical file. |
-| `01-SECURITY.md` | Independent security and prohibition record | ✓ VERIFIED AS GOVERNANCE RECORD | Records accepted risks truthfully; explicitly says the defects remain unremediated and the proceed verdict is contradicted. |
+| `SELECTORS.md` | Complete recorded ledger and derived verdict | VERIFIED | 18 entries, human handoff, corpus provenance, seven-row table and structured final fields; consumed by CLI and regression tests. |
+| `scripts/verify-recon-gate.js` | Production final/evidence validator | VERIFIED | 735 lines; parses entries/questions/verdict/assumptions, checks per-ID contracts and production interaction assessor; CLI validates real manifest first. |
+| `scripts/sensitive-patterns.js` | Shared policy | VERIFIED | NFC normalization, mandatory denylist, frozen code/category findings; sanitizer and corpus imports use it. |
+| `scripts/sanitize-fixture.js` | Bounded one-way transformation | VERIFIED | 336 lines; external canonical custody, size bounds, shared parse/output policy, immutable input and exclusive output; CLI/library and tests share path. |
+| `scripts/sanitized-output-contract.js` | Shared pure grammar | VERIFIED | 338 lines, no filesystem import; owned-table parsing, attributes/ARIA/text and header rules; producer and consumer both call it. |
+| `scripts/fixture-contract.js` | Corpus admission | VERIFIED | 454 lines; canonical preflight, hashes, scan, grammar, detached parse, actual header binding and scenario validation; called from final CLI and tests. |
+| `scripts/interaction-evidence.js` | Production paint/privacy grammar | VERIFIED | 184 lines; closed fields/counts/owner/scenario, bounded paint and canonical equality; one definition shared with tests. |
+| `package.json`, `package-lock.json`, `vitest.config.js` | Exact toolchain and test discovery | VERIFIED | Exact pins, no runtime deps, supported engines, Node smoke and Happy DOM Vitest globs. Approval history remains row 8. |
+| `DEPENDENCY-APPROVALS.md` | Truthful version/approval record | VERIFIED as record | Rows bind to pins via five passing tests; uncertainty explicitly preserved, not an artifact stub. |
+| `test/fixtures/zendesk-view-priority-present.html` | Canonical four-label structural projection | VERIFIED | 16 headers, four ordered ticket rows and exact labels; checksum, grammar and round-trip pass. |
+| `test/fixtures/zendesk-view-priority-absent.html` | Genuine absence control | VERIFIED | Six headers/four ticket rows; no Priority header/value; actual header binding prevents body-row substitution. |
+| `test/fixtures/zendesk-view-grouped-long.html` | Group/sticky/scroll structure | VERIFIED | Fifteen headers, twelve ordered ticket rows and one group row, same-table header/scroll ownership; round-trip passes. |
+| `test/fixtures/manifest.json` | Exact source declarations and structural assertions | VERIFIED | All three current hashes and full scenario matrix admitted; prior structural/selector declarations unchanged. |
+| Eight `test/recon/*` files | Contract and regression evidence | VERIFIED | Active globs, production imports, explicit negative and positive checks; test-quality audit below. |
+| `01-SECURITY.md` | Independent threat/prohibition dispositions | VERIFIED as governance record | 66/68 threat IDs closed; two open IDs name one historical issue. Its blocked status is retained. |
+| Checkpoint 10 and decisions 12/15 | Human evidence and scope decisions | VERIFIED as records | Exact answers and constraints read directly; no fresh facts inferred. |
 
-Generic artifact queries reported every declared path present and pattern-complete. The goal-level substance checks above supersede that shallow existence result.
+All fifteen plan artifact/key-link queries ran. Their shallow checks returned three expected historical mismatches: deleted `test/recon/sensitive-patterns.js` (explicitly moved by 09), replaced `REQUIRED_LIVE_EVIDENCE_IDS` export (explicitly promoted to `REQUIRED_LIVE_EVIDENCE` by 14), and consumed `state: marker-staged` link (planned successor in 05). Plan 02 declares no artifacts. These are documented successor contracts, not missing current deliverables or new overrides. Generic “pattern found” responses were cross-checked against actual imports/calls.
 
 ### Key Link Verification
 
-| From | To | Via | Status | Details |
-|---|---|---|---|---|
-| `scripts/sanitize-fixture.js` | `test/recon/sensitive-patterns.js` | final scan before write | ⚠️ WIRED, WEAK | The call is real, but Unicode normalization and denylist custody are missing. |
-| `scripts/fixture-contract.js` | `test/recon/sensitive-patterns.js` | scan before detached parse | ⚠️ WIRED, WEAK | Scan ordering is correct; output grammar and Unicode handling are incomplete. |
-| `scripts/verify-recon-gate.js` | `scripts/fixture-contract.js` | final mode corpus validation | ⚠️ WIRED, INCOMPLETE | Final mode calls the shared validator, but the validator accepts false scenario and canonical-file proofs. |
-| `scripts/verify-recon-gate.js` | `SELECTORS.md` | required entries and verdict predicates | ✗ NOT RELIABLY WIRED | Required IDs are present, but expected scope/status/scenarios and seven table-form inputs are not enforced. |
-| `test/recon/interaction-evidence.smoke.js` | production final gate | shared paint/privacy grammar | ✗ NOT WIRED | The stricter assessor remains test-local; production accepts arbitrary private paint strings. |
-| `test/fixtures/manifest.json` | `scripts/fixture-contract.js` | selectors, hashes, structure, scenarios | ⚠️ PARTIAL | Current manifest passes, but assertion purpose is not bound to kind and duplicate paths are checked before canonicalization. |
-| `SELECTORS.md` | Phase 2 | explicit final verdict | ✗ UNSAFE SIGNAL | The file says proceed despite its own unresolved-input statement and independently reproduced blocking defects. |
-| Plan 04 `marker-staged` link | completed interaction record | successor handoff state | ✓ SUPERSEDED AS DESIGNED | The generic Plan 04 query reports one stale link missing; `interaction-evidence-complete` is the intended successor state. |
+| From | To | Via | Status / evidence |
+|---|---|---|---|
+| Sanitizer | Production scanner | `finalMarkup → scanSensitiveContent` | WIRED; runs before shared validation and exclusive write. |
+| Sanitizer | Shared output grammar | `parseBoundedCapture / validateSanitizedOutput` | WIRED; named corrupt-product test proves fail-before-write. |
+| Corpus validator | Scanner → grammar → detached parser | Ordered direct calls | WIRED; named DOMParser-spy test proves scan-before-parse. |
+| Corpus validator | Manifest and exact fixture files | Canonical preflight, SHA-256, actual header, scenario assertions | WIRED; committed-corpus and adversarial header/alias tests pass. |
+| Final CLI | Corpus validator → ledger function | Await complete matrix then pass `corpus.scenarios` | WIRED; final command independently validates real files. Library caller supplies admitted scenarios by declared API contract. |
+| Final ledger | Production interaction assessor | `collectBlockingPredicates` | WIRED; equivalence rejection exercised through final mode. |
+| Final ledger | Per-ID map, enums and assumptions | `requireFinalEvidence`, `assumptionBlockers` | WIRED; relabeling, order and unresolved-gating tests pass. |
+| Final ledger | Registered proof paths/cases | `FALLBACK_PROOFS / ASSUMPTION_PROOFS` | WIRED; rejects unrelated existing files and unbound references. Reference presence is supplemented here by behavioral execution. |
+| Tests | Current committed corpus | Default manifest plus optional `GSD_FIXTURE_MANIFEST` | WIRED; positive committed-corpus test passed independently of synthetic harness cases. |
+| Approval record | Package and lock resolutions | Dependency smoke file | WIRED; five fresh checks pass without asserting historical independence. |
+| Recorded DOM result | Phase 2 acceptance | Explicit final rationale and independent verification/security gates | DOM result is proceed; advancement remains CLOSED until the human/security disposition. |
 
 ### Data-Flow Trace (Level 4)
 
-No user-facing dynamic rendering exists in Phase 1. The evidence/admission flow was traced instead.
+There is no authored product UI or database in this phase. The actual evidence/admission flow, rather than fictitious rendered application data, was traced.
 
-| Stage | Source | Consumer | Status | Finding |
-|---|---|---|---|---|
-| Live observations | Authenticated English Agent Workspace | `SELECTORS.md` | ✓ HUMAN-ATTESTED | Static and interaction observations are recorded with explicit scope and user-control judgments. |
-| Private capture | Outside-worktree HTML + denylist | `sanitizeFixture()` | ✗ FAIL-OPEN | Wrong-column text, Unicode-equivalent values, and a worktree-resident private denylist can cross or weaken the boundary. |
-| Sanitized bytes | Sanitizer output | committed fixtures | ✗ CONTRACT DIVERGENCE | Current committed fixtures cannot be reproduced through the current sanitizer grammar. |
-| Fixture bytes | `manifest.json` | `validateFixtureManifest()` | ✗ HOLLOW PROOF | Hashes flow, but false Priority absence and one physical file as three scenarios are accepted. |
-| Ledger + corpus | `SELECTORS.md` + manifest | final CLI | ✗ UNSAFE AUTHORIZATION | Relabeled, prose-only, private-string, and unresolved evidence still reaches proceed. |
+| Source | Processing | Output | Status |
+|---|---|---|---|
+| Previously observed English live DOM | Exact probes and sanitized direct results, retained human provenance/control judgments | SELECTORS ledger | FLOWING — historical observed evidence; no fresh session claimed. |
+| Approved previously sanitized repository bytes | External temporary input, deterministic sanitizer, shared scan/output grammar | Three current fixture files | FLOWING — each exact second pass reproduced bytes/hash. |
+| Manifest + canonical fixture bytes | Actual hashes, grammar, detached selectors, actual header identity, scenario assertions | Three admitted scenarios | FLOWING — complete current corpus test passes; no empty hardcoded manifest bypass. |
+| Admitted scenarios + real ledger | Per-ID/interaction/root/fallback/assumption predicates | CLI proceed | FLOWING — current positive result plus targeted rejection evidence. |
+| Historical human answers | Verbatim record and package/lock consistency checks | Two exact approvals attested; independence not-attested | FLOWING WITH DECLARED LIMITATION — no code path manufactures the missing event. |
 
 ### Behavioral Spot-Checks
 
-| Behavior | Command | Result | Status |
-|---|---|---|---|
-| Full default workspace suite | `npm test` | 30 Node smoke + 41 Vitest = 71 passed; 0 failed/skipped/todo | ✓ PASS |
-| Evidence ledger gate | `node scripts/verify-recon-gate.js evidence SELECTORS.md` | `EVIDENCE READY: 18 terminal entries` | ✓ PASS |
-| Nominal final gate | `node scripts/verify-recon-gate.js final SELECTORS.md test/fixtures/manifest.json` | `FINAL VERDICT: proceed` | ✓ PASS, contradicted below |
-| CR-01 wrong-column Priority preservation | Fresh temporary-input `sanitizeFixture()` probe | Accepted; wrong-column `High` survived | ✗ FAIL |
-| CR-02 Unicode-equivalent denylist | `scanSensitiveContent()` with NFC denylist and NFD content | Accepted | ✗ FAIL |
-| CR-03 worktree private denylist | `sanitizeFixture()` using `package.json` as an in-worktree denylist path | Accepted and produced output | ✗ FAIL |
-| CR-04 sanitizer/corpus parity | Run a copied committed fixture through current `sanitizeFixture()` | Rejected with `aria-attribute-invalid` | ✗ FAIL |
-| CR-05 Priority-absence assertion | Mutate absence assertion to `selector-present`, add a seventh column, update hash/widths | Complete matrix accepted | ✗ FAIL |
-| CR-06 canonical file uniqueness | Use `combo.html`, `./combo.html`, `.//combo.html` for three scenarios | Complete matrix accepted from one physical multi-table file | ✗ FAIL |
-| CR-07 required-evidence scope | Relabel only `shell-metadata` as localization-only | `verifyReconLedger()` returned proceed | ✗ FAIL |
-| CR-08 fallback proof | Disprove stable identifiers while retaining existing future-tense fallback prose | `verifyReconLedger()` returned proceed | ✗ FAIL |
-| CR-09 interaction privacy grammar | Replace three paint summaries with distinct private strings | `verifyReconLedger()` returned proceed | ✗ FAIL |
-| CR-10 unresolved declared inputs | Validate unchanged ledger containing seven unresolved assumption rows | `verifyReconLedger()` returned proceed | ✗ FAIL |
-| CR-11 private-path diagnostics | Final CLI with missing `/private/tmp/PRIVATE-PERSON-NAME-missing.md` | Exit 1, but stderr echoed the full path | ✗ FAIL |
+Fresh verifier execution used the following exact command forms. Every named test invocation completed in under one second; no server or external service started. Temporary fixture writes were confined to existing test harnesses and cleaned by their teardown. No source, captured tenant data, or operational state was modified.
+
+- `V(file, name)` = `node node_modules/vitest/vitest.mjs run --config vitest.config.js test/recon/<file> -t '<name>'`.
+- `N(file, name)` = `node --test --test-name-pattern='<name>' test/recon/<file>`.
+
+| Behavior | Command / exact named case | Result |
+|---|---|---|
+| Mixed-child rejection and no output | V(sanitize-fixture.test.js, rejects a mixed td/th header before it can preserve wrong-column Priority text) | PASS — 1 test |
+| External denylist custody/alias | V(sanitize-fixture.test.js, rejects a denylist inside the worktree, directly or through an outside symlink) | PASS — 1 |
+| Corrupt product rejected before write | V(sanitize-fixture.test.js, validates its own serialized product before any write) | PASS — 1 |
+| Normalized scan precedes parse | V(fixture-contract.test.js, normalizes a canonical generic-rule hit and scans before any detached parse) | PASS — 1 |
+| Actual header binding | V(fixture-contract.test.js, audit: a body-row header selector cannot conceal the real Priority header) | PASS — 1 |
+| Three aliases cannot form matrix | V(fixture-contract.test.js, rejects three relative aliases of a single multi-table file) | PASS — 1 |
+| Actual committed corpus offline | V(fixture-contract.test.js, the selected admitted corpus satisfies the complete non-vacuous contract) | PASS — 1 |
+| Three exact corpus round trips | Three separate V(corpus-provenance.test.js, <scenario>: re-sanitization preserves exact bytes and manifest hash), scenarios priority-present-ungrouped, priority-absent, grouped-long | PASS — 1 each |
+| Coded null root | V(fixture-contract.test.js, rejects malformed manifest root null with a stable code) | PASS — 1 |
+| Stable blocker order | N(recon-gate.smoke.js, blocker ordering does not depend on ledger section order) | PASS — 1 |
+| Equivalent paint rejected | N(recon-gate.smoke.js, audit: equivalent transparent paint cannot masquerade as distinct states) | PASS — 1 |
+| Unrelated fallback proof rejected | N(recon-gate.smoke.js, audit: existing unrelated test files cannot prove a fallback rung) | PASS — 1 |
+| Null-only root proof rejected | N(recon-gate.smoke.js, null-shadowRoot alone does not rule out a closed root) | PASS — 1 |
+| Unresolved gate row rejected | N(recon-gate.smoke.js, CR-10: declared-input-unresolved blocks a gating row) | PASS — 1 |
+| Required English IDs cannot be relabeled | N(recon-gate.smoke.js, required evidence cannot be relabeled as localization-only) | PASS — 1 |
+| Unbound assumption references rejected | N(recon-gate.smoke.js, resolved gating rows need bound proof references) | PASS — 1 |
+| Structured metadata injection rejected | N(recon-gate.smoke.js, audit: new verdict metadata uses closed identifiers and proof tokens) | PASS — 1 |
+| Stable scanner findings | N(sensitive-patterns.smoke.js, deduplicates overlapping matches and returns findings in stable order) | PASS — 1 |
+| Canonical Unicode denylist match | N(sensitive-patterns.smoke.js, rejects NFD content against NFC denylist with value-free findings) | PASS — 1 |
+| Version record consistency | `node --test test/recon/dependency-approvals.smoke.js` | PASS — 5 |
+| Complete evidence command | `node scripts/verify-recon-gate.js evidence SELECTORS.md` | PASS — EVIDENCE READY: 18 terminal entries |
+| Real final command | `node scripts/verify-recon-gate.js final SELECTORS.md test/fixtures/manifest.json` | PASS — FINAL VERDICT: proceed |
+| Private path rejection | Same final CLI with a nonexistent temporary ledger path | Expected exit 1; only RECON_GATE_REJECTED ledger-readable-required |
+| Readmission structure preservation | Read-only Node deep comparison with `git show f391241:test/fixtures/manifest.json`, excluding only sha256/sanitizationMethod/priorityHeaderIndex | PASS — all 3 entries identical in remaining fields |
+
+**Fresh behavioral result:** 26 passing tests (21 individually selected cases plus 5 dependency cases). Vitest's other cases were deselected by `-t`; those displayed skips are selection exclusions, not disabled requirements.
+
+The independent source review already records a full **173 passed (65 Node + 108 Vitest)** on the same source, and security independently rechecked the focused final paths. That full result is attributed to those reviews; it was not re-run or claimed as this verifier's execution. All newly scored ordering/no-write/parity invariants above have fresh behavioral evidence. Previously verified historical observations retain their explicit human dispositions.
 
 ### Probe Execution
 
-No `scripts/**/tests/probe-*.sh` files or phase-declared shell probe files exist. The phase's runnable CLI gates and focused in-process adversarial probes are recorded above.
+No conventional `scripts/*/tests/probe-*.sh` files or phase-declared shell probe files exist. No missing probe artifact is alleged. The phase's declared executable checks are Node/Vitest commands; the verifier independently ran the relevant gate/negative commands above. Inline probe claims in summaries were not substituted for execution.
 
 ### Requirements Coverage
 
-All eight PLAN frontmatters declare `RECON-01`, `RECON-02`, and `RECON-03`. All three IDs exist in `REQUIREMENTS.md` and map to Phase 1; there are no orphaned Phase 1 requirements.
-
-| Requirement | Source Plans | Description | Status | Evidence |
+| Requirement | Source plans | Description | Status | Evidence and limit |
 |---|---|---|---|---|
-| RECON-01 | 01-01 through 01-08 | Real-view outerHTML fixture committed and usable offline | ✗ BLOCKED | Files load offline, but CR-01 through CR-06 and CR-11 mean their safe, faithful, distinct, current-sanitizer admission is not trustworthy. |
-| RECON-02 | 01-01 through 01-08 | Every English-path DOM assumption answered live; localization outside Phase 1 | ✗ BLOCKED | Current entries are populated, but CR-07 through CR-10 allow required evidence to be removed, fabricated, or left unresolved while still authorizing proceed. |
-| RECON-03 | 01-01 through 01-08 | Closed Shadow DOM and current Garden-ID risks ruled in or out | ✓ SATISFIED | The repo records direct-Document root-chain evidence across all scenarios and current Garden identifiers with ranked selector candidates. |
+| RECON-01 | 01–15 | Captured real-view outerHTML fixture committed and usable offline | SATISFIED within approved provenance | Current three-file corpus passes real admission and exact parity; historical live-origin judgment retained; normalized structural projection and approved repository-byte re-admission explicitly disclosed. Not fresh capture. |
+| RECON-02 | 01–15 | Every English-path assumption answered live and recorded; localization outside scope | SATISFIED within recorded scenarios | Fifteen complete live entries; positive interaction evidence, observed English signal, explicit disproofs/fallbacks and excluded localization entries. Seven planning assumptions separately accounted. |
+| RECON-03 | 01–15 | Closed Shadow DOM and Garden-absence risks ruled in/out | SATISFIED within recorded scenarios | Direct root/reachability observations and current Garden pairs; invalid null-only proof and unproven fallback rejected. |
 
-**Coverage:** 1/3 requirements satisfied; 2/3 blocked.
+All three roadmap-assigned requirement IDs occur in the phase plans; **orphaned requirements: 0**. These requirement findings do not close the separate phase-level historical approval/security gate. REQUIREMENTS.md and roadmap/state remain orchestrator-owned and were not edited by this verifier.
 
-### Decision Coverage
+### Prohibition Coverage
 
-`check.decision-coverage-verify` reports all 16 trackable `01-CONTEXT.md` decisions honored by shipped artifacts. This heuristic is advisory and does not offset the reproduced failures.
+Thirty-six declarations were found: five object-form inherited entries in Plan 04 and thirty-one string-form entries in Plans 09–15. String forms have no authored tier; they are grouped by obligation below and resolved with actual enforcement evidence or previously explicit human decisions. Repeated declarations are all mapped using plan.item notation. No unwired test-tier item or new unaccepted judgment is silently green.
 
-### Prohibition Verification
+| Group | Declarations | Obligation | Disposition / evidence |
+|---|---|---|---|
+| P1 | 04.1, 09.1, 10.2, 11.1, 12.2, 13.2, 14.2, 15.3 | No tenant content/identifying metadata/private path in admitted artifacts/default diagnostics | VERIFIED — shared scanner/output grammar, strict paint and metadata, custody and code-only diagnostics; current safe evidence inspected. Historical session confidentiality is limited to the retained judgment, not universally inferred from tests. |
+| P2 | 04.2, 11.2, 12.1, 13.1 | No toy capture represented as live; no fabricated re-admission structure | VERIFIED — existing Plan 08 live-origin judgment plus explicit decision 12; manifest source limitation, original Git record, unchanged structural fields, grammar/parity/canonical identity. Tests prove current conformance, not historical live origin. |
+| P3 | 04.3, 09.2, 14.1, 15.1 | No English evidence generalized to locale/shell/domain/plan | VERIFIED — recorded bounds and active all-ID relabeling rejection; observed disproofs retained. |
+| P4 | 04.4 | Operational actions and authentication remain user-controlled | VERIFIED by existing human judgment — historical security record and SELECTORS handoff; earlier recovered read-only navigation incident remains disclosed. No new browser session. |
+| P5 | 04.5, 14.3, 15.2 | Null shadowRoot is not conclusive | VERIFIED — recorded two-part observations and fresh named negative final-gate test. |
+| P6 | 09.3, 11.3, 12.5, 13.3, 14.4, 15.5 | No blocker closed by stand-in/deferral/risk-acceptance narrative | VERIFIED — production fixes and targeted counterexamples close all three prior technical concerns; no later-phase deferral or risk override used. Decisions 12/15 explicitly approve the identified contract corrections. |
+| P7 | 09.4, 11.4, 12.4 | Do not weaken rejection policy merely to pass corpus/tests | VERIFIED — shared grammar enforcement, corrupt-product rejection, exact parity and preserved structural fields. Header-token preservation is the planned contract; approved token renumbering is documented. Bounded observed-paint support rejects unsupported alternatives rather than fabricating observations. |
+| P8 | 10.1 | Do not invent independent approval | VERIFIED — separate verbatim not-attested answer retained; truth 8 remains uncertain. |
+| P9 | 10.3 | Do not use SUMMARY as approval proof | VERIFIED — checkpoint 10/approval record are the evidence; SUMMARY affirmative claim is not used. |
+| P10 | 12.3 | Absence control must gain neither Priority header nor value | VERIFIED — actual header-bound corpus admission and current absence parity/structure. |
+| P11 | 13.4 | Purpose string alone cannot satisfy an assertion | VERIFIED — required kind map and topology checks; wrong-kind and false-header regressions are active. |
+| P12 | 14.5 | Test-local assessor cannot be stricter than production | VERIFIED — one production definition imported by both callers and final-mode negative test. |
+| P13 | 15.4 | No declared gate input silently dropped | VERIFIED — seven exact identities, bound proof sets and exact surfaced exception; negative tests pass. |
+| P14 | 15.6 | Verdict must be gate output rather than target | VERIFIED — decision 15 explicitly authorizes either outcome; unmodified current ledger/corpus command returns its recorded proceed; separate phase/security limitation remains explicit. |
 
-| Prohibition | Current disposition | Verification result |
-|---|---|---|
-| No tenant/customer/identity/raw-path leakage | Accepted high-severity risk | ✗ FAILED — CR-01 through CR-04 and CR-11 remain reproducible. |
-| No hand-authored toy table presented as live capture | Human provenance approval plus accepted risk | ⚠️ PARTIAL — live origin was attested, but admission does not enforce sanitizer provenance or three distinct files. |
-| No English observation represented as localization/legacy/vanity/cross-plan evidence | Accepted high-severity risk | ✗ FAILED ENFORCEMENT — current prose is scoped, but CR-07/CR-08 bypass the production gate. |
-| No operational-view mutation or loss of user control | Approved judgment | ✓ VERIFIED by explicit human disposition. |
-| No `host.shadowRoot === null` used as conclusive proof | Test/document evidence | ✓ VERIFIED — root-chain plus top-document reachability is recorded. |
-
-The risk-acceptance entries in `01-SECURITY.md` are not verification overrides because the prior/current `VERIFICATION.md` frontmatter contains no accepted `overrides:` records matching these must-haves.
+No new prohibition override was applied. Existing judgments were not re-requested. The unresolved independence fact is a positive must-have/human item, while faithfully recording that uncertainty satisfies the negative prohibition against inventing it.
 
 ### Test Quality Audit
 
-| Test File | Linked Requirements | Active | Skipped | Circular | Strongest assertion | Verdict |
+| Test file | Linked requirements | Active inventory | Disabled | Circular expected oracle | Strongest evidence | Finding |
 |---|---|---:|---:|---|---|---|
-| `test/recon/sensitive-patterns.smoke.js` | RECON-01 | 7 | 0 | No | Behavioral | ✗ INSUFFICIENT — no canonical Unicode-equivalence case. |
-| `test/recon/sanitize-fixture.test.js` | RECON-01/02 | 30 reported | 0 | No | Behavioral | ✗ INSUFFICIENT — misses CR-01, CR-03, and committed-output parity. |
-| `test/recon/fixture-contract.test.js` | RECON-01/03 | 11 reported | 0 | No | Behavioral/structural | ✗ INSUFFICIENT — misses CR-04 through CR-06. |
-| `test/recon/interaction-evidence.smoke.js` | RECON-02 | 8 | 0 | No | Behavioral | ⚠️ PARTIAL — strong test-local grammar is not shared with production. |
-| `test/recon/recon-gate.smoke.js` | RECON-02/03 | 15 | 0 | No | Behavioral | ✗ INSUFFICIENT — misses CR-07 through CR-10. |
+| sensitive-patterns.smoke.js | RECON-01/02 | 10 | 0 | No | Exact findings/codes, Unicode and order | Production scanner, positive and negative cases. |
+| dependency-approvals.smoke.js | Phase prerequisite; RECON-01/02/03 traceability | 5 | 0 | No | Exact record/package/lock values | Consistency only; deliberately does not prove historical independence. |
+| interaction-evidence.smoke.js | RECON-02 | 11 | 0 | No | Positive/blocked states and paint rejection | Production assessor; explicit observed-computed-paint support boundary. |
+| recon-gate.smoke.js | RECON-02/03 | 39 | 0 | No | Mutated real-ledger rejection, blocker arrays, CLI integration | No remaining 14-era todo; case/order/proof/metadata regressions active. |
+| sanitize-fixture.test.js | RECON-01/02 | 42 | 0 | No | Output absence/input immutability, exact bytes, CLI and DOM seams | Mixed-child, custody, output-corruption and header parity cases present. |
+| sanitized-output-contract.test.js | RECON-01/03 | 18 | 0 | No | Exact acceptance summary and rejection codes | Independent explicit invalid structures/attributes/text. |
+| corpus-provenance.test.js | RECON-01 | 11 | 0 | No, within stated claim | Current committed bytes versus re-sanitized bytes/hash; mutation negative | Proves parity/conformance, not real-world origin or original labels. |
+| fixture-contract.test.js | RECON-01/03 | 37 | 0 | No | Exact scenario/structure, parser spy, aliases and actual header | Synthetic harness is supplemented by default committed-corpus test. |
 
-**Disabled tests on requirements:** 0  
-**Circular expected-value generators:** 0 detected  
-**Insufficient assertion sets:** 4 requirement-linked suites plus 1 production-wiring divergence
+**Disabled requirement tests:** 0. **Circular expected-value generators:** 0 found. **Insufficient assertions for the claimed software behaviors:** 0.
 
-### Anti-Patterns and Review Findings
+Test filesystem writes create isolated input corpora, deliberate mutations and temporary sanitizer outputs; they do not generate the expected committed fixture from the system under test before comparing it. Hash generation for synthetic input integrity is not a live-provenance oracle. The corpus parity test asserts the deliberately narrow idempotence contract; treating it as proof of live origin would be circular reasoning, and this report does not do so.
 
-No unreferenced `TBD`, `FIXME`, or `XXX` markers were found. `placeholder` matches are attribute-policy names, not stubs. The substantive findings are:
+Disconfirmation checks: (1) package history remains partially established; (2) passing dependency and synthetic fixture tests do not establish historical/live facts; (3) default missing-ledger error path was directly invoked and stayed value-free. For the Plan 15 backstop, negative parser tests alone are insufficient; the recorded direct root-chain/reachability observations provide the external evidence. No undeclared production precondition or incidental ordering was used to upgrade an untested invariant.
 
-| ID | File / Lines | Severity | Fresh status | Goal impact |
-|---|---|---|---|---|
-| CR-01 | `scripts/sanitize-fixture.js:303-340` | 🛑 BLOCKER | Reproduced | Wrong-column private text can survive as Priority. |
-| CR-02 | `test/recon/sensitive-patterns.js:82-116` | 🛑 BLOCKER | Reproduced | Canonically equivalent sensitive values evade the denylist. |
-| CR-03 | `scripts/sanitize-fixture.js:478-498` | 🛑 BLOCKER | Reproduced | Capture-specific private denylist may reside inside Git worktree. |
-| CR-04 | `scripts/fixture-contract.js:320-392`; fixtures | 🛑 BLOCKER | Reproduced | Corpus does not satisfy or enforce current sanitizer output grammar. |
-| CR-05 | `scripts/fixture-contract.js:156-246` | 🛑 BLOCKER | Reproduced | Presence can be admitted as Priority absence. |
-| CR-06 | `scripts/fixture-contract.js:316-348` | 🛑 BLOCKER | Reproduced | Raw path aliases let one physical file satisfy three scenarios. |
-| CR-07 | `scripts/verify-recon-gate.js:227-265` | 🛑 BLOCKER | Reproduced | Required English evidence can be relabeled out of scope. |
-| CR-08 | `scripts/verify-recon-gate.js:303-314` | 🛑 BLOCKER | Reproduced | Future-tense prose is accepted as fallback proof. |
-| CR-09 | `scripts/verify-recon-gate.js:273-291` | 🛑 BLOCKER | Reproduced | Arbitrary private strings satisfy production paint evidence. |
-| CR-10 | `scripts/verify-recon-gate.js:159-191`; `SELECTORS.md:273-286` | 🛑 BLOCKER | Reproduced | Seven declared unresolved gate inputs are ignored. |
-| CR-11 | `scripts/verify-recon-gate.js:365-396` | 🛑 BLOCKER | Reproduced | CLI errors disclose private paths/untrusted values. |
-| WR-01 | `package.json:6-8` | ⚠️ WARNING | Source-confirmed | Node 23 is allowed by the project but unsupported by locked Vitest. |
-| WR-02 | `scripts/fixture-contract.js:303-313` | ⚠️ WARNING | Reproduced | JSON `null` escapes as a raw TypeError without stable code. |
-| WR-03 | production scripts importing `test/recon/sensitive-patterns.js` | ⚠️ WARNING | Source-confirmed | Production admission depends on a module under the test tree. |
+### Anti-Patterns and Regression Review
 
-### Security Gate Separation
+No unreferenced TBD/FIXME/XXX, TODO/HACK/PLACEHOLDER, disabled tests or todos were found in phase source/tests/current evidence. Empty arrays are populated accumulators or intentional negative inputs; null Priority indexes represent proven absence. TEXT/ARIA placeholders are the explicit sanitization product, not empty implementation.
 
-`01-SECURITY.md` truthfully records `THREAT-SECURE` by explicit risk acceptance: ten high-severity defects remain unremediated and six below-threshold threats remain open. That security workflow result is preserved as a separate governance status. It does not change this goal-verification result, the 10/15 score, or the blocking classification of failed must-haves.
+The clean 01-REVIEW.md and blocked 01-SECURITY.md were read as independent gate records and their source identity checked. This verification does not repeat or replace those audits.
+
+| Prior concern | Current evidence | Result |
+|---|---|---|
+| CR-01/02/03/04/11 sanitizer/privacy/grammar | Shared production paths and fresh mixed-child, normalized scan, custody, output, parity and CLI checks | Closed |
+| CR-05/06 corpus semantics/identity | Actual shared-parser header binding, required kinds, canonical preflight and fresh false-header/alias tests | Closed |
+| CR-07/08/09/10 final evidence gate | Exact IDs, bounded canonical paint, registered proof contracts, parsed assumptions and fresh negative cases | Closed |
+| CR-12 structured metadata | Closed unproven-proof and flagged-ID tokens; named injection test | Closed |
+| WR-01/02/03/04 | Engine intersection, root guard, production scanner location, direct-cells vocabulary | Closed; source and focused evidence agree |
+| Old seven-unresolved/proceed contradiction | Explicit decision 15, six test-bound gating rows plus one surfaced exception | Closed under approved contract |
+| Historical dependency approval independence | Two exact-version yes answers; separate answer cannot attest | WARNING / human decision still required |
+
+### Decision Coverage
+
+All trackable CONTEXT.md decisions are honored by shipped artifacts.
+
+The canonical non-blocking decision-coverage query returned **16/16**, with no not-honored entries. Direct inspection retained D-01/D-03 user-control/confidentiality limits, D-05 English-only scope, D-09–12 corpus/source facts, and D-13–16 evidence/verdict wiring. The explicitly approved 12/15 decisions refine implementation details without inventing new observations.
 
 ### Human Verification Required
 
-This section does not override the higher-priority `gaps_found` status.
+#### 1. Historical independence of dependency approvals
 
-#### 1. Exact package approval record
+**Test:** Resolve the original separate-approval fact from an independent contemporaneous record or a truthful historical re-attestation based on recollection. If no such evidence exists, choose an explicit governance disposition that keeps the fact unproven.
 
-**Test:** Confirm from an independent checkpoint record, or explicitly re-attest, that `vitest@4.1.11` and `happy-dom@20.13.1` were separately approved before their install commit.
+**Expected:** Truth 8 and the security dispositions for T-01-05/T-01-SC agree with that explicit decision. A later “continue”, package-consistency test, source/provenance re-admission approval or derived-verdict approval cannot supply it.
 
-**Expected:** Two exact-version approvals predate installation; neither approval was inferred from the other.
+**Why human:** The user already said they do not remember. Repeating the same technical tests cannot answer a historical question. This report preserves the existing answer rather than asking the user to invent certainty.
 
-**Why human:** The codebase proves installed versions and chronology, but the approval event is documented only in SUMMARY.md, which is not verification evidence.
+All deferred human-check blocks were accounted for: Plans 02/04/06/08 retain their prior explicit session/provenance/control judgments; Plan 10's truthful record is complete but its historical independence truth remains uncertain; decisions 12/15 resolve their stated source/contract questions. No new live session is requested. Product UI acceptance is not applicable to this reconnaissance/tooling phase; 01-UI-REVIEW.md correctly records not_applicable.
 
 ### Deferred Items
 
-None. Later phases implement tinting and liveness; none explicitly owns repair of the Phase 1 sanitizer, corpus-admission, or evidence-gate defects. Deferring them would violate the roadmap's ordering constraint that Phase 1 gates all implementation.
+No actionable technical gap was deferred. The full later-phase roadmap was checked: tinting, liveness, toolbar controls and store publishing do not own the historical approval event or any Phase 1 admission repair. RECON-01/unclassified is an approved, explicitly surfaced non-gating specification limitation, not a secretly deferred failed must-have.
 
-### Gaps Summary
+### Outcome
 
-Three grouped concerns block Phase 1:
+Three prior technical gap groups are closed; the expanded evidence score is **23/24**, with one human uncertainty and no behavior-unverified software invariant. **human_needed** follows the canonical decision tree because there is no remaining failed implementation truth and a real human item remains. The separate security gate is still **blocked**, so this is not permission to advance to Phase 2.
 
-1. Sanitization and sensitive-data admission are not fail closed, and the committed corpus does not satisfy the current sanitizer contract.
-2. Corpus validation does not prove Priority absence or three distinct canonical scenario files.
-3. Final validation can authorize proceed from relabeled, prose-only, private-string, and explicitly unresolved evidence.
-
-The 71 passing tests establish only the tested happy/negative paths. The fresh adversarial checks demonstrate that the phase's pre-implementation gate is still bypassable. Phase 2 should not proceed on the current `FINAL VERDICT: proceed` signal.
+No source edits, dependency installations, authenticated actions, commits, requirement updates or roadmap/state updates were performed by this verifier.
 
 ---
 
-_Verified: 2026-09-04T12:45:22Z_
+_Verified: 2026-09-08T07:34:03Z_
 _Verifier: the agent (gsd-verifier)_

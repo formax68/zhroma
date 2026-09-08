@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: DOM Recon Spike
-status: executing
-stopped_at: "Plans 01-09 through 01-15 complete; independent reviews and verification pending"
-last_updated: "2026-09-05T13:27:39.509Z"
-last_activity: 2026-09-07
-last_activity_desc: All gap plans and audit fixes implemented; independent verification pending
-state_head: f39124165e3c35cfb20011d3723fe62335c14896
+status: awaiting_human_input
+stopped_at: "Phase 01 human_needed: historical dependency approval independence disposition"
+last_updated: "2026-09-08T07:34:03Z"
+last_activity: 2026-09-08
+last_activity_desc: Verification human_needed, 23/24; code review clean; 173 tests pass; one historical approval issue
+state_head: f73ea9f
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 15
-  completed_plans: 11
+  completed_plans: 15
   percent: 0
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 
 ## Current Position
 
-Phase: 01 (DOM Recon Spike) — EXECUTING
+Phase: 01 (DOM Recon Spike) — HUMAN VERIFICATION
 Plan: 15 of 15 (15 complete)
-Status: All gap plans complete; independent audit remediation committed; phase verification pending
-Last activity: 2026-09-07 — Completed 01-15 and audit fixes; 172 tests pass, no todos
+Status: All plans executed; verification human_needed (23/24); security blocked on one historical approval issue
+Last activity: 2026-09-08 — Formal verification complete: 23/24; 173 tests pass; one human item pending
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -104,7 +104,7 @@ None yet.
 
 - User approved Plan 01-12 source and provenance with "yes on both"; re-admission and second-pass parity are complete. Originals remain recoverable from Git.
 
-- Phase 1 remains `gaps_found`; all 15 plans are complete, but independent verification remains pending. Phase 2 is closed.
+- Phase 1 is `human_needed` (23/24). All 15 plans and technical audit fixes are complete; code review is clean. T-01-05/T-01-SC represent one unresolved historical approval fact. Phase 2 is closed.
 - Historical approval independence remains not-attested: the user answered "I don't remember, it should be fine". Preserve verification truth 8 uncertainty.
 - Phase 4's scope depends on a Phase 1 finding: if a locale-independent priority signal exists on the row or cell, the locale work collapses to almost nothing.
 - Store submission has latency and the direct predecessor was delisted at this step. Register the developer account early; budget one rejection-and-resubmit cycle in Phase 5.
@@ -123,6 +123,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-05T13:27:39.495Z
-Stopped at: Plans 01-09 through 01-15 complete; independent reviews and verification pending
-Resume file: .planning/phases/01-dom-recon-spike/01-15-PLAN.md
+Last session: 2026-09-08T07:34:03Z
+Stopped at: Phase 01 human_needed: historical dependency approval independence disposition
+Resume file: .planning/phases/01-dom-recon-spike/01-UAT.md

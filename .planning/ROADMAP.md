@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Anyone reading the repo can state, from the recorded answers alone, whether a closed Shadow DOM wraps the ticket list and whether `data-garden-id` is present on rows in a current agent view — the two answers that decide whether the project proceeds as designed.
   4. The recon was performed in the English agent UI only. `SELECTORS.md` records the observed page-language signal, but Phase 1 makes no claim that it works across UI languages.
 
-**Plans**: 15/15 plans executed (8/8 executed; 7 gap-closure plans planned after verification found gaps)
+**Plans**: 15/15 plans executed (8 original plans and 7 gap-closure plans); verification human_needed (23/24), with one historical approval issue pending
 
 Plans:
 
