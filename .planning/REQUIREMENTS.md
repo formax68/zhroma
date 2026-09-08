@@ -18,7 +18,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Detection
 
 - [ ] **DETECT-01**: Extension locates the Priority column by its header rather than by column position, so it survives user-configured column order
-- [ ] **DETECT-02**: Extension reads each ticket row's priority and resolves it to one of Urgent, High, Normal or Low
+- [x] **DETECT-02**: Extension reads each ticket row's priority and resolves it to one of Urgent, High, Normal or Low
 - [ ] **DETECT-03**: Extension resolves headers within the same table as the rows it tints, given that agent views render a sticky duplicate header table alongside the body table
 - [ ] **DETECT-04**: Extension distinguishes grouped-view group rows from ticket rows and never tints a group row
 
@@ -56,8 +56,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Distribution
 
 - [ ] **STORE-01**: Extension is published as a public Chrome Web Store listing
-- [ ] **STORE-02**: Extension declares no `host_permissions` block and requests `storage` as its only permission
-- [ ] **STORE-03**: The content script matches only `https://*.zendesk.com/agent/*`, excluding the customer-facing Help Center on the same domain
+- [x] **STORE-02**: Extension declares no `host_permissions` block and requests `storage` as its only permission
+- [x] **STORE-03**: The content script matches only `https://*.zendesk.com/agent/*`, excluding the customer-facing Help Center on the same domain
 - [ ] **STORE-04**: A privacy policy is published, linked from the listing, and discloses that no data is collected
 - [ ] **STORE-05**: Shipped code is unminified and byte-identical to repo source
 - [ ] **STORE-06**: A manual pre-submission smoke checklist lives in the repo and is run before each submission
@@ -107,7 +107,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RECON-02 | Phase 1 | Complete |
 | RECON-03 | Phase 1 | Complete |
 | DETECT-01 | Phase 2 | Pending |
-| DETECT-02 | Phase 2 | Pending |
+| DETECT-02 | Phase 2 | Complete |
 | DETECT-03 | Phase 3 | Pending |
 | DETECT-04 | Phase 3 | Pending |
 | TINT-01 | Phase 2 | Pending |
@@ -130,8 +130,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CTRL-03 | Phase 4 | Pending |
 | CTRL-04 | Phase 4 | Pending |
 | STORE-01 | Phase 5 | Pending |
-| STORE-02 | Phase 2 | Pending |
-| STORE-03 | Phase 2 | Pending |
+| STORE-02 | Phase 2 | Complete |
+| STORE-03 | Phase 2 | Complete |
 | STORE-04 | Phase 5 | Pending |
 | STORE-05 | Phase 2 | Pending |
 | STORE-06 | Phase 5 | Pending |
