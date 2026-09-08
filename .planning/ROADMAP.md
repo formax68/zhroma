@@ -101,10 +101,20 @@ Plans:
   1. Loading a real Zendesk agent view with the extension installed shows every ticket row carrying the tint for its priority, with the four values visually distinct at a glance — and nothing was configured first.
   2. Reordering the view's columns so Priority sits somewhere else leaves the tinting correct, because the column is found by its header rather than its position.
   3. Hovering a row, selecting rows for a bulk action, and unread/bold rows all read the way they do without the extension installed, and ticket text is legible over all four tints.
-  4. Changing a tint colour is an edit to the stylesheet alone — no JavaScript file in the repo contains a colour value.
+  4. Changing a product tint requires a stylesheet edit only. No shipped extension JavaScript contains product palette values or writes CSS. Recon evidence parsers/tests retain observed colour strings outside the runtime asset boundary.
   5. `manifest.json` has no `host_permissions` block, declares `storage` as its only permission, and matches `https://*.zendesk.com/agent/*` and nothing else; the loaded extension folder is byte-for-byte the repo source.
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Loadable initial-tint tracer with atomic English-table validation and runtime regressions (Wave 1).
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-02-PLAN.md — Real-view palette/readiness validation with source-bound human acceptance (Wave 2; depends on 02-01).
+
 **UI hint**: yes
 **Known gap**: sorting the view visibly clears the tint. Intentional and accepted here — closed in Phase 3.
 
@@ -163,7 +173,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. DOM Recon Spike | 15/15 | Complete    | 2026-09-08 |
-| 2. First Tint on a Real View | 0/TBD | Not started | - |
+| 2. First Tint on a Real View | 0/2 | Planned | - |
 | 3. The Tint Survives Everything | 0/TBD | Not started | - |
 | 4. Honest Failure and an Off Switch | 0/TBD | Not started | - |
 | 5. Published | 0/TBD | Not started | - |
