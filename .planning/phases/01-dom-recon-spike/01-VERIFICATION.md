@@ -1,12 +1,17 @@
 ---
 phase: 01-dom-recon-spike
-verified: 2026-09-08T07:34:03Z
+verified: 2026-09-08
+acceptance_source: 01-RISK-ACCEPTANCE.md
 source_snapshot: 1341022a96c4adbbb439c534ab48e1750129d83f
 head_at_verification: f73ea9f810c39a0614f9874d7f40d23eb5b55607
-status: human_needed
-score: 23/24 must-haves verified
+status: passed
+score: 23/24 must-haves verified; 1 explicit acceptance exception
 behavior_unverified: 0
-overrides_applied: 0
+overrides_applied: 1
+accepted_exceptions:
+  - truth: 8
+    reason: Historical approval independence remains not-attested; user explicitly accepted the residual risk.
+    evidence: 01-RISK-ACCEPTANCE.md
 decision_coverage:
   honored: 16
   total: 16
@@ -14,23 +19,24 @@ decision_coverage:
 re_verification:
   previous_status: gaps_found
   previous_score: 10/15
-  previous_report: 01-VERIFICATION-HISTORY-2026-09-04.md
+  previous_report: history/01-VERIFICATION-2026-09-04.md
   gaps_closed:
     - "Sanitizer and sensitive-data admission: shared production scanner, canonical Unicode matching, external denylist custody, unfiltered Priority indexing, shared output grammar, and value-free default diagnostics."
     - "Corpus admission: actual header identity, required assertion kinds, canonical distinct files, exact hashes, shared grammar, and approved repository-byte re-admission."
     - "Final gate: per-ID contracts, production paint validation, structured proof registry and metadata, parsed assumptions, and consistent evidence-derived verdict."
   gaps_remaining: []
   regressions: []
-  unresolved_human_items:
-    - "Truth 8: historical independence of the two exact-version dependency approvals remains not-attested."
-human_verification:
-  - test: "Resolve the historical independence of the original vitest@4.1.11 and happy-dom@20.13.1 approvals."
-    expected: "Provide a contemporaneous independent record or an explicit historical re-attestation based on recollection. If that fact cannot be established, an explicit governance disposition must preserve it as unproven and separately resolve the security gate."
-    why_human: "The developer affirmed approval of each exact release before installation but answered the separate independence question: I don't remember, it should be fine. Code, record-consistency tests, later execution approval, and plan completion cannot establish that historical event."
+  unresolved_human_items: []
+human_verification: []
+resolved_human_verification:
+  - truth: 8
+    result: accepted-risk
+    evidence: 01-RISK-ACCEPTANCE.md
+    historical_attestation: not-attested
 security_gate:
-  status: blocked
-  open_threats: [T-01-05, T-01-SC]
-  distinct_issues: 1
+  status: verified
+  open_threats: []
+  accepted_risk: AR-01-13
 flagged_assumptions:
   - id: RECON-01/unclassified
     status: unresolved
@@ -44,7 +50,7 @@ flagged_assumptions:
 
 **Verified:** 2026-09-08T07:34:03Z
 
-**Status:** human_needed
+**Status:** passed with one explicit acceptance exception
 
 **Re-verification:** Yes — Plans 01-09 through 01-15 and subsequent audit fixes.
 **Source:** 1341022a96c4adbbb439c534ab48e1750129d83f; HEAD f73ea9f contains only subsequent report changes.
@@ -53,9 +59,9 @@ flagged_assumptions:
 
 The three prior technical gaps are closed at the inspected source. The recorded English DOM conclusions, safe offline corpus, and mechanical ledger gate have current code and focused behavioral evidence. The final CLI returns `FINAL VERDICT: proceed`; this is the repository DOM-evidence result, not overall phase acceptance.
 
-One human fact remains unresolved: whether the two original exact-version dependency approvals were independent. Both exact releases were separately re-attested as approved before installation, but independence was expressly **not-attested**. Consequently truth 8 is **UNCERTAIN (WARNING)**, this report is **human_needed**, and the independent security report remains **blocked** by T-01-05 and T-01-SC, two IDs for that same fact. Phase 2 remains closed.
+Historical independence of the two original exact-version dependency approvals remains **not-attested**. Both exact releases were separately re-attested as approved before installation. The subsequent explicit user decision “risk accepted” resolves the governance gate while preserving that uncertainty. Truth 8 has one explicit acceptance exception, T-01-05/T-01-SC are closed by AR-01-13, and this report is **passed**. No historical event is retroactively verified.
 
-The previous report is preserved verbatim in `01-VERIFICATION-HISTORY-2026-09-04.md`. Its historical risk acceptances are not must-have overrides and are not used to close any implementation gap.
+The previous report is preserved verbatim in `history/01-VERIFICATION-2026-09-04.md`. Its historical risk acceptances are not must-have overrides and are not used to close any implementation gap.
 
 ### Scope and Must-Have Reconciliation
 
@@ -94,7 +100,7 @@ The Plan 12 decision explicitly supersedes its incorrect first-pass equality/irr
 | 5 | The ledger contract cannot authorize proceed while required English evidence inputs are unresolved or semantically unsafe. | VERIFIED | `requireFinalEvidence`, `collectBlockingPredicates`, `assumptionBlockers` are called by final mode. Named relabeling, unresolved-gating and proof-reference regressions pass. Valid block remains a conservative result. |
 | 6 | Fixture sanitization and sensitive-data admission are one-way, bounded, and fail closed on the identified invalid inputs. | VERIFIED | `sanitizeFixture` canonicalizes custody, reads only external input/denylist, validates unfiltered owned cells and final output before exclusive write. Named mixed-child, custody, and corrupt-output/no-write tests pass. No broader arbitrary-OS-write-failure guarantee is inferred. |
 | 7 | The offline tracer proves a complete synthetic ledger path without asserting a live Zendesk fact. | VERIFIED | Explicit synthetic entry, evidence-mode contract, and final complete-matrix requirement; synthetic-only evidence cannot satisfy final mode. Earlier passed truth regression checked against current source/tests. |
-| 8 | Both exact dependency releases were independently human-approved before installation. | UNCERTAIN — WARNING | `01-10-CHECKPOINT.md` and `DEPENDENCY-APPROVALS.md` record two yes answers and the separate independence answer “I don't remember, it should be fine”. Independence remains not-attested. No override exists; not counted as verified. |
+| 8 | Both exact dependency releases were independently human-approved before installation. | ACCEPTED EXCEPTION — AR-01-13 | `01-10-CHECKPOINT.md` and `DEPENDENCY-APPROVALS.md` record two yes answers and the separate independence answer “I don't remember, it should be fine”. Independence remains not-attested and is not counted as verified. The user explicitly accepted the residual risk; one governance override is recorded in 01-RISK-ACCEPTANCE.md. |
 | 9 | Authenticated scenario provenance and retained user control have explicit human judgment dispositions. | VERIFIED | Current security report retains the two Plan 08 judgments; historical report records them separately from technical risk acceptance. SELECTORS preserves the completed human interaction seam and the recovered read-only navigation incident. No new authenticated actions were taken. |
 | 10 | Only the two exact development dependencies are installed and the approval record cannot drift unnoticed from package/lock pins. | VERIFIED | `package.json`, lock resolutions and five freshly passing dependency smoke tests agree on vitest 4.1.11 and happy-dom 20.13.1; no runtime dependencies. Tests assert consistency, not the historical truth in row 8. |
 | 11 | One production corpus validator proves scan-before-parse, detached parsing, exact hashes, actual header identity, scenario semantics, and three distinct canonical files. | VERIFIED | `validateFixtureManifest` preflights canonical identity, scans, invokes shared grammar, parses detached, binds actual header via `resolveBoundedDocument`, then validates purpose/kind/topology. Named scan-order, alias, false-header and committed-corpus tests pass. |
@@ -112,7 +118,7 @@ The Plan 12 decision explicitly supersedes its incorrect first-pass equality/irr
 | 23 | Authorization uses closed enums and validator-owned per-rung proof contracts; unrelated files/unproven metadata cannot authorize fallback. | VERIFIED | `FALLBACK_PROOFS`, canonical test-path checks, registered case anchors, four enums and closed metadata tokens are actually used. Named unrelated-proof and metadata-injection tests pass. Only Garden-pair is currently admitted; other strategies remain unproven. |
 | 24 | All seven assumptions are parsed; unresolved gating rows or unbound proofs block, and the approved non-gating exception must be surfaced by exact name. | VERIFIED | Exact seven identities/classifications and proof sets in production; fresh unresolved-row and missing-proof tests pass. No silent row deletion, proof substitution, or unrecorded specification claim. |
 
-**Score:** 23/24 truths verified; 0 present-but-behavior-unverified; 1 historical fact uncertain. There are no applied must-have overrides and no new regressions. The backstop tag in Plan 15 was evaluated explicitly; a parser token alone was not treated as proof of the external DOM fact.
+**Score:** 23/24 truths verified; 0 present-but-behavior-unverified; 1 historical fact uncertain with an explicit user acceptance exception. One acceptance override is applied; no new regression exists. The backstop tag in Plan 15 was evaluated explicitly; a parser token alone was not treated as proof of the external DOM fact.
 
 ### Required Artifacts
 
@@ -132,7 +138,7 @@ The Plan 12 decision explicitly supersedes its incorrect first-pass equality/irr
 | `test/fixtures/zendesk-view-grouped-long.html` | Group/sticky/scroll structure | VERIFIED | Fifteen headers, twelve ordered ticket rows and one group row, same-table header/scroll ownership; round-trip passes. |
 | `test/fixtures/manifest.json` | Exact source declarations and structural assertions | VERIFIED | All three current hashes and full scenario matrix admitted; prior structural/selector declarations unchanged. |
 | Eight `test/recon/*` files | Contract and regression evidence | VERIFIED | Active globs, production imports, explicit negative and positive checks; test-quality audit below. |
-| `01-SECURITY.md` | Independent threat/prohibition dispositions | VERIFIED as governance record | 66/68 threat IDs closed; two open IDs name one historical issue. Its blocked status is retained. |
+| `01-SECURITY.md` | Independent threat/prohibition dispositions | VERIFIED as governance record | 68/68 threat IDs closed; two IDs share explicit risk acceptance AR-01-13. Historical independence remains not-attested. |
 | Checkpoint 10 and decisions 12/15 | Human evidence and scope decisions | VERIFIED as records | Exact answers and constraints read directly; no fresh facts inferred. |
 
 All fifteen plan artifact/key-link queries ran. Their shallow checks returned three expected historical mismatches: deleted `test/recon/sensitive-patterns.js` (explicitly moved by 09), replaced `REQUIRED_LIVE_EVIDENCE_IDS` export (explicitly promoted to `REQUIRED_LIVE_EVIDENCE` by 14), and consumed `state: marker-staged` link (planned successor in 05). Plan 02 declares no artifacts. These are documented successor contracts, not missing current deliverables or new overrides. Generic “pattern found” responses were cross-checked against actual imports/calls.
@@ -263,7 +269,7 @@ Disconfirmation checks: (1) package history remains partially established; (2) p
 
 No unreferenced TBD/FIXME/XXX, TODO/HACK/PLACEHOLDER, disabled tests or todos were found in phase source/tests/current evidence. Empty arrays are populated accumulators or intentional negative inputs; null Priority indexes represent proven absence. TEXT/ARIA placeholders are the explicit sanitization product, not empty implementation.
 
-The clean 01-REVIEW.md and blocked 01-SECURITY.md were read as independent gate records and their source identity checked. This verification does not repeat or replace those audits.
+The clean 01-REVIEW.md and the then-blocked 01-SECURITY.md were read during independent technical verification. The subsequent acceptance addendum resolves the sole governance issue; it does not replace the independent technical audits.
 
 | Prior concern | Current evidence | Result |
 |---|---|---|
@@ -273,7 +279,7 @@ The clean 01-REVIEW.md and blocked 01-SECURITY.md were read as independent gate 
 | CR-12 structured metadata | Closed unproven-proof and flagged-ID tokens; named injection test | Closed |
 | WR-01/02/03/04 | Engine intersection, root guard, production scanner location, direct-cells vocabulary | Closed; source and focused evidence agree |
 | Old seven-unresolved/proceed contradiction | Explicit decision 15, six test-bound gating rows plus one surfaced exception | Closed under approved contract |
-| Historical dependency approval independence | Two exact-version yes answers; separate answer cannot attest | WARNING / human decision still required |
+| Historical dependency approval independence | Two exact-version yes answers; separate answer cannot attest | ACCEPTED EXCEPTION / AR-01-13; history remains not-attested |
 
 ### Decision Coverage
 
@@ -281,9 +287,11 @@ All trackable CONTEXT.md decisions are honored by shipped artifacts.
 
 The canonical non-blocking decision-coverage query returned **16/16**, with no not-honored entries. Direct inspection retained D-01/D-03 user-control/confidentiality limits, D-05 English-only scope, D-09–12 corpus/source facts, and D-13–16 evidence/verdict wiring. The explicitly approved 12/15 decisions refine implementation details without inventing new observations.
 
-### Human Verification Required
+### Human Verification — Resolved by Explicit Risk Acceptance
 
 #### 1. Historical independence of dependency approvals
+
+**Resolution:** User explicitly stated “risk accepted” after the gap and consequence were explained. See 01-RISK-ACCEPTANCE.md and AR-01-13. The following test describes the original question; its governance disposition is now resolved, with historical independence still not-attested.
 
 **Test:** Resolve the original separate-approval fact from an independent contemporaneous record or a truthful historical re-attestation based on recollection. If no such evidence exists, choose an explicit governance disposition that keeps the fact unproven.
 
@@ -299,7 +307,7 @@ No actionable technical gap was deferred. The full later-phase roadmap was check
 
 ### Outcome
 
-Three prior technical gap groups are closed; the expanded evidence score is **23/24**, with one human uncertainty and no behavior-unverified software invariant. **human_needed** follows the canonical decision tree because there is no remaining failed implementation truth and a real human item remains. The separate security gate is still **blocked**, so this is not permission to advance to Phase 2.
+Three prior technical gap groups are closed; **23/24 truths are verified**, with one explicitly accepted historical uncertainty and no behavior-unverified software invariant. The sole human item is resolved by the user’s separate risk acceptance. Security has zero open threats; status is **passed with one acceptance exception**. Phase completion may proceed without claiming the missing historical fact was proved.
 
 No source edits, dependency installations, authenticated actions, commits, requirement updates or roadmap/state updates were performed by this verifier.
 
@@ -307,3 +315,7 @@ No source edits, dependency installations, authenticated actions, commits, requi
 
 _Verified: 2026-09-08T07:34:03Z_
 _Verifier: the agent (gsd-verifier)_
+
+## Acceptance Addendum — 2026-09-08
+
+The orchestrator recorded the explicit user risk disposition after the independent verifier completed its technical review. Source remains 1341022; no technical findings or source checks were changed. The single pending UAT item passed through the governance-disposition option stated in this report. This addendum changes acceptance status only; it does not inflate the independent technical score to 24/24 or alter the original not-attested record.

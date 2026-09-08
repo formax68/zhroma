@@ -1,19 +1,19 @@
 ---
 phase: 01-dom-recon-spike
-reviewed: 2026-09-07
+reviewed: 2026-09-08
 source_snapshot: 1341022
 standard: OWASP ASVS Level 1
-status: blocked
+status: verified
 block_on: high
 threats_found: 68
-threats_closed: 66
-threats_open: 2
+threats_closed: 68
+threats_open: 0
 threats_open_nonblocking: 0
 ---
 
 # Phase 1 Security and Prohibition Review
 
-All reproduced implementation bypasses are remediated and independently rechecked. The security gate remains blocked by **one historical fact represented by two threat IDs**: original dependency approval independence is not-attested. Exact-version approval, truthful recording, and subsequent execution authorization do not establish that historical fact. Phase 2 remains closed.
+All reproduced implementation bypasses are remediated and independently rechecked. The security gate is resolved by an explicit acceptance of **one historical risk represented by two threat IDs**. Original dependency approval independence remains not-attested; the user accepted proceeding despite that missing historical evidence on 2026-09-08. This is governance acceptance, not retrospective verification.
 
 This report supersedes the technical status in [the 2026-09-04 report](01-SECURITY-HISTORY-2026-09-04.md). Its accepted-risk history is preserved there; none of those prior overrides substitutes for the technical fixes verified here.
 
@@ -28,14 +28,14 @@ A gsd-security-auditor reviewed all 68 deduplicated plan-authored threats at ASV
 - Six gating assumptions bind exact test-reference sets and case/code anchors; the approved unresolved RECON-01/unclassified exception is explicitly surfaced.
 - Privacy and authenticated-session judgments remain distinct. No fresh capture, tenant identity, or retrospective independence attestation was inferred.
 
-## Remaining Blocking Issue
+## Historical Issue — Explicitly Accepted
 
 | Threat | Severity | Evidence | Disposition |
 |---|---|---|---|
-| T-01-05 | high | DEPENDENCY-APPROVALS.md records independence as not-attested; user said “I don't remember, it should be fine”. | OPEN — historical evidence or an explicit governance disposition is required |
-| T-01-SC | high | Same original approval-independence requirement inherited by the supply-chain register. | OPEN — same single issue, not a second defect |
+| T-01-05 | high | DEPENDENCY-APPROVALS.md records independence as not-attested; user said “I don't remember, it should be fine”. | CLOSED — accepted risk AR-01-13; historical fact remains not-attested |
+| T-01-SC | high | Same original approval-independence requirement inherited by the supply-chain register. | CLOSED — same accepted risk AR-01-13 |
 
-No new acceptance of this issue is inferred from the Plan 01-15 contract approval. Plan 01-10's truthful record closes T-01-38 while leaving these original requirements unresolved.
+Acceptance comes from the later explicit “risk accepted” decision, not from the Plan 01-15 execution approval. See 01-RISK-ACCEPTANCE.md. Plan 01-10's truthful not-attested record is retained.
 
 ## Existing Planned Acceptances Recorded
 
@@ -45,6 +45,12 @@ No new acceptance of this issue is inferred from the Plan 01-15 contract approva
 | AR-01-12 | T-01-37 | Unsupported Node versions fail loudly on the developer machine; untrusted parties do not choose the runtime. | Existing accept disposition in 01-09-PLAN.md:305 | 2026-09-07 |
 
 These entries record already-authored plan dispositions, not newly obtained user acceptances or invented historical acceptance dates.
+
+## Explicit User Acceptance
+
+| Risk | Threats | Rationale | Accepted by | Recorded on |
+|---|---|---|---|---|
+| AR-01-13 | T-01-05, T-01-SC | Proceed despite incomplete historical evidence that the two original package approvals were independent; keep not-attested. | User — verbatim “risk accepted”; 01-RISK-ACCEPTANCE.md | 2026-09-08 |
 
 ## Complete Register
 
@@ -56,8 +62,8 @@ Each row retains its plan-authored category and severity. CLOSED means the indep
 | T-01-02 | Spoofing | high | CLOSED | SELECTORS.md; verify-recon-gate.js; final-gate regressions; 01-01-PLAN.md |
 | T-01-03 | Tampering | medium | CLOSED | SELECTORS.md; verify-recon-gate.js; final-gate regressions; 01-01-PLAN.md |
 | T-01-04 | Denial of Service | low | CLOSED | Existing planned acceptance above; 01-01-PLAN.md |
-| T-01-SC | Tampering | high | OPEN | DEPENDENCY-APPROVALS.md — historical independence not-attested; 01-01-PLAN.md |
-| T-01-05 | Spoofing | high | OPEN | DEPENDENCY-APPROVALS.md — historical independence not-attested; 01-02-PLAN.md |
+| T-01-SC | Tampering | high | CLOSED — AR-01-13 | DEPENDENCY-APPROVALS.md — historical independence not-attested; 01-01-PLAN.md |
+| T-01-05 | Spoofing | high | CLOSED — AR-01-13 | DEPENDENCY-APPROVALS.md — historical independence not-attested; 01-02-PLAN.md |
 | T-01-06 | Information Disclosure | high | CLOSED | SELECTORS.md authenticated handoff; historical user judgment retained; 01-02-PLAN.md |
 | T-01-07 | Elevation of Privilege | high | CLOSED | SELECTORS.md authenticated handoff; historical user judgment retained; 01-02-PLAN.md |
 | T-01-08 | Spoofing | medium | CLOSED | SELECTORS.md; verify-recon-gate.js; final-gate regressions; 01-02-PLAN.md |
@@ -133,4 +139,4 @@ Each row retains its plan-authored category and severity. CLOSED means the indep
 
 ## Audit Outcome
 
-66 of 68 registered threats closed; two blocking IDs represent the same unverified historical approval fact. No open technical bypass and no below-threshold open threat remains. This security disposition is separate from the repository gate's current FINAL VERDICT: proceed and from formal phase acceptance.
+68 of 68 registered threats closed, including T-01-05/T-01-SC by one explicit user risk acceptance. No open technical or governance blocker remains. Historical independence is still not-attested. The unchanged technical evidence is source 1341022; this update records a human disposition only. Formal phase acceptance is evaluated separately.
