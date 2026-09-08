@@ -8,6 +8,7 @@ const ASSETS = ['manifest.json', 'content.js', 'zhroma.css'];
 const REQUIRED_IDS = ['initial-load', 'urgent', 'high', 'normal', 'low', 'native-hover',
   'native-selection-inset', 'unread-bold', 'focus-click', 'reordered-reload', 'source-identity'];
 const SCOPE = { language: 'English', html_lang: 'en', shell: 'current Agent Workspace', interface: 'light' };
+const REFERENCE_CLOCK = { now: new Date('2026-09-08T12:00:00Z'), timeZone: 'Asia/Nicosia' };
 const asset = (name) => readFileSync(new URL(`../../extension/${name}`, import.meta.url), 'utf8');
 const currentHashes = Object.fromEntries(ASSETS.map((name) => [name,
   createHash('sha256').update(asset(name)).digest('hex')]));
@@ -59,7 +60,16 @@ function parseLiveAcceptance(markdown) {
 }
 
 // Validates declared evidence consistency, never whether a person really saw it.
-function validateLiveAcceptance(record, hashes) {
+// Date-only observations use the reviewer's local calendar (the validation
+// host's timezone by default), not UTC. Inject both clock and zone for tests.
+function validateLiveAcceptance(record, hashes, {
+  now = new Date(), timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone,
+} = {}) {
+  requireEvidence(now instanceof Date && Number.isFinite(now.getTime()), 'validation-clock');
+  const dateParts = new Intl.DateTimeFormat('en', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(now);
+  const today = ['year', 'month', 'day'].map((part) => dateParts.find(({ type }) => type === part).value).join('-');
   requireEvidence(isObject(record) && record.schema_version === 1, 'schema');
   requireEvidence(['human_needed', 'gaps_found', 'passed'].includes(record.status), 'status');
   requireEvidence(sameKeys(record.scope, Object.keys(SCOPE))
@@ -85,6 +95,7 @@ function validateLiveAcceptance(record, hashes) {
       requireEvidence(typeof check.observed_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(check.observed_on)
         && Number.isFinite(Date.parse(check.observed_on))
         && new Date(check.observed_on).toISOString().slice(0, 10) === check.observed_on, 'observation-date');
+      requireEvidence(check.observed_on <= today, 'observation-date-future');
       requireEvidence(record.loaded_from_repository, 'observed-source-unconfirmed');
     }
   }
@@ -118,10 +129,10 @@ function syntheticReport({ complete = false } = {}) {
 
 describe('live evidence disposition (synthetic test data only)', () => {
   test('admits a pending prepared record only as human_needed', () => {
-    expect(validateLiveAcceptance(syntheticReport(), currentHashes)).toBe('human_needed');
+    expect(validateLiveAcceptance(syntheticReport(), currentHashes, REFERENCE_CLOCK)).toBe('human_needed');
   });
   test('admits a complete claimed-live shape for validator testing only', () => {
-    expect(validateLiveAcceptance(syntheticReport({ complete: true }), currentHashes)).toBe('passed');
+    expect(validateLiveAcceptance(syntheticReport({ complete: true }), currentHashes, REFERENCE_CLOCK)).toBe('passed');
   });
   test.each([
     ['pending check', (r) => { Object.assign(r.checks[0], { status: 'pending', evidence_kind: 'pending', observed_on: '', evidence: '' }); }],
@@ -149,40 +160,40 @@ describe('live evidence disposition (synthetic test data only)', () => {
   ])('rejects false passed: %s', (_name, mutate) => {
     const record = syntheticReport({ complete: true });
     mutate(record);
-    expect(() => validateLiveAcceptance(record, currentHashes)).toThrow();
+    expect(() => validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK)).toThrow();
   });
   test('observed failure takes precedence over remaining pending evidence', () => {
     const record = syntheticReport();
     record.status = 'gaps_found'; record.loaded_from_repository = true;
     Object.assign(record.checks[0], { status: 'fail', evidence_kind: 'live', observed_on: '2026-09-08',
       evidence: 'SYNTHETIC TEST DATA: initial batch missed.' });
-    expect(validateLiveAcceptance(record, currentHashes)).toBe('gaps_found');
+    expect(validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK)).toBe('gaps_found');
     record.status = 'human_needed';
-    expect(() => validateLiveAcceptance(record, currentHashes)).toThrow();
+    expect(() => validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK)).toThrow();
   });
   test('an unresolved observed defect cannot be hidden by all-pass rows', () => {
     const record = syntheticReport({ complete: true });
     record.limitations.unresolved_observed_defects.push('SYNTHETIC TEST DATA: unresolved visual defect.');
     record.status = 'gaps_found';
-    expect(validateLiveAcceptance(record, currentHashes)).toBe('gaps_found');
+    expect(validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK)).toBe('gaps_found');
   });
   test('partial live evidence stays human_needed', () => {
     const record = syntheticReport();
     record.loaded_from_repository = true;
     record.checks[0] = syntheticReport({ complete: true }).checks[0];
-    expect(validateLiveAcceptance(record, currentHashes)).toBe('human_needed');
+    expect(validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK)).toBe('human_needed');
   });
   test.each(['passed', 'gaps_found', 'complete'])('rejects unsupported pending disposition %s', (status) => {
     const record = syntheticReport(); record.status = status;
-    expect(() => validateLiveAcceptance(record, currentHashes)).toThrow();
+    expect(() => validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK)).toThrow();
   });
   test('rejects a pending row retaining stale observations', () => {
     const record = syntheticReport(); record.checks[0].evidence = 'SYNTHETIC TEST DATA: old observation';
-    expect(() => validateLiveAcceptance(record, currentHashes)).toThrow();
+    expect(() => validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK)).toThrow();
   });
   test('rejects stale identity even while the report is pending', () => {
     const record = syntheticReport(); record.runtime_sha256['zhroma.css'] = 'a'.repeat(64);
-    expect(() => validateLiveAcceptance(record, currentHashes)).toThrow();
+    expect(() => validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK)).toThrow();
   });
 });
 
@@ -200,7 +211,7 @@ describe('single fenced JSON record', () => {
     const json = JSON.stringify(syntheticReport({ complete: true })).replace(before, after);
     expect(json).toContain(after);
     // Each contradictory record previously survived parsing and derived passed.
-    expect(() => validateLiveAcceptance(parseLiveAcceptance(`\`\`\`json\n${json}\n\`\`\``), currentHashes))
+    expect(() => validateLiveAcceptance(parseLiveAcceptance(`\`\`\`json\n${json}\n\`\`\``), currentHashes, REFERENCE_CLOCK))
       .toThrow('LIVE_ACCEPTANCE_REJECTED duplicate-json-member');
   });
   test('keeps repeated keys in separate objects and key-like text inside strings', () => {
@@ -208,10 +219,56 @@ describe('single fenced JSON record', () => {
     record.checks[0].evidence += ' "status":"fail","status":"pass" \\ { } [ ]';
     const parsed = parseLiveAcceptance(`\`\`\`json\n${JSON.stringify(record)}\n\`\`\``);
     expect(parsed).toEqual(record);
-    expect(validateLiveAcceptance(parsed, currentHashes)).toBe('passed');
+    expect(validateLiveAcceptance(parsed, currentHashes, REFERENCE_CLOCK)).toBe('passed');
   });
   test.each(['no record', '```json\n{invalid}\n```', '```json\n[]\n```', '```json\nnull\n```'])('rejects malformed record %s', (input) => {
     expect(() => parseLiveAcceptance(input)).toThrow();
+  });
+});
+
+describe('completed observation dates (synthetic test data only)', () => {
+  test.each(['2026-09-07', '2026-09-08'])('admits yesterday/today: %s', (observedOn) => {
+    const record = syntheticReport({ complete: true });
+    for (const check of record.checks) check.observed_on = observedOn;
+    expect(validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK)).toBe('passed');
+  });
+  test.each(['2026-09-09', '2999-01-01'])('rejects future completed observations: %s', (observedOn) => {
+    const record = syntheticReport({ complete: true });
+    for (const check of record.checks) check.observed_on = observedOn;
+    expect(() => validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK))
+      .toThrow('LIVE_ACCEPTANCE_REJECTED observation-date-future');
+  });
+  test('rejects a future failed observation as well as a future pass', () => {
+    const record = syntheticReport({ complete: true });
+    record.status = 'gaps_found';
+    Object.assign(record.checks[0], { status: 'fail', observed_on: '2026-09-09' });
+    expect(() => validateLiveAcceptance(record, currentHashes, REFERENCE_CLOCK))
+      .toThrow('LIVE_ACCEPTANCE_REJECTED observation-date-future');
+  });
+  test.each([
+    ['Asia/Nicosia', '2026-09-08T20:59:59Z', '2026-09-08', '2026-09-09'],
+    ['Asia/Nicosia', '2026-09-08T21:00:00Z', '2026-09-09', '2026-09-10'],
+    ['America/Los_Angeles', '2026-09-09T06:59:59Z', '2026-09-08', '2026-09-09'],
+    ['America/Los_Angeles', '2026-09-09T07:00:00Z', '2026-09-09', '2026-09-10'],
+  ])('uses local midnight in %s at %s', (timeZone, instant, today, tomorrow) => {
+    const clock = { now: new Date(instant), timeZone };
+    const record = syntheticReport({ complete: true });
+    for (const check of record.checks) check.observed_on = today;
+    expect(validateLiveAcceptance(record, currentHashes, clock)).toBe('passed');
+    record.checks[0].observed_on = tomorrow;
+    expect(() => validateLiveAcceptance(record, currentHashes, clock))
+      .toThrow('LIVE_ACCEPTANCE_REJECTED observation-date-future');
+  });
+  test('keeps scheduled work pending with no completed observation date', () => {
+    expect(validateLiveAcceptance(syntheticReport(), currentHashes, REFERENCE_CLOCK)).toBe('human_needed');
+  });
+  test('defaults to the validation host local date, including the start of today', () => {
+    const record = syntheticReport({ complete: true });
+    for (const check of record.checks) check.observed_on = '2026-09-09';
+    expect(validateLiveAcceptance(record, currentHashes, { now: new Date(2026, 8, 9, 0, 0, 0) })).toBe('passed');
+    record.checks[0].observed_on = '2026-09-10';
+    expect(() => validateLiveAcceptance(record, currentHashes, { now: new Date(2026, 8, 9, 23, 59, 59) }))
+      .toThrow('LIVE_ACCEPTANCE_REJECTED observation-date-future');
   });
 });
 
