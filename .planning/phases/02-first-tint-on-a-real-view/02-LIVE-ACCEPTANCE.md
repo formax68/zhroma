@@ -149,3 +149,20 @@ approval independence remains **not-attested**; this report adds no attestation
 or fresh capture. A1/A2, the six unclassified probes and all six judgment
 prohibitions remain visible for independent review. Phase 2 stays open; Phase 3,
 controls, storage behavior and publication are not authorized by this record.
+
+## Automated preparation verification — 2026-09-08
+
+| Check | Result | What it establishes |
+|---|---|---|
+| Focused `test/extension/live-acceptance.test.js` | 39 tests passed; `LIVE ACCEPTANCE STATUS: human_needed` | Rejects incomplete, contradictory, stale and non-live acceptance claims; validates this pending record and source settings. |
+| Product `test/extension` | 111 tests passed across initial-tint, runtime-contract and live-acceptance | Existing actual-byte detection/refusal/disposal, direct-cell CSS and frozen permission contracts remain intact. |
+| `GSD_FIXTURE_MANIFEST=test/fixtures/manifest.json npm --prefix . run test:recon` | 284 tests passed: 65 Node smoke + 219 Vitest across 7 files; no skipped tests | Recon smoke, admitted fixture and product tests all execute together. |
+| `node scripts/verify-recon-gate.js final SELECTORS.md test/fixtures/manifest.json` | `FINAL VERDICT: proceed` | The historical admitted recon corpus and its gate remain valid; this is not Phase 02 live acceptance. |
+| Runtime/corpus/dependency comparison to 02-01 completion | No differences | No CSS, timing, fixture, dependency or historical approval change was needed or made. |
+
+Task 2 preparation is complete. **Authentic checks: 0 pass, 0 fail, 11 pending.**
+There is no actual live evidence to justify CSS or startup changes. The existing
+15000/100 ms heuristic and four palette seeds remain unchanged and unaccepted
+visually. Independent code review, security review, goal verification and the
+user-controlled product gate are separate outstanding dispositions owned by the
+phase orchestrator. Passing this table does not close Phase 2.
