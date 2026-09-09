@@ -27,7 +27,7 @@ afterEach(async () => {
   vi.useRealTimers();
 });
 
-function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false, onDisconnect } = {}) {
+function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false, onDisconnect, hidden = false, instrumentCollections = false } = {}) {
   if (!vi.isFakeTimers()) vi.useFakeTimers();
   const window = new Window({ settings: {
     enableJavaScriptEvaluation: false,
@@ -38,6 +38,7 @@ function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false,
   } });
   windows.push(window);
   const { document } = window;
+  Object.defineProperty(document, 'hidden', { value: hidden, writable: true, configurable: true });
   document.documentElement.lang = 'en';
   document.body.innerHTML = empty ? '' : fixture(name);
   mutate?.(document, window);
@@ -58,9 +59,14 @@ function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false,
     observe(target, options) { this.active = true; this.options = options; this.native?.observe(target, options); }
     disconnect() { this.active = false; this.native?.disconnect(); onDisconnect?.(document); }
   }
-  const context = createContext({ document, window, MutationObserver: StartupObserver, setTimeout, clearTimeout });
+  const collections = [];
+  class TrackedSet extends Set { constructor(values) { super(values); collections.push(this); } }
+  const windowListeners = vi.spyOn(window, 'addEventListener');
+  const documentListeners = vi.spyOn(document, 'addEventListener');
+  const context = createContext({ document, window, MutationObserver: StartupObserver, setTimeout, clearTimeout,
+    ...(instrumentCollections ? { Set: TrackedSet } : {}) });
   for (const path of manifest.content_scripts[0].js) new Script(asset(path), { filename: path }).runInContext(context);
-  return { document, window, observers, context,
+  return { document, window, observers, context, collections, windowListeners, documentListeners,
     deliver(target = document.body, extra = {}) {
       for (const observer of observers) if (observer.active) observer.callback([{ type: 'childList', target, addedNodes: [], removedNodes: [], ...extra }]);
     },
@@ -333,4 +339,61 @@ test('sustained relevant turns make progress with one non-resetting pending pass
     expect(ticket.getAttribute('data-zhroma-priority')).toBe(value);
     expect(vi.getTimerCount()).toBe(0);
   }
+});
+
+
+test.each([false, true])('hidden startup and repeated visibility/restoration use one current controller (initial hidden=%s)', (hidden) => {
+  const r = loadRuntimeFixture({ hidden });
+  if (hidden) {
+    expect(r.observers.filter((o) => o.active)).toHaveLength(0); expect(vi.getTimerCount()).toBe(0);
+    r.document.hidden = false; r.document.dispatchEvent(new r.window.Event('visibilitychange'));
+  }
+  r.settled(); expect(markers(r.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  for (let i = 0; i < 3; i++) {
+    r.document.hidden = true; r.document.dispatchEvent(new r.window.Event('visibilitychange'));
+    expect(r.observers.filter((o) => o.active)).toHaveLength(0); expect(vi.getTimerCount()).toBe(0);
+    expect(markers(r.document)).toEqual([null, null, null, null]);
+    rows(r.document)[0].children[6].textContent = 'Low';
+    r.document.hidden = false; r.document.dispatchEvent(new r.window.Event('visibilitychange'));
+    const restored = new r.window.Event('pageshow'); Object.defineProperty(restored, 'persisted', { value: true });
+    r.window.dispatchEvent(restored); r.window.dispatchEvent(restored); r.settled();
+    expect(markers(r.document)).toEqual(['Low', 'High', 'Normal', 'Low']); r.disposed();
+    r.window.dispatchEvent(new r.window.Event('pagehide'));
+    expect(r.observers.filter((o) => o.active)).toHaveLength(0);
+    r.window.dispatchEvent(restored); r.settled(); r.disposed();
+  }
+  expect(r.observers).toHaveLength(1);
+  expect(r.windowListeners.mock.calls.map(([name]) => name)).toEqual(['pagehide', 'pageshow']);
+  expect(r.documentListeners.mock.calls.map(([name]) => name)).toEqual(['visibilitychange']);
+});
+
+test('thirty switches release strong owned references and preserve non-view native content and interaction', () => {
+  const r = loadRuntimeFixture({ instrumentCollections: true }); r.settled();
+  const owned = r.collections.find((set) => [...set].some((value) => value?.nodeType === 1));
+  expect(owned.size).toBe(4);
+  for (let i = 0; i < 30; i++) {
+    const old = r.document.querySelector('table'); const oldRows = rows(r.document);
+    r.document.body.innerHTML = '<main><button>Native action</button><p>Non-view surface</p></main>';
+    const before = r.document.body.innerHTML; const clicked = vi.fn(); const button = r.document.querySelector('button');
+    button.addEventListener('click', clicked); button.focus();
+    r.deliver(r.document.body, { removedNodes: [old] }); r.settled();
+    expect(owned.size).toBe(0);
+    expect(oldRows.every((row) => !row.hasAttribute('data-zhroma-priority'))).toBe(true);
+    expect(r.document.body.innerHTML).toBe(before); expect(r.document.activeElement).toBe(button);
+    button.click(); expect(clicked).toHaveBeenCalledOnce();
+    r.window.dispatchEvent(new r.window.Event('pagehide')); expect(owned.size).toBe(0);
+    r.document.body.innerHTML = fixture(); r.window.dispatchEvent(new r.window.Event('pageshow')); r.settled();
+    expect(owned.size).toBe(4); expect([...owned].every((row) => row.isConnected)).toBe(true); r.disposed();
+  }
+  expect(r.observers).toHaveLength(1);
+  expect(r.windowListeners.mock.calls).toHaveLength(2); expect(r.documentListeners.mock.calls).toHaveLength(1);
+  r.window.dispatchEvent(new r.window.Event('pagehide')); expect(owned.size).toBe(0); expect(vi.getTimerCount()).toBe(0);
+});
+
+test('native observer self-writes reach quiescence with zero idle timers', async () => {
+  const r = loadRuntimeFixture({ realObserver: true }); r.settled();
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  const scans = vi.spyOn(r.document, 'querySelectorAll');
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  expect(scans).not.toHaveBeenCalled(); expect(vi.getTimerCount()).toBe(0);
 });
