@@ -6,7 +6,7 @@ source_confirmation: user-confirmed
 
 # Phase 03 Current-Source Live Acceptance
 
-Nine of twenty current-source live checks now have confirmed user-reported passes. Repository-directory reload and the unchanged Chrome 152.0.7977.77, macOS 27 beta 6, English/light Zendesk environment with 30 mounted rows were confirmed on 2026-09-09. Generic sorting and stated row interactions also passed, but narrower untested variants remain pending. Earlier sixteen-pass evidence remains separately preserved in [historical evidence](history/2026-09-09-before-runtime-repair/03-LIVE-ACCEPTANCE.md). Manual profiling stays deferred; phase status remains human_needed.
+Eleven of twenty current-source live checks now have confirmed user-reported passes. Repository-directory reload and the unchanged Chrome 152.0.7977.77, macOS 27 beta 6, English/light Zendesk environment with 30 mounted rows were confirmed on 2026-09-09. Priority/other-column sorting and keyboard focus now also passed, completing the previously partial sorting and native-interaction checks. Earlier sixteen-pass evidence remains separately preserved in [historical evidence](history/2026-09-09-before-runtime-repair/03-LIVE-ACCEPTANCE.md). Manual profiling stays deferred; phase status remains human_needed.
 
 ## Repaired-source smoke observation — 2026-09-09
 
@@ -41,6 +41,12 @@ The user replied **"nothing changed"** when asked to confirm Chrome 152.0.7977.7
 Promoted nine complete checks: in-app-entry, delayed-entry, native refresh, view-switch, pagination-next, pagination-previous, scroll, grouped-sticky and tab-return. Generic sort and row-interaction observations remain preserved; Priority/other-column sorting and keyboard traversal were not explicitly covered. No completed observation needs repetition. Earlier log statements about pending metadata reflect their recording time and are superseded by this confirmation.
 
 Current disposition: 9/20 passed, 11 pending, zero failed. Manual profiling remains deferred; no phase-completion claim.
+
+## Repaired-source sorting variants and keyboard focus — 2026-09-09
+
+The user replied **"all passed"** after instructions to sort by Priority and then another column, confirming colours still matched ticket priorities, and to use Tab through the view, confirming visible, normal keyboard focus. Source and confirmed environment are unchanged. Promoted sort and native-states, combining this keyboard observation with the already recorded hover, selection/deselection, unread and ticket-opening observations; those earlier actions were not repeated.
+
+Current disposition: 11/20 passed, nine pending, zero failed. Remaining practical comparisons are ticket/dashboard/admin isolation and enabled/disabled responsiveness, followed by a separately reviewed user-controlled failure-cleanup operation. Persisted restoration and quantitative profiling remain pending/deferred. No phase-completion claim.
 
 ## Start with source confirmation
 
@@ -130,10 +136,10 @@ Exactly one JSON record governs consistency. Null values represent no observatio
     },
     {
       "id": "sort",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed after sorting by Priority and then another column; colours continued to match each ticket priority on the unchanged repaired source."
     },
     {
       "id": "refresh",
@@ -179,10 +185,10 @@ Exactly one JSON record governs consistency. Null values represent no observatio
     },
     {
       "id": "native-states",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User previously reported hovering, selecting/deselecting a row, unread bold text and opening a ticket looked and behaved normally. User now additionally reported all passed after Tab navigation: keyboard focus remained visible and behaved normally. Combined current-source observations establish the stated native-interaction check; no extension-disabled isolation comparison is claimed here."
     },
     {
       "id": "failure-cleanup",

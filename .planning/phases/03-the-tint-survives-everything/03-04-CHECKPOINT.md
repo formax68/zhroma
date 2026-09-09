@@ -94,3 +94,9 @@ The user replied **"nothing changed"** when asked to confirm Chrome 152.0.7977.7
 Promoted nine complete checks: in-app-entry, delayed-entry, native refresh, view-switch, pagination-next, pagination-previous, scroll, grouped-sticky and tab-return. Generic sort and row-interaction observations remain preserved; Priority/other-column sorting and keyboard traversal were not explicitly covered. No completed observation needs repetition. Earlier log statements about pending metadata reflect their recording time and are superseded by this confirmation.
 
 Current disposition: 9/20 passed, 11 pending, zero failed. Manual profiling remains deferred; no phase-completion claim.
+
+## Repaired-source sorting variants and keyboard focus — 2026-09-09
+
+The user replied **"all passed"** after instructions to sort by Priority and then another column, confirming colours still matched ticket priorities, and to use Tab through the view, confirming visible, normal keyboard focus. Source and confirmed environment are unchanged. Promoted sort and native-states, combining this keyboard observation with the already recorded hover, selection/deselection, unread and ticket-opening observations; those earlier actions were not repeated.
+
+Current disposition: 11/20 passed, nine pending, zero failed. Remaining practical comparisons are ticket/dashboard/admin isolation and enabled/disabled responsiveness, followed by a separately reviewed user-controlled failure-cleanup operation. Persisted restoration and quantitative profiling remain pending/deferred. No phase-completion claim.
