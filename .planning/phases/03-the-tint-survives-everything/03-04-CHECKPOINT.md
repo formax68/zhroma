@@ -74,3 +74,9 @@ These observations are preserved now without requiring repetition. Canonical pro
 The user replied **"all passed"** after instructions to use Zendesk's native view-refresh button, scroll down through the tickets and back up, switch to another browser tab for about twenty seconds, then return without a browser refresh. Correct colours remained or returned automatically. Record user-reported passes for refresh, scroll and tab-return on the unchanged repaired source `aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2`.
 
 This does not establish row virtualization, unseen priority changes while inactive, persisted document restoration or quantitative performance. Preserve these actual observations without repetition; canonical promotion still awaits the current live environment metadata. Manual profiling stays deferred.
+
+## Repaired-source grouped view and native interactions — 2026-09-09
+
+The user replied **"all passed"** after instructions to check a grouped view while scrolling: group headings and the sticky column header stay untinted, and ticket colours remain correct. The user also checked hovering, selecting and deselecting a row, unread bold text and opening a ticket; these looked and behaved normally. Record a user-reported grouped-sticky pass and the stated native-interaction observations on unchanged content.js SHA-256 `aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2`.
+
+Keyboard-focus traversal and a separate extension-disabled comparison were not explicitly requested in this batch and are not inferred. Opening a ticket normally is not the full ticket-isolation comparison. Preserve actual observations without repeating them; current environment metadata still awaits confirmation before canonical promotion. Manual profiling remains deferred and phase acceptance is not complete.
