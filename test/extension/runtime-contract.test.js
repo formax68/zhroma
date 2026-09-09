@@ -85,6 +85,25 @@ test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every decla
     for (const row of markers) row.removeAttribute('data-zhroma-priority');
   } else expect(markers).toHaveLength(0);
   expect(document.body.innerHTML).toBe(before);
+  // Repeat actual-source execution paths with the same fail-on-call sentinels.
+  for (let i = 0; i < 30; i++) {
+    window.dispatchEvent(new window.Event('pagehide'));
+    document.body.innerHTML = '<main><button>Native action</button></main>';
+    const native = document.body.innerHTML;
+    window.dispatchEvent(new window.Event('pageshow'));
+    vi.runOnlyPendingTimers();
+    expect(document.body.innerHTML).toBe(native);
+    const button = document.querySelector('button'); const clicked = vi.fn();
+    button.addEventListener('click', clicked); button.focus(); button.click();
+    expect(clicked).toHaveBeenCalledOnce(); expect(document.activeElement).toBe(button);
+    window.dispatchEvent(new window.Event('pagehide'));
+    document.body.innerHTML = before;
+    window.dispatchEvent(new window.Event('pageshow'));
+    vi.runOnlyPendingTimers();
+    expect(vi.getTimerCount()).toBe(0);
+  }
+  expect(forbiddenCalls).toEqual([]);
+  expect(Object.keys(context)).toEqual(initialGlobals);
 });
 
 test('runtime source remains classic, palette-free and limited to DOM reading plus marker/lifecycle writes', () => {

@@ -156,7 +156,7 @@
     return false;
   }
 
-  function disposeController() {
+  function pauseController() {
     active = false;
     observer?.disconnect();
     clearTimeout(reconcileTimer);
@@ -165,8 +165,24 @@
     candidate = null;
   }
 
+  function resumeController() {
+    if (document.hidden) return;
+    try {
+      if (!active) {
+        observer.observe(document, { childList: true, characterData: true, subtree: true,
+          attributes: true, attributeFilter: INTERPRETATION_ATTRIBUTES });
+        active = true;
+      }
+      scheduleReconcile();
+    } catch { pauseController(); }
+  }
+
+  function onVisibilityChange() {
+    if (document.hidden) pauseController();
+    else resumeController();
+  }
+
   function startPersistentTint() {
-    active = true;
     try {
       observer = new MutationObserver((records) => {
         if (!active) return;
@@ -183,11 +199,11 @@
         } catch { clearOwnedMarkers(); }
         scheduleReconcile();
       });
-      observer.observe(document, { childList: true, characterData: true, subtree: true,
-        attributes: true, attributeFilter: INTERPRETATION_ATTRIBUTES });
-      window.addEventListener('pagehide', disposeController);
-      scheduleReconcile();
-    } catch { disposeController(); }
+      window.addEventListener('pagehide', pauseController);
+      window.addEventListener('pageshow', resumeController);
+      document.addEventListener('visibilitychange', onVisibilityChange);
+      resumeController();
+    } catch { pauseController(); }
   }
 
   startPersistentTint();
