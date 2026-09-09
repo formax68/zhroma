@@ -65,7 +65,7 @@ function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false,
       for (const observer of observers) if (observer.active) observer.callback([{ type: 'childList', target, addedNodes: [], removedNodes: [], ...extra }]);
     },
     settled() { vi.advanceTimersByTime(100); },
-    disposed() { expect(observers.every((observer) => !observer.active)).toBe(true); expect(vi.getTimerCount()).toBe(0); },
+    disposed() { expect(observers.filter((observer) => observer.active)).toHaveLength(1); expect(vi.getTimerCount()).toBe(0); },
   };
 }
 
@@ -95,7 +95,7 @@ test('unknown final row refuses the entire candidate before any marker write', (
   runtime.disposed();
 });
 
-test('Priority-absent fixture stays unchanged and expires without a marker', () => {
+test('Priority-absent fixture stays unchanged and discovery remains available', () => {
   const runtime = loadRuntimeFixture({ name: 'priority-absent' });
   const before = runtime.document.body.innerHTML;
   vi.advanceTimersByTime(15000);
@@ -255,7 +255,7 @@ test('only marker attributes change; all nodes, Unicode text, native styles and 
   runtime.disposed();
 });
 
-test('write interruption rolls this attempt back while preserving prior and unrelated attributes', () => {
+test('write interruption clears attempted markers while preserving unrelated attributes', () => {
   const runtime = loadRuntimeFixture({ mutate(document, window) {
     const ticketRows = rows(document);
     ticketRows[0].setAttribute('data-zhroma-priority', 'old-owned-value');
@@ -268,7 +268,7 @@ test('write interruption rolls this attempt back while preserving prior and unre
     });
   } });
   runtime.settled();
-  expect(markers(runtime.document)).toEqual(['old-owned-value', null, null, null]);
+  expect(markers(runtime.document)).toEqual([null, null, null, null]);
   expect(rows(runtime.document)[1].getAttribute('data-unrelated')).toBe('keep');
   runtime.disposed();
 });
@@ -282,20 +282,6 @@ test('identical owned markers are retained without rewriting', () => {
   runtime.settled();
   expect(writes).not.toHaveBeenCalled();
   expect(markers(runtime.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
-});
-
-test.each(['remove', 'unknown'])('final preflight refuses %s after observer disconnect without writes', (change) => {
-  let writes;
-  const runtime = loadRuntimeFixture({
-    mutate(_d, window) { writes = vi.spyOn(window.Element.prototype, 'setAttribute'); },
-    onDisconnect(document) {
-      if (change === 'remove') document.querySelector('table')?.remove();
-      else if (rows(document).length) rows(document).at(-1).children[6].textContent = 'Unknown';
-    },
-  });
-  runtime.settled();
-  expect(writes.mock.calls.filter(([name]) => name === 'data-zhroma-priority')).toEqual([]);
-  runtime.disposed();
 });
 
 test('late table, head, cell and text batches settle together before tint', () => {
@@ -313,16 +299,15 @@ test('late table, head, cell and text batches settle together before tint', () =
   expect(markers(runtime.document)).toEqual([null, null, null, null]);
   ['Urgent', 'High', 'Normal', 'Low'].forEach((value, i) => { rows(runtime.document)[i].children[6].textContent = value; });
   runtime.deliver(table, { type: 'characterData' });
-  vi.advanceTimersByTime(99);
   expect(markers(runtime.document)).toEqual([null, null, null, null]);
-  vi.advanceTimersByTime(1);
+  runtime.settled();
   expect(markers(runtime.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
   runtime.disposed();
 });
 
 test('unknown last row arriving during quiet interval prevents any initial tint', () => {
   const runtime = loadRuntimeFixture();
-  vi.advanceTimersByTime(90);
+
   const last = rows(runtime.document).at(-1).cloneNode(true);
   last.children[6].textContent = 'Unknown';
   runtime.document.querySelector('tbody').append(last);
@@ -335,7 +320,7 @@ test('unknown last row arriving during quiet interval prevents any initial tint'
   runtime.disposed();
 });
 
-test.each([true, false])('hard deadline never extends under perpetual churn (empty=%s)', (empty) => {
+test.each([true, false])('persistent discovery remains idle between perpetual churn batches (empty=%s)', (empty) => {
   const runtime = loadRuntimeFixture({ empty, mutate(document) {
     for (const row of rows(document)) row.children[6].textContent = '';
   } });
@@ -356,18 +341,22 @@ test('unrelated churn cannot delay a bound safe candidate', () => {
   runtime.disposed();
 });
 
-test.each(['success', 'expiry', 'pagehide', 'error'])('%s disposes startup and later rows remain unmarked', (outcome) => {
-  const runtime = loadRuntimeFixture({ empty: outcome === 'expiry', mutate(document) {
-    if (outcome === 'error') vi.spyOn(document, 'querySelectorAll').mockImplementation(() => { throw new Error('synthetic read error'); });
-  } });
-  if (outcome === 'pagehide') runtime.window.dispatchEvent(new runtime.window.Event('pagehide'));
-  else vi.advanceTimersByTime(outcome === 'expiry' ? 15000 : 100);
-  runtime.disposed();
-  vi.restoreAllMocks();
-  runtime.document.body.innerHTML = fixture();
-  runtime.deliver();
-  vi.advanceTimersByTime(20000);
+test('pagehide stops observation and releases owned markers and pending work', () => {
+  const runtime = loadRuntimeFixture();
+  runtime.settled();
+  runtime.window.dispatchEvent(new runtime.window.Event('pagehide'));
+  expect(runtime.observers.every((observer) => !observer.active)).toBe(true);
+  expect(vi.getTimerCount()).toBe(0);
   expect(markers(runtime.document)).toEqual([null, null, null, null]);
+});
+
+test('inspection error stays quiet and recovers on a later mutation', () => {
+  const runtime = loadRuntimeFixture();
+  const spy = vi.spyOn(runtime.document, 'querySelectorAll').mockImplementation(() => { throw new Error('synthetic'); });
+  runtime.settled();
+  spy.mockRestore();
+  runtime.deliver(); runtime.settled();
+  expect(markers(runtime.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
   runtime.disposed();
 });
 

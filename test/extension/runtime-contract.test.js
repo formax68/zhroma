@@ -94,9 +94,34 @@ test('runtime source remains classic, palette-free and limited to DOM reading pl
   expect(source).not.toMatch(/\b(import|export|require|eval|Function|fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|indexedDB|postMessage)\s*[.(]/);
   expect(source).not.toMatch(/https?:|\.style\b|innerHTML|outerHTML\s*=|insertAdjacentHTML|document\.write|createElement|cssText|adoptedStyleSheets|attachShadow/);
   expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\s*\(|hsla?\s*\(|getBoundingClientRect|offsetHeight|offsetWidth|getComputedStyle/);
-  expect(source.match(/\.setAttribute\(/g)).toHaveLength(2);
-  expect(source.match(/\.removeAttribute\(/g)).toHaveLength(1);
   expect(source).toMatch(/setAttribute\(PRIORITY_ATTRIBUTE, priority\)/);
+});
+
+test('ongoing writes target only the owned marker and skip unchanged values', () => {
+  vi.useFakeTimers();
+  const window = createDocument();
+  const { document } = window;
+  let deliver;
+  class Observer {
+    constructor(callback) { deliver = callback; }
+    observe() {}
+    disconnect() {}
+  }
+  const writes = vi.spyOn(window.Element.prototype, 'setAttribute');
+  const removals = vi.spyOn(window.Element.prototype, 'removeAttribute');
+  new Script(asset('content.js')).runInContext(createContext({ document, window, MutationObserver: Observer, setTimeout, clearTimeout }));
+  vi.runOnlyPendingTimers();
+  expect(writes.mock.calls).toEqual(['Urgent', 'High', 'Normal', 'Low'].map((p) => ['data-zhroma-priority', p]));
+  writes.mockClear();
+  deliver([{ type: 'childList', target: document.querySelector('tbody'), addedNodes: [], removedNodes: [] }]);
+  vi.runOnlyPendingTimers();
+  expect(writes).not.toHaveBeenCalled();
+  expect(removals).not.toHaveBeenCalled();
+  document.querySelector('tbody tr').children[6].textContent = '';
+  deliver([{ type: 'characterData', target: document.querySelector('tbody tr').children[6].firstChild }]);
+  vi.runOnlyPendingTimers();
+  expect(writes).not.toHaveBeenCalled();
+  expect(removals.mock.calls).toEqual([['data-zhroma-priority']]);
 });
 
 function loadRules(window, css = asset('zhroma.css')) {

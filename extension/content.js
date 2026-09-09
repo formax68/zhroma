@@ -3,8 +3,6 @@
 
   const PRIORITY_ATTRIBUTE = 'data-zhroma-priority';
   const PRIORITY_LABELS = new Set(['Urgent', 'High', 'Normal', 'Low']);
-  const STARTUP_DEADLINE_MS = 15000;
-  const SETTLE_MS = 100;
   const TABLE = 'table[data-garden-id="tables.table"][data-test-id="generic-table"]';
   const HEAD = 'thead[data-garden-id="tables.head"][data-test-id="generic-table-head"]';
   const BODY = 'tbody[data-garden-id="tables.body"][data-test-id="generic-table-body"]';
@@ -15,10 +13,9 @@
   const CELL = 'td[data-garden-id="tables.cell"]';
 
   let observer = null;
-  let deadlineTimer = null;
-  let settleTimer = null;
-  let candidate = null;
+  let reconcileTimer = null;
   let active = false;
+  const ownedRows = new Set();
 
   function inspectCandidateTable(document) {
     const result = (state, table = null, entries = []) => ({ state, table, entries });
@@ -73,78 +70,84 @@
     return result(entries.some((entry) => entry.priority !== null) ? 'safe' : 'blank', table, entries);
   }
 
+  function clearOwnedMarkers(keep = new Map()) {
+    // Release even unremovable rows. A permanently broken native removal API
+    // cannot guarantee paint cleanup; it must not also leak detached nodes.
+    let complete = true;
+    for (const row of ownedRows) {
+      if (keep.has(row) && row.getAttribute(PRIORITY_ATTRIBUTE) === keep.get(row)) continue;
+      try {
+        if (row.hasAttribute(PRIORITY_ATTRIBUTE)) row.removeAttribute(PRIORITY_ATTRIBUTE);
+      } catch { complete = false; }
+      ownedRows.delete(row);
+    }
+    return complete;
+  }
+
   function commitSnapshot(snapshot) {
-    // Revalidate after disconnect, immediately before writes. No asynchronous gap.
-    const current = inspectCandidateTable(document);
-    if (current.state !== 'safe' || current.table !== snapshot.table
-      || current.entries.length !== snapshot.entries.length
-      || current.entries.some((entry, index) => entry.row !== snapshot.entries[index].row
-        || entry.priority !== snapshot.entries[index].priority
-        || !entry.row.isConnected || entry.row.closest(TABLE) !== current.table)) return;
-    const changed = [];
+    // The snapshot is inspected and committed in the same synchronous turn.
+    // Never carry DOM interpretations across a timer boundary.
+    const keep = new Map(snapshot.entries.filter(({ priority }) => priority !== null)
+      .map(({ row, priority }) => [row, priority]));
+    if (!clearOwnedMarkers(keep)) {
+      clearOwnedMarkers();
+      return;
+    }
     try {
-      for (const { row, priority } of current.entries) {
+      for (const { row, priority } of snapshot.entries) {
         if (priority === null) continue;
-        const previous = row.getAttribute(PRIORITY_ATTRIBUTE);
-        if (previous === priority) continue;
-        changed.push({ row, previous });
-        row.setAttribute(PRIORITY_ATTRIBUTE, priority);
+        ownedRows.add(row); // Include even a write that mutates and then throws.
+        if (row.getAttribute(PRIORITY_ATTRIBUTE) !== priority) row.setAttribute(PRIORITY_ATTRIBUTE, priority);
       }
     } catch {
-      // Best effort per attribute: one failed restoration must not skip the rest.
-      for (const { row, previous } of changed.reverse()) {
-        try {
-          if (previous === null) row.removeAttribute(PRIORITY_ATTRIBUTE);
-          else row.setAttribute(PRIORITY_ATTRIBUTE, previous);
-        } catch { /* Contain host DOM failures without exposing ticket values. */ }
-      }
+      clearOwnedMarkers();
     }
   }
 
-  function disposeStartup() {
+  function reconcileCurrentTable() {
+    reconcileTimer = null;
+    if (!active) return;
+    try {
+      const snapshot = inspectCandidateTable(document);
+      if (snapshot.state === 'safe') commitSnapshot(snapshot);
+      else clearOwnedMarkers();
+    } catch { clearOwnedMarkers(); }
+  }
+
+  function scheduleReconcile() {
+    if (active && reconcileTimer === null) reconcileTimer = setTimeout(reconcileCurrentTable, 0);
+  }
+
+  function disposeController() {
     active = false;
     observer?.disconnect();
-    observer = null;
-    clearTimeout(deadlineTimer);
-    clearTimeout(settleTimer);
-    deadlineTimer = null;
-    settleTimer = null;
-    candidate = null;
-    window.removeEventListener('pagehide', disposeStartup);
+    clearTimeout(reconcileTimer);
+    reconcileTimer = null;
+    clearOwnedMarkers();
   }
 
-  function startInitialTint(document) {
+  function startPersistentTint() {
     active = true;
-    const check = () => {
-      if (!active) return;
-      settleTimer = null;
-      try {
-        const snapshot = inspectCandidateTable(document);
-        candidate = snapshot.table;
-        if (snapshot.state === 'safe' || snapshot.state === 'unsafe') {
-          disposeStartup();
-          if (snapshot.state === 'safe') commitSnapshot(snapshot);
-        }
-      } catch { disposeStartup(); }
-    };
-    const schedule = () => {
-      clearTimeout(settleTimer);
-      settleTimer = setTimeout(check, SETTLE_MS);
-    };
     try {
       observer = new MutationObserver((records) => {
-        if (!active) return;
+        if (!active || records.every((record) => record.type === 'attributes'
+          && record.attributeName === PRIORITY_ATTRIBUTE)) return;
+        // Invalidate stale colours during observer delivery, before the browser
+        // may paint. Only the deferred fresh pass can add positive markers.
         try {
-          if (!candidate || !candidate.isConnected || records.some((record) => candidate.contains(record.target))) schedule();
-        } catch { disposeStartup(); }
+          const snapshot = inspectCandidateTable(document);
+          const keep = snapshot.state === 'safe'
+            ? new Map(snapshot.entries.filter(({ priority }) => priority !== null)
+              .map(({ row, priority }) => [row, priority])) : new Map();
+          clearOwnedMarkers(keep);
+        } catch { clearOwnedMarkers(); }
+        scheduleReconcile();
       });
       observer.observe(document, { childList: true, characterData: true, subtree: true });
-      deadlineTimer = setTimeout(disposeStartup, STARTUP_DEADLINE_MS);
-      window.addEventListener('pagehide', disposeStartup);
-      candidate = inspectCandidateTable(document).table;
-      schedule();
-    } catch { disposeStartup(); }
+      window.addEventListener('pagehide', disposeController);
+      scheduleReconcile();
+    } catch { disposeController(); }
   }
 
-  startInitialTint(document);
+  startPersistentTint();
 })();
