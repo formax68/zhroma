@@ -4,9 +4,9 @@ current_phase: 03
 current_phase_name: The Tint Survives Everything
 status: human_needed
 stopped_at: Repaired-source smoke checks passed; remaining live acceptance pending; manual profiling deferred
-last_updated: "2026-09-09T13:02:45Z"
+last_updated: "2026-09-09T13:04:01Z"
 last_activity: 2026-09-09
-last_activity_desc: "User reported repaired-source grouped/sticky view and stated native interactions all passed"
+last_activity_desc: "User reported repaired-source delayed dashboard entry and Priority-absent switching all passed"
 state_head: d19e1e4015cfafb93d300279d530a1c672bc2d8c
 progress:
   total_phases: 5
@@ -132,7 +132,7 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T13:02:45Z
+Last session: 2026-09-09T13:04:01Z
 Stopped at: Repaired-source smoke checks passed; remaining live acceptance pending
 Resume file: .planning/phases/03-the-tint-survives-everything/03-04-CHECKPOINT.md
 
@@ -161,3 +161,5 @@ User reported "all passed" for repository extension reload plus one setup browse
 Follow-up: native view refresh, scrolling down/back and twenty-second browser-tab return also passed on unchanged repaired source. These observations are recorded; environment metadata and remaining canonical checks still pending. Next practical checks: grouped/sticky view and native row interactions.
 
 Follow-up: grouped/sticky headings remained untinted with correct ticket colours; hover, selection/deselection, unread bold text and ticket opening behaved normally. User reported all passed. Remaining navigation variants: delayed landing-page entry and Priority-absent view switching. Preserve observed scope; keyboard traversal and disabled-isolation comparison were not inferred.
+
+Follow-up: delayed dashboard-to-view entry and Priority-present/absent/present switching also passed without browser refresh. All guided observations are preserved against the unchanged repaired source. Next: confirm current browser, OS, English/light environment and mounted-row metadata so completed observations can be promoted without repetition. Remaining live criteria and manual profiling deferral stay explicit.

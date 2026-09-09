@@ -28,6 +28,12 @@ The user replied **"all passed"** after instructions to check a grouped view whi
 
 Keyboard-focus traversal and a separate extension-disabled comparison were not explicitly requested in this batch and are not inferred. Opening a ticket normally is not the full ticket-isolation comparison. Preserve actual observations without repeating them; current environment metadata still awaits confirmation before canonical promotion. Manual profiling remains deferred and phase acceptance is not complete.
 
+## Repaired-source delayed entry and Priority-absent switching — 2026-09-09
+
+The user replied **"all passed"** after instructions to go to Zendesk's home/dashboard, wait twenty seconds, then open a Priority view, followed by switching to a view without a Priority column and back, without refreshing the browser between operations. Colours appeared automatically on entry; the Priority-absent view stayed untinted and correct colours returned in the Priority-present view. Record passes for delayed-entry, the observed landing-page-to-view entry, and the Priority-present/absent/present view-switch sequence on unchanged content.js SHA-256 `aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2`.
+
+This is actual user-reported navigation evidence. It does not establish disabled/native dashboard isolation or persisted-document restoration. Preserve the completed checks without repetition. Current live environment metadata still awaits confirmation for canonical promotion; manual profiling remains deferred and full phase acceptance remains open.
+
 ## Start with source confirmation
 
 1. In Chrome Extensions, reload the unpacked repository extension. Refresh the Zendesk document once to replace the previous content-script instance; this is setup, not an allowed recovery workaround during tests.
