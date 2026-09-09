@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { expect, test } from 'vitest';
-import { summarizeSamples, validateWorkloadReport, parseArguments } from '../../scripts/run-tint-workload.js';
+import { summarizeSamples, validateWorkloadReport, parseArguments, mergeReport } from '../../scripts/run-tint-workload.js';
 const sample = (observer = 0.2, timer = 0.3) => ({ segments: [{ category: 'observer', cpu: observer }, { category: 'timer', cpu: timer }], totalCpu: observer + timer, latency: 2, callbacks: 2, passes: 1, writes: 1 });
 const run = (size = 30, mode = 'enabled') => ({ size, mode, warmups: 10, measured: 100, operations: Object.fromEntries(['edit', 'reorder', 'body', 'table', 'invalid-repair', 'unrelated'].map((name) => [name, Array.from({ length: 100 }, () => mode === 'enabled' ? sample() : { segments: [], totalCpu: 0, latency: 1, callbacks: 0, passes: 0, writes: 0 })])) });
 test('sums observer and timer CPU, reports all quantiles and distinct latency', () => {
@@ -18,4 +18,16 @@ test('exact complete workload passes; missing, disabled callbacks and breached b
 test('CLI validates sizes, modes, missing values and unsupported flags', () => {
   expect(parseArguments(['--size', '30', '--mode', 'enabled', '--smoke'])).toMatchObject({ size: 30, mode: 'enabled', smoke: true });
   for (const args of [['--size', '50'], ['--mode', 'maybe'], ['--output'], ['--unknown']]) expect(() => parseArguments(args)).toThrow();
+});
+test('combined acceptance requires every enabled and disabled size with identical source/environment', () => {
+  const identity = { hashes: { source: 'pinned' }, browser: 'fixed' };
+  let report = mergeReport(null, identity, '30-disabled', run(30, 'disabled'));
+  expect(report.timingStatus).toBe('incomplete');
+  expect(() => mergeReport(report, { ...identity, browser: 'changed' }, '30-enabled', run())).toThrow(/stale\/mixed/);
+  expect(() => mergeReport(report, identity, '30-disabled', run(30, 'disabled'))).toThrow(/already exists/);
+  for (const size of [30, 200, 1000]) for (const mode of ['enabled', 'disabled']) {
+    if (size === 30 && mode === 'disabled') continue;
+    report = mergeReport(report, identity, `${size}-${mode}`, run(size, mode));
+  }
+  expect(report.timingStatus).toBe('passed');
 });
