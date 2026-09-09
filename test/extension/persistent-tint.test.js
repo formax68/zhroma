@@ -275,3 +275,62 @@ test.each([false, true])('partial write plus removal failure continues cleanup (
   vi.restoreAllMocks(); r.deliver(r.document.querySelector('tbody')); r.settled();
   expect(markers(r.document)).toEqual(['Urgent', 'Low', 'Normal', 'Low']);
 });
+
+test.each([
+  ['lang', (d) => d.documentElement, 'fr'],
+  ['role', (d) => d.body.firstElementChild, 'table'],
+  ['data-garden-id', (d) => d.querySelector('table'), 'other'],
+  ['data-test-id', (d) => d.querySelector('tbody tr'), 'other'],
+  ['colspan', (d) => d.querySelector('td'), '2'],
+  ['rowspan', (d) => d.querySelector('th'), '2'],
+])('native observer reacts to validation attribute %s and recovers', async (attributeName, target, invalid) => {
+  const r = loadRuntimeFixture({ realObserver: true }); r.settled();
+  const node = target(r.document); const old = node.getAttribute(attributeName);
+  node.setAttribute(attributeName, invalid);
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0)); r.settled();
+  expect(r.document.querySelectorAll('[data-zhroma-priority]')).toHaveLength(0);
+  if (old === null) node.removeAttribute(attributeName); else node.setAttribute(attributeName, old);
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0)); r.settled();
+  expect(markers(r.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+});
+
+test('unrelated sibling churn performs zero table scans, writes or scheduled work', () => {
+  const r = loadRuntimeFixture(); r.settled();
+  const aside = r.document.createElement('aside'); aside.textContent = 'outside'; r.document.body.append(aside);
+  const scan = vi.spyOn(r.document, 'querySelectorAll');
+  const writes = vi.spyOn(r.window.Element.prototype, 'setAttribute');
+  for (let i = 0; i < 30; i++) {
+    r.deliver(aside.firstChild, { type: 'characterData' });
+    r.deliver(aside, { type: 'attributes', attributeName: 'class' });
+    r.deliver(r.document.body, { addedNodes: [aside] });
+  }
+  expect(scan).not.toHaveBeenCalled();
+  expect(writes).not.toHaveBeenCalled(); expect(vi.getTimerCount()).toBe(0);
+});
+
+test('mixed self-marker and external records retain invalidation; host marker stripping recovers', () => {
+  const r = loadRuntimeFixture(); r.settled(); const ticket = rows(r.document)[0];
+  ticket.removeAttribute('data-zhroma-priority');
+  r.deliver(ticket, { type: 'attributes', attributeName: 'data-zhroma-priority' }); r.settled();
+  expect(ticket.getAttribute('data-zhroma-priority')).toBe('Urgent');
+  ticket.children[6].textContent = 'Low';
+  r.observers[0].callback([
+    { type: 'attributes', target: ticket, attributeName: 'data-zhroma-priority' },
+    { type: 'characterData', target: ticket.children[6].firstChild },
+  ]);
+  r.settled(); expect(ticket.getAttribute('data-zhroma-priority')).toBe('Low');
+});
+
+test('sustained relevant turns make progress with one non-resetting pending pass', () => {
+  const r = loadRuntimeFixture(); r.settled(); const ticket = rows(r.document)[0];
+  for (let turn = 0; turn < 20; turn++) {
+    const value = turn % 2 ? 'High' : 'Low'; ticket.children[6].textContent = value;
+    for (let burst = 0; burst < 20; burst++) {
+      r.deliver(ticket.children[6].firstChild, { type: 'characterData' });
+      expect(vi.getTimerCount()).toBe(1);
+    }
+    vi.runOnlyPendingTimers();
+    expect(ticket.getAttribute('data-zhroma-priority')).toBe(value);
+    expect(vi.getTimerCount()).toBe(0);
+  }
+});
