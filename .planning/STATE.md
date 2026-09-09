@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 current_phase: 03
 current_phase_name: The Tint Survives Everything
 status: human_needed
-stopped_at: Repaired-source live acceptance 11/20 passed; isolation and responsiveness comparisons next; manual profiling deferred
-last_updated: "2026-09-09T13:08:43Z"
+stopped_at: UAT skipped at user request; do not resume UAT unless asked
+last_updated: "2026-09-09T13:10:19Z"
 last_activity: 2026-09-09
-last_activity_desc: "Priority/other-column sorting and keyboard focus passed; current-source live acceptance 11/20"
+last_activity_desc: "UAT skipped at user request; eleven live passes preserved, nine checks untested; stop further UAT prompts"
 state_head: d19e1e4015cfafb93d300279d530a1c672bc2d8c
 progress:
   total_phases: 5
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 ## Current Position
 
-Phase: 03 (The Tint Survives Everything) — HUMAN CHECKPOINT
+Phase: 03 (The Tint Survives Everything) — UAT SKIPPED BY USER
 Plan: 03-04 Task 2; 3/4 plans executed, final plan 1/2 tasks complete
-Status: Runtime repairs verified; current-source live acceptance 11/20 passed, nine pending; manual profiling deferred
+Status: Runtime repairs verified; UAT skipped by user with 11 passes preserved and nine untested; stop UAT prompts
 Last activity: 2026-09-09 — CR-01/CR-02 repaired; 403 tests passed, independent code review clean, security high blockers closed; fresh Chrome timing passed
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
@@ -104,6 +104,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
+**Latest user direction:** Skip UAT. Stop further live-check and profiling prompts; earlier next-check instructions are superseded. Eleven passes remain recorded, nine untested.
+
 CR-01/CR-02 repairs and independent reverification are complete; 403 tests and fresh synthetic timing pass. Preserve historical 16/20 live passes and four pending checks. Current-source live confirmation and acceptance are pending; synthetic layout/retainer attribution and final goal acceptance remain open. Manual profiling stays deferred. T-03-15 remains a non-blocking medium evidence gap. Do not count the halted 03-04 summary as a completed plan.
 
 ### Blockers/Concerns
@@ -132,8 +134,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T13:08:43Z
-Stopped at: Current-source 11/20 live checks passed; isolation and responsiveness comparisons next
+Last session: 2026-09-09T13:10:19Z
+Stopped at: UAT skipped at user request; do not resume without a new user request
 Resume file: .planning/phases/03-the-tint-survives-everything/03-04-CHECKPOINT.md
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
@@ -169,3 +171,9 @@ Follow-up: delayed dashboard-to-view entry and Priority-present/absent/present s
 User confirmed the unchanged browser/OS/English-light environment and 30 mounted rows. Nine complete repaired-source checks are now canonical passes; eleven remain pending, with generic sorting and interaction observations retained as partial coverage. Source hashes unchanged. Earlier notes about unconfirmed metadata are historical. Next narrow checks: sort by Priority and another column; keyboard focus and selection indicator. No redoing completed checks. Manual profiling remains deferred.
 
 Follow-up: user reported all passed for sorting by Priority and another column and visible/normal Tab focus. Combined prior native-interaction observations now promote sort and native-states. Current canonical total is 11/20 passed, nine pending. Next practical checks: enabled/disabled non-view isolation and subjective responsiveness. Manual profiling remains deferred.
+
+## UAT skipped at user request — 2026-09-09
+
+The user said **"let's skip UAT,"**. Stop the UAT walkthrough and further UAT prompts. Preserve the eleven completed current-source live passes. The remaining nine checks are untested and skipped for this walkthrough; their canonical evidence statuses remain pending because no observations were supplied. Do not invent passes, failed observations, or risk acceptance. Resume UAT only if the user asks.
+
+This supersedes all earlier next-check instructions, including the requested enabled/disabled isolation and responsiveness comparisons. Manual profiling also remains deferred. Automated verification, independent code review and the security threshold verdict remain recorded separately. No phase-completion or full live-acceptance claim is made by this instruction.

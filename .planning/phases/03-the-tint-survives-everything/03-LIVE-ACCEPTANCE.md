@@ -2,9 +2,16 @@
 phase: 03-the-tint-survives-everything
 status: human_needed
 source_confirmation: user-confirmed
+uat_execution: skipped-by-user
 ---
 
 # Phase 03 Current-Source Live Acceptance
+
+## UAT skipped at user request — 2026-09-09
+
+The user said **"let's skip UAT,"**. Stop the UAT walkthrough and further UAT prompts. Preserve the eleven completed current-source live passes. The remaining nine checks are untested and skipped for this walkthrough; their canonical evidence statuses remain pending because no observations were supplied. Do not invent passes, failed observations, or risk acceptance. Resume UAT only if the user asks.
+
+This supersedes all earlier next-check instructions, including the requested enabled/disabled isolation and responsiveness comparisons. Manual profiling also remains deferred. Automated verification, independent code review and the security threshold verdict remain recorded separately. No phase-completion or full live-acceptance claim is made by this instruction.
 
 Eleven of twenty current-source live checks now have confirmed user-reported passes. Repository-directory reload and the unchanged Chrome 152.0.7977.77, macOS 27 beta 6, English/light Zendesk environment with 30 mounted rows were confirmed on 2026-09-09. Priority/other-column sorting and keyboard focus now also passed, completing the previously partial sorting and native-interaction checks. Earlier sixteen-pass evidence remains separately preserved in [historical evidence](history/2026-09-09-before-runtime-repair/03-LIVE-ACCEPTANCE.md). Manual profiling stays deferred; phase status remains human_needed.
 

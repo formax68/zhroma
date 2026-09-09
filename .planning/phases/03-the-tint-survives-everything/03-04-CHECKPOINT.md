@@ -3,10 +3,17 @@ phase: 03-the-tint-survives-everything
 plan: "04"
 status: human_needed
 gate: blocking-human
+uat_execution: skipped-by-user
 task: 2
 ---
 
 # Pending live source confirmation and acceptance
+
+## UAT skipped at user request — 2026-09-09
+
+The user said **"let's skip UAT,"**. Stop the UAT walkthrough and further UAT prompts. Preserve the eleven completed current-source live passes. The remaining nine checks are untested and skipped for this walkthrough; their canonical evidence statuses remain pending because no observations were supplied. Do not invent passes, failed observations, or risk acceptance. Resume UAT only if the user asks.
+
+This supersedes all earlier next-check instructions, including the requested enabled/disabled isolation and responsiveness comparisons. Manual profiling also remains deferred. Automated verification, independent code review and the security threshold verdict remain recorded separately. No phase-completion or full live-acceptance claim is made by this instruction.
 
 **Current resumption note (2026-09-09):** CR-01/CR-02 repairs changed runtime source. The observation log below belongs to the pre-repair source and is preserved verbatim. Its sixteen passes remain historical; current-source confirmation and live checks are pending in 03-LIVE-ACCEPTANCE.md. Manual profiling remains deferred. See 03-REPAIR-SUMMARY.md for repair verification and independent gate outcomes. Do not resume the old source confirmation or promote these observations onto repaired bytes.
 
