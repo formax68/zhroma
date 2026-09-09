@@ -86,3 +86,11 @@ Keyboard-focus traversal and a separate extension-disabled comparison were not e
 The user replied **"all passed"** after instructions to go to Zendesk's home/dashboard, wait twenty seconds, then open a Priority view, followed by switching to a view without a Priority column and back, without refreshing the browser between operations. Colours appeared automatically on entry; the Priority-absent view stayed untinted and correct colours returned in the Priority-present view. Record passes for delayed-entry, the observed landing-page-to-view entry, and the Priority-present/absent/present view-switch sequence on unchanged content.js SHA-256 `aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2`.
 
 This is actual user-reported navigation evidence. It does not establish disabled/native dashboard isolation or persisted-document restoration. Preserve the completed checks without repetition. Current live environment metadata still awaits confirmation for canonical promotion; manual profiling remains deferred and full phase acceptance remains open.
+
+## Current environment confirmation and promotion — 2026-09-09
+
+The user replied **"nothing changed"** when asked to confirm Chrome 152.0.7977.77, macOS 27 beta 6, English Zendesk in light mode and 30 mounted ticket rows. Combined with the earlier instructed unpacked repository reload and one setup document refresh, this completes the reported source/environment metadata. All three repository asset hashes were rechecked and are unchanged through this observation sequence. Provenance is user-confirmed directory loading, not independent browser hash extraction.
+
+Promoted nine complete checks: in-app-entry, delayed-entry, native refresh, view-switch, pagination-next, pagination-previous, scroll, grouped-sticky and tab-return. Generic sort and row-interaction observations remain preserved; Priority/other-column sorting and keyboard traversal were not explicitly covered. No completed observation needs repetition. Earlier log statements about pending metadata reflect their recording time and are superseded by this confirmation.
+
+Current disposition: 9/20 passed, 11 pending, zero failed. Manual profiling remains deferred; no phase-completion claim.

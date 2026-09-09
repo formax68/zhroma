@@ -1,12 +1,12 @@
 ---
 phase: 03-the-tint-survives-everything
 status: human_needed
-source_confirmation: pending
+source_confirmation: user-confirmed
 ---
 
 # Phase 03 Current-Source Live Acceptance
 
-The CR-01/CR-02 runtime repair changed content.js. Current-source live acceptance is pending; none of the earlier observations has been relabelled for these bytes. The exact prior record, including sixteen user-reported passes and four pending checks, is preserved in [historical evidence](history/2026-09-09-before-runtime-repair/03-LIVE-ACCEPTANCE.md). Manual profiling remains deferred at the user's request. The repaired-source smoke checks below have now passed; remaining source metadata and full live validation stay user-controlled.
+Nine of twenty current-source live checks now have confirmed user-reported passes. Repository-directory reload and the unchanged Chrome 152.0.7977.77, macOS 27 beta 6, English/light Zendesk environment with 30 mounted rows were confirmed on 2026-09-09. Generic sorting and stated row interactions also passed, but narrower untested variants remain pending. Earlier sixteen-pass evidence remains separately preserved in [historical evidence](history/2026-09-09-before-runtime-repair/03-LIVE-ACCEPTANCE.md). Manual profiling stays deferred; phase status remains human_needed.
 
 ## Repaired-source smoke observation — 2026-09-09
 
@@ -33,6 +33,14 @@ Keyboard-focus traversal and a separate extension-disabled comparison were not e
 The user replied **"all passed"** after instructions to go to Zendesk's home/dashboard, wait twenty seconds, then open a Priority view, followed by switching to a view without a Priority column and back, without refreshing the browser between operations. Colours appeared automatically on entry; the Priority-absent view stayed untinted and correct colours returned in the Priority-present view. Record passes for delayed-entry, the observed landing-page-to-view entry, and the Priority-present/absent/present view-switch sequence on unchanged content.js SHA-256 `aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2`.
 
 This is actual user-reported navigation evidence. It does not establish disabled/native dashboard isolation or persisted-document restoration. Preserve the completed checks without repetition. Current live environment metadata still awaits confirmation for canonical promotion; manual profiling remains deferred and full phase acceptance remains open.
+
+## Current environment confirmation and promotion — 2026-09-09
+
+The user replied **"nothing changed"** when asked to confirm Chrome 152.0.7977.77, macOS 27 beta 6, English Zendesk in light mode and 30 mounted ticket rows. Combined with the earlier instructed unpacked repository reload and one setup document refresh, this completes the reported source/environment metadata. All three repository asset hashes were rechecked and are unchanged through this observation sequence. Provenance is user-confirmed directory loading, not independent browser hash extraction.
+
+Promoted nine complete checks: in-app-entry, delayed-entry, native refresh, view-switch, pagination-next, pagination-previous, scroll, grouped-sticky and tab-return. Generic sort and row-interaction observations remain preserved; Priority/other-column sorting and keyboard traversal were not explicitly covered. No completed observation needs repetition. Earlier log statements about pending metadata reflect their recording time and are superseded by this confirmation.
+
+Current disposition: 9/20 passed, 11 pending, zero failed. Manual profiling remains deferred; no phase-completion claim.
 
 ## Start with source confirmation
 
@@ -77,7 +85,7 @@ Four unclassified probes (E01/E14/E15/E16), three descriptor-less prohibition ju
 
 ## Canonical record
 
-Exactly one JSON record governs consistency. Null values represent no observation. Browser/environment fields belong to the actual live run, not the synthetic Chrome profile. Current-source confirmation has not yet occurred. Earlier source-directory confirmation and observations remain in the historical record; they have not been transferred to this source.
+Exactly one JSON record governs consistency. Null values represent no observation. Browser/environment fields belong to the actual live run, not the synthetic Chrome profile. Current-source directory and environment confirmation are complete. Only observations actually reported for the repaired source are promoted; pre-repair observations remain historical.
 
 ```json
 {
@@ -98,27 +106,27 @@ Exactly one JSON record governs consistency. Null values represent no observatio
     "reconcile_delay_ms": 0,
     "startup_deadline_ms": null
   },
-  "loaded_from_repository": false,
-  "source_confirmed_on": null,
+  "loaded_from_repository": true,
+  "source_confirmed_on": "2026-09-09",
   "environment": {
-    "browser": null,
-    "os": null,
-    "mounted_rows": null
+    "browser": "Chrome 152.0.7977.77",
+    "os": "macOS 27 beta 6",
+    "mounted_rows": 30
   },
   "checks": [
     {
       "id": "in-app-entry",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed after opening a Priority view from the Zendesk home/dashboard without a browser refresh; correct colours appeared automatically."
     },
     {
       "id": "delayed-entry",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed after waiting twenty seconds on the Zendesk home/dashboard and then opening a Priority view without a browser refresh; correct colours appeared automatically."
     },
     {
       "id": "sort",
@@ -129,45 +137,45 @@ Exactly one JSON record governs consistency. Null values represent no observatio
     },
     {
       "id": "refresh",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed after using Zendesk's native view-refresh button without refreshing the browser; correct colours remained or returned automatically."
     },
     {
       "id": "view-switch",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed for Priority-present to Priority-absent to Priority-present switching without browser refresh: the absent-column view stayed untinted and correct colours returned in the Priority view."
     },
     {
       "id": "pagination-next",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed for Next pagination without browser refresh; colours appeared automatically and matched current ticket priorities."
     },
     {
       "id": "pagination-previous",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed for Previous pagination without browser refresh; colours appeared automatically and matched current ticket priorities."
     },
     {
       "id": "scroll",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed after scrolling down through tickets and back up without browser refresh; colours remained correct. No virtualization claim is made."
     },
     {
       "id": "grouped-sticky",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed in a grouped view while scrolling: group headings and the sticky column header stayed untinted while ticket colours remained correct."
     },
     {
       "id": "native-states",
@@ -206,10 +214,10 @@ Exactly one JSON record governs consistency. Null values represent no observatio
     },
     {
       "id": "tab-return",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported all passed after switching to another browser tab for about twenty seconds and returning without browser refresh; colours remained correct or returned automatically. No unseen priority-change claim is made."
     },
     {
       "id": "document-restoration",
@@ -252,7 +260,7 @@ Exactly one JSON record governs consistency. Null values represent no observatio
     "unavailable_scenarios": [
       {
         "id": "document-restoration",
-        "reason": "Chrome back/forward-cache test reported not served from cache, with cache-control no-store, cookie-change and WebSocket eligibility reasons. User reported colours returned correctly after the round trip. Persisted document restoration was therefore not exercised; keep this required check pending for this run."
+        "reason": "The pre-repair run could not exercise persisted back/forward-cache restoration (reported cache-control no-store, cookie-change and WebSocket eligibility reasons). That observation is historical; availability has not been rechecked on the repaired source. Persisted restoration remains pending, and ordinary tab return does not establish it."
       }
     ]
   }

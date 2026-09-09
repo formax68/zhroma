@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 current_phase: 03
 current_phase_name: The Tint Survives Everything
 status: human_needed
-stopped_at: Repaired-source smoke checks passed; remaining live acceptance pending; manual profiling deferred
-last_updated: "2026-09-09T13:04:01Z"
+stopped_at: Repaired-source live acceptance 9/20 passed; sorting variants and keyboard focus next; manual profiling deferred
+last_updated: "2026-09-09T13:06:33Z"
 last_activity: 2026-09-09
-last_activity_desc: "User reported repaired-source delayed dashboard entry and Priority-absent switching all passed"
+last_activity_desc: "Current environment confirmed; nine repaired-source live checks promoted; eleven remain pending"
 state_head: d19e1e4015cfafb93d300279d530a1c672bc2d8c
 progress:
   total_phases: 5
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 Phase: 03 (The Tint Survives Everything) — HUMAN CHECKPOINT
 Plan: 03-04 Task 2; 3/4 plans executed, final plan 1/2 tasks complete
-Status: Runtime repairs verified; repaired-source smoke checks passed; full live acceptance pending; manual profiling deferred
+Status: Runtime repairs verified; current-source live acceptance 9/20 passed, 11 pending; manual profiling deferred
 Last activity: 2026-09-09 — CR-01/CR-02 repaired; 403 tests passed, independent code review clean, security high blockers closed; fresh Chrome timing passed
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
@@ -132,8 +132,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T13:04:01Z
-Stopped at: Repaired-source smoke checks passed; remaining live acceptance pending
+Last session: 2026-09-09T13:06:33Z
+Stopped at: Current-source 9/20 live checks passed; remaining acceptance pending
 Resume file: .planning/phases/03-the-tint-survives-everything/03-04-CHECKPOINT.md
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
@@ -163,3 +163,7 @@ Follow-up: native view refresh, scrolling down/back and twenty-second browser-ta
 Follow-up: grouped/sticky headings remained untinted with correct ticket colours; hover, selection/deselection, unread bold text and ticket opening behaved normally. User reported all passed. Remaining navigation variants: delayed landing-page entry and Priority-absent view switching. Preserve observed scope; keyboard traversal and disabled-isolation comparison were not inferred.
 
 Follow-up: delayed dashboard-to-view entry and Priority-present/absent/present switching also passed without browser refresh. All guided observations are preserved against the unchanged repaired source. Next: confirm current browser, OS, English/light environment and mounted-row metadata so completed observations can be promoted without repetition. Remaining live criteria and manual profiling deferral stay explicit.
+
+## Current acceptance update — 2026-09-09
+
+User confirmed the unchanged browser/OS/English-light environment and 30 mounted rows. Nine complete repaired-source checks are now canonical passes; eleven remain pending, with generic sorting and interaction observations retained as partial coverage. Source hashes unchanged. Earlier notes about unconfirmed metadata are historical. Next narrow checks: sort by Priority and another column; keyboard focus and selection indicator. No redoing completed checks. Manual profiling remains deferred.
