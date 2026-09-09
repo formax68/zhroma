@@ -140,20 +140,20 @@ UAT update (2026-09-09): eleven live checks and all twelve specification/prohibi
   4. Deliberately breaking the row selector leaves the page pixel-identical to having no extension installed — no half-tinted rows, no errors surfaced into the page.
   5. Opening a ticket page, the dashboard and the admin area with the extension enabled changes nothing on them and breaks nothing.
 
-**Plans**: 4 plans
+**Plans**: 3/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Persistent tint recovery and historical evidence binding
+- [x] 03-01-PLAN.md — Persistent tint recovery and historical evidence binding
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Bounded mutation handling, lifecycle recovery and privacy
+- [x] 03-02-PLAN.md — Bounded mutation handling, lifecycle recovery and privacy
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 03-03-PLAN.md — Reproducible Chrome performance, layout and retention workload
+- [x] 03-03-PLAN.md — Reproducible Chrome performance, layout and retention workload
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -199,7 +199,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. DOM Recon Spike | 15/15 | Complete    | 2026-09-08 |
 | 2. First Tint on a Real View | 3/3 | Complete    | 2026-09-09 |
-| 3. The Tint Survives Everything | 0/4 | Not started | - |
+| 3. The Tint Survives Everything | 3/4 | In Progress|  |
 | 4. Honest Failure and an Off Switch | 0/TBD | Not started | - |
 | 5. Published | 0/TBD | Not started | - |
 
