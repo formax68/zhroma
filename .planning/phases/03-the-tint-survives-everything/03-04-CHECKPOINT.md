@@ -8,6 +8,8 @@ task: 2
 
 # Pending live source confirmation and acceptance
 
+**Current resumption note (2026-09-09):** CR-01/CR-02 repairs changed runtime source. The observation log below belongs to the pre-repair source and is preserved verbatim. Its sixteen passes remain historical; current-source confirmation and live checks are pending in 03-LIVE-ACCEPTANCE.md. Manual profiling remains deferred. See 03-REPAIR-SUMMARY.md for repair verification and independent gate outcomes. Do not resume the old source confirmation or promote these observations onto repaired bytes.
+
 Completed Task 1: e26d697 and d19e1e4; files test/extension/phase-03-live-acceptance.test.js and 03-LIVE-ACCEPTANCE.md. All 27 validator tests and 393 combined tests pass. Plans 03-01/02/03 were executed; 03-04 is 1/2 tasks complete. Do not count the halted 03-04 summary as completion or start Phase 4.
 
 Current content.js SHA-256: 85aa975028d5c2653167a5c13a7d9e6031891b43ba0cf03a7ac6285dce5c2ac1. Scheduler: one non-resetting zero-delay timeout, no startup deadline. Manifest/CSS unchanged. Exact full hashes are in the live and performance records.

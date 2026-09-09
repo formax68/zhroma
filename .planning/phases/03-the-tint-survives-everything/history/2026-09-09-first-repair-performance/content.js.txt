@@ -73,18 +73,11 @@
     return result(entries.some((entry) => entry.priority !== null) ? 'safe' : 'blank', table, entries);
   }
 
-  function adoptCopiedMarkers(root) {
-    // Host cloning/serialization copies our reserved attribute onto identities
-    // we have never tracked. Discover them at entry and in added subtrees,
-    // never use their values as input to priority detection.
-    if (root.nodeType !== 1 && root.nodeType !== 9) return false;
-    let found = false;
-    if (root.nodeType === 1 && root.hasAttribute(PRIORITY_ATTRIBUTE)) { ownedRows.add(root); found = true; }
-    for (const row of root.querySelectorAll(`[${PRIORITY_ATTRIBUTE}]`)) { ownedRows.add(row); found = true; }
-    return found;
-  }
-
   function clearOwnedMarkers(keep = new Map()) {
+    // Host cloning/serialization copies our reserved attribute onto identities
+    // we have never tracked. Adopt mounted markers for cleanup, never as input
+    // to priority detection. Detached originals remain in the same cleanup set.
+    for (const row of document.querySelectorAll(`[${PRIORITY_ATTRIBUTE}]`)) ownedRows.add(row);
     // Release even unremovable rows. A permanently broken native removal API
     // cannot guarantee paint cleanup; it must not also leak detached nodes.
     let complete = true;
@@ -152,10 +145,7 @@
         if (!INTERPRETATION_ATTRIBUTES.includes(record.attributeName)) continue;
         if (record.attributeName === PRIORITY_ATTRIBUTE) {
           const expected = ownedRows.has(target) ? expectedMarkers.get(target) : null;
-          if (target.getAttribute(PRIORITY_ATTRIBUTE) !== expected) {
-            ownedRows.add(target);
-            return true;
-          }
+          if (target.getAttribute(PRIORITY_ATTRIBUTE) !== expected) return true;
           continue;
         }
         if (target === document.documentElement && record.attributeName === 'lang') return true;
@@ -172,6 +162,8 @@
         if (candidate?.contains(target) || target.closest?.(TABLE)) return true;
         for (const node of [...record.addedNodes, ...record.removedNodes]) {
           if (hasCandidate(node) || (candidate && node.contains(candidate))) return true;
+          if (node.nodeType === 1 && (node.hasAttribute(PRIORITY_ATTRIBUTE)
+            || node.querySelector(`[${PRIORITY_ATTRIBUTE}]`))) return true;
         }
       }
     }
@@ -183,7 +175,6 @@
     observer?.disconnect();
     clearTimeout(reconcileTimer);
     reconcileTimer = null;
-    adoptCopiedMarkers(document);
     clearOwnedMarkers();
     candidate = null;
   }
@@ -192,7 +183,6 @@
     if (document.hidden) return;
     try {
       if (!active) {
-        adoptCopiedMarkers(document);
         observer.observe(document, { childList: true, characterData: true, subtree: true,
           attributes: true, attributeFilter: INTERPRETATION_ATTRIBUTES });
         active = true;
@@ -213,15 +203,7 @@
         // Invalidate stale colours during observer delivery, before the browser
         // may paint. Only the deferred fresh pass can add positive markers.
         try {
-          let copiedMarkers = false;
-          for (const record of records) {
-            if (record.type === 'childList') for (const node of record.addedNodes) {
-              if (adoptCopiedMarkers(node)) copiedMarkers = true;
-            }
-            if (record.type === 'attributes' && record.attributeName === PRIORITY_ATTRIBUTE
-              && record.target.hasAttribute(PRIORITY_ATTRIBUTE)) ownedRows.add(record.target);
-          }
-          if (!mutationsAffectInterpretation(records) && !copiedMarkers) return;
+          if (!mutationsAffectInterpretation(records)) return;
           const snapshot = inspectCandidateTable(document);
           candidate = snapshot.table;
           const keep = snapshot.state === 'safe'

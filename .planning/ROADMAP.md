@@ -142,6 +142,8 @@ UAT update (2026-09-09): eleven live checks and all twelve specification/prohibi
 
 **Plans**: 3/4 plans executed
 
+Runtime repair update (2026-09-09): CR-01/CR-02 resolved; 403 tests and fresh synthetic timing pass; independent code review clean and security has zero high blockers. Current-source live acceptance remains pending; sixteen prior passes are preserved as historical evidence. Manual profiling stays deferred.
+
 Plans:
 **Wave 1**
 

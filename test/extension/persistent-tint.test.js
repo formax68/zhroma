@@ -397,3 +397,64 @@ test('native observer self-writes reach quiescence with zero idle timers', async
   await new Promise((resolve) => r.window.setTimeout(resolve, 0));
   expect(scans).not.toHaveBeenCalled(); expect(vi.getTimerCount()).toBe(0);
 });
+
+test.each(['unknown', 'blank', 'incomplete', 'valid', 'unidentified'])('marked replacement clone %s cannot retain stale paint', async (variant) => {
+  const r = loadRuntimeFixture({ realObserver: true }); r.settled();
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  const original = r.document.querySelector('table');
+  const departed = rows(r.document);
+  const replacement = original.cloneNode(true);
+  const first = replacement.querySelector('tbody tr');
+  if (variant === 'unknown') first.children[6].textContent = 'Unknown';
+  if (variant === 'blank') first.children[6].textContent = '';
+  if (variant === 'incomplete') first.lastElementChild.remove();
+  if (variant === 'valid') first.children[6].textContent = 'Low';
+  if (variant === 'unidentified') replacement.removeAttribute('data-test-id');
+  original.replaceWith(replacement);
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  const expected = ['blank', 'valid'].includes(variant) ? [null, 'High', 'Normal', 'Low'] : [null, null, null, null];
+  expect(markers(r.document)).toEqual(expected); // Before deferred positive writes.
+  expect(departed.every((row) => !row.hasAttribute('data-zhroma-priority'))).toBe(true);
+  expect(vi.getTimerCount()).toBe(1);
+  r.settled();
+  expect(markers(r.document)).toEqual(variant === 'valid' ? ['Low', 'High', 'Normal', 'Low'] : expected);
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  r.disposed();
+});
+
+test.each([['data-test-id'], ['data-garden-id'], ['data-test-id', 'data-garden-id']])('identifier removal %j recovers from ambiguity without another mutation', async (...attributes) => {
+  const r = loadRuntimeFixture({ realObserver: true, mutate(d) { d.body.append(d.querySelector('table').cloneNode(true)); } });
+  r.settled();
+  expect(markers(r.document)).toEqual(Array(8).fill(null));
+  const competitor = r.document.querySelectorAll('table')[1];
+  for (const attribute of attributes) competitor.removeAttribute(attribute);
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  expect(vi.getTimerCount()).toBe(1);
+  expect(markers(r.document)).toEqual(Array(8).fill(null));
+  r.settled();
+  expect(markers(r.document)).toEqual(['Urgent', 'High', 'Normal', 'Low', null, null, null, null]);
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  r.disposed();
+});
+
+test('untracked markers on blank rows and copied non-view subtrees are cleared without touching native attributes', async () => {
+  const r = loadRuntimeFixture({ realObserver: true, mutate(d) {
+    rows(d)[0].children[6].textContent = ''; rows(d)[3].children[6].textContent = '';
+  } }); r.settled();
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  const blank = rows(r.document)[0];
+  blank.setAttribute('data-zhroma-priority', 'Urgent');
+  rows(r.document)[3].setAttribute('data-zhroma-priority', 'High');
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  expect(blank.hasAttribute('data-zhroma-priority')).toBe(false);
+  expect(rows(r.document)[3].hasAttribute('data-zhroma-priority')).toBe(false);
+  r.settled();
+  const copy = rows(r.document)[1].cloneNode(true);
+  const native = copy.outerHTML.replace(' data-zhroma-priority="High"', '');
+  const wrapper = r.document.createElement('aside'); wrapper.append(copy); r.document.body.append(wrapper);
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  expect(copy.outerHTML).toBe(native);
+  r.settled();
+  await new Promise((resolve) => r.window.setTimeout(resolve, 0));
+  r.disposed();
+});

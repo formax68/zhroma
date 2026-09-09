@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 current_phase: 03
 current_phase_name: The Tint Survives Everything
-status: gaps_found
-stopped_at: Plan 03-04 Task 2 blocking-human checkpoint; 16/20 live checks passed; remaining measurements deferred by user
-last_updated: "2026-09-09T11:16:18Z"
+status: human_needed
+stopped_at: Phase 03 runtime repairs verified; final-source human acceptance pending; manual profiling deferred
+last_updated: "2026-09-09T12:44:20Z"
 last_activity: 2026-09-09
-last_activity_desc: "Phase 03 has 16 live passes; manual profiling deferred; independent review found two runtime blockers"
+last_activity_desc: "CR-01/CR-02 repaired; 403 tests and synthetic timing pass; code review clean; zero high security blockers"
 state_head: d19e1e4015cfafb93d300279d530a1c672bc2d8c
 progress:
   total_phases: 5
@@ -29,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 Phase: 03 (The Tint Survives Everything) — HUMAN CHECKPOINT
 Plan: 03-04 Task 2; 3/4 plans executed, final plan 1/2 tasks complete
-Status: Sixteen live checks passed; four pending; manual profiling deferred at user request
-Last activity: 2026-09-09 — Persistent runtime, lifecycle and Chrome timing verified; sixteen live checks passed, four pending
+Status: Runtime repairs verified; final-source live acceptance pending; historical 16/20 passes preserved; manual profiling deferred
+Last activity: 2026-09-09 — CR-01/CR-02 repaired; 403 tests passed, independent code review clean, security high blockers closed; fresh Chrome timing passed
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 
@@ -104,7 +104,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-Manual profiling is deferred at user request. Preserve source-confirmed 16/20 live passes and four pending checks in 03-04-CHECKPOINT.md. Independent review/security found two runtime blockers (CR-01 copied stale markers; CR-02 lost ambiguity recovery). Repair and reverify these; synthetic layout/retainer attribution and final goal acceptance remain open. Do not count the halted 03-04 summary as a completed plan.
+CR-01/CR-02 repairs and independent reverification are complete; 403 tests and fresh synthetic timing pass. Preserve historical 16/20 live passes and four pending checks. Current-source live confirmation and acceptance are pending; synthetic layout/retainer attribution and final goal acceptance remain open. Manual profiling stays deferred. T-03-15 remains a non-blocking medium evidence gap. Do not count the halted 03-04 summary as a completed plan.
 
 ### Blockers/Concerns
 
@@ -132,8 +132,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T09:13:51.464Z
-Stopped at: 03-04 Task 2 blocking-human checkpoint
+Last session: 2026-09-09T12:44:20Z
+Stopped at: Phase 03 runtime repairs independently verified; current-source acceptance pending
 Resume file: .planning/phases/03-the-tint-survives-everything/03-04-CHECKPOINT.md
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
@@ -141,13 +141,15 @@ Resume file: .planning/phases/03-the-tint-survives-everything/03-04-CHECKPOINT.m
 Completion helper warnings: legacy summaries contain command strings and historical Git lock text misidentified as file references. The actual test commands passed and no required product artifact is missing. Historical summaries were preserved.
 
 
-## Phase 03 execution checkpoint — 2026-09-09
+## Phase 03 execution checkpoint — 2026-09-09 (pre-repair history)
 
 - Plans 03-01/02 implemented persistent fresh-DOM tint, prompt owned cleanup, filtered coalescing and pause/resume. No runtime channels, dependencies, manifest or CSS changes.
 - Plan 03-03 executed 1800 enabled and 1800 disabled Chrome timing samples: slowest 30-row operation median 1.3 ms; global maximum 15.4 ms. Both timing budgets pass. Synthetic layout/retainer attribution remains human_needed; zero aggregate detached growth is not attribution proof.
 - 03-04 prepared twenty current-source live checks; sixteen now have dated user-reported passes. Task 2 is an explicit blocking-human checkpoint. All 393 combined tests pass; four live checks and independent review/security/goal verification remain open. Manual profiling was deferred at user request.
 - Three completed plan summaries plus one halted checkpoint summary exist. ROADMAP remains 3/4 for Phase 03. No phase.complete call is authorized by current evidence.
 
-## Independent reviews — 2026-09-09
+## Runtime repair and independent reviews — 2026-09-09
 
-Code review: two reproduced blockers. Security: twelve closed threats, two high open blockers and one medium missing-snippet evidence gap. See 03-REVIEW.md and 03-SECURITY.md. Manual profiling remains deferred; no new acceptance or runtime source change. Next work is scoped runtime repair and regression verification, followed by source-evidence reconciliation.
+CR-01 and CR-02 are repaired. Independent final code review is clean; security closes fourteen of fifteen mitigations with zero high blocking threats and one non-blocking medium missing-snippet gap. Full suite: 403 passed. Fresh synthetic timing: 1800 enabled/1800 disabled samples; largest 30-row median 1.4 ms, overall maximum 14.5 ms. See 03-REPAIR-SUMMARY.md, 03-REVIEW.md, 03-SECURITY.md and 03-PERFORMANCE.md.
+
+Final-source live acceptance is human_needed. Sixteen passes and four pending checks remain bound to the old source in history/2026-09-09-before-runtime-repair; current-source twenty checks are pending. Manual profiling remains deferred. No Phase 4 advancement or completion claim.

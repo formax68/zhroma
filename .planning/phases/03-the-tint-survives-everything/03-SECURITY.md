@@ -1,32 +1,32 @@
 ---
 phase: "03"
 slug: the-tint-survives-everything
-status: blocked
-threats_open: 2
-threats_open_total: 3
-threats_closed: 12
+status: secured
+threats_open: 0
+threats_open_total: 1
+threats_closed: 14
 asvs_level: 1
 block_on: high
 created: "2026-09-09"
 ---
 
-# Phase 03 — Security
+# Phase 03 — Security Reverification
 
-Independent auditor verified the authored fifteen-threat register against actual implementation. Its preliminary clean threshold verdict was superseded after both code-review defects were independently reproduced. Two high threats block advancement; one medium evidence gap is non-blocking.
+Independent gsd-security-auditor verified all fifteen authored threat mitigations on final content.js SHA-256 `aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2`. Verdict SECURED at ASVS 1 / high blocking threshold: fourteen closed, zero blocking open, one non-blocking medium evidence gap. This verifies mitigation implementation, not phase completion or live acceptance.
 
 ## Trust boundaries
 
-Host-controlled DOM crosses the exact-English table inspector and extension-owned marker boundary. The development harness crosses a loopback/CDP boundary using a fresh profile and synthetic target. User-controlled live observations cross into aggregate-only, source-bound acceptance records.
+Host-controlled DOM crosses the exact-English inspector and extension-owned marker boundary. The development harness uses allowlisted loopback assets and a fresh Chrome profile. User-controlled live observations remain aggregate-only and source-bound.
 
 ## Threat register
 
 | Threat ID | Category | Component | Severity | Disposition | Planned mitigation | Status |
 |---|---|---|---|---|---|---|
-| T-03-01 | Tampering | inspector/reconciliation | high | mitigate | Exact allowlist, whole-table validation, same-table ownership and unsafe recovery regressions | OPEN — blocking; CR-01 copied markers bypass rejection |
+| T-03-01 | Tampering | inspector/reconciliation | high | mitigate | Exact allowlist, whole-table validation, same-table ownership and unsafe recovery regressions | CLOSED — final repaired source adopts copied markers before fresh validation |
 | T-03-02 | Tampering | marker cleanup | high | mitigate | Clear complete owned/attempted set independently after faults; no stale rollback; fault-limit disclosure | CLOSED |
 | T-03-03 | Repudiation | historical acceptance | high | mitigate | Immutable verified Git bytes supply hashes/settings; missing revision errors; old evidence preserved | CLOSED |
 | T-03-04 | Spoofing | group/sticky header classification | medium | mitigate | Current paired identifiers and same-table guards; adversarial group and sibling decoy tests | CLOSED |
-| T-03-05 | Denial of Service | observer/scheduler | high | mitigate | Input-derived filtering, one non-resetting pending pass, self-write suppression, continuous-burst and idle-quiescence tests | OPEN — blocking; CR-02 ambiguity recovery filtered out |
+| T-03-05 | Denial of Service | observer/scheduler | high | mitigate | Input-derived filtering, one non-resetting pending pass, self-write suppression, continuous-burst and idle-quiescence tests | CLOSED — table identifier removal invalidates even with null candidate |
 | T-03-06 | Information Disclosure | runtime channels/ownership | high | mitigate | Extended forbidden-channel sentinels and deterministic detached-row release across thirty switches | CLOSED |
 | T-03-07 | Tampering | lifecycle resume | medium | mitigate | Idempotent pause/resume clears snapshots and revalidates current DOM before paint | CLOSED |
 | T-03-08 | Elevation of Privilege | manifest and browser surfaces | high | mitigate | Preserve frozen manifest; DOM-only navigation; no added privileged runtime channel | CLOSED |
@@ -38,26 +38,23 @@ Host-controlled DOM crosses the exact-English table inspector and extension-owne
 | T-03-14 | Repudiation | live acceptance validator | high | mitigate | Current source/settings, exact check inventory, duplicate rejection, dated live evidence and derived fail-closed status | CLOSED |
 | T-03-15 | Tampering | deliberate failure scenario | medium | mitigate | Reviewed ephemeral selector-only change controlled by user; restore identifier; no ticket-data mutation | OPEN — below high threshold; reviewed snippet unavailable |
 
-## Blocking evidence
 
-- T-03-01: extension/content.js:80–83,121–124,193–198 clears tracked originals but leaves copied markers on a replacement clone rejected for Unknown Priority. See CR-01 in 03-REVIEW.md for the independent reproduction.
-- T-03-05: extension/content.js:26–28,143–146 drops candidate identity during ambiguity and filters out the identifier removal that resolves it. No reconciliation is scheduled for the remaining valid table. See CR-02.
-- T-03-15: successful user-controlled five-second selector removal/restoration is recorded, but the exact console snippet is unavailable for independent verification. This is missing evidence, not an observed data mutation.
+## Repaired blocking findings
 
-## Closed mitigation evidence
+- T-03-01 / CR-01: content.js adopts reserved markers across every added subtree and marker mutation before filtering. Lifecycle entry also discovers preexisting copies. Only a freshly validated whole-table snapshot permits retained or positive markers. Unknown, incomplete and blank rows cannot retain copied paint; detached originals are cleaned and released. Regressions cover native observer delivery and the state before deferred positive writes.
+- T-03-05 / CR-02: removing or changing either table identifier invalidates the candidate universe even when ambiguity left no unique candidate and the changed table no longer matches. Native-observer regressions cover either identifier and both identifiers removed in one delivery, with one pending coalesced pass and automatic recovery.
+- Existing cleanup fault, ownership release, no-data-channel, lifecycle, same-table topology and minimal manifest mitigations remain intact. The harness retains bounded CDP commands, a separately bounded 180-second matrix, finally cleanup, exact identity and overwrite refusal.
 
-T-03-02: content.js:76–114 independently clears tracked owned/attempted nodes; bounded permanent native-removal failure remains disclosed. T-03-03: test/extension/live-acceptance.test.js:13–32 binds historical Git bytes. T-03-04: content.js:6–13,30–69 enforces paired identifiers and topology. T-03-06: content.js:20–21,90–91,159–165 releases references; runtime-contract.test.js:54–106 exercises forbidden channels and thirty switches. T-03-07: content.js:159–177,202–205 implements idempotent pause/resume. T-03-08: unchanged manifest and DOM-only runtime preserve privileges.
+## Remaining evidence gap
 
-T-03-09: scripts/run-tint-workload.js:150–184 provides exact loopback assets, temporary profile and its own target. T-03-10: driver:33–75,186–200 validates complete samples and identity, while attribution remains human_needed. T-03-11: driver:80,96,123,166–171,203–214 bounds commands and cleans resources. T-03-12: runtime unchanged during performance work; this preservation does not erase the newly found runtime defects. T-03-13: retained live evidence is sanitized aggregates; synthetic trace/heap data is discarded at driver:128–142. T-03-14: phase-03-live-acceptance.test.js:10–124 derives fail-closed current-source acceptance with exact inventory and dates.
-
-## Accepted risks
-
-No new risks accepted. The request to move on defers manual profiling only.
+T-03-15 remains OPEN, medium and below the high blocking threshold. Historical records describe the user-controlled five-second selector removal/restoration result, but the exact reviewed snippet and its provenance remain unavailable. Do not invent that code or infer risk acceptance. Recover the exact historical operation before closing this finding.
 
 ## Audit trail
 
-2026-09-09 — gsd-security-auditor: 15 total,12 closed,3 open (2 high blocking,1 medium). Corrected verdict OPEN_THREATS supersedes preliminary SECURED after independent reproduction of CR-01 and CR-02. No runtime files changed. Four live checks and synthetic layout/retainer attribution remain human_needed independently.
+The [original blocked audit](history/2026-09-09-before-runtime-repair/03-SECURITY.md) is preserved byte-for-byte. Its two independently reproduced blockers prompted these repairs.
 
-## Sign-off
+2026-09-09 — Independent gsd-security-auditor reverified all fifteen authored threats using source and regression inspection at ASVS 1. Fourteen closed; one non-blocking medium open; no unregistered flags. The auditor ran no tests during active synthetic matrices to avoid interference. Parent validation and final code review are recorded separately in 03-REPAIR-SUMMARY.md and 03-REVIEW.md.
 
-Blocked. Repair both runtime defects and rerun independent review/security verification. Reconcile source-bound evidence honestly if source changes; preserve existing user observations as historical evidence.
+## Acceptance boundaries
+
+No new risks accepted. Current-source live confirmation and twenty checks remain pending; previous sixteen passes remain historical. Synthetic timing passed, but layout/retainer attribution remains human_needed. Manual profiling remains deferred. This security threshold verdict does not close those separate phase gates.

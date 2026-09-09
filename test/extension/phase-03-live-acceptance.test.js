@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 import { validateWorkloadReport } from '../../scripts/run-tint-workload.js';
 
@@ -133,17 +135,26 @@ function example(complete = false) {
     limitations: { unresolved_observed_defects: [], unavailable_scenarios: [] } };
 }
 function acceptedPerformance() {
-  const result = structuredClone(performanceRecord);
+  // Hypothetical success must not depend on whether a real measurement passed.
+  // Keep examples in memory; only the repository test consumes actual samples.
+  const result = { identity: { hashes: { ...hashes } }, runs: {} };
+  for (const size of [30, 200, 1000]) for (const mode of ['enabled', 'disabled']) {
+    const sample = mode === 'enabled'
+      ? { segments: [{ category: 'observer', cpu: 0.2 }, { category: 'timer', cpu: 0.3 }], totalCpu: 0.5, callbacks: 2, passes: 1, writes: 1, latency: 2 }
+      : { segments: [], totalCpu: 0, callbacks: 0, passes: 0, writes: 0, latency: 2 };
+    result.runs[`${size}-${mode}`] = { size, mode, warmups: 10, measured: 100,
+      operations: Object.fromEntries(['edit', 'reorder', 'body', 'table', 'invalid-repair', 'unrelated']
+        .map((op) => [op, Array.from({ length: 100 }, () => structuredClone(sample))])) };
+  }
   for (const mode of ['enabled', 'disabled']) {
-    const run = result.runs[`30-${mode}-profile`];
-    run.status = 'passed'; run.layout.status = 'passed'; run.layout.attributedForcedLayouts = 0;
-    run.retention.status = 'passed'; run.retention.attributedDetachedGrowth = 0;
+    result.runs[`30-${mode}-profile`] = { status: 'passed', switches: 30, pendingTimers: 0, observers: mode === 'enabled' ? 1 : 0,
+      layout: { status: 'passed', attributedForcedLayouts: 0 }, retention: { status: 'passed', attributedDetachedGrowth: 0 } };
   }
   return result;
 }
 
 test('pending checks are valid preparation and only complete consistent live/performance claims can pass', () => {
-  expect(validatePhase03Acceptance(example(), performanceRecord, CLOCK)).toBe('human_needed');
+  expect(validatePhase03Acceptance(example(), acceptedPerformance(), CLOCK)).toBe('human_needed');
   expect(validatePhase03Acceptance(example(true), acceptedPerformance(), CLOCK)).toBe('passed');
 });
 test.each([
@@ -180,7 +191,7 @@ test('failed live results derive gaps_found; unavailable required scenarios stay
   const r = example(true); r.checks[0].status = 'fail'; r.status = 'gaps_found';
   expect(validatePhase03Acceptance(r, acceptedPerformance(), CLOCK)).toBe('gaps_found');
   const pending = example(); pending.limitations.unavailable_scenarios.push({ id: 'document-restoration', reason: 'Not available in this run' });
-  expect(validatePhase03Acceptance(pending, performanceRecord, CLOCK)).toBe('human_needed');
+  expect(validatePhase03Acceptance(pending, acceptedPerformance(), CLOCK)).toBe('human_needed');
 });
 test('parser rejects duplicate JSON members and multiple canonical records', () => {
   expect(() => parsePhase03Acceptance('```json\n{"schema_version":1,"schema_version":1}\n```')).toThrow(/duplicate/);
@@ -193,4 +204,21 @@ test('repository record reports its actual final-source acceptance status', () =
   const status = validatePhase03Acceptance(r);
   process.stdout.write(`PHASE 03 LIVE ACCEPTANCE STATUS: ${status}\n`);
   expect(status).toBe(r.status);
+});
+
+test('pre-repair live observations and performance samples remain byte-exact historical evidence', () => {
+  const revision = 'e2eb7bab92deb04d1ad5ec1156973426ab0e0e8f';
+  const phasePath = '.planning/phases/03-the-tint-survives-everything/';
+  const historical = new URL('history/2026-09-09-before-runtime-repair/', phase);
+  const gitBytes = (path) => execFileSync('git', ['show', `${revision}:${path}`], {
+    cwd: fileURLToPath(new URL('../../', import.meta.url)), maxBuffer: 20 * 1024 * 1024,
+  });
+  for (const name of ['03-LIVE-ACCEPTANCE.md', '03-PERFORMANCE.md', '03-PERFORMANCE-SAMPLES.json']) {
+    expect(readFileSync(new URL(name, historical)).equals(gitBytes(phasePath + name))).toBe(true);
+  }
+  const previous = parsePhase03Acceptance(readFileSync(new URL('03-LIVE-ACCEPTANCE.md', historical), 'utf8'));
+  for (const name of ASSETS) expect(previous.runtime_sha256[name]).toBe(createHash('sha256').update(gitBytes(`extension/${name}`)).digest('hex'));
+  expect(previous.checks.filter((row) => row.status === 'pass')).toHaveLength(16);
+  expect(previous.checks.filter((row) => row.status === 'pending')).toHaveLength(4);
+  expect(() => validatePhase03Acceptance(previous)).toThrow(/source-hashes/);
 });

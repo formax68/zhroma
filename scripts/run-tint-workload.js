@@ -90,10 +90,10 @@ async function connectCdp(url) {
   });
   ws.addEventListener('close', () => { for (const waiter of pending.values()) { clearTimeout(waiter.timer); waiter.reject(new Error('CDP disconnected')); } pending.clear(); });
   return {
-    send(method, params = {}, sessionId) {
+    send(method, params = {}, sessionId, timeoutMs = 60000) {
       return new Promise((resolveCommand, reject) => {
         const requestId = ++id;
-        const timer = setTimeout(() => { pending.delete(requestId); reject(new Error(`${method}: command timeout`)); }, 60000);
+        const timer = setTimeout(() => { pending.delete(requestId); reject(new Error(`${method}: command timeout`)); }, timeoutMs);
         pending.set(requestId, { resolve: resolveCommand, reject, timer, method });
         ws.send(JSON.stringify({ id: requestId, method, params, ...(sessionId ? { sessionId } : {}) }));
       });
@@ -173,9 +173,9 @@ export async function runWorkload(options) {
     const version = await cdp.send('Browser.getVersion');
     ({ targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' }));
     const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
-    const send = (method, params) => cdp.send(method, params, sessionId);
-    const evaluate = async (expression) => {
-      const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    const send = (method, params, timeoutMs) => cdp.send(method, params, sessionId, timeoutMs);
+    const evaluate = async (expression, timeoutMs) => {
+      const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, timeoutMs);
       requireValue(!result.exceptionDetails, `Workload failed: ${result.exceptionDetails?.exception?.description || result.exceptionDetails?.text}`);
       return result.result.value;
     };
@@ -185,7 +185,9 @@ export async function runWorkload(options) {
     for (let i = 0; i < 200; i++) { if (await evaluate('Boolean(window.tintWorkload)')) break; if (i === 199) throw new Error('Workload page load timeout'); await delay(25); }
     const identity = { hashes, browser: version.product, revision: version.revision, os: `${platform()} ${release()} ${arch()}`, cpu: cpus()[0]?.model || 'unknown', cpuThrottle: 1, headed: options.headed,
       harnessHash: createHash('sha256').update(await readFile(fileURLToPath(import.meta.url))).update(routes.get('/test/performance/tint-workload.js')).digest('hex') };
-    const result = options.profile ? await runProfile(cdp, send, evaluate) : await evaluate(`window.tintWorkload.run(${JSON.stringify({ smoke: options.smoke })})`);
+    // The six-operation matrix includes 660 batches and real settling delays.
+    // Keep it bounded separately from individual setup/profile CDP commands.
+    const result = options.profile ? await runProfile(cdp, send, evaluate) : await evaluate(`window.tintWorkload.run(${JSON.stringify({ smoke: options.smoke })})`, 180000);
     result.timestamp = new Date().toISOString();
     if (!options.profile) {
       result.metrics = Object.fromEntries(Object.entries(result.operations).map(([key, samples]) => [key, summarizeSamples(samples)]));

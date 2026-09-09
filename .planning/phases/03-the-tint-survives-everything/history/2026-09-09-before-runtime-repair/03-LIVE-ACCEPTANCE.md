@@ -1,12 +1,12 @@
 ---
 phase: 03-the-tint-survives-everything
 status: human_needed
-source_confirmation: pending
+source_confirmation: user-confirmed
 ---
 
 # Phase 03 Current-Source Live Acceptance
 
-The CR-01/CR-02 runtime repair changed content.js. Current-source live acceptance is pending; none of the earlier observations has been relabelled for these bytes. The exact prior record, including sixteen user-reported passes and four pending checks, is preserved in [historical evidence](history/2026-09-09-before-runtime-repair/03-LIVE-ACCEPTANCE.md). Manual profiling remains deferred at the user's request. Source confirmation and future live validation remain user-controlled.
+Sixteen of twenty live checks have user-reported passes. Repository source, Chrome 152.0.7977.77, macOS 27 beta 6 and 30 mounted ticket rows were confirmed in this session. Four checks remain pending, including cached-document restoration unavailable in this live run; phase status remains human_needed. Automated consistency tests and historical/synthetic evidence remain separate from these live observations.
 
 ## Start with source confirmation
 
@@ -45,13 +45,13 @@ Do not execute the deliberate selector edit until the user controls and approves
 
 ## Performance and independent gates
 
-Repaired-source synthetic timing passed: 1800 enabled and 1800 disabled samples, largest 30-row median 1.400 ms and overall maximum 14.500 ms. Full results and historical runs are in 03-PERFORMANCE.md. Synthetic layout/retainer attribution remains human_needed in 03-PERFORMANCE.md; no zero-attributed result has been established. Even if all live rows later pass, full acceptance remains human_needed until those current-source synthetic attribution dimensions are accepted. Independent code review, security and phase goal verification follow separately.
+Synthetic timing passed for all 1800 enabled plus 1800 disabled samples. Synthetic layout/retainer attribution remains human_needed in 03-PERFORMANCE.md; no zero-attributed result has been established. Even if all live rows later pass, full acceptance remains human_needed until those current-source synthetic attribution dimensions are accepted. Independent code review, security and phase goal verification follow separately.
 
 Four unclassified probes (E01/E14/E15/E16), three descriptor-less prohibition judgments and the permanent-native-removal platform limit need explicit independent dispositions. A permanently failing native removal API can defeat literal cleanup; neither a unit-test pass nor this checklist makes that platform guarantee possible.
 
 ## Canonical record
 
-Exactly one JSON record governs consistency. Null values represent no observation. Browser/environment fields belong to the actual live run, not the synthetic Chrome profile. Current-source confirmation has not yet occurred. Earlier source-directory confirmation and observations remain in the historical record; they have not been transferred to this source.
+Exactly one JSON record governs consistency. Null values represent no observation. Browser/environment fields belong to the actual live run, not the synthetic Chrome profile. Source-directory confirmation followed the guided observations on the same date; no runtime bytes changed during the sequence. The record is user-confirmed source provenance, not an independent browser hash extraction.
 
 ```json
 {
@@ -65,125 +65,125 @@ Exactly one JSON record governs consistency. Null values represent no observatio
   },
   "runtime_sha256": {
     "manifest.json": "0c959d71e71b34f5f5d4bc75ffc84f7838f09cc7f0db95d24ad605d45ca57ee6",
-    "content.js": "aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2",
+    "content.js": "85aa975028d5c2653167a5c13a7d9e6031891b43ba0cf03a7ac6285dce5c2ac1",
     "zhroma.css": "f5af38707480b2379d00343d36ec3a54b27ae79e95a09ad00a4538230c586b61"
   },
   "settings": {
     "reconcile_delay_ms": 0,
     "startup_deadline_ms": null
   },
-  "loaded_from_repository": false,
-  "source_confirmed_on": null,
+  "loaded_from_repository": true,
+  "source_confirmed_on": "2026-09-09",
   "environment": {
-    "browser": null,
-    "os": null,
-    "mounted_rows": null
+    "browser": "Chrome 152.0.7977.77",
+    "os": "macOS 27 beta 6",
+    "mounted_rows": 30
   },
   "checks": [
     {
       "id": "in-app-entry",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User answered yes after immediately opening a Priority view from home/dashboard without browser refresh; correct colours appeared automatically."
     },
     {
       "id": "delayed-entry",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass after waiting 20 seconds on home/dashboard and entering a Priority view without browser refresh; colours appeared automatically and matched displayed priorities."
     },
     {
       "id": "sort",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass after sorting by Priority and another column without browser refresh; colours stayed matched after both sorts."
     },
     {
       "id": "refresh",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass after native view refresh; colours returned automatically and matched refreshed priorities."
     },
     {
       "id": "view-switch",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass for Priority-present to Priority-absent and back without browser refresh; absent stayed untinted and correct colours returned."
     },
     {
       "id": "pagination-next",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass for Next then Previous without browser refresh; correct colours appeared automatically on both pages."
     },
     {
       "id": "pagination-previous",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass for Next then Previous without browser refresh; correct colours appeared automatically on both pages."
     },
     {
       "id": "scroll",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass scrolling down a long Priority view and back up; revealed tickets retained correct colours without missing or stale tint. No virtualization claim."
     },
     {
       "id": "grouped-sticky",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass for grouped headings and sticky column-header appearance; both remained untinted while ticket colours matched Priority. No new DOM-topology claim."
     },
     {
       "id": "native-states",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass for hover, selection and left-edge indicator, unread bold text, keyboard focus and opening a ticket; no flashing, overlays or added spinners."
     },
     {
       "id": "failure-cleanup",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User answered yes after running the reviewed console operation that removed the single ticket table data-test-id for five seconds and automatically restored its exact value; all ticket colours disappeared and then returned correctly. The operation changed temporary DOM markup only."
     },
     {
       "id": "ticket-isolation",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass comparing ticket appearance and interactions with the extension disabled and enabled, refreshing once after each toggle."
     },
     {
       "id": "dashboard-isolation",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass comparing dashboard appearance and interactions with the extension disabled and enabled, refreshing once after each toggle."
     },
     {
       "id": "admin-isolation",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass comparing accessible admin-area appearance and interactions with the extension disabled and enabled, refreshing once after each toggle without changing settings."
     },
     {
       "id": "tab-return",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass after about 20 seconds in another browser tab and returning without refresh; correct colours appeared automatically. No unseen priority change claimed."
     },
     {
       "id": "document-restoration",
@@ -194,10 +194,10 @@ Exactly one JSON record governs consistency. Null values represent no observatio
     },
     {
       "id": "live-responsiveness",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-09",
+      "evidence": "User reported pass for enabled/disabled sorting, pagination, scrolling and ticket-opening comparison; no noticeable added slowdown or stutter. This is subjective responsiveness, not measured CPU or memory."
     },
     {
       "id": "live-pass-budget",
