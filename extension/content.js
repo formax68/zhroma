@@ -11,11 +11,14 @@
   const ROW = 'tr[data-garden-id="tables.row"][data-test-id="generic-table-row"]';
   const GROUP = 'tr[data-garden-id="tables.group_row"][data-test-id="generic-table-rows-group-by"]';
   const CELL = 'td[data-garden-id="tables.cell"]';
+  const INTERPRETATION_ATTRIBUTES = ['data-garden-id', 'data-test-id', 'role', 'colspan', 'rowspan', 'lang', PRIORITY_ATTRIBUTE];
 
   let observer = null;
   let reconcileTimer = null;
   let active = false;
+  let candidate = null;
   const ownedRows = new Set();
+  const expectedMarkers = new WeakMap();
 
   function inspectCandidateTable(document) {
     const result = (state, table = null, entries = []) => ({ state, table, entries });
@@ -85,6 +88,7 @@
         catch { complete = false; }
       }
       ownedRows.delete(row);
+      expectedMarkers.delete(row);
     }
     return complete;
   }
@@ -102,6 +106,7 @@
       for (const { row, priority } of snapshot.entries) {
         if (priority === null) continue;
         ownedRows.add(row); // Include even a write that mutates and then throws.
+        expectedMarkers.set(row, priority);
         if (row.getAttribute(PRIORITY_ATTRIBUTE) !== priority) row.setAttribute(PRIORITY_ATTRIBUTE, priority);
       }
     } catch {
@@ -114,6 +119,7 @@
     if (!active) return;
     try {
       const snapshot = inspectCandidateTable(document);
+      candidate = snapshot.table;
       if (snapshot.state === 'safe') commitSnapshot(snapshot);
       else clearOwnedMarkers();
     } catch { clearOwnedMarkers(); }
@@ -123,24 +129,53 @@
     if (active && reconcileTimer === null) reconcileTimer = setTimeout(reconcileCurrentTable, 0);
   }
 
+  function mutationsAffectInterpretation(records) {
+    const hasCandidate = (node) => node.nodeType === 1
+      && (node.matches(TABLE) || node.querySelector(TABLE));
+    for (const record of records) {
+      const { target } = record;
+      if (record.type === 'attributes') {
+        if (!INTERPRETATION_ATTRIBUTES.includes(record.attributeName)) continue;
+        if (record.attributeName === PRIORITY_ATTRIBUTE) {
+          if (ownedRows.has(target) && target.getAttribute(PRIORITY_ATTRIBUTE) !== expectedMarkers.get(target)) return true;
+          continue;
+        }
+        if (target === document.documentElement && record.attributeName === 'lang') return true;
+        if (candidate && (candidate.contains(target) || target.contains(candidate))) return true;
+        // Identifier/ancestor edits can create a competing table anywhere.
+        if (hasCandidate(target) || target.closest?.(TABLE)) return true;
+      } else if (record.type === 'characterData') {
+        if (candidate?.contains(target) || target.parentElement?.closest(TABLE)) return true;
+      } else if (record.type === 'childList') {
+        if (candidate?.contains(target) || target.closest?.(TABLE)) return true;
+        for (const node of [...record.addedNodes, ...record.removedNodes]) {
+          if (hasCandidate(node) || (candidate && node.contains(candidate))) return true;
+        }
+      }
+    }
+    return false;
+  }
+
   function disposeController() {
     active = false;
     observer?.disconnect();
     clearTimeout(reconcileTimer);
     reconcileTimer = null;
     clearOwnedMarkers();
+    candidate = null;
   }
 
   function startPersistentTint() {
     active = true;
     try {
       observer = new MutationObserver((records) => {
-        if (!active || records.every((record) => record.type === 'attributes'
-          && record.attributeName === PRIORITY_ATTRIBUTE)) return;
+        if (!active) return;
         // Invalidate stale colours during observer delivery, before the browser
         // may paint. Only the deferred fresh pass can add positive markers.
         try {
+          if (!mutationsAffectInterpretation(records)) return;
           const snapshot = inspectCandidateTable(document);
+          candidate = snapshot.table;
           const keep = snapshot.state === 'safe'
             ? new Map(snapshot.entries.filter(({ priority }) => priority !== null)
               .map(({ row, priority }) => [row, priority])) : new Map();
@@ -148,7 +183,8 @@
         } catch { clearOwnedMarkers(); }
         scheduleReconcile();
       });
-      observer.observe(document, { childList: true, characterData: true, subtree: true });
+      observer.observe(document, { childList: true, characterData: true, subtree: true,
+        attributes: true, attributeFilter: INTERPRETATION_ATTRIBUTES });
       window.addEventListener('pagehide', disposeController);
       scheduleReconcile();
     } catch { disposeController(); }

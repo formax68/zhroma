@@ -118,7 +118,7 @@ test('ongoing writes target only the owned marker and skip unchanged values', ()
   expect(writes).not.toHaveBeenCalled();
   expect(removals).not.toHaveBeenCalled();
   document.querySelector('tbody tr').children[6].textContent = '';
-  deliver([{ type: 'characterData', target: document.querySelector('tbody tr').children[6].firstChild }]);
+  deliver([{ type: 'childList', target: document.querySelector('tbody tr').children[6], addedNodes: [], removedNodes: [] }]);
   vi.runOnlyPendingTimers();
   expect(writes).not.toHaveBeenCalled();
   expect(removals.mock.calls).toEqual([['data-zhroma-priority']]);

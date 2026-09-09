@@ -355,7 +355,7 @@ test('inspection error stays quiet and recovers on a later mutation', () => {
   const spy = vi.spyOn(runtime.document, 'querySelectorAll').mockImplementation(() => { throw new Error('synthetic'); });
   runtime.settled();
   spy.mockRestore();
-  runtime.deliver(); runtime.settled();
+  runtime.deliver(runtime.document.querySelector('table')); runtime.settled();
   expect(markers(runtime.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
   runtime.disposed();
 });
@@ -377,6 +377,6 @@ test('real happy-dom MutationObserver delivers delayed document insertion', asyn
   await new Promise((resolve) => runtime.window.setTimeout(resolve, 0));
   runtime.settled();
   expect(markers(runtime.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
-  expect(runtime.observers[0].options).toEqual({ childList: true, characterData: true, subtree: true });
+  expect(runtime.observers[0].options).toEqual({ childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['data-garden-id', 'data-test-id', 'role', 'colspan', 'rowspan', 'lang', 'data-zhroma-priority'] });
   runtime.disposed();
 });
