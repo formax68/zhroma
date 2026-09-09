@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { URL } from 'node:url';
 import { describe, expect, test } from 'vitest';
 
@@ -9,10 +10,27 @@ const REQUIRED_IDS = ['initial-load', 'urgent', 'high', 'normal', 'low', 'native
   'native-selection-inset', 'unread-bold', 'focus-click', 'reordered-reload', 'source-identity'];
 const SCOPE = { language: 'English', html_lang: 'en', shell: 'current Agent Workspace', interface: 'light' };
 const REFERENCE_CLOCK = { now: new Date('2026-09-08T12:00:00Z'), timeZone: 'Asia/Nicosia' };
-const asset = (name) => readFileSync(new URL(`../../extension/${name}`, import.meta.url), 'utf8');
+const historicalRevision = '6fc6161ceff56f6830e23072273676929fecd8e9';
+const asset = (name) => {
+  try {
+    return execFileSync('git', ['show', `${historicalRevision}:extension/${name}`], {
+      cwd: new URL('../../', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch {
+    throw new Error(`Restore historical commit ${historicalRevision} locally to validate Phase 2 evidence`);
+  }
+};
 const currentHashes = Object.fromEntries(ASSETS.map((name) => [name,
   createHash('sha256').update(asset(name)).digest('hex')]));
 const reportURL = new URL('../../.planning/phases/02-first-tint-on-a-real-view/02-LIVE-ACCEPTANCE.md', import.meta.url);
+
+test('historical assets match independently pinned accepted identities', () => {
+  expect(currentHashes).toEqual({
+    'manifest.json': '0c959d71e71b34f5f5d4bc75ffc84f7838f09cc7f0db95d24ad605d45ca57ee6',
+    'content.js': '35051cca30a12217e121d270715b70616b3deeaca1e697b7904358516f29cd70',
+    'zhroma.css': 'f5af38707480b2379d00343d36ec3a54b27ae79e95a09ad00a4538230c586b61',
+  });
+});
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const nonempty = (value) => typeof value === 'string' && value.trim().length > 0;
