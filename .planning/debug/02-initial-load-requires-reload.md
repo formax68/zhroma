@@ -86,4 +86,24 @@ remain unchanged.
 
 **INVESTIGATION INCONCLUSIVE.** No observed live root cause is established. Do not change timers, broaden URL matches, weaken table validation, add history hooks, or implement Phase 3 liveness on this evidence alone.
 
+### User-demonstrated untinted page — follow-up
+
+After the user reported readiness, inspected the newly opened view without
+reloading it: exact English, one matching table, 16 headers with one Priority
+header, 30 body rows, five High priorities, 25 blanks and zero owned markers.
+Current structural checks found matching head/body/header-row/row/cell seams,
+no malformed spans or nested cell topology, no incomplete/excess cells, no
+nested table and a top-level document. This establishes an untinted currently
+admissible table; it does not establish its earlier lifecycle or injection.
+
+A temporary direct navigation to the same view first sampled no table and later
+sampled one table, 30 rows and five owned markers. Closed the temporary control;
+left the user's failed page untouched. All three repository hashes still match
+the acceptance record. No timing measurement or transient lifecycle is claimed.
+
+Asked the user for the entry sequence: direct full view address versus Zendesk
+landing page followed by clicking a view, or another sequence. Await that answer
+before attributing the symptom to fresh-document startup or Phase 3 navigation.
+Task 2 remains blocked by missing causal evidence; no runtime change.
+
 Next: execute 02-03's bounded reproduction gate using confirmed source and aggregate startup observations. Correlate a failing load to injection/readiness/disposal, create a failing exact-byte regression derived from that evidence, then repair only the confirmed cause within Phase 2. If no failure can be reproduced, retain the gap and ask for the specific failed-entry sequence; repeated successful loads alone do not erase the report.
