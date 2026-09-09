@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 current_phase: 03
 current_phase_name: The Tint Survives Everything
 status: human_needed
-stopped_at: UAT skipped at user request; do not resume UAT unless asked
-last_updated: "2026-09-09T13:10:19Z"
+stopped_at: Final goal verification and handoff complete; Phase 04 planning inputs ready; UAT remains skipped
+last_updated: "2026-09-09T13:25:38Z"
 last_activity: 2026-09-09
-last_activity_desc: "UAT skipped at user request; eleven live passes preserved, nine checks untested; stop further UAT prompts"
+last_activity_desc: "Final goal verification 28/34 human_needed; zero new implementation blockers; Phase 04 planning handoff prepared"
 state_head: d19e1e4015cfafb93d300279d530a1c672bc2d8c
 progress:
   total_phases: 5
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 Phase: 03 (The Tint Survives Everything) — UAT SKIPPED BY USER
 Plan: 03-04 Task 2; 3/4 plans executed, final plan 1/2 tasks complete
-Status: Runtime repairs verified; UAT skipped by user with 11 passes preserved and nine untested; stop UAT prompts
+Status: Final goal verification 28/34 human_needed; UAT skipped (11 passed, nine untested); Phase 04 planning handoff ready
 Last activity: 2026-09-09 — CR-01/CR-02 repaired; 403 tests passed, independent code review clean, security high blockers closed; fresh Chrome timing passed
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
@@ -134,9 +134,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T13:10:19Z
-Stopped at: UAT skipped at user request; do not resume without a new user request
-Resume file: .planning/phases/03-the-tint-survives-everything/03-04-CHECKPOINT.md
+Last session: 2026-09-09T13:25:38Z
+Stopped at: Automated goal verification and handoff complete; Phase 04 planning inputs ready
+Resume file: .planning/phases/03-the-tint-survives-everything/03-HANDOFF.md
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
 
@@ -177,3 +177,9 @@ Follow-up: user reported all passed for sorting by Priority and another column a
 The user said **"let's skip UAT,"**. Stop the UAT walkthrough and further UAT prompts. Preserve the eleven completed current-source live passes. The remaining nine checks are untested and skipped for this walkthrough; their canonical evidence statuses remain pending because no observations were supplied. Do not invent passes, failed observations, or risk acceptance. Resume UAT only if the user asks.
 
 This supersedes all earlier next-check instructions, including the requested enabled/disabled isolation and responsiveness comparisons. Manual profiling also remains deferred. Automated verification, independent code review and the security threshold verdict remain recorded separately. No phase-completion or full live-acceptance claim is made by this instruction.
+
+## Final goal verification and handoff — 2026-09-09
+
+Independent 03-VERIFICATION.md: human_needed, 28/34 distinct truths verified, no new implementation blockers. All eight requirement IDs accounted; six satisfied within admitted evidence scope, LIVE-05/FAIL-04 need human evidence. Fresh full suite: 403 passed. Current live acceptance: eleven passes, nine untested; UAT explicitly skipped. Three judgment prohibitions remain flagged; no accepted-risk inference.
+
+03-HANDOFF.md records the verified baseline, remaining evidence and concrete Phase 04 planning inputs. Next preparatory work is Phase 04 design/context and planning; current phase remains 03 and no phase.complete was invoked. Do not restart UAT or profiling. MVP goal wording was normalized into required user-story syntax with original scope and all success criteria preserved; centralized validation passed.

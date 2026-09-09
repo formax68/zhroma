@@ -128,7 +128,8 @@ UAT update (2026-09-09): eleven live checks and all twelve specification/prohibi
 
 ### Phase 3: The Tint Survives Everything
 
-**Goal**: Tinting stays correct through everything an agent actually does to a view, costs nothing perceptible in responsiveness, and leaves the page untouched whenever it cannot do its job.
+**Goal**: As a support agent using English Zendesk views, I want to keep priority tinting correct through everyday view interactions without perceptible slowdown and leave the page untouched whenever tinting cannot work, so that I can reliably identify urgent tickets without disrupting Zendesk.
+**Goal scope (original wording retained)**: Tinting stays correct through everything an agent actually does to a view, costs nothing perceptible in responsiveness, and leaves the page untouched whenever it cannot do its job.
 **Mode:** mvp
 **Depends on**: Phase 2
 **Requirements**: DETECT-03, DETECT-04, LIVE-01, LIVE-02, LIVE-03, LIVE-04, LIVE-05, FAIL-04
@@ -145,6 +146,8 @@ UAT update (2026-09-09): eleven live checks and all twelve specification/prohibi
 Runtime repair update (2026-09-09): CR-01/CR-02 resolved; 403 tests and fresh synthetic timing pass; independent code review clean and security has zero high blockers. Current-source live acceptance remains pending; sixteen prior passes are preserved as historical evidence. Manual profiling stays deferred.
 
 UAT update (2026-09-09): user requested skipping UAT. Eleven current-source live passes are preserved; nine checks remain untested. Stop further UAT prompts. Phase completion is not claimed.
+
+Final goal verification (2026-09-09): 28/34 truths verified; status human_needed; no new implementation blockers. All eight Phase 03 requirements traced. Phase 04 planning inputs are prepared in 03-HANDOFF.md; formal Phase 03 completion remains unclaimed.
 
 Plans:
 **Wave 1**
