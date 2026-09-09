@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 current_phase: 02
 current_phase_name: First Tint on a Real View
 status: verifying
-stopped_at: Phase 2 human_needed: code review clean; 11 live checks and 12 explicit decisions pending
-last_updated: "2026-09-08T12:52:50Z"
-last_activity: 2026-09-08
-last_activity_desc: Phase 2 verified human_needed (19/25); 301 tests pass; code review clean; UAT saved
+stopped_at: Phase 2 UAT diagnosed; G-02-1 inconclusive; 02-03 reproduction-first gap plan ready
+last_updated: "2026-09-09T07:58:53.807Z"
+last_activity: 2026-09-09
+last_activity_desc: Phase 2 UAT 10 live passes and 12 accepted decisions; 1 startup issue; no runtime change
 state_head: a58b826ef23a741ceee09e43d59d0fc1419bfa0c
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 17
+  total_plans: 18
   completed_plans: 17
   percent: 20
 ---
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 ## Current Position
 
 Phase: 02 (First Tint on a Real View) — VERIFYING
-Plan: 2 of 2
-Status: Phase 2 open — human_needed; 19/25 truths verified; 23 UAT items pending
-Last activity: 2026-09-08 — Independent reviews and goal verification complete; human UAT pending
+Plan: 2 of 3 executed; 02-03 gap plan pending
+Status: Phase 2 open — gaps_found; UAT 22 accepted/passed items and 1 initial-load issue; diagnosis inconclusive
+Last activity: 2026-09-09 — UAT completed; bounded startup mechanisms checked; reproduction-first gap plan prepared
 
 Progress: [██░░░░░░░░] 20%
 
@@ -98,22 +98,22 @@ Recent decisions affecting current work:
 - [Phase 01]: Authorize proceed only when the complete ledger, corpus, interaction, Shadow DOM, selector, and prohibition predicates all pass.
 - [Phase 01]: Accept the provenance and user-control judgments only within the named English current Agent Workspace scenarios and record no identifying content.
 - [Phase 02]: Use exact-English whole-table initial snapshots; grouped redaction placeholders remain unknown and untinted.
-- [Phase 02]: Plan 02-02 preparation is complete with all eleven authentic observations pending; retain human_needed and no speculative runtime tuning.
+- [Phase 02]: UAT now has ten source-bound live passes, one failed initial-load observation and twelve explicit user decisions. Keep G-02-1 open; no speculative runtime tuning.
 - [Phase 02]: Source settings and evidence-schema test success establish preparation only; product acceptance and independent review gates remain separate.
 
 ### Pending Todos
 
-None yet.
+Execute 02-03 via `$gsd-execute-phase 02 --gaps-only`; establish a reproducible failed fresh load before runtime changes, then complete required final-source retesting.
 
 ### Blockers/Concerns
 
 - User approved Plan 01-12 source and provenance with "yes on both"; re-admission and second-pass parity are complete. Originals remain recoverable from Git.
 
-- Phase 1 is complete: 23/24 truths verified plus one explicitly accepted historical uncertainty. All 15 plans and audit fixes are complete; code review is clean; security has zero open threats. Phase 2 implementation and independent reviews are complete; authentic acceptance remains pending.
+- Phase 1 is complete: 23/24 truths verified plus one explicitly accepted historical uncertainty. All 15 plans and audit fixes are complete; code review is clean; security has zero open threats. Phase 2 initial implementation and independent review snapshots exist; acceptance is gaps_found after UAT.
 - Historical approval independence remains not-attested. User explicitly accepted the residual risk on 2026-09-08 (AR-01-13; 01-RISK-ACCEPTANCE.md); preserve truth 8 as an accepted exception, not a verified historical fact.
 - Phase 1 found no locale-independent Priority signal; the observed English-text fallback remains scoped to English current Agent Workspace.
 - Store submission has latency and the direct predecessor was delisted at this step. Register the developer account early; budget one rejection-and-resubmit cycle in Phase 5.
-- Phase 2 is human_needed (19/25 truths): eleven live checks, six unspecified-edge decisions and six prohibition judgments remain pending in 02-UAT.md. A1/A2 are unverified. Code review is clean after CR-01/CR-02 fixes; security has zero high blockers and two open medium threats (T-02-05/08); UI review is human_needed. All 301 tests pass.
+- Phase 2 remains gaps_found: G-02-1 is a user-reported fresh-load failure; one independent fresh-tab attempt succeeded, so the actual cause is inconclusive. A1 remains unresolved; A2's scoped appearance checks passed. The twelve user decisions are recorded in UAT, not independent security remediation. Original goal score 19/25 awaits refresh; code review was clean, security still records two open medium threats (T-02-05/08), and UI review remains a separate snapshot. Current focused checks: initial-tint 64/64 and evidence validator 56/56, with gaps_found retained.
 
 ### Roadmap Evolution
 
@@ -127,10 +127,10 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 | Category | Item | Status | Deferred At | Milestone |
 |----------|------|--------|-------------|-----------|
-| *(none)* | | | | |
+| Phase 3 liveness | Next/Previous pagination clears tint; add explicit coverage alongside sorting and view switching | Pending Phase 3 | 2026-09-09 | v1 |
 
 ## Session Continuity
 
-Last session: 2026-09-08T12:24:51.104Z
-Stopped at: Phase 2 human_needed: code review clean; 11 live checks and 12 explicit decisions pending
+Last session: 2026-09-09T07:58:53.808Z
+Stopped at: Phase 2 UAT diagnosed; G-02-1 inconclusive; execute 02-03 reproduction-first gap plan
 Resume file: .planning/phases/02-first-tint-on-a-real-view/02-UAT.md

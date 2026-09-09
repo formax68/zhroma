@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-first-tint-on-a-real-view
 source: [02-VERIFICATION.md]
 started: 2026-09-08T12:52:50Z
-updated: 2026-09-09T07:52:33Z
+updated: 2026-09-09T07:58:21.633Z
 ---
 
 # Phase 02 User Acceptance
@@ -258,7 +258,10 @@ blocked: 0
     Keep the reported fresh-load failure open pending diagnosis.
   severity: major
   test: 1
-  root_cause: "Unconfirmed. Source inspection shows a finite startup attempt that terminates on a safe or unsafe snapshot; the failed startup was not observed in flight. View switching without page load remains Phase 3 scope."
+  root_cause: "Investigation inconclusive: terminal refusal, success followed by replacement, and deadline expiry reproduce missing-tint mechanisms in synthetic exact-byte probes, but the failing fresh startup was not observed in flight. No live root cause is confirmed. See the debug record and the blocking reproduction gate in 02-03."
+  diagnosis_status: inconclusive
+  debug_session: .planning/debug/02-initial-load-requires-reload.md
+  fix_plan: 02-03
   artifacts:
     - path: "extension/content.js"
       issue: "Investigate initial startup readiness, terminal preflight and source injection against a reproducible fresh-load failure."

@@ -258,8 +258,10 @@ controls, storage behavior and publication are not authorized by this record.
 
 At the 2026-09-08 preparation checkpoint, **authentic checks were 0 pass, 0 fail,
 11 pending**, and there was no actual live evidence to justify changes. The
-2026-09-09 investigation above now records an unresolved reported defect. The existing
-15000/100 ms heuristic and four palette seeds remain unchanged and unaccepted
-visually. Independent code review, security review, goal verification and the
-user-controlled product gate are separate outstanding dispositions owned by the
-phase orchestrator. Passing this table does not close Phase 2.
+2026-09-09 UAT now records ten live passes, twelve accepted decisions and one
+unresolved initial-load defect. The palette has user acceptance within the tested
+scope; the unchanged 15000/100 ms startup heuristic remains under investigation.
+Current focused validation passed 56 evidence tests and 64 initial-tint tests;
+the actual acceptance disposition remains gaps_found. Independent security and
+goal-verification refresh remain separate. Passing the historical preparation
+table above does not close Phase 2.

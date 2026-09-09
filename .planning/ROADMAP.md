@@ -105,7 +105,7 @@ Plans:
   4. Changing a product tint requires a stylesheet edit only. No shipped extension JavaScript contains product palette values or writes CSS. Recon evidence parsers/tests retain observed colour strings outside the runtime asset boundary.
   5. `manifest.json` has no `host_permissions` block, declares `storage` as its only permission, and matches `https://*.zendesk.com/agent/*` and nothing else; the loaded extension folder is byte-for-byte the repo source.
 
-**Plans**: 2/2 plans executed/prepared; goal verification human_needed (19/25); code review clean; eleven live checks and twelve explicit decisions pending; security has two open medium threats
+**Plans**: 2/3 plans executed/prepared; UAT has ten live passes, twelve accepted decisions and one unresolved startup issue (G-02-1). Goal verification remains gaps_found; original independent score 19/25 awaits refresh. Security still records two open medium threats.
 
 Plans:
 **Wave 1**
@@ -114,10 +114,17 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [x] 02-02-PLAN.md — Source-bound acceptance preparation complete; real-view palette/readiness and all eleven live checks remain pending (Wave 2; depends on 02-01).
+- [x] 02-02-PLAN.md — Source-bound acceptance preparation complete; UAT now has ten live passes and one initial-load issue (Wave 2; depends on 02-01).
+
+**Gap Wave 3** *(depends on 02-01 and 02-02)*
+
+- [ ] 02-03-PLAN.md — Reproduce G-02-1 before a bounded startup repair, then retest final source; diagnosis is inconclusive and checkpoints remain mandatory.
+
+UAT update (2026-09-09): all twelve specification/prohibition decisions accepted; initial-load remains failed.
 
 **UI hint**: yes
 **Known gap**: sorting the view visibly clears the tint. Intentional and accepted here — closed in Phase 3.
+**UAT follow-up**: Next-page pagination also clears tint; explicitly cover Next/Previous navigation in Phase 3. The separate fresh-load failure G-02-1 remains Phase 2 work.
 
 ### Phase 3: The Tint Survives Everything
 
@@ -174,7 +181,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. DOM Recon Spike | 15/15 | Complete    | 2026-09-08 |
-| 2. First Tint on a Real View | 2/2 | In Progress|  |
+| 2. First Tint on a Real View | 2/3 | In Progress|  |
 | 3. The Tint Survives Everything | 0/TBD | Not started | - |
 | 4. Honest Failure and an Off Switch | 0/TBD | Not started | - |
 | 5. Published | 0/TBD | Not started | - |
