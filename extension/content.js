@@ -78,7 +78,12 @@
       if (keep.has(row) && row.getAttribute(PRIORITY_ATTRIBUTE) === keep.get(row)) continue;
       try {
         if (row.hasAttribute(PRIORITY_ATTRIBUTE)) row.removeAttribute(PRIORITY_ATTRIBUTE);
-      } catch { complete = false; }
+      } catch {
+        // One bounded retry handles a transient host failure. Never retain a
+        // failed row indefinitely or schedule a retry loop against the page.
+        try { row.removeAttribute(PRIORITY_ATTRIBUTE); }
+        catch { complete = false; }
+      }
       ownedRows.delete(row);
     }
     return complete;
