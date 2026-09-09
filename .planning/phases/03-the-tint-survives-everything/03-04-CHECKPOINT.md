@@ -60,3 +60,11 @@ Resume Task 2 directly after reading the user's actual results; preserve complet
 ## Manual profiling deferred — 2026-09-09
 
 The user said, "I don't know but we are overccomplicating. let's move on" after the callback-count question. Stop further manual profiling questions. Preserve 16/20 live passes, four pending checks, the unavailable persisted-restoration scenario and the partial callback measurements. This is a decision to defer measurement, not a failed observation, a full-batch timing result or acceptance of unresolved risks. Proceed with independent code/security review; phase completion remains unclaimed.
+
+## Repaired-source smoke observation — 2026-09-09
+
+The user replied **"all passed"** after instructions to reload the unpacked repository Zhroma extension, refresh the Zendesk document once for setup, open a Priority view, sort, use Next/Previous pagination, and switch to another view and back without further document refresh. Record correct automatic colours matching current priorities for those reported operations. Repository content.js remained at SHA-256 `aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2`; this is user-confirmed repository-directory loading, not an independent browser hash extraction.
+
+Scope: initial Priority-view opening, sorting (sort keys unspecified), both pagination directions, and generic view switching passed. The prompt did not specify a landing-page start, both Priority/other-column sorts, or a Priority-absent destination; those extra variants are not inferred. The setup browser refresh does not count as Zendesk's native view-refresh check.
+
+These observations are preserved now without requiring repetition. Canonical promotion awaits current browser/OS/mounted-row metadata, which was not supplied in this reply; old environment values are not silently reused. The canonical inventory remains pending where its full criteria or metadata have not yet been established. Manual profiling remains deferred. No phase-completion claim.

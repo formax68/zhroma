@@ -6,7 +6,15 @@ source_confirmation: pending
 
 # Phase 03 Current-Source Live Acceptance
 
-The CR-01/CR-02 runtime repair changed content.js. Current-source live acceptance is pending; none of the earlier observations has been relabelled for these bytes. The exact prior record, including sixteen user-reported passes and four pending checks, is preserved in [historical evidence](history/2026-09-09-before-runtime-repair/03-LIVE-ACCEPTANCE.md). Manual profiling remains deferred at the user's request. Source confirmation and future live validation remain user-controlled.
+The CR-01/CR-02 runtime repair changed content.js. Current-source live acceptance is pending; none of the earlier observations has been relabelled for these bytes. The exact prior record, including sixteen user-reported passes and four pending checks, is preserved in [historical evidence](history/2026-09-09-before-runtime-repair/03-LIVE-ACCEPTANCE.md). Manual profiling remains deferred at the user's request. The repaired-source smoke checks below have now passed; remaining source metadata and full live validation stay user-controlled.
+
+## Repaired-source smoke observation — 2026-09-09
+
+The user replied **"all passed"** after instructions to reload the unpacked repository Zhroma extension, refresh the Zendesk document once for setup, open a Priority view, sort, use Next/Previous pagination, and switch to another view and back without further document refresh. Record correct automatic colours matching current priorities for those reported operations. Repository content.js remained at SHA-256 `aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2`; this is user-confirmed repository-directory loading, not an independent browser hash extraction.
+
+Scope: initial Priority-view opening, sorting (sort keys unspecified), both pagination directions, and generic view switching passed. The prompt did not specify a landing-page start, both Priority/other-column sorts, or a Priority-absent destination; those extra variants are not inferred. The setup browser refresh does not count as Zendesk's native view-refresh check.
+
+These observations are preserved now without requiring repetition. Canonical promotion awaits current browser/OS/mounted-row metadata, which was not supplied in this reply; old environment values are not silently reused. The canonical inventory remains pending where its full criteria or metadata have not yet been established. Manual profiling remains deferred. No phase-completion claim.
 
 ## Start with source confirmation
 

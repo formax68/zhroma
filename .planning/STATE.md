@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 current_phase: 03
 current_phase_name: The Tint Survives Everything
 status: human_needed
-stopped_at: Phase 03 runtime repairs verified; final-source human acceptance pending; manual profiling deferred
-last_updated: "2026-09-09T12:44:20Z"
+stopped_at: Repaired-source smoke checks passed; remaining live acceptance pending; manual profiling deferred
+last_updated: "2026-09-09T12:55:45Z"
 last_activity: 2026-09-09
-last_activity_desc: "CR-01/CR-02 repaired; 403 tests and synthetic timing pass; code review clean; zero high security blockers"
+last_activity_desc: "User reported repaired-source reload, sorting, Next/Previous and view switching all passed"
 state_head: d19e1e4015cfafb93d300279d530a1c672bc2d8c
 progress:
   total_phases: 5
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 Phase: 03 (The Tint Survives Everything) — HUMAN CHECKPOINT
 Plan: 03-04 Task 2; 3/4 plans executed, final plan 1/2 tasks complete
-Status: Runtime repairs verified; final-source live acceptance pending; historical 16/20 passes preserved; manual profiling deferred
+Status: Runtime repairs verified; repaired-source smoke checks passed; full live acceptance pending; manual profiling deferred
 Last activity: 2026-09-09 — CR-01/CR-02 repaired; 403 tests passed, independent code review clean, security high blockers closed; fresh Chrome timing passed
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
@@ -132,8 +132,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T12:44:20Z
-Stopped at: Phase 03 runtime repairs independently verified; current-source acceptance pending
+Last session: 2026-09-09T12:55:45Z
+Stopped at: Repaired-source smoke checks passed; remaining live acceptance pending
 Resume file: .planning/phases/03-the-tint-survives-everything/03-04-CHECKPOINT.md
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
@@ -153,3 +153,7 @@ Completion helper warnings: legacy summaries contain command strings and histori
 CR-01 and CR-02 are repaired. Independent final code review is clean; security closes fourteen of fifteen mitigations with zero high blocking threats and one non-blocking medium missing-snippet gap. Full suite: 403 passed. Fresh synthetic timing: 1800 enabled/1800 disabled samples; largest 30-row median 1.4 ms, overall maximum 14.5 ms. See 03-REPAIR-SUMMARY.md, 03-REVIEW.md, 03-SECURITY.md and 03-PERFORMANCE.md.
 
 Final-source live acceptance is human_needed. Sixteen passes and four pending checks remain bound to the old source in history/2026-09-09-before-runtime-repair; current-source twenty checks are pending. Manual profiling remains deferred. No Phase 4 advancement or completion claim.
+
+## Repaired-source smoke follow-up — 2026-09-09
+
+User reported "all passed" for repository extension reload plus one setup browser refresh, opening a Priority view, sorting, Next/Previous pagination, and generic view switching. Preserved in 03-LIVE-ACCEPTANCE.md and 03-04-CHECKPOINT.md. Current environment metadata and narrower canonical variants remain unconfirmed; do not infer native view refresh, Priority-absent switching, or a completed phase. Manual profiling remains deferred.
