@@ -16,6 +16,12 @@ Scope: initial Priority-view opening, sorting (sort keys unspecified), both pagi
 
 These observations are preserved now without requiring repetition. Canonical promotion awaits current browser/OS/mounted-row metadata, which was not supplied in this reply; old environment values are not silently reused. The canonical inventory remains pending where its full criteria or metadata have not yet been established. Manual profiling remains deferred. No phase-completion claim.
 
+## Repaired-source refresh, scroll and tab return — 2026-09-09
+
+The user replied **"all passed"** after instructions to use Zendesk's native view-refresh button, scroll down through the tickets and back up, switch to another browser tab for about twenty seconds, then return without a browser refresh. Correct colours remained or returned automatically. Record user-reported passes for refresh, scroll and tab-return on the unchanged repaired source `aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2`.
+
+This does not establish row virtualization, unseen priority changes while inactive, persisted document restoration or quantitative performance. Preserve these actual observations without repetition; canonical promotion still awaits the current live environment metadata. Manual profiling stays deferred.
+
 ## Start with source confirmation
 
 1. In Chrome Extensions, reload the unpacked repository extension. Refresh the Zendesk document once to replace the previous content-script instance; this is setup, not an allowed recovery workaround during tests.

@@ -4,9 +4,9 @@ current_phase: 03
 current_phase_name: The Tint Survives Everything
 status: human_needed
 stopped_at: Repaired-source smoke checks passed; remaining live acceptance pending; manual profiling deferred
-last_updated: "2026-09-09T12:55:45Z"
+last_updated: "2026-09-09T13:00:16Z"
 last_activity: 2026-09-09
-last_activity_desc: "User reported repaired-source reload, sorting, Next/Previous and view switching all passed"
+last_activity_desc: "User reported repaired-source native view refresh, scrolling and tab return all passed"
 state_head: d19e1e4015cfafb93d300279d530a1c672bc2d8c
 progress:
   total_phases: 5
@@ -132,7 +132,7 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T12:55:45Z
+Last session: 2026-09-09T13:00:16Z
 Stopped at: Repaired-source smoke checks passed; remaining live acceptance pending
 Resume file: .planning/phases/03-the-tint-survives-everything/03-04-CHECKPOINT.md
 
@@ -157,3 +157,5 @@ Final-source live acceptance is human_needed. Sixteen passes and four pending ch
 ## Repaired-source smoke follow-up — 2026-09-09
 
 User reported "all passed" for repository extension reload plus one setup browser refresh, opening a Priority view, sorting, Next/Previous pagination, and generic view switching. Preserved in 03-LIVE-ACCEPTANCE.md and 03-04-CHECKPOINT.md. Current environment metadata and narrower canonical variants remain unconfirmed; do not infer native view refresh, Priority-absent switching, or a completed phase. Manual profiling remains deferred.
+
+Follow-up: native view refresh, scrolling down/back and twenty-second browser-tab return also passed on unchanged repaired source. These observations are recorded; environment metadata and remaining canonical checks still pending. Next practical checks: grouped/sticky view and native row interactions.
