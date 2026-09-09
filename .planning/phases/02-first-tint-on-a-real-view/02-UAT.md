@@ -1,20 +1,20 @@
 ---
-status: diagnosed
+status: complete
 phase: 02-first-tint-on-a-real-view
 source: [02-VERIFICATION.md]
 started: 2026-09-08T12:52:50Z
-updated: 2026-09-09T07:58:21.633Z
+updated: 2026-09-09T08:57:35.104949+00:00
 ---
 
 # Phase 02 User Acceptance
 
-Implementation and review preparation are complete; phase acceptance remains open with initial-load gap G-02-1. The eleven authentic product checks are separate from the six unspecified-edge decisions and six prohibition judgments. No item has been implicitly passed.
+Product acceptance is complete within Phase 2 scope; G-02-1 was reclassified to Phase 3 by explicit entry-sequence clarification. Independent review and phase verification remain separate. The eleven authentic product checks are separate from the six unspecified-edge decisions and six prohibition judgments. No item has been implicitly passed.
 
 Load `/Users/mike/code/zhroma/extension` using Chrome’s Load unpacked control, reload the extension, then fully reload an approved English light-interface Zendesk view. The user owns login, navigation and native interactions. Record non-identifying observations against the hashes in 02-LIVE-ACCEPTANCE.md; unavailable states remain pending.
 
 ## Current Test
 
-[testing complete — 10 live checks passed, 12 decisions accepted, 1 initial-load issue open]
+[testing complete — 11 live checks passed, 12 decisions accepted, 0 Phase 2 issues]
 
 ## Tests
 
@@ -22,11 +22,15 @@ Load `/Users/mike/code/zhroma/extension` using Chrome’s Load unpacked control,
 test: Load the repository extension folder, reload the extension, then fully reload an approved English current Agent Workspace view in the light interface with no product configuration. Observe the complete initial table and any naturally occurring delayed batches.
 expected: Every recognized initial ticket row receives its correct tint; blank priorities remain untinted and unsafe tables are refused. Record observed startup completeness, whether delayed batches occurred or were missed, and the measured 15000 ms deadline/100 ms quiet interval. Do not claim unobserved delayed batches were tested.
 why_human: A1 is a heuristic. Offline timing tests do not establish when a real Zendesk initial load is semantically complete.
-result: issue
+result: pass
 reported: "approved. When I opened the agent view it didn't load, I had to reload the page"
 clarification: "both and it doesn't work until I reload. you can check yourself if you want"
-severity: major
+historical_severity: major
 observed: On 2026-09-09, read-only browser inspection found 30 current rows and zero tint markers. After full reload, 22 Normal rows had markers and eight blank-priority rows remained unmarked. One fresh-tab navigation to the same view succeeded with the same counts and the expected Normal cell background. The user-reported fresh-tab failure was not reproduced in that attempt; original tab entry history and failure mechanism remain unconfirmed. Current repository hashes match the acceptance inventory; the user subsequently confirmed the loaded directory and reload at check 11.
+
+
+final_clarification: On 2026-09-09 the user stated "open zendesk, click the view" and confirmed "Same sequence: Zendesk, then click view" for the earlier fresh-tab report as well.
+final_disposition: Pass within observed direct-load/full-reload Phase 2 scope. The earlier report describes in-app entry, deferred to Phase 3; no direct-view-address failure remains reported. The demonstrated table had five High rows, 25 blanks and zero markers; a direct-view control produced five markers. Preserve earlier observations as history, not a continued Phase 2 defect. No runtime changes, exact timing or unobserved delayed-batch coverage claimed.
 
 ### 2. urgent
 test: Inspect an existing authentic Urgent row alongside the other priorities against the final loaded source.
@@ -241,33 +245,27 @@ decided_on: 2026-09-09
 ## Summary
 
 total: 23
-passed: 22
-issues: 1
+passed: 23
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
 
+No unresolved Phase 2 gaps.
+
+## Resolved Gap History
+
 - gap_id: G-02-1
-  truth: "A fresh supported agent-view page load tints recognized priority rows without a second manual reload."
-  status: failed
-  reason: >-
-    User reported: "both and it doesn't work until I reload. you can check yourself if you want".
-    The existing untinted table recovered after reload; one independent fresh-tab attempt succeeded.
-    Keep the reported fresh-load failure open pending diagnosis.
-  severity: major
-  test: 1
-  root_cause: "Investigation inconclusive: terminal refusal, success followed by replacement, and deadline expiry reproduce missing-tint mechanisms in synthetic exact-byte probes, but the failing fresh startup was not observed in flight. No live root cause is confirmed. See the debug record and the blocking reproduction gate in 02-03."
-  diagnosis_status: inconclusive
+  status: resolved
+  resolution: reclassified_to_phase_3
+  resolved_on: 2026-09-09
+  original_report: "both and it doesn't work until I reload. you can check yourself if you want"
+  clarification: "open zendesk, click the view"; "Same sequence: Zendesk, then click view"
+  disposition: The user explicitly clarified that both reports used in-app navigation, including from a fresh tab. Direct-view controls tinted recognized rows. No Phase 2 fresh-document failure is established or still reported; no startup repair, RED/GREEN regression or lifecycle diagnosis is claimed. Preserve the symptom for Phase 3 liveness.
   debug_session: .planning/debug/02-initial-load-requires-reload.md
-  fix_plan: 02-03
-  artifacts:
-    - path: "extension/content.js"
-      issue: "Investigate initial startup readiness, terminal preflight and source injection against a reproducible fresh-load failure."
-  missing:
-    - "Reproduce the reported fresh-load failure against the confirmed source bytes with sanitized timing evidence."
-    - "Derive a failing regression from the confirmed cause before changing runtime behavior."
+  investigation_plan: 02-03
 
 ## Deferred Follow-Ups
 
@@ -275,4 +273,11 @@ blocked: 0
   idea: "when I click on next page to find more tickets, the gradient goes away"
   deferred_at: 2026-09-09
   target_phase: 03-the-tint-survives-everything
-  disposition: "Record explicit Next/Previous pagination coverage during Phase 3 planning. This is replacement of rows after the initial tint attempt, consistent with the existing Phase 2 finite-startup boundary. Pagination is not yet explicitly enumerated in the roadmap's liveness criteria; this observation must not be lost under generic view-switch coverage. It does not resolve G-02-1."
+  disposition: "Record explicit Next/Previous pagination coverage during Phase 3 planning. This is replacement of rows after the initial tint attempt, consistent with the existing Phase 2 finite-startup boundary. Pagination is not yet explicitly enumerated in the roadmap's liveness criteria; this observation must not be lost under generic view-switch coverage. G-02-1 is separately reclassified by the later explicit entry-sequence clarification."
+
+- test: 1
+  idea: "open zendesk, click the view" leaves the entered view untinted until reload
+  deferred_at: 2026-09-09
+  target_phase: 03-the-tint-survives-everything
+  source_gap: G-02-1
+  disposition: Cover landing-page-to-view entry explicitly alongside view switching and Next/Previous pagination. User confirmed both original reports used this sequence. Do not widen URL matches or add route hooks by assumption; retain existing design constraints.

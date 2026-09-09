@@ -1,5 +1,5 @@
 ---
-status: inconclusive
+status: resolved
 phase: 02-first-tint-on-a-real-view
 gap_id: G-02-1
 created: 2026-09-09
@@ -106,4 +106,28 @@ landing page followed by clicking a view, or another sequence. Await that answer
 before attributing the symptom to fresh-document startup or Phase 3 navigation.
 Task 2 remains blocked by missing causal evidence; no runtime change.
 
+### Entry sequence clarified
+
+User clarified the demonstrated sequence: "open zendesk, click the view".
+This is in-app view entry after the initial document, within the existing Phase 3
+view-switch/liveness scope. The same view's direct-document control received five
+markers. The demonstrated symptom is therefore not evidence of a failed direct
+view-document startup. The precise injection/disposal lifecycle remains unobserved.
+
+Asked whether the earlier "fresh tab" report also meant opening Zendesk then
+clicking the view, or whether direct entry to the full view address separately
+failed. Until clarified, retain G-02-1 and the existing acceptance disposition.
+No Phase 3 behavior is pulled into this conditional Phase 2 repair plan.
+
 Next: execute 02-03's bounded reproduction gate using confirmed source and aggregate startup observations. Correlate a failing load to injection/readiness/disposal, create a failing exact-byte regression derived from that evidence, then repair only the confirmed cause within Phase 2. If no failure can be reproduced, retain the gap and ask for the specific failed-entry sequence; repeated successful loads alone do not erase the report.
+
+## Final disposition — explicit report clarification
+
+User confirmed the earlier fresh-tab report was also "Same sequence: Zendesk,
+then click view". Both reports are now classified as in-app entry, not a direct
+view-document startup failure. Direct-view controls tinted recognized rows.
+G-02-1 is resolved as a Phase 2 classification issue and transferred to the existing
+Phase 3 liveness scope. The exact earlier injection/disposal lifecycle remains
+unknown; no startup-cause or runtime-fix claim is made. Prior inconclusive entries
+above are historical. Task 2 repair and Task 3 changed-source retest are unnecessary
+because the report's precondition was corrected and no source bytes changed.
