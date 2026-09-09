@@ -51,6 +51,39 @@ Existing exact-byte runtime suite: 64/64 passed. Evidence validator: 56/56 passe
 
 ## Disposition
 
+## 02-03 execution checkpoint — 2026-09-09
+
+Task 1 remains inconclusive; Task 2's causal-reproduction precondition is unmet.
+All three source hashes were recomputed and match the canonical live-acceptance
+record; its prior user-confirmed loaded directory remains the recorded source
+confirmation. No new loaded-directory claim is made.
+
+One focused comparison was performed using read-only aggregate DOM sampling:
+
+| Entry | Exact English | Tables | Body rows | Owned markers |
+|---|---|---|---|---|
+| Existing user tab, entry history unknown | yes | 1 | 30 | 0 |
+| Temporary direct fresh document, first sample | yes | 0 | 0 | 0 |
+| Same fresh document, later sample | yes | 1 | 30 | 9 |
+| Full reload of temporary document, first sample | yes | 0 | 0 | 0 |
+| Same reload, later sample | yes | 1 | 30 | 9 |
+
+Counts are aggregate body rows and owned attributes, not a validated per-priority
+completeness or appearance assertion. No startup timings were measured. Samples
+do not expose injection time, observer disposal, transient refusal, or replacement
+history. In particular, zero markers in the existing tab do not prove a failing
+fresh startup. The direct fresh-load failure was not reproduced, and this browser
+interface's read-only DOM sampling cannot establish the missing lifecycle facts.
+No second comparison was attempted without a new hypothesis. The temporary tab
+was closed; the existing user tab was not navigated or reloaded. No DOM exports,
+screenshots, ticket content, URLs, or identifiers are retained in this record.
+
+**Blocking-human unmet-precondition:** obtain the precise failing fresh-entry
+sequence or a user-demonstrated failed fresh load left open before reloading.
+G-02-1 and Phase 02 remain gaps_found. No runtime/test changes or completed
+02-03 summary were made. Existing UAT decisions and independent review limits
+remain unchanged.
+
 **INVESTIGATION INCONCLUSIVE.** No observed live root cause is established. Do not change timers, broaden URL matches, weaken table validation, add history hooks, or implement Phase 3 liveness on this evidence alone.
 
 Next: execute 02-03's bounded reproduction gate using confirmed source and aggregate startup observations. Correlate a failing load to injection/readiness/disposal, create a failing exact-byte regression derived from that evidence, then repair only the confirmed cause within Phase 2. If no failure can be reproduced, retain the gap and ask for the specific failed-entry sequence; repeated successful loads alone do not erase the report.
