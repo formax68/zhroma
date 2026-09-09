@@ -66,12 +66,20 @@ For manual interpretation, run `node scripts/run-tint-workload.js --size 30 --mo
 
 ## Live measurements — pending
 
-The actual mounted row count, current loaded source/browser confirmation, enabled/disabled responsiveness, complete callback CPU median/p95/max, synchronous forced-layout attribution and post-GC thirty-user-controlled-switch retention comparison are all pending. No synthetic result or historical Phase 2 observation fills these fields. See 03-LIVE-ACCEPTANCE.md when prepared.
+Partial observation, 2026-09-09: live environment confirmed as Chrome 152.0.7977.77, macOS 27 beta 6, 30 mounted ticket rows. User prepared a DevTools recording of one sort with screenshots off and no CPU throttling, located reconcileCurrentTable, and reported 0.16 ms total duration (self 39 microseconds / 0.039 ms). This is one callback, not the full triggering-batch cost. Observer filtering/invalidation, other callbacks, representative sample distribution, forced-layout and retainer attribution remain unmeasured. Do not add inclusive and self durations together or mark live-pass-budget passed from this observation.
+
+Source-directory/environment confirmation, mounted-row count and user-reported enabled/disabled responsiveness are recorded in 03-LIVE-ACCEPTANCE.md. Complete callback CPU median/p95/max, synchronous forced-layout attribution and post-GC thirty-user-controlled-switch retention comparison remain pending. No synthetic result or historical Phase 2 observation fills these dimensions.
+
+Continuation of the same sort inspection: user reported 11 microseconds (0.011 ms) for the enclosing observer callback requested at content.js around line 187. Combined with the reported 0.16 ms reconciliation callback, the observed pair totals 0.171 ms inclusive CPU. Completeness of the same-sort callback inventory remains unconfirmed; this is not yet a complete batch measurement or a representative median/p95/max result.
 
 User controls all authenticated navigation and DevTools inspection. Record only sanitized aggregates and conclusions, never raw live heap dumps, traces, screenshots, DOM or ticket values. Clear console node references before memory comparison. Unavailable restoration/admin scenarios stay pending with a reason.
 
 ## Verification and remaining gates
 
-Chrome smoke passed; six complete timing commands passed; both profile commands returned human_needed truthfully. Extension suite: 193 passed; final recon gate: proceed. Independent review/security/goal verification and all live acceptance remain outstanding.
+Chrome smoke passed; six complete timing commands passed; both profile commands returned human_needed truthfully. Extension suite at measurement time: 193 passed; final recon gate: proceed. Sixteen live checks now have user-reported passes; four remain pending, including unavailable cached-document restoration. Independent review/security/goal verification remains outstanding.
 
 Protocol references: [CDP HeapProfiler](https://chromedevtools.github.io/devtools-protocol/tot/HeapProfiler/) and [CDP Tracing](https://chromedevtools.github.io/devtools-protocol/tot/Tracing/).
+
+## Manual profiling deferred — 2026-09-09
+
+The user said, "I don't know but we are overccomplicating. let's move on" after the callback-count question. Stop further manual profiling questions. Preserve 16/20 live passes, four pending checks, the unavailable persisted-restoration scenario and the partial callback measurements. This is a decision to defer measurement, not a failed observation, a full-batch timing result or acceptance of unresolved risks. Proceed with independent code/security review; phase completion remains unclaimed.

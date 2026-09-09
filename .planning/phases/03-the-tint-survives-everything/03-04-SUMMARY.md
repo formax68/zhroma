@@ -7,7 +7,7 @@ requires:
   - phase: 03-03
     provides: Current runtime timing matrix and explicit open profile attribution
 provides:
-  - Twenty-check final-source live matrix, all pending
+  - Twenty-check final-source live matrix, sixteen passed and four pending
   - Strict consistency validator rejecting false live/performance acceptance
 key-files:
   created: [test/extension/phase-03-live-acceptance.test.js, .planning/phases/03-the-tint-survives-everything/03-LIVE-ACCEPTANCE.md]
@@ -27,11 +27,11 @@ metrics:
 
 # Phase 03 Plan 04 — Human Checkpoint
 
-Final-source acceptance preparation is complete; authentic live testing has not started. This is a halted checkpoint summary, not a completed plan.
+Final-source acceptance preparation is complete; authentic live testing has recorded sixteen passes. This is a halted checkpoint summary, not a completed plan.
 
 ## Completed task
 
-Task 1: strict current-source live matrix and validator. Commits e26d697 (RED: absent repository evidence record) and d19e1e4 (prepared pending record and visible status output). Twenty unique checks are pending, loaded source is unconfirmed and all observation dates/evidence are null. No historical or synthetic result was rebound to live source.
+Task 1: strict current-source live matrix and validator. Commits e26d697 (RED: absent repository evidence record) and d19e1e4 (prepared pending record and visible status output). Initially twenty unique checks were pending. Source/environment confirmation and sixteen dated user-reported passes are now recorded. No historical or synthetic result was rebound to live source.
 
 ## Verification
 
@@ -39,11 +39,11 @@ Task 1: strict current-source live matrix and validator. Commits e26d697 (RED: a
 
 ## Current task and blocker
 
-Task 2 is checkpoint:human-verify with gate="blocking-human". Await source confirmation and authentic user-controlled results for the twenty-check matrix. Synthetic layout and retainer attribution remain human_needed independently; all live visual/interaction/timing/layout/memory results are pending. Full acceptance cannot pass while these dimensions are missing.
+Task 2 is checkpoint:human-verify with gate="blocking-human". Source is user-confirmed; sixteen of twenty checks passed. The user deferred further manual profiling on 2026-09-09. Synthetic layout and retainer attribution remain human_needed independently; document restoration and quantitative live CPU/layout/memory checks remain pending. Full acceptance cannot pass while these dimensions are missing.
 
 ## Resume
 
-Read 03-04-CHECKPOINT.md and 03-LIVE-ACCEPTANCE.md. Verify the Task 1 commits; resume Task 2 with the user's actual source confirmation/results. Do not recreate the matrix, rerun Task 1, fabricate observations, infer approval from acknowledgment, or mark the phase complete. Missing/unavailable checks remain pending; failed observations remain gaps_found. After all required evidence passes, change this summary from halted to complete and resume independent review/security/goal verification through execute-phase.
+Read 03-04-CHECKPOINT.md and 03-LIVE-ACCEPTANCE.md. Verify the Task 1 commits; resume Task 2 with the user's actual source confirmation/results. Do not recreate the matrix, rerun Task 1, fabricate observations, infer approval from acknowledgment, or mark the phase complete. Missing/unavailable checks remain pending; failed observations remain gaps_found. Independent code/security review may proceed now; completion and goal acceptance still require resolution of the outstanding evidence. Do not change this summary to complete until required evidence passes.
 
 ## Self-Check: PASSED for preparation only
 
