@@ -179,8 +179,17 @@ Plans:
   3. The popup carries an on/off switch that is already on; turning it off clears every tint from the view currently on screen without a refresh, and turning it back on restores them.
   4. Quitting Chrome and reopening it preserves whichever way the switch was left.
 
-**Plans**: TBD
+**Plans**: 6 plans
 **UI hint**: yes
+
+Plans:
+
+- [ ] 04-01-PLAN.md — Resolve the three product choices before implementation (wave 1)
+- [ ] 04-02-PLAN.md — Trace supported-view status through content, worker, toolbar and popup (wave 2)
+- [ ] 04-06-PLAN.md — Integrate inherited regressions and the preference-aware browser workload (wave 3)
+- [ ] 04-03-PLAN.md — Confirm missing-column certainty and distinguish all diagnoses (wave 4)
+- [ ] 04-04-PLAN.md — Persist off/on intent and apply it without refreshing (wave 5)
+- [ ] 04-05-PLAN.md — Bind final-source evidence and reach blocking browser acceptance (wave 6)
 
 ### Phase 5: Published
 
