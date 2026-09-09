@@ -191,6 +191,6 @@ test('parser rejects duplicate JSON members and multiple canonical records', () 
 test('repository record reports its actual final-source acceptance status', () => {
   const r = parsePhase03Acceptance(readFileSync(new URL('03-LIVE-ACCEPTANCE.md', phase), 'utf8'));
   const status = validatePhase03Acceptance(r);
-  console.log(`PHASE 03 LIVE ACCEPTANCE STATUS: ${status}`);
+  process.stdout.write(`PHASE 03 LIVE ACCEPTANCE STATUS: ${status}\n`);
   expect(status).toBe(r.status);
 });
