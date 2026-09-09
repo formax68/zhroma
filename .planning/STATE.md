@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 current_phase: 03
 current_phase_name: The Tint Survives Everything
-status: awaiting_human_verification
+status: gaps_found
 stopped_at: Plan 03-04 Task 2 blocking-human checkpoint; 16/20 live checks passed; remaining measurements deferred by user
 last_updated: "2026-09-09T11:16:18Z"
 last_activity: 2026-09-09
-last_activity_desc: "Phase 03 has 16 live passes; manual profiling deferred; independent reviews next"
+last_activity_desc: "Phase 03 has 16 live passes; manual profiling deferred; independent review found two runtime blockers"
 state_head: d19e1e4015cfafb93d300279d530a1c672bc2d8c
 progress:
   total_phases: 5
@@ -104,7 +104,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-Manual profiling is deferred at user request. Preserve source-confirmed 16/20 live passes and four pending checks in 03-04-CHECKPOINT.md. Proceed with independent code/security review; synthetic layout/retainer attribution and final goal acceptance remain open. Do not count the halted 03-04 summary as a completed plan.
+Manual profiling is deferred at user request. Preserve source-confirmed 16/20 live passes and four pending checks in 03-04-CHECKPOINT.md. Independent review/security found two runtime blockers (CR-01 copied stale markers; CR-02 lost ambiguity recovery). Repair and reverify these; synthetic layout/retainer attribution and final goal acceptance remain open. Do not count the halted 03-04 summary as a completed plan.
 
 ### Blockers/Concerns
 
@@ -147,3 +147,7 @@ Completion helper warnings: legacy summaries contain command strings and histori
 - Plan 03-03 executed 1800 enabled and 1800 disabled Chrome timing samples: slowest 30-row operation median 1.3 ms; global maximum 15.4 ms. Both timing budgets pass. Synthetic layout/retainer attribution remains human_needed; zero aggregate detached growth is not attribution proof.
 - 03-04 prepared twenty current-source live checks; sixteen now have dated user-reported passes. Task 2 is an explicit blocking-human checkpoint. All 393 combined tests pass; four live checks and independent review/security/goal verification remain open. Manual profiling was deferred at user request.
 - Three completed plan summaries plus one halted checkpoint summary exist. ROADMAP remains 3/4 for Phase 03. No phase.complete call is authorized by current evidence.
+
+## Independent reviews — 2026-09-09
+
+Code review: two reproduced blockers. Security: twelve closed threats, two high open blockers and one medium missing-snippet evidence gap. See 03-REVIEW.md and 03-SECURITY.md. Manual profiling remains deferred; no new acceptance or runtime source change. Next work is scoped runtime repair and regression verification, followed by source-evidence reconciliation.
