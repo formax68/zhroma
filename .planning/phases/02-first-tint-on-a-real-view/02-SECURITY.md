@@ -3,70 +3,82 @@ phase: "02"
 slug: first-tint-on-a-real-view
 status: verified
 threats_open: 0
-threats_open_nonblocking: 2
+threats_open_nonblocking: 0
 threats_total: 10
-threats_closed: 8
+threats_closed: 10
 asvs_level: 1
 block_on: high
 created: "2026-09-08"
+updated: "2026-09-09"
 ---
 
 # Phase 02 — Security
 
-Independent planned-threat audit: eight closed threats, two open medium threats, no open threats at or above high. This threshold verdict does not establish product acceptance or authorize phase advancement. All eleven live checks remain pending (`human_needed`).
-
-## Trust Boundaries
-
-| Boundary | Description | Data Crossing |
-|----------|-------------|---------------|
-| Host DOM to isolated script | Admit one owned English Garden table | Header and Priority text only |
-| Isolated script to host DOM | Exact namespaced markers after whole-table validation | Recognized priority labels |
-| Stylesheet to native page | Translucent backgrounds on direct ticket cells | Four local colour declarations |
-| Authentic session to report | User owns navigation and native interactions | Non-identifying aggregate observations only |
-| Repository assets to acceptance | Bind observations to the loaded source | Three SHA-256 hashes |
+**Independent reassessment: SECURED, 10/10 planned threats closed.**
+The auditor independently inspected implementation, evidence contracts, installed
+tool versions and repository hashes. Authentic appearance and loaded-directory
+claims are explicitly attributed to user testimony; the auditor did not observe
+the browser itself. This audit does not alone authorize phase advancement.
 
 ## Threat Register
 
-All planned threats have disposition `mitigate`. The duplicate T-02-SC in the two plans is counted once. Paths below are repository-relative; live report references mean `.planning/phases/02-first-tint-on-a-real-view/02-LIVE-ACCEPTANCE.md`.
+All dispositions remain `mitigate`. No risk was accepted to close a finding.
+The duplicate T-02-SC in the plans is counted once.
 
-| Threat ID | Category | Component | Severity | Disposition | Mitigation and evidence | Status |
-|-----------|----------|-----------|----------|-------------|-------------------------|--------|
-| T-02-01 | Tampering | DOM preflight / marker commit | high | mitigate | `extension/content.js:23-101` validates ownership and all labels, synchronously revalidates, and rolls back interrupted writes; adverse tests in `test/extension/initial-tint.test.js` | closed |
-| T-02-02 | Information disclosure | content.js | high | mitigate | Full runtime reviewed: only header/Priority text reads, no logging/storage/dynamic execution/network; actual-byte side-effect sentinels in `test/extension/runtime-contract.test.js:54-100` | closed |
-| T-02-03 | Denial of service | startup lifecycle | medium | mitigate | `extension/content.js:104-146` coalesces checks, uses one non-extending deadline and terminal teardown; lifecycle/churn tests in `test/extension/initial-tint.test.js:338-392` | closed |
-| T-02-04 | Elevation of privilege | manifest | high | mitigate | `extension/manifest.json:1-14`: storage only, exact HTTPS agent match, isolated top frame; exact asset/manifest assertions in `test/extension/runtime-contract.test.js:40-51` | closed |
-| T-02-05 | Tampering | native appearance | medium | mitigate | Four background-only direct-cell rules and preservation tests exist. Authentic native-state and legibility checks remain pending in the live report | open — below high threshold (non-blocking) |
-| T-02-06 | Information disclosure | acceptance report | high | mitigate | Actual pending report inspected: scoped hashes/settings and empty observations contain no tenant/ticket/raw DOM/private-path evidence. Report privacy contract retained; validator is not represented as universal sanitization | closed |
-| T-02-07 | Tampering | authentic session actions | high | mitigate | No authentic account action occurred. Report explicitly assigns navigation/interactions to user and leaves missing states pending; runtime only changes owned markers/lifecycle state | closed — current exercised scope |
-| T-02-08 | Repudiation | acceptance/source linkage | medium | mitigate | Three hashes independently recomputed and match; freshness and false-pass controls present. Loaded-directory confirmation is false and dated live observations are absent. Code review identified two validator defects; fixes 0ddcc27/a58b826 were independently re-reviewed clean before use | open — below high threshold (non-blocking) |
-| T-02-09 | Tampering | CSS/startup tuning | medium | mitigate | Whole-table preflight, direct-cell styling and documented stale-evidence invalidation retained. No runtime tuning or existing live observations required invalidation | closed |
-| T-02-SC | Tampering | installed test tooling | high | mitigate | Installed Vitest 4.1.11 and happy-dom 20.13.1 independently checked against approved versions; dependency/approval diff from 608d98e is empty | closed |
+| Threat | Category | Severity | Status | Mitigation evidence |
+|---|---|---|---|---|
+| T-02-01 | Tampering | high | closed | content.js:23-101 whole-table admission, synchronous revalidation and rollback; adverse initial-tint regressions |
+| T-02-02 | Information disclosure | high | closed | Full runtime has no collection/data channels; runtime-contract sentinels and source restrictions |
+| T-02-03 | Denial of service | medium | closed | content.js:104-146 non-extending deadline, coalescing and terminal disposal; lifecycle/churn tests |
+| T-02-04 | Elevation of privilege | high | closed | Exact manifest static scope, isolated top frame and local assets; manifest contract |
+| T-02-05 | Tampering | medium | closed | Direct-cell alpha backgrounds and preservation tests plus explicit authentic user acceptance of all hues/native states in UAT |
+| T-02-06 | Information disclosure | high | closed | Current report inspected: aggregate observations/settings/hashes, no tenant/ticket identifiers, raw DOM or private paths |
+| T-02-07 | Tampering | high | closed | Recorded checks retain user/safe-action boundaries; runtime only writes owned markers and lifecycle state |
+| T-02-08 | Repudiation | medium | closed | User confirmed directory/reloads; dated live evidence, independently recomputed hashes and truthful-disposition validator |
+| T-02-09 | Tampering | medium | closed | Whole-table/direct-cell controls and source-invalidation/retest rules remain; runtime diff against a58b826 empty |
+| T-02-SC | Tampering | high | closed | Installed Vitest 4.1.11 and happy-dom 20.13.1 verified; dependency files unchanged; historical independence not-attested |
 
-## Accepted Risks Log
+## Source and Live-Evidence Boundaries
 
-No new Phase 02 risk acceptance. Phase 01 AR-01-13 remains an explicitly accepted historical approval-independence uncertainty; it is **not-attested**, not newly verified, and authorizes no future installation. See `01-RISK-ACCEPTANCE.md` and `DEPENDENCY-APPROVALS.md`.
+The auditor independently recomputed these hashes:
 
-The two open medium threats have not been accepted or waived. Close their missing live portions through authentic source-bound user observations and re-audit.
+- manifest.json: `0c959d71e71b34f5f5d4bc75ffc84f7838f09cc7f0db95d24ad605d45ca57ee6`
+- content.js: `35051cca30a12217e121d270715b70616b3deeaca1e697b7904358516f29cd70`
+- zhroma.css: `f5af38707480b2379d00343d36ec3a54b27ae79e95a09ad00a4538230c586b61`
 
-## Security Audit Trail
+G-02-1 is reclassified only after the user clarified both reports as opening
+Zendesk then clicking a view. Direct-document controls passed. No runtime repair,
+exact lifecycle diagnosis, universal timing guarantee or unobserved delayed-batch
+coverage is established. Phase 3 navigation/pagination liveness is unimplemented.
 
-| Audit Date | Threats Total | Closed | Open | Blocking | Run By |
-|------------|---------------|--------|------|----------|--------|
-| 2026-09-08 | 10 | 8 | 2 | 0 | Independent gsd-security-auditor; orchestrator recorded result |
+## Accepted Risks
 
-The auditor independently inspected code/tests, checked installed versions and recomputed runtime hashes. It did not rerun tests. Executor-attributed checks: 39 focused, 111 product, 284 combined tests passed; recon `FINAL VERDICT: proceed`. Independent code review remains a separate gate and its findings must be resolved separately.
+No new Phase 02 risk acceptance. AR-01-13 retains the explicitly accepted Phase 1
+historical approval-independence uncertainty as **not-attested**. This audit adds
+no retrospective attestation and grants no future installation permission.
+
+## Audit Trail
+
+| Date | Closed | Open | Blocking | Authority |
+|---|---|---|---|---|
+| 2026-09-08 | 8 | 2 medium | 0 | Independent gsd-security-auditor; original snapshot before authentic evidence |
+| 2026-09-09 | 10 | 0 | 0 | Independent gsd-security-auditor reassessment; orchestrator recorded returned verdict |
+
+The original open T-02-05/08 missing-evidence portions are now supported by
+explicitly attributed authentic user observations and loaded-source confirmation.
+No security risk waiver or speculative remediation closed them. Original report
+is preserved in Git history. CR-01/02 were repaired in 0ddcc27/a58b826 and
+independently re-reviewed clean. No new unregistered threat flags were found.
+
+Orchestrator verification this run: 301 combined tests; after reconciliation,
+56 focused tests with acceptance passed. Auditor did not rerun tests.
 
 ## Sign-Off
 
-- [x] All ten unique planned threats have an explicit disposition.
-- [x] Historical accepted uncertainty retained without inventing attestation.
-- [x] `threats_open: 0` at the configured high threshold.
-- [x] Independent L1 mitigation audit recorded.
-- [ ] T-02-05 authentic visual/native-state acceptance.
-- [ ] T-02-08 loaded-source confirmation and dated observations.
+- [x] All ten unique threats independently reassessed at L1.
+- [x] T-02-05 authentic appearance evidence reviewed with attribution.
+- [x] T-02-08 loaded-source/dates/hashes reviewed with attribution.
+- [x] Zero open threats at or below the configured threshold.
+- [x] Historical not-attested exception and Phase 3 limits preserved.
 
-**Approval:** Security threshold verified 2026-09-08; product acceptance remains `human_needed`.
-
-### Code-review repair and regression follow-up
-
-CR-01 and CR-02 were repaired in 0ddcc27/a58b826 and independently rechecked by the original reviewer: current code review is clean. Only the test-local acceptance validator changed; runtime assets and live report hashes are unchanged. Orchestrator regression on 2026-09-08: 301 tests passed (65 Node smoke + 236 Vitest), LIVE ACCEPTANCE STATUS: human_needed, final recon verdict proceed. T-02-08 remains open for genuine loaded-source confirmation and dated observations, and T-02-05 remains open for authentic appearance checks. No risk was waived.
+Security threshold verified; goal verification remains a separate gate.

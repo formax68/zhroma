@@ -1,5 +1,69 @@
 # Phase 02 — UI Review
 
+## Current Advisory Refresh — 2026-09-09
+
+**Baseline:** `02-CONTEXT.md` D-01–D-12 and plans 02-01/02-02; no UI-SPEC. Plan 02-03's repair path was superseded by the user's entry-sequence clarification, not implemented.
+**Disposition:** No unresolved Phase 2 UI finding established within the tested English current Agent Workspace light-interface scope. Product acceptance is recorded as passed; independent code/security/goal gates remain separate.
+**Screenshots:** No new captures or browser operations in this refresh. Authentic visual evidence below is explicitly attributed to the user in `02-UAT.md` and `02-LIVE-ACCEPTANCE.md`, not independently observed by this auditor. The previous no-server result below is historical; no new server probe was made under this refresh's no-browser/capture scope.
+**Source:** `git diff a58b826 -- extension` is empty. All three runtime SHA-256 values recomputed in this refresh match the current live-acceptance inventory. No runtime changes or new visual tuning occurred.
+
+### Six-Pillar Dispositions
+
+| Pillar | Advisory disposition | Evidence and remaining limit |
+|---|---|---|
+| Copywriting | N/A — host-owned | No authored controls or text; exact labels are detection inputs (`extension/content.js:5`, `:49`, `:68`). |
+| Visuals | Accepted by user within tested scope | User passed hover, selection/inset and focus/click comparisons (`02-UAT.md:71`, `:80`, `:98`); no fresh independent visual observation. |
+| Color | Accepted by user within tested scope | Four appearance/readability checks passed (`02-UAT.md:35`, `:44`, `:53`, `:62`); no measured contrast or broader palette claim. |
+| Typography | N/A — host-owned; tested legibility accepted | Zero typography declarations; user passed unread/bold readability (`02-UAT.md:89`). |
+| Spacing | N/A — host-owned | Zero geometry/spacing/responsive declarations and no created elements; no responsive audit claimed. |
+| Experience Design | Observed Phase 2 entry accepted; Phase 3 liveness deferred | Direct-entry/full-reload controls passed; both original failure reports mean opening Zendesk then clicking a view (`02-UAT.md:32`, `:33`). |
+
+**Overall: not scored /24.** Retain the original scope-aware advisory rubric: host-owned pillars are not fabricated extension design work, and source inspection plus attributed user acceptance does not establish an independent full visual quality grade. This refresh closes the historical evidence gaps on their stated scope; it does not assign perfect scores or manufacture defects to populate a numeric rubric.
+
+### Top 3 Follow-Ups and Historical Finding Resolution
+
+1. **UI-02-01 — Closed for tested native states.** User acceptance now covers visible hover distinction, selection with the native first-cell inset, unread/bold emphasis and safe focus/click behavior, including baseline comparisons where specified. No opacity reduction is indicated by this evidence. Retest authentic states if the source changes.
+2. **UI-02-02 — Closed for the tested light palette.** The user reported “Urgent works fine” and passed High, Normal and Low checks covering expected hues, readability and relative emphasis. Keep the existing stylesheet values. Dark mode, colourblind-safe palettes, custom colours and broader theme support remain excluded; no automatic contrast or colour-vision certification is implied.
+3. **UI-02-03 — Closed within observed direct-load scope; preserve Phase 3 work.** Source identity is user-confirmed (`02-UAT.md:116`) and repository hashes match. Both earlier startup reports, including the fresh-tab report, were clarified as “open zendesk, click the view.” The direct full-address control tinted five High rows among 30, leaving 25 blanks untinted; the preceding in-app view had zero markers. Earlier controls tinted 22 Normal rows and left eight blanks untinted. These are recorded observations from the acceptance file, not new auditor observations. Explicitly cover landing-page-to-view entry, view switching, sorting and Next/Previous pagination in Phase 3. No startup repair, causal lifecycle diagnosis, exact timing measurement or unobserved delayed-batch coverage is claimed.
+
+### Source Findings by Pillar
+
+**Copywriting:** `extension/content.js:49` locates the exact Priority header and `:68` reads its cell; `:91` only writes a namespaced attribute. Zero authored CTA/empty/error strings or icon-only controls exist. Missing-column hints remain Phase 4. No extension copy defect found.
+
+**Visuals:** All four rules at `extension/zhroma.css:1`–`:27` terminate at direct ticket cells. No badges, stripes, animation or native row-background replacement exists. Recorded user passes now supply the native-state evidence missing in the historical review. They establish the tested outcomes without proving every cascade, viewport or host update.
+
+**Color:** Exactly four background declarations remain: Urgent `rgb(220 38 38 / 0.14)` (`:5`), High `rgb(234 88 12 / 0.12)` (`:12`), Normal `rgb(202 138 4 / 0.09)` (`:19`) and Low `rgb(22 163 74 / 0.08)` (`:26`). Zero product palette values occur in runtime JavaScript. These literals are the required CSS palette authority. The host's priority distribution determines tint coverage, so page-level 60/30/10 allocation and an arbitrary ten-accent limit do not apply. User checks support A2 within the tested light interface; no independent screenshot, quantitative contrast test or excluded-palette acceptance is claimed.
+
+**Typography:** Zero extension font sizes, weights, text colours or line-height declarations; `extension/content.js:76`–`:101` changes only owned markers. The user's four colour checks and unread/bold pass support tested legibility. Host font quality and responsive typography are not graded here.
+
+**Spacing:** Zero padding, margin, gap, dimensions, positioning or breakpoint rules. No runtime-created layout elements. The implementation preserves host layout structurally; no desktop/mobile/tablet rendering audit was performed in this refresh.
+
+**Experience Design:** Strict table/header/label validation, deliberate blank handling and commit rollback remain at `extension/content.js:23`–`:101`. Startup disposes on a safe/unsafe terminal check (`:124`–`:126`) and retains a finite 15000 ms deadline and 100 ms quiet interval (`:6`–`:7`, `:142`). These constants are heuristics, not universal readiness proof. The actual in-app-entry and pagination symptoms remain material product limitations for Phase 3, not resolved functionality or current Phase 2 blockers. No loading/error-control defect is invented for this control-free surface.
+
+### Verification and Evidence Limits
+
+- The current canonical record contains **11 live passes, 0 failures, 0 pending** and **12 explicit decisions**. Decision approvals are not additional live tests. Historical references to the open G-02-1 record retain their chronology; its final disposition is reclassification to Phase 3, without a waiver or source repair.
+- Source diff and hashes were checked in this refresh. No test suite was rerun by this advisory auditor; historical test results below remain dated evidence, not fresh verification claims.
+- The existing `.planning/ui-reviews/.gitignore` already satisfies the screenshot-storage gate; `git check-ignore` verified all seven image suffixes. No screenshots or unrelated review files were created, changed or removed.
+- No `components.json` exists; registry safety audit is inapplicable. No packages were installed.
+- Dark mode, colourblind-safe/custom palettes, other locales, legacy shells, untested account plans, responsive rendering, Phase 3 reapplication and publication are not accepted by this report.
+- Fixture provenance remains repository-byte re-admission; AR-01-13 historical approval independence remains not-attested. Current user acceptance does not alter either historical limit.
+
+**Recommendation count:** 0 unresolved Phase 2 priority fixes; 0 additional minor implementation recommendations. Three historical findings resolved within stated scope. One deferred Phase 3 liveness workstream includes explicit in-app entry and pagination cases; it is not accepted as working.
+
+### Files Audited for This Refresh
+
+- `extension/manifest.json`, `extension/content.js`, `extension/zhroma.css`
+- `02-CONTEXT.md`, `02-01-PLAN.md`, `02-02-PLAN.md`, `02-03-PLAN.md`
+- `02-UAT.md`, `02-LIVE-ACCEPTANCE.md`, and this report's prior audit
+- `.planning/config.json`, `.planning/ui-reviews/.gitignore`
+
+---
+
+## Historical Audit — 2026-09-08 (Preserved)
+
+The following dated audit is retained unchanged as historical evidence. Its pending counts and `human_needed` disposition are superseded by the scoped refresh above, not current unresolved findings.
+
 **Audited:** 2026-09-08
 **Baseline:** Abstract six-pillar standards constrained by current `02-CONTEXT.md` D-01–D-12 and both execution plans; no UI-SPEC exists.
 **Screenshots:** Not captured. Local probes at ports 3000, 5173 and 8080 returned HTTP `000`; no dev server was detected. This unpacked extension requires authentic host-page acceptance, which was unavailable and was not automated.

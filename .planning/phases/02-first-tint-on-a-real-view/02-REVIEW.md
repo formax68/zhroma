@@ -1,6 +1,6 @@
 ---
 phase: 02-first-tint-on-a-real-view
-reviewed: 2026-09-08T12:39:51Z
+reviewed: 2026-09-09T08:59:05Z
 initial_reviewed: 2026-09-08T12:29:33Z
 depth: standard
 files_reviewed: 7
@@ -24,7 +24,7 @@ rereview_commits: [0ddcc27, a58b826]
 
 # Phase 02: Code Review Report
 
-**Reviewed:** 2026-09-08T12:39:51Z (targeted independent re-review)
+**Reviewed:** 2026-09-09T08:59:05Z (standard scope and evidence refresh)
 **Initial review:** 2026-09-08T12:29:33Z
 **Depth:** standard
 **Files Reviewed:** 7
@@ -36,9 +36,20 @@ rereview_commits: [0ddcc27, a58b826]
 
 Reviewed the explicit seven-file implementation scope against the current Phase 02 context, research, plans and summaries, the project instructions in `.claude/CLAUDE.md`, and the admitted selector contract. Traced discovery, whole-table validation, synchronous preflight/rollback, finite startup disposal, the manifest-to-script-to-CSS seam, fixture harness isolation, and live-evidence parsing/disposition. No project skills or root AGENTS.md were present; none of the seven files is ignored. The initial review found two reproducible false-acceptance paths in the evidence guard. Targeted independent re-review of fixes `0ddcc27` and `a58b826` found both resolved, with no new defect in the changed validator. Frontmatter counts describe current open findings; the original findings and reproductions remain below as history.
 
-The current product acceptance report remains `human_needed` with eleven pending checks. Missing authentic observations, the explicitly heuristic startup parameters, later-phase reapplication, and the approved historical AR-01-13 exception are not reported as new code defects. No source files or acceptance evidence were modified.
+The current product acceptance record derives `passed`, with eleven source-bound live checks; UAT separately records twelve explicit decisions. This refresh found no new supported BLOCKER or WARNING within the Phase 2 initial-document scope. The explicitly heuristic startup parameters, deferred Phase 3 reapplication, and approved historical AR-01-13 exception remain limitations. No source files or acceptance evidence were modified by this reviewer.
 
-### Independent re-review: both findings resolved
+### Current standard refresh — 2026-09-09
+
+Re-read all seven listed source files and the current 02-01, 02-02 and conditionally resolved 02-03 plans, UAT, live-acceptance record and debug history. Checked the manifest/script/CSS boundary, whole-table refusal and synchronous preflight, marker rollback, finite observer/timer disposal, test fixture isolation, duplicate-key/date guards and final-record source/settings checks. No root AGENTS.md or project skill directories exist; `.planning/config.json` configures no agent skills. The seven files are not Git-ignored. `git diff a58b826 -- extension test/extension vitest.config.js` is empty: runtime and test bytes remain at the previously repaired baseline.
+
+- **G-02-1 classification:** The user explicitly clarified both reports, including the earlier fresh-tab report, as opening Zendesk then clicking the view. The demonstrated in-app table had five High rows, 25 blanks and zero markers; the direct-view control produced five markers. Earlier direct-entry/full-reload controls produced 22 Normal markers and eight unmarked blanks. These are recorded observations from the orchestrator/UAT, not browser operations performed by this reviewer. Reclassification follows the clarified entry sequence, not an inference that successful controls disprove an unresolved direct-load report.
+- **Scope remains explicit:** In-app entry, switching views and Next/Previous pagination remain unimplemented Phase 3 liveness work. The finite initial controller does not restart after disposal. No causal injection/disposal timeline, precise startup measurement, naturally delayed-batch coverage, runtime repair or new regression is claimed. The corrected report interpretation makes 02-03's conditional runtime-repair precondition inapplicable; no code change is warranted solely by this report.
+- **Evidence consistency:** Current UAT, JSON and final debug disposition agree on Phase 2 acceptance and Phase 3 deferral. Earlier gaps_found judgments and inconclusive investigation entries remain identifiable historical evidence. Runtime hashes and palette/timing settings are checked against actual files; acceptance still represents declared evidence consistency, not automatic proof of a human observation. No expanded compatibility or historical approval independence is claimed.
+- **Fresh reviewer verification:** `node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension` passed all 128 tests across three files and printed `LIVE ACCEPTANCE STATUS: passed`. This includes all 56 evidence-validator tests and the actual-byte runtime/CSS tests. The orchestrator additionally reported 301 combined tests passing earlier this turn; that broader run was not repeated by this reviewer.
+
+Open finding counts remain zero. CR-01 and CR-02 remain repaired; their original reproductions and the prior independent repair verification are retained below. This clean code review does not replace the separate security, visual, or goal-verification dispositions and does not claim Phase 3 works.
+
+### Historical independent re-review — 2026-09-08: both findings resolved
 
 Re-read this review, `02-REVIEW-FIX.md`, the two fix commits and the complete changed `test/extension/live-acceptance.test.js`. The seven-file list preserves the original scope; this follow-up was limited to the two fixes and their affected behavior.
 

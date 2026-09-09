@@ -105,7 +105,7 @@ Plans:
   4. Changing a product tint requires a stylesheet edit only. No shipped extension JavaScript contains product palette values or writes CSS. Recon evidence parsers/tests retain observed colour strings outside the runtime asset boundary.
   5. `manifest.json` has no `host_permissions` block, declares `storage` as its only permission, and matches `https://*.zendesk.com/agent/*` and nothing else; the loaded extension folder is byte-for-byte the repo source.
 
-**Plans**: 2/3 plans executed/prepared; UAT has ten live passes, twelve accepted decisions and one unresolved startup issue (G-02-1). Goal verification remains gaps_found; original independent score 19/25 awaits refresh. Security still records two open medium threats.
+**Plans**: 3/3 closed out; 02-03 was investigation-only after explicit report clarification. Eleven live checks and twelve decisions passed. Independent goal verification refresh pending; security reassessment closes all ten planned threats.
 
 Plans:
 **Wave 1**
@@ -114,17 +114,17 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [x] 02-02-PLAN.md — Source-bound acceptance preparation complete; UAT now has ten live passes and one initial-load issue (Wave 2; depends on 02-01).
+- [x] 02-02-PLAN.md — Source-bound acceptance complete; UAT now has eleven live passes (Wave 2; depends on 02-01).
 
 **Gap Wave 3** *(depends on 02-01 and 02-02)*
 
-- [ ] 02-03-PLAN.md — Reproduce G-02-1 before a bounded startup repair, then retest final source; diagnosis is inconclusive and checkpoints remain mandatory.
+- [x] 02-03-PLAN.md — Investigated and reclassified G-02-1 to Phase 3 after user clarified both reports; direct-document controls passed, no runtime change.
 
-UAT update (2026-09-09): all twelve specification/prohibition decisions accepted; initial-load remains failed.
+UAT update (2026-09-09): eleven live checks and all twelve specification/prohibition decisions passed; G-02-1 reclassified by explicit user clarification.
 
 **UI hint**: yes
 **Known gap**: sorting the view visibly clears the tint. Intentional and accepted here — closed in Phase 3.
-**UAT follow-up**: Next-page pagination also clears tint; explicitly cover Next/Previous navigation in Phase 3. The separate fresh-load failure G-02-1 remains Phase 2 work.
+**UAT follow-up**: Next-page pagination also clears tint; explicitly cover Next/Previous navigation in Phase 3. G-02-1 also describes opening Zendesk then clicking a view, including in a fresh tab; explicitly cover landing-page-to-view entry in Phase 3. Direct-view document controls passed.
 
 ### Phase 3: The Tint Survives Everything
 
@@ -134,7 +134,7 @@ UAT update (2026-09-09): all twelve specification/prohibition decisions accepted
 **Requirements**: DETECT-03, DETECT-04, LIVE-01, LIVE-02, LIVE-03, LIVE-04, LIVE-05, FAIL-04
 **Success Criteria** (what must be TRUE):
 
-  1. Sorting a view, refreshing it, switching to a different view with no page load, and scrolling to reveal rows further down all leave every visible ticket row correctly tinted, with no manual refresh performed at any point.
+  1. Opening Zendesk then entering a view, sorting a view, refreshing it, switching to a different view with no page load, using Next/Previous pagination, and scrolling to reveal rows further down all leave every visible ticket row correctly tinted, with no manual refresh performed at any point.
   2. In a grouped view, group header rows are never tinted; in a view wide enough to show the sticky duplicate header, the tints still correspond to the right column.
   3. Scrolling and clicking around a full view feels no slower with the extension enabled than with it disabled, and a measured pass stays within the stated budget with zero forced layouts and no detached-node growth across thirty view switches.
   4. Deliberately breaking the row selector leaves the page pixel-identical to having no extension installed — no half-tinted rows, no errors surfaced into the page.
