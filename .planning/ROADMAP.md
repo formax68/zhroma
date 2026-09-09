@@ -16,7 +16,7 @@ Zhroma tints Zendesk ticket rows by priority so an agent knows what is urgent wi
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: DOM Recon Spike** - Answer every unverified DOM assumption against a live Zendesk instance before writing extension code (completed 2026-09-08)
-- [ ] **Phase 2: First Tint on a Real View** - The thinnest vertical slice: rows tinted on first load, with permissions, palette and styling seam frozen
+- [x] **Phase 2: First Tint on a Real View** - The thinnest vertical slice: rows tinted on first load, with permissions, palette and styling seam frozen (completed 2026-09-09)
 - [ ] **Phase 3: The Tint Survives Everything** - Sorting, refreshing, switching views and scrolling keep the tint correct; every failure leaves the page untouched
 - [ ] **Phase 4: Honest Failure and an Off Switch** - Three distinguishable states on the toolbar, a hint that never lies, and a persistent on/off toggle
 - [ ] **Phase 5: Published** - A public Chrome Web Store listing that survives review and tells an IT admin exactly what it does
@@ -105,7 +105,7 @@ Plans:
   4. Changing a product tint requires a stylesheet edit only. No shipped extension JavaScript contains product palette values or writes CSS. Recon evidence parsers/tests retain observed colour strings outside the runtime asset boundary.
   5. `manifest.json` has no `host_permissions` block, declares `storage` as its only permission, and matches `https://*.zendesk.com/agent/*` and nothing else; the loaded extension folder is byte-for-byte the repo source.
 
-**Plans**: 3/3 closed out; 02-03 was investigation-only after explicit report clarification. Eleven live checks and twelve decisions passed. Independent goal verification refresh pending; security reassessment closes all ten planned threats.
+**Plans**: 3/3 closed out; 02-03 was investigation-only after explicit report clarification. Eleven live checks and twelve decisions passed. Independent goal verification passed 25/25; security reassessment closes all ten planned threats; code review clean.
 
 Plans:
 **Wave 1**
@@ -181,7 +181,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. DOM Recon Spike | 15/15 | Complete    | 2026-09-08 |
-| 2. First Tint on a Real View | 2/3 | In Progress|  |
+| 2. First Tint on a Real View | 3/3 | Complete    | 2026-09-09 |
 | 3. The Tint Survives Everything | 0/TBD | Not started | - |
 | 4. Honest Failure and an Off Switch | 0/TBD | Not started | - |
 | 5. Published | 0/TBD | Not started | - |

@@ -17,18 +17,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Detection
 
-- [ ] **DETECT-01**: Extension locates the Priority column by its header rather than by column position, so it survives user-configured column order
+- [x] **DETECT-01**: Extension locates the Priority column by its header rather than by column position, so it survives user-configured column order
 - [x] **DETECT-02**: Extension reads each ticket row's priority and resolves it to one of Urgent, High, Normal or Low
 - [ ] **DETECT-03**: Extension resolves headers within the same table as the rows it tints, given that agent views render a sticky duplicate header table alongside the body table
 - [ ] **DETECT-04**: Extension distinguishes grouped-view group rows from ticket rows and never tints a group row
 
 ### Tinting
 
-- [ ] **TINT-01**: Each ticket row is tinted according to its priority, with a visually distinct tint for each of the four values
-- [ ] **TINT-02**: Row text remains legible over every tint
-- [ ] **TINT-03**: Zendesk's own row states — hover, selected, unread/bold — remain visible and are not suppressed by the tint
-- [ ] **TINT-04**: The tint is applied as a translucent layer that composites over whatever Zendesk paints, rather than replacing the row's background colour
-- [ ] **TINT-05**: All colour is declared in a stylesheet driven by a single data attribute, so the visual treatment can be changed without touching detection logic
+- [x] **TINT-01**: Each ticket row is tinted according to its priority, with a visually distinct tint for each of the four values
+- [x] **TINT-02**: Row text remains legible over every tint
+- [x] **TINT-03**: Zendesk's own row states — hover, selected, unread/bold — remain visible and are not suppressed by the tint
+- [x] **TINT-04**: The tint is applied as a translucent layer that composites over whatever Zendesk paints, rather than replacing the row's background colour
+- [x] **TINT-05**: All colour is declared in a stylesheet driven by a single data attribute, so the visual treatment can be changed without touching detection logic
 
 ### Liveness
 
@@ -48,7 +48,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Control
 
-- [ ] **CTRL-01**: Extension works immediately on install with nothing to configure
+- [x] **CTRL-01**: Extension works immediately on install with nothing to configure
 - [ ] **CTRL-02**: Agent can turn tinting off and back on from the toolbar popup
 - [ ] **CTRL-03**: The on/off setting persists across browser restarts
 - [ ] **CTRL-04**: Turning tinting off clears tints from the current view without requiring a page refresh
@@ -59,7 +59,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **STORE-02**: Extension declares no `host_permissions` block and requests `storage` as its only permission
 - [x] **STORE-03**: The content script matches only `https://*.zendesk.com/agent/*`, excluding the customer-facing Help Center on the same domain
 - [ ] **STORE-04**: A privacy policy is published, linked from the listing, and discloses that no data is collected
-- [ ] **STORE-05**: Shipped code is unminified and byte-identical to repo source
+- [x] **STORE-05**: Shipped code is unminified and byte-identical to repo source
 - [ ] **STORE-06**: A manual pre-submission smoke checklist lives in the repo and is run before each submission
 
 ## v2 Requirements
@@ -106,15 +106,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RECON-01 | Phase 1 | Complete |
 | RECON-02 | Phase 1 | Complete |
 | RECON-03 | Phase 1 | Complete |
-| DETECT-01 | Phase 2 | Pending |
+| DETECT-01 | Phase 2 | Complete |
 | DETECT-02 | Phase 2 | Complete |
 | DETECT-03 | Phase 3 | Pending |
 | DETECT-04 | Phase 3 | Pending |
-| TINT-01 | Phase 2 | Pending |
-| TINT-02 | Phase 2 | Pending |
-| TINT-03 | Phase 2 | Pending |
-| TINT-04 | Phase 2 | Pending |
-| TINT-05 | Phase 2 | Pending |
+| TINT-01 | Phase 2 | Complete |
+| TINT-02 | Phase 2 | Complete |
+| TINT-03 | Phase 2 | Complete |
+| TINT-04 | Phase 2 | Complete |
+| TINT-05 | Phase 2 | Complete |
 | LIVE-01 | Phase 3 | Pending |
 | LIVE-02 | Phase 3 | Pending |
 | LIVE-03 | Phase 3 | Pending |
@@ -125,7 +125,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FAIL-03 | Phase 4 | Pending |
 | FAIL-04 | Phase 3 | Pending |
 | FAIL-05 | Phase 4 | Pending |
-| CTRL-01 | Phase 2 | Pending |
+| CTRL-01 | Phase 2 | Complete |
 | CTRL-02 | Phase 4 | Pending |
 | CTRL-03 | Phase 4 | Pending |
 | CTRL-04 | Phase 4 | Pending |
@@ -133,7 +133,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STORE-02 | Phase 2 | Complete |
 | STORE-03 | Phase 2 | Complete |
 | STORE-04 | Phase 5 | Pending |
-| STORE-05 | Phase 2 | Pending |
+| STORE-05 | Phase 2 | Complete |
 | STORE-06 | Phase 5 | Pending |
 
 **Coverage:**
