@@ -304,3 +304,10 @@ None — no external service configuration required.
 ---
 *Phase: 04-honest-failure-and-an-off-switch*
 *Completed: 2026-09-10*
+
+## Self-Check: PASSED
+
+- `test/mutants/worker-staleness.mutants.json` exists on disk
+- `test/extension/tracer-world.js` and `test/extension/toolbar-popup.test.js` exist and carry the four controls and the six new tests
+- All five commits resolve: `11f74a5`, `89a44e6`, `ec69f47`, `6d82b07`, `3bd8bae`
+- Plan verification re-run: `test/extension` exit 0; `npm test` 580 passed; `npm run test:mutants` 17/17 killed; `--only project-queue` 1/1 killed

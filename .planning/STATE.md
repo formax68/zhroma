@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: Completed 04-11-PLAN.md
-last_updated: "2026-09-10T16:42:56.885Z"
+stopped_at: Completed 04-12-PLAN.md
+last_updated: "2026-09-10T17:18:08.654Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 04 execution started
-state_head: 01336f094ed4a624f6b284cb9601ddaff83c98cc
+state_head: 3bd8bae6a4e70a76a1339d15dec205931a20cd2c
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 36
-  completed_plans: 33
+  completed_plans: 34
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 6 of 14
+Plan: 7 of 14
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 04 execution started
 
@@ -79,6 +79,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P09 | 8 min | 2 tasks | 4 files |
 | Phase 04 P10 | 19 min | 3 tasks | 4 files |
 | Phase 04 P11 | 23 min | 3 tasks | 14 files |
+| Phase 04 P12 | 30 min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -126,6 +127,8 @@ Recent decisions affecting current work:
 - [Phase 04]: A mutant is registered only after it has been measured killed: popup-focus-guard mutates the focus restoration itself, because reinstating the disabled-state guard the plan named was measured SURVIVED — Task 1's corrected ordering re-enables the control before end() runs, so !control.disabled is unreachable-true on every failure path with a confirmed value, and focusing a disabled control is a no-op in the browser on the other. Registering it would have claimed a kill the gate could not honestly deliver.
 - [Phase 04]: The fourteen live observations attested on 2026-09-10 are preserved as dated history and NOT carried onto the repaired bytes; every check is reset to pending and Phase 4 now carries zero live browser evidence — An observation is evidence about the bytes it was taken on. Promotion rule 3, 04-LIVE-ACCEPTANCE rule 5 and the validator's live-source-evidence gate each independently forbid re-pointing an old observation at new bytes, and CR-01/WR-04/WR-07/WR-08 moved four of the eleven shipped assets.
 - [Phase 04]: english-regional-locale is added as a seventeenth live check rather than folded into working-icon, and the re-enable-not-pressured ratification is qualified rather than carried intact — The CR-01 repair ships a behaviour (an English regional shell tints) that no existing check covered, and a shipped behaviour with no live-evidence slot is the silent gap promotion rule 3 exists to prevent. Symmetrically, popup.js changed under WR-04/WR-07, so the popup the user judged when ratifying the off-switch prohibition is not the popup that ships.
+- [Phase 04]: [Phase 04]: replyDelays delays DELIVERY so the document always answers with FRESH data; only a RESPONSE-side hold (payload captured when the listener answered, released later) can put a genuinely stale reply in flight. Both are kept as separately named tracer capabilities so the distinction that made the WR-01 guardian test vacuous cannot be lost again.
+- [Phase 04]: [Phase 04]: Two of the seven named worker guard sites cannot be individually fenced and are not registered as if they were: requestStatus's catch-branch guard and its post-await recheck are each redundant with the recheck BOTH callers perform immediately afterwards, with no macrotask able to interleave. Both were MEASURED SURVIVED against the full suite. generation-counter fences them at mechanism level and status-catch-reports-unavailable fences the reporting half of the catch branch; each note states what it does not fence.
 
 ### Pending Todos
 
@@ -160,8 +163,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T16:42:29.769Z
-Stopped at: Completed 04-11-PLAN.md
+Last session: 2026-09-10T17:17:57.494Z
+Stopped at: Completed 04-12-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
