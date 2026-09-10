@@ -17,6 +17,44 @@
   let registering = false; let template; let priorityIndex;
   const view = document.querySelector('#view');
   const delay = () => new Promise((resolve) => nativeTimer(resolve, 0));
+  // Test-only preference/status seam. This developer page is not the extension:
+  // Chrome hands `chrome.*` to a real content script, so the page has to supply
+  // it here. It exposes exactly the shipped seam — one {enabled: boolean}
+  // storage.local read, storage.onChanged, runtime.onMessage and the finite
+  // status hint — and nothing else, so what is measured is the shipped code
+  // path rather than a fallback. No such object ships; the packaged inventory
+  // is pinned by runtime-contract.test.js and toolbar-popup.test.js.
+  let confirmPreference;
+  const preferenceConfirmed = new Promise((resolve) => { confirmPreference = resolve; });
+  function installPreferenceSeam() {
+    const storageListeners = [];
+    const seam = {
+      runtime: {
+        id: 'zhroma-workload-runtime',
+        lastError: undefined,
+        onMessage: { addListener() {} },
+        // No service worker is loaded here, so a status hint reaches no
+        // receiver — reported exactly the way Chrome reports it.
+        sendMessage(message, callback) {
+          if (typeof callback !== 'function') return undefined;
+          nativeTimer(() => {
+            seam.runtime.lastError = { message: 'Could not establish connection. Receiving end does not exist.' };
+            try { callback(undefined); } finally { seam.runtime.lastError = undefined; }
+          }, 0);
+          return undefined;
+        },
+      },
+      storage: {
+        onChanged: { addListener(listener) { storageListeners.push(listener); } },
+        local: {
+          // Asynchronous, exactly like Chrome: never resolved inside the call,
+          // and only an absent key is filled by the caller's default.
+          get(defaults, callback) { nativeTimer(() => { callback({ ...defaults }); confirmPreference(); }, 0); },
+        },
+      },
+    };
+    Object.defineProperty(window, 'chrome', { value: seam, writable: true, configurable: true });
+  }
   function timed(category, callback, receiver, args) {
     const start = performance.now(); depth++;
     const mark = `zhroma-callback-${sequence++}`;
@@ -112,12 +150,18 @@
     template.querySelector('tbody').replaceChildren(template.querySelector('tbody tr').cloneNode(true));
     view.append(buildSyntheticTable());
     if (enabled) {
+      installPreferenceSeam();
       await new Promise((resolve, reject) => {
         const script = document.createElement('script'); script.src = '/extension/content.js';
         script.onload = () => { registering = false; resolve(); }; script.onerror = () => reject(new Error('Runtime load failed'));
         registering = true; document.head.append(script);
       });
+      // The controller only runs once the preference is confirmed. Measuring
+      // before that would time an extension that is deliberately dormant.
+      await preferenceConfirmed;
     }
+    // Disabled mode installs no seam and loads no runtime, so the control is
+    // genuinely disabled rather than merely switched off.
     await settle(); verify();
   })();
   window.tintWorkload = {

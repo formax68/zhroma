@@ -11,6 +11,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { createContext, Script } from 'node:vm';
 import { Window } from 'happy-dom';
 import { afterEach, expect, test } from 'vitest';
+import { PREFERENCE_CONTRACT, createChromeHarness } from './chrome-harness.js';
 
 const root = new URL('../../extension/', import.meta.url);
 const asset = (name) => readFileSync(new URL(name, root), 'utf8');
@@ -643,4 +644,62 @@ test('the popup renders fixed copy through textContent for every reachable statu
   expect(html).toMatch(/<h1/);
   // The popup must never claim the tab is definitively outside Zendesk.
   expect(`${source}${html}`).not.toMatch(/not a zendesk|outside zendesk|wrong site/i);
+});
+
+// --- one contract, two independent test doubles -----------------------------
+
+test('the tracer world and the strict inherited-suite harness drive one preference and status contract', async () => {
+  // Two test doubles now model the same seam: this file's `createWorld`, which
+  // wires three real contexts together, and `chrome-harness.js`, which the
+  // inherited runtime suites use. If they drift, one of them is testing an
+  // extension that does not exist. Both are anchored to the shipped literals.
+  const source = asset('content.js');
+  expect(source).toContain(`PREFERENCE_KEY = '${PREFERENCE_CONTRACT.key}'`);
+  expect(source).toContain(`PREFERENCE_AREA = '${PREFERENCE_CONTRACT.area}'`);
+  expect(source).toContain(`MAX_REQUEST_ID = ${PREFERENCE_CONTRACT.maxRequestId}`);
+  expect(source).toContain(`'${PREFERENCE_CONTRACT.statusMessage.type}'`);
+  expect(asset('background.js')).toContain(`'${PREFERENCE_CONTRACT.statusRequestType}'`);
+
+  // Same bytes, same admitted fixture, same absent-key default — driven this
+  // time through the strict harness, which refuses any Chrome surface beyond
+  // the seam and records a violation rather than silently tolerating one.
+  const harness = createChromeHarness();
+  const window = inertWindow(fixture());
+  const context = createContext({ document: window.document, window, chrome: harness.chrome,
+    MutationObserver: window.MutationObserver, setTimeout, clearTimeout });
+  new Script(asset('content.js'), { filename: 'content.js' }).runInContext(context);
+  harness.flush();
+  await settle();
+  expect(markers(window.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  expect(harness.requestStatus()).toEqual({ type: 'status', requestId: 1, diagnosis: 'working', reason: null });
+  // Every crossing is the same finite hint — the startup announcement and the
+  // transition to working — and carries nothing else.
+  expect(harness.messages.length).toBeGreaterThan(0);
+  expect([...new Set(harness.messages.map((message) => JSON.stringify(message)))])
+    .toEqual([JSON.stringify(PREFERENCE_CONTRACT.statusMessage)]);
+  harness.assertClean();
+
+  // And the packaged worker and popup turn exactly that reply into the decided
+  // copy, so the harness's expectation is the product's behaviour.
+  const { world, content, popup } = await bootAll();
+  expect(markers(content.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  expect(world.action()).toEqual({ icon: 'icons/working.png', title: COPY.working });
+  expect(statusText(popup.document)).toBe(COPY.working);
+});
+
+test('a stored false reaches the same dormant state through both doubles', async () => {
+  const harness = createChromeHarness({ stored: false });
+  const window = inertWindow(fixture());
+  const context = createContext({ document: window.document, window, chrome: harness.chrome,
+    MutationObserver: window.MutationObserver, setTimeout, clearTimeout });
+  new Script(asset('content.js'), { filename: 'content.js' }).runInContext(context);
+  harness.flush();
+  await settle();
+  expect(markers(window.document)).toEqual([]);
+  expect(harness.requestStatus()).toEqual({ type: 'status', requestId: 1, diagnosis: 'neutral', reason: null });
+  harness.assertClean();
+
+  const { world, content } = await bootAll({ stored: { enabled: false } });
+  expect(markers(content.document)).toEqual([]);
+  expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.checking });
 });
