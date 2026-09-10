@@ -258,7 +258,7 @@ test('four CSS rules map exact labels to alpha backgrounds and only direct ticke
     target.setAttribute('data-zhroma-priority', label);
   }
   expect(labels.sort()).toEqual(['High', 'Low', 'Normal', 'Urgent']);
-  document.documentElement.lang = 'en-US';
+  document.documentElement.lang = 'fr';
   for (const rule of rules) expect(document.querySelectorAll(rule.selectorText)).toHaveLength(0);
   expect(asset('zhroma.css')).not.toMatch(/@|url\(|box-shadow|font|\bopacity\s*:/);
 });

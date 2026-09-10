@@ -4,6 +4,8 @@
   const PRIORITY_ATTRIBUTE = 'data-zhroma-priority';
   const PRIORITY_LABELS = new Set(['Urgent', 'High', 'Normal', 'Low']);
   const PREFERENCE_KEY = 'enabled';
+  const LANGUAGE_PRIMARY = 'en';
+  const LANGUAGE_PREFIX = 'en-';
   const PREFERENCE_AREA = 'local';
   const MAX_REQUEST_ID = 1000000;
   // The quiet period a Priority-less candidate must survive before the
@@ -61,7 +63,13 @@
     // agent's interface language and naming one would be an invention.
     if (window.top !== window) return result('unsafe');
     const shellLanguage = document.documentElement.lang;
-    if (shellLanguage !== 'en') {
+    // The supported shell is the English language FAMILY, not the single tag
+    // `en`: every `en-*` regional locale renders the same priority labels, so
+    // refusing them told an English agent their own language was the problem
+    // (CR-01). The raw value is compared untrimmed, which is exactly what the
+    // stylesheet's `[lang|="en" i]` does, so the two encodings cannot drift.
+    const lower = shellLanguage.toLowerCase();
+    if (lower !== LANGUAGE_PRIMARY && !lower.startsWith(LANGUAGE_PREFIX)) {
       // Only a shell that actually declares another language may be reported
       // as an unsupported language (D-04). The declared value itself is never
       // read out, transmitted or interpolated — the reason is a fixed token.
