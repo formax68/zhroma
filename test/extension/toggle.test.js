@@ -11,19 +11,10 @@
 import { afterEach, expect, test } from 'vitest';
 import {
   COPY, TAB_ID, TICKET_TOKENS, asset, bootAll, closeWindows, control, createWorld, fixture, loadContent, loadPopup,
-  loadWorker, markers, settle, statusText, wait,
+  flip, loadWorker, markers, settle, statusText, wait,
 } from './tracer-world.js';
 
 afterEach(closeWindows);
-
-/** Operate the switch the way a person does: change the control, let it fire. */
-async function flip(popup, value) {
-  const box = control(popup.document);
-  box.checked = value;
-  box.dispatchEvent(new popup.window.Event('change', { bubbles: true }));
-  await settle();
-  await settle();
-}
 
 /** Boot a world with a popup already open on the active tab. */
 async function withPopup(options = {}) {

@@ -18,8 +18,8 @@ import { afterEach, expect, test } from 'vitest';
 import { PREFERENCE_CONTRACT, createChromeHarness } from './chrome-harness.js';
 import {
   CONFIRMED, COPY, DOCUMENT_ID, EXTENSION_ID, ICON, MAX_REQUEST_ID, OTHER_TAB_ID, POPUP_PATH, POPUP_URL,
-  TAB_ID, TICKET_TOKENS, asset, bootAll, closeWindows, createWorld, extensionRoot as root, fixture,
-  inertWindow, loadContent, loadPopup, loadWorker, markers, settle, statusText, wait,
+  TAB_ID, TICKET_TOKENS, asset, bootAll, closeWindows, control, createWorld, extensionRoot as root, fixture,
+  flip, inertWindow, loadContent, loadPopup, loadWorker, markers, settle, statusText, wait,
 } from './tracer-world.js';
 
 const manifest = JSON.parse(asset('manifest.json'));
@@ -55,19 +55,20 @@ test('every packaged asset the manifest names exists locally and no remote resou
     expect(realpathSync(new URL(name, root))).toBe(fileURLToPath(new URL(name, root)));
   }
   expect(readdirSync(root).sort()).toEqual(['background.js', 'content.js', 'icons', 'manifest.json', 'popup.html', 'popup.js', 'zhroma.css']);
-  expect(readdirSync(new URL('icons/', root)).sort()).toEqual(['missing.png', 'neutral.png', 'unreadable.png', 'working.png']);
+  expect(readdirSync(new URL('icons/', root)).sort())
+    .toEqual(['missing.png', 'neutral.png', 'off.png', 'unreadable.png', 'working.png']);
   // Every icon the worker can project must be packaged: an icon set at runtime
   // is not declared in the manifest, so the inventory is the only thing that
   // can prove it will exist in the store package.
   const projected = [...asset('background.js').matchAll(/'(icons\/[a-z]+\.png)'/g)].map(([, path]) => path);
-  expect(new Set(projected).size).toBe(4);
+  expect(new Set(projected).size).toBe(5);
   for (const path of new Set(projected)) expect(realpathSync(new URL(path, root))).toBe(fileURLToPath(new URL(path, root)));
   for (const name of ['content.js', 'background.js', 'popup.js', 'popup.html']) {
     expect(asset(name)).not.toMatch(/https?:\/\/|@import|url\(\s*['"]?https?:/);
   }
 });
 
-const ICON_FILES = ['working.png', 'missing.png', 'unreadable.png', 'neutral.png'];
+const ICON_FILES = ['working.png', 'missing.png', 'unreadable.png', 'neutral.png', 'off.png'];
 
 test.each(ICON_FILES)('%s is a locally authored 32x32 PNG', (name) => {
   const bytes = readFileSync(new URL(`icons/${name}`, root));
@@ -78,13 +79,13 @@ test.each(ICON_FILES)('%s is a locally authored 32x32 PNG', (name) => {
   expect(statSync(new URL(`icons/${name}`, root)).size).toBeLessThan(8192);
 });
 
-test('the four icons are four different images, so shape can carry the meaning', () => {
+test('the five icons are five different images, so shape can carry the meaning', () => {
   // FAIL-05 asks the agent to tell the states apart from the toolbar alone.
   // Byte-distinctness is the automatable floor; whether a person recognises a
   // column-plus from a question mark at 16px is a human check in 04-05.
   const digests = ICON_FILES.map((name) => createHash('sha256')
     .update(readFileSync(new URL(`icons/${name}`, root))).digest('hex'));
-  expect(new Set(digests).size).toBe(4);
+  expect(new Set(digests).size).toBe(5);
 });
 
 test('shipped JavaScript carries no colour value and builds no page markup', () => {
@@ -639,4 +640,229 @@ test('a stored false reaches the same dormant state through both doubles', async
   const { world, content } = await bootAll({ stored: { enabled: false } });
   expect(markers(content.document)).toEqual([]);
   expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.off });
+});
+
+// --- the off state, its races and its faults (04-04) ------------------------
+
+/** Two tabs, deliberately in different states, both tinted and settled. */
+async function twoTintedTabs() {
+  const world = createWorld();
+  loadWorker(world);
+  world.openTab(OTHER_TAB_ID);
+  const first = loadContent(world, { tabId: TAB_ID });
+  const second = loadContent(world, { tabId: OTHER_TAB_ID });
+  await settle();
+  const popup = loadPopup(world);
+  await settle();
+  return { world, first, second, popup };
+}
+
+test('off is projected as its own packaged shape and never as the add-a-column hint', async () => {
+  const { world, popup } = await twoTabWorld();
+  const onMissing = loadPopup(world);
+  await settle();
+  expect(statusText(onMissing.document)).toBe(COPY.missing);
+
+  await flip(onMissing, false);
+
+  // The tab whose Priority column really is missing is no longer told to add
+  // one: off is an operational state, and while it is on there is no diagnosis
+  // to act on. Three diagnoses stay exactly three.
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.off, title: COPY.off });
+  world.activateTab(OTHER_TAB_ID);
+  await settle();
+  expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.off, title: COPY.off });
+  const titles = world.actionLog.filter((entry) => entry.title).map((entry) => entry.title);
+  expect(titles.at(-1)).toBe(COPY.off);
+  const afterOff = loadPopup(world);
+  await settle();
+  expect(statusText(afterOff.document)).not.toBe(COPY.missing);
+  expect(popup).toBeTruthy();
+});
+
+test('a background tab converges through onChanged without ever being messaged', async () => {
+  const { world, first, second, popup } = await twoTintedTabs();
+  expect(markers(first.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  expect(markers(second.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+
+  await flip(popup, false);
+
+  // The current tab acknowledged; the other runnable tab converged on the
+  // change event alone. Exactly one apply request was ever sent.
+  expect(markers(first.document)).toEqual([]);
+  expect(markers(second.document)).toEqual([]);
+  const applies = world.traffic.filter(({ payload }) => payload && payload.type === 'apply-preference');
+  expect(applies).toHaveLength(1);
+});
+
+test('a frozen tab applies the preference when it is resumed, and not before', async () => {
+  const { world, second, popup } = await twoTintedTabs();
+  // A frozen tab keeps its rendered DOM and cannot run a handler or a timer
+  // until it is unfrozen. Delivery is asynchronous and this is the honest
+  // limit of the decided global preference: no atomic application everywhere.
+  world.freezeTab(OTHER_TAB_ID);
+
+  await flip(popup, false);
+  expect(markers(second.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+
+  world.thawTab(OTHER_TAB_ID);
+  second.window.dispatchEvent(new second.window.Event('pageshow'));
+  await settle();
+  // On resume it re-reads storage rather than trusting the value it froze with.
+  expect(markers(second.document)).toEqual([]);
+  expect(world.forbidden).toEqual([]);
+});
+
+test('two popups asking for opposite values are serialized, and neither inverts the other', async () => {
+  const world = createWorld();
+  loadWorker(world);
+  const content = loadContent(world);
+  await settle();
+  const first = loadPopup(world);
+  const second = loadPopup(world);
+  await settle();
+
+  // Both requests are issued before either can complete.
+  const a = control(first.document);
+  a.checked = false;
+  a.dispatchEvent(new first.window.Event('change', { bubbles: true }));
+  const b = control(second.document);
+  b.checked = true;
+  b.dispatchEvent(new second.window.Event('change', { bubbles: true }));
+  await settle();
+  await settle();
+
+  // Exactly the two desired values, in arrival order. Never a third value, and
+  // never an inversion of a stale reading.
+  expect(world.writeLog).toEqual([{ enabled: false }, { enabled: true }]);
+  expect(world.getStored('enabled')).toBe(true);
+  expect(control(second.document).checked).toBe(true);
+  expect(markers(content.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+});
+
+test('a worker stopped and recreated after an off serves the persisted value, not a memory of it', async () => {
+  const { world, popup } = await bootAll();
+  await flip(popup, false);
+  world.terminateWorker();
+  loadWorker(world);
+  world.activateTab(TAB_ID);
+  await settle();
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.off, title: COPY.off });
+  const reopened = loadPopup(world);
+  await settle();
+  expect(control(reopened.document).checked).toBe(false);
+  expect(statusText(reopened.document)).toBe(COPY.off);
+});
+
+test('a popup abandoned mid-write does not corrupt the preference', async () => {
+  const world = createWorld({ writeMode: 'deferred' });
+  loadWorker(world);
+  loadContent(world);
+  await settle();
+  const popup = loadPopup(world);
+  await settle();
+  const box = control(popup.document);
+  box.checked = false;
+  box.dispatchEvent(new popup.window.Event('change', { bubbles: true }));
+  await settle(2);
+  // The agent closes the popup while the write is still in flight; its reply
+  // now has nowhere to land.
+  world.setWriteMode('immediate');
+  world.flushWrites();
+  await settle();
+  await settle();
+  expect(world.snapshot()).toEqual({ enabled: false });
+  const reopened = loadPopup(world);
+  await settle();
+  expect(control(reopened.document).checked).toBe(false);
+});
+
+test('a transient native cleanup failure still reaches the intended state', async () => {
+  const { world, content, popup } = await bootAll();
+  for (const row of content.document.querySelectorAll('[data-zhroma-priority]')) {
+    const native = row.removeAttribute.bind(row);
+    let failed = false;
+    Object.defineProperty(row, 'removeAttribute', {
+      configurable: true,
+      value(name) {
+        // One transient host failure, then the bounded retry succeeds.
+        if (!failed) { failed = true; throw new Error('Transient attribute failure'); }
+        return native(name);
+      },
+    });
+  }
+  await flip(popup, false);
+  expect(markers(content.document)).toEqual([]);
+  // Recovered inside the bounded retry, so this genuinely is a cleared tint
+  // and is reported as one.
+  expect(statusText(popup.document)).toBe(COPY.off);
+});
+
+test('every toolbar write is tab-scoped, through every off and on path', async () => {
+  const { world, popup } = await twoTintedTabs();
+  await flip(popup, false);
+  world.activateTab(OTHER_TAB_ID);
+  await settle();
+  await flip(popup, true);
+  world.activateTab(TAB_ID);
+  await settle();
+  expect(world.actionLog.length).toBeGreaterThan(0);
+  for (const entry of world.actionLog) {
+    expect([TAB_ID, OTHER_TAB_ID], JSON.stringify(entry)).toContain(entry.tabId);
+  }
+});
+
+test('the popup and worker contexts survive every failure path without logging or transmitting', async () => {
+  const { world, popup } = await bootAll();
+  world.setWriteMode('rejected');
+  await flip(popup, false);
+  world.setWriteMode('immediate');
+  world.setReadMode('rejected');
+  await flip(popup, false);
+  world.setReadMode('immediate');
+  world.breakAction();
+  await flip(popup, true);
+  world.repairAction();
+  world.breakQuery();
+  await flip(popup, false);
+  // Not one console call, network attempt or web-storage touch on any failure
+  // path, in any of the three contexts.
+  expect(world.forbidden).toEqual([]);
+  const wire = JSON.stringify({ traffic: world.traffic, writes: world.writeLog });
+  for (const token of TICKET_TOKENS) expect(wire, token).not.toContain(token);
+  for (const token of ['Storage write failed', 'Storage read failed', 'Action unavailable', 'Tabs unavailable']) {
+    expect(wire, token).not.toContain(token);
+  }
+});
+
+test('the popup gives its single switch default focus and names itself meaningfully', async () => {
+  const { popup } = await bootAll();
+  const box = control(popup.document);
+  // The only control on the panel is the default focus, so the switch is
+  // operable from the keyboard the moment the popup opens.
+  expect(popup.document.activeElement).toBe(box);
+  const html = asset(POPUP_PATH);
+  expect(html).toMatch(/<title>[^<]*Zhroma[^<]*<\/title>/);
+  expect(html).toMatch(/<title>[^<]{10,}<\/title>/);
+  expect(html).toMatch(/<h1[^>]*>Zhroma<\/h1>/);
+  // A polite live region, so a status change is announced without the popup
+  // having to shout it on every render.
+  expect(html).toMatch(/id="zhroma-status"[^>]*role="status"|role="status"[^>]*id="zhroma-status"/);
+  expect(asset('popup.js')).toMatch(/activeElement/);
+  // Still no options page, no outbound link and no page overlay (D-03, D-11).
+  expect(html).not.toMatch(/<a\s|options|href=/i);
+  expect(asset('popup.js')).not.toMatch(/window\.open|location\s*=|chrome\.runtime\.openOptionsPage/);
+});
+
+test('the whole off and on cycle goes quiet: nothing repaints once it has settled', async () => {
+  const { world, popup } = await bootAll();
+  await flip(popup, false);
+  await flip(popup, true);
+  await wait(CONFIRMED + 100);
+  await settle();
+  const settled = world.actionLog.length;
+  await wait(CONFIRMED + 100);
+  await settle();
+  expect(world.actionLog.length).toBe(settled);
+  expect(world.forbidden).toEqual([]);
 });

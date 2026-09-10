@@ -114,7 +114,12 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
     if (!contentListeners.has(tabId)) contentListeners.set(tabId, []);
     return contentListeners.get(tabId);
   };
+  // Tracked per owning context, not as one flat list, so a single tab can be
+  // frozen while its siblings stay runnable. A frozen tab genuinely cannot run
+  // a handler — modelling it by "delivering anyway" would prove the opposite
+  // of what the frozen-tab case is meant to establish.
   const storageListeners = [];
+  const frozen = new Set();
   const storage = new Map(stored === null ? [] : Object.entries(stored));
   const pendingReads = [];
   const pendingWrites = [];
@@ -176,11 +181,15 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
   }
 
   /** Fire storage.onChanged exactly as Chrome does after a committed write. */
-  function announceChange(changes) {
-    for (const listener of storageListeners.slice()) listener(structuredClone(changes), 'local');
+  function announceChange(changes, areaName = 'local') {
+    for (const entry of storageListeners.slice()) {
+      if (frozen.has(entry.owner)) continue;
+      entry.listener(structuredClone(changes), areaName);
+    }
   }
 
-  function storageFor(chromeObject, { writable = false } = {}) {
+  function storageFor(chromeObject, { writable = false, owner = 'unknown' } = {}) {
+    const addListener = (listener) => { storageListeners.push({ owner, listener }); };
     const local = {
       get(defaults, callback) {
         const resolveRead = () => {
@@ -204,7 +213,7 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
       // writer, which is exactly what the serialized worker exists to prevent.
       local.set = function () { forbidden.push('content chrome.storage.local.set'); throw new Error('Forbidden storage write'); };
       local.remove = function () { forbidden.push('content chrome.storage.local.remove'); throw new Error('Forbidden storage write'); };
-      return { onChanged: { addListener: (listener) => { storageListeners.push(listener); } }, local };
+      return { onChanged: { addListener }, local };
     }
     local.set = function set(items, callback) {
       writeLog.push(structuredClone(items));
@@ -230,7 +239,7 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
       else if (currentWriteMode === 'throws') throw new Error('Storage unavailable');
       else setTimeout(commit, 0);
     };
-    return { onChanged: { addListener: (listener) => { storageListeners.push(listener); } }, local };
+    return { onChanged: { addListener }, local };
   }
 
   const contentChromes = new Map();
@@ -238,7 +247,7 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
     if (contentChromes.has(tabId)) return contentChromes.get(tabId);
     const object = {};
     object.runtime = runtimeFor(object, tabId);
-    object.storage = storageFor(object);
+    object.storage = storageFor(object, { owner: tabId });
     contentChromes.set(tabId, object);
     return object;
   }
@@ -299,7 +308,7 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
     },
   };
   workerChrome.runtime.lastError = undefined;
-  workerChrome.storage = storageFor(workerChrome, { writable: true });
+  workerChrome.storage = storageFor(workerChrome, { writable: true, owner: 'worker' });
 
   return {
     contentChrome, contentChromeFor, workerChrome, popupChrome, forbidden, traffic, actions, actionLog, tabsEvents,
@@ -340,9 +349,10 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
     breakAction() { actionAvailable = false; },
     repairAction() { actionAvailable = true; },
     breakQuery() { queryAvailable = false; },
-    emitStorageChange(changes, areaName = 'local') {
-      for (const listener of storageListeners.slice()) listener(structuredClone(changes), areaName);
-    },
+    emitStorageChange(changes, areaName = 'local') { announceChange(changes, areaName); },
+    /** A frozen tab cannot execute handlers or timers until it is resumed. */
+    freezeTab(tabId) { frozen.add(tabId); },
+    thawTab(tabId) { frozen.delete(tabId); },
     sendToWorker(message, sender) { return deliver(workerListeners, message, sender).catch((error) => error); },
     storageListenerCount: () => storageListeners.length,
   };
@@ -405,6 +415,15 @@ export const markers = (document) => [...document.querySelectorAll('[data-zhroma
   .map((row) => row.getAttribute('data-zhroma-priority'));
 /** The single decided switch, found the way an agent's screen reader would. */
 export const control = (document) => document.getElementById('zhroma-enabled');
+
+/** Operate the switch the way a person does: change the control, let it fire. */
+export async function flip(popup, value) {
+  const box = control(popup.document);
+  box.checked = value;
+  box.dispatchEvent(new popup.window.Event('change', { bubbles: true }));
+  await settle();
+  await settle();
+}
 
 export async function bootAll(options = {}) {
   const world = createWorld(options);

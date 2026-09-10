@@ -70,7 +70,8 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
     expect(Object.hasOwn(manifest, key)).toBe(false);
   }
   expect(shippedInventory()).toEqual(['background.js', 'content.js', 'icons/missing.png', 'icons/neutral.png',
-    'icons/unreadable.png', 'icons/working.png', 'manifest.json', 'popup.html', 'popup.js', 'zhroma.css']);
+    'icons/off.png', 'icons/unreadable.png', 'icons/working.png', 'manifest.json', 'popup.html', 'popup.js',
+    'zhroma.css']);
   const declared = [...manifest.content_scripts[0].js, ...manifest.content_scripts[0].css,
     manifest.action.default_popup, manifest.background.service_worker,
     ...Object.values(manifest.action.default_icon), ...Object.values(manifest.icons)];
@@ -83,10 +84,12 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
 
 // Runtime-projected icons are not named in the manifest, so nothing but the
 // package inventory can prove they will exist in the store zip. Pin the exact
-// set, the exact bytes' shape, and that the worker projects only those four.
+// set, the exact bytes' shape, and that the worker projects only those five.
 test('every packaged icon is a 32x32 8-bit RGBA PNG and the worker projects no other artwork', () => {
   const icons = readdirSync(new URL('icons/', root)).sort();
-  expect(icons).toEqual(['missing.png', 'neutral.png', 'unreadable.png', 'working.png']);
+  // 04-04 completes the decided set of five shape treatments: the off state is
+  // the fifth, and packaging it is a deliberate, visible change to this pin.
+  expect(icons).toEqual(['missing.png', 'neutral.png', 'off.png', 'unreadable.png', 'working.png']);
   for (const name of icons) {
     const bytes = readFileSync(new URL(`icons/${name}`, root));
     expect([...bytes.subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
