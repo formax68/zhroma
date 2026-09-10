@@ -3,11 +3,11 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: Completed 04-06-PLAN.md
-last_updated: "2026-09-10T05:53:42.153Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-09-10T06:17:58.241Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 04 execution started
-state_head: 130eb181bbb1b5aa7e7fd60614fce9c6a8f099f2
+state_head: cafc450cbd7e0e936678b44c40b18df8c84caaae
 progress:
   total_phases: 5
   completed_phases: 2
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 04 execution started
 
@@ -72,6 +72,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P01 | 8 min | 3 tasks | 1 files |
 | Phase 04 P02 | 15 min | 1 tasks | 10 files |
 | Phase 04 P06 | 12 min | 2 tasks | 6 files |
+| Phase 04 P03 | 28 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Use exact-English whole-table initial snapshots; grouped redaction placeholders remain unknown and untinted.
 - [Phase 02]: UAT now has ten source-bound live passes, one failed initial-load observation and twelve explicit user decisions. Keep G-02-1 open; no speculative runtime tuning.
 - [Phase 02]: Source settings and evidence-schema test success establish preparation only; product acceptance and independent review gates remain separate.
+- [Phase 04]: Missing-column certainty is gated on a mutation revision, not a wall clock: the settle callback re-inspects the current DOM and only confirms when the revision that armed it is still current, so a change inside the window restarts a full 100 ms rather than confirming through it.
+- [Phase 04]: Structural unreadability and unsupported locale share the cannot-read diagnosis but carry different fixed reasons; an absent, empty or whitespace lang and a subframe all take the generic structure branch so no language is ever invented.
+- [Phase 04]: The finite {diagnosis, reason} pair is validated as one key in the worker and the popup, so an unpaired combination reports the connection fact rather than falling back to a weaker message.
 
 ### Pending Todos
 
@@ -137,8 +141,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T05:53:42.071Z
-Stopped at: Completed 04-06-PLAN.md
+Last session: 2026-09-10T06:17:48.386Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
