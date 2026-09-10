@@ -1,0 +1,13 @@
+{
+  "phase": "04-honest-failure-and-an-off-switch",
+  "plan": "01",
+  "note": "Explicit user selections for the three product choices left unresolved in 04-CONTEXT.md <deferred>. Responses are recorded verbatim as supplied by the user. Recommendations were never treated as consent.",
+  "toolbar": {
+    "choice": "distinct-icons",
+    "response": "Distinct icons (proposed) — Five static shape treatments in 32x32 PNG: check = working (incl. blank column), column-plus = confirmed missing Priority column, question mark = cannot read view, hollow circle = checking/unavailable, power symbol = off. Three diagnoses stay exactly three; off/neutral describe operation, not a fourth diagnosis. Explanatory action titles, never colour alone. Store artwork stays Phase 5.",
+    "confirmed": true,
+    "requires_replan": false,
+    "requirements": ["FAIL-01", "FAIL-05"],
+    "recorded_by": "04-01 Task 1"
+  }
+}
