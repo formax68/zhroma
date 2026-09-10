@@ -5,6 +5,7 @@ import { createContext, Script } from 'node:vm';
 import { Window } from 'happy-dom';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { validateFixtureManifest } from '../../scripts/fixture-contract.js';
+import { createChromeHarness } from './chrome-harness.js';
 
 const windows = [];
 const asset = (name) => readFileSync(new URL(`../../extension/${name}`, import.meta.url), 'utf8');
@@ -27,7 +28,10 @@ afterEach(async () => {
   vi.useRealTimers();
 });
 
-function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false, onDisconnect } = {}) {
+// `preference` configures the strict Chrome harness; `confirmPreference: false`
+// leaves the startup read in flight, which is the shipped script's real
+// pre-confirmation state rather than a state this harness invents.
+function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false, onDisconnect, preference, confirmPreference = true } = {}) {
   if (!vi.isFakeTimers()) vi.useFakeTimers();
   const window = new Window({ settings: {
     enableJavaScriptEvaluation: false,
@@ -58,14 +62,29 @@ function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false,
     observe(target, options) { this.active = true; this.options = options; this.native?.observe(target, options); }
     disconnect() { this.active = false; this.native?.disconnect(); onDisconnect?.(document); }
   }
-  const context = createContext({ document, window, MutationObserver: StartupObserver, setTimeout, clearTimeout });
+  const harness = createChromeHarness(preference);
+  const context = createContext({ document, window, chrome: harness.chrome, MutationObserver: StartupObserver, setTimeout, clearTimeout });
   for (const path of manifest.content_scripts[0].js) new Script(asset(path), { filename: path }).runInContext(context);
-  return { document, window, observers, context,
+  // Chrome resolves the startup read only after the script has finished
+  // evaluating. Nothing may be painted before that reply lands.
+  if (confirmPreference) harness.flush();
+  return { document, window, observers, context, harness,
     deliver(target = document.body, extra = {}) {
       for (const observer of observers) if (observer.active) observer.callback([{ type: 'childList', target, addedNodes: [], removedNodes: [], ...extra }]);
     },
-    settled() { vi.advanceTimersByTime(100); },
-    disposed() { expect(observers.filter((observer) => observer.active)).toHaveLength(1); expect(vi.getTimerCount()).toBe(0); },
+    settled() { harness.flush(); vi.advanceTimersByTime(100); },
+    disposed() {
+      harness.assertClean();
+      expect(observers.filter((observer) => observer.active)).toHaveLength(1);
+      expect(vi.getTimerCount()).toBe(0);
+    },
+    // An unconfirmed or refused preference must leave no observer running and
+    // no timer pending — dormant, not merely untinted.
+    dormant() {
+      harness.assertClean();
+      expect(observers.filter((observer) => observer.active)).toHaveLength(0);
+      expect(vi.getTimerCount()).toBe(0);
+    },
   };
 }
 
@@ -378,5 +397,49 @@ test('real happy-dom MutationObserver delivers delayed document insertion', asyn
   runtime.settled();
   expect(markers(runtime.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
   expect(runtime.observers[0].options).toEqual({ childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['data-garden-id', 'data-test-id', 'role', 'colspan', 'rowspan', 'lang', 'data-zhroma-priority'] });
+  runtime.disposed();
+});
+
+// --- preference readiness gates the very first paint ------------------------
+
+test('an in-flight startup read leaves the controller dormant, then tints once it lands', () => {
+  const runtime = loadRuntimeFixture({ confirmPreference: false });
+  expect(runtime.harness.readCount()).toBe(1);
+  expect(runtime.harness.pendingCount()).toBe(1);
+  // The reply is still queued in Chrome, so there is nothing to be right about
+  // yet: no observer, no timer, no marker, no guess.
+  vi.advanceTimersByTime(15000);
+  expect(markers(runtime.document)).toEqual([null, null, null, null]);
+  runtime.dormant();
+  runtime.settled();
+  expect(markers(runtime.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  runtime.disposed();
+});
+
+test.each([
+  ['a rejected read', { readMode: 'rejected' }],
+  ['a throwing storage API', { readMode: 'throws' }],
+  ['a stored false', { stored: false }],
+  ['a non-boolean stored value', { stored: 'true' }],
+  ['a null stored value', { stored: null }],
+])('%s stays dormant: no marker is ever written and every timer drains', (_name, preference) => {
+  let writes;
+  const runtime = loadRuntimeFixture({ preference, mutate(_document, window) {
+    writes = vi.spyOn(window.Element.prototype, 'setAttribute');
+  } });
+  vi.advanceTimersByTime(15000);
+  expect(markers(runtime.document)).toEqual([null, null, null, null]);
+  expect(writes.mock.calls.filter(([name]) => name === 'data-zhroma-priority')).toEqual([]);
+  runtime.dormant();
+});
+
+test('a preference confirmed only by a later change event still reaches the first paint', () => {
+  const runtime = loadRuntimeFixture({ preference: { stored: false } });
+  runtime.settled();
+  expect(markers(runtime.document)).toEqual([null, null, null, null]);
+  runtime.dormant();
+  runtime.harness.emitChange({ enabled: { oldValue: false, newValue: true } });
+  runtime.settled();
+  expect(markers(runtime.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
   runtime.disposed();
 });

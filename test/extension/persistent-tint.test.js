@@ -5,6 +5,7 @@ import { createContext, Script } from 'node:vm';
 import { Window } from 'happy-dom';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { validateFixtureManifest } from '../../scripts/fixture-contract.js';
+import { createChromeHarness } from './chrome-harness.js';
 
 const windows = [];
 const asset = (name) => readFileSync(new URL(`../../extension/${name}`, import.meta.url), 'utf8');
@@ -27,7 +28,10 @@ afterEach(async () => {
   vi.useRealTimers();
 });
 
-function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false, onDisconnect, hidden = false, instrumentCollections = false } = {}) {
+// `preference` configures the strict Chrome harness; `confirmPreference: false`
+// leaves the startup read in flight, which is the shipped script's real
+// pre-confirmation state rather than a state this harness invents.
+function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false, onDisconnect, hidden = false, instrumentCollections = false, preference, confirmPreference = true } = {}) {
   if (!vi.isFakeTimers()) vi.useFakeTimers();
   const window = new Window({ settings: {
     enableJavaScriptEvaluation: false,
@@ -63,15 +67,30 @@ function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false,
   class TrackedSet extends Set { constructor(values) { super(values); collections.push(this); } }
   const windowListeners = vi.spyOn(window, 'addEventListener');
   const documentListeners = vi.spyOn(document, 'addEventListener');
-  const context = createContext({ document, window, MutationObserver: StartupObserver, setTimeout, clearTimeout,
+  const harness = createChromeHarness(preference);
+  const context = createContext({ document, window, chrome: harness.chrome, MutationObserver: StartupObserver, setTimeout, clearTimeout,
     ...(instrumentCollections ? { Set: TrackedSet } : {}) });
   for (const path of manifest.content_scripts[0].js) new Script(asset(path), { filename: path }).runInContext(context);
-  return { document, window, observers, context, collections, windowListeners, documentListeners,
+  // Chrome resolves the startup read only after the script has finished
+  // evaluating. Nothing may be painted before that reply lands.
+  if (confirmPreference) harness.flush();
+  return { document, window, observers, context, collections, windowListeners, documentListeners, harness,
     deliver(target = document.body, extra = {}) {
       for (const observer of observers) if (observer.active) observer.callback([{ type: 'childList', target, addedNodes: [], removedNodes: [], ...extra }]);
     },
-    settled() { vi.advanceTimersByTime(100); },
-    disposed() { expect(observers.filter((observer) => observer.active)).toHaveLength(1); expect(vi.getTimerCount()).toBe(0); },
+    settled() { harness.flush(); vi.advanceTimersByTime(100); },
+    disposed() {
+      harness.assertClean();
+      expect(observers.filter((observer) => observer.active)).toHaveLength(1);
+      expect(vi.getTimerCount()).toBe(0);
+    },
+    // An unconfirmed or refused preference must leave no observer running and
+    // no timer pending — dormant, not merely untinted.
+    dormant() {
+      harness.assertClean();
+      expect(observers.filter((observer) => observer.active)).toHaveLength(0);
+      expect(vi.getTimerCount()).toBe(0);
+    },
   };
 }
 
@@ -457,4 +476,61 @@ test('untracked markers on blank rows and copied non-view subtrees are cleared w
   r.settled();
   await new Promise((resolve) => r.window.setTimeout(resolve, 0));
   r.disposed();
+});
+
+// --- the preference is an input of its own, never a lifecycle side effect ---
+
+test('switching the preference off mid-session clears owned markers and stops observation in the same turn', () => {
+  const r = loadRuntimeFixture(); r.settled();
+  const tickets = rows(r.document);
+  expect(markers(r.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  r.harness.emitChange({ enabled: { oldValue: true, newValue: false } });
+  expect(tickets.every((row) => !row.hasAttribute('data-zhroma-priority'))).toBe(true);
+  r.dormant();
+  // A churning page cannot wake a switched-off controller.
+  for (let i = 0; i < 30; i++) { r.deliver(r.document.body); vi.advanceTimersByTime(50); }
+  expect(markers(r.document)).toEqual([null, null, null, null]);
+  r.dormant();
+});
+
+test('a stored false survives visibility and bfcache cycles and never resumes the controller', () => {
+  const r = loadRuntimeFixture({ preference: { stored: false } });
+  r.settled(); r.dormant();
+  const restored = new r.window.Event('pageshow');
+  Object.defineProperty(restored, 'persisted', { value: true });
+  for (let i = 0; i < 3; i++) {
+    r.document.hidden = true; r.document.dispatchEvent(new r.window.Event('visibilitychange'));
+    r.document.hidden = false; r.document.dispatchEvent(new r.window.Event('visibilitychange'));
+    r.window.dispatchEvent(new r.window.Event('pagehide'));
+    r.window.dispatchEvent(restored);
+    r.settled();
+    expect(markers(r.document)).toEqual([null, null, null, null]);
+    r.dormant();
+  }
+  expect(r.harness.readCount()).toBe(4);
+});
+
+test('a restored document re-reads the preference instead of trusting the value it froze with', () => {
+  const r = loadRuntimeFixture(); r.settled();
+  expect(markers(r.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  r.window.dispatchEvent(new r.window.Event('pagehide'));
+  // The preference changed while this document was frozen and unreachable.
+  r.harness.setStored(false);
+  const restored = new r.window.Event('pageshow');
+  Object.defineProperty(restored, 'persisted', { value: true });
+  r.window.dispatchEvent(restored);
+  r.settled();
+  expect(markers(r.document)).toEqual([null, null, null, null]);
+  r.dormant();
+});
+
+test.each([
+  ['hidden with the preference on', { hidden: true }],
+  ['visible with the preference off', { preference: { stored: false } }],
+  ['hidden with the preference off', { hidden: true, preference: { stored: false } }],
+])('%s stays dormant: neither input alone may run the controller', (_name, options) => {
+  const r = loadRuntimeFixture(options);
+  r.settled();
+  expect(markers(r.document)).toEqual([null, null, null, null]);
+  r.dormant();
 });

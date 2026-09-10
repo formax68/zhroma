@@ -1,15 +1,26 @@
 // @vitest-environment node
-import { readFileSync, readdirSync, realpathSync } from 'node:fs';
+import { readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { createContext, Script } from 'node:vm';
 import { Window } from 'happy-dom';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { validateFixtureManifest } from '../../scripts/fixture-contract.js';
+import { createChromeHarness } from './chrome-harness.js';
 
 const root = new URL('../../extension/', import.meta.url);
 const asset = (name) => readFileSync(new URL(name, root), 'utf8');
 const manifest = JSON.parse(asset('manifest.json'));
 const windows = [];
+
+// The complete shipped tree, not just its top level: a directory that hides new
+// files from the inventory would defeat the whole point of pinning it.
+function shippedInventory(directory = root, prefix = '') {
+  return readdirSync(directory, { withFileTypes: true })
+    .flatMap((entry) => (entry.isDirectory()
+      ? shippedInventory(new URL(`${entry.name}/`, directory), `${prefix}${entry.name}/`)
+      : [`${prefix}${entry.name}`]))
+    .sort();
+}
 
 beforeAll(async () => {
   expect((await validateFixtureManifest(fileURLToPath(new URL('../fixtures/manifest.json', import.meta.url)), {
@@ -37,17 +48,36 @@ function createDocument() {
   return window;
 }
 
+// Phase 4 added an action, a popup and a service worker by decision
+// (04-DECISIONS.json). The inventory and the manifest are re-pinned to that
+// decided set — narrowed in scope, never weakened: this is still a whole-object
+// equality, so any undeclared key or unshipped file fails.
 test('manifest has the exact minimal MV3 isolated top-frame static injection contract', () => {
   expect(manifest).toEqual({
-    manifest_version: 3, name: 'Zhroma', version: '0.1.0', permissions: ['storage'],
+    manifest_version: 3, name: 'Zhroma', version: '0.1.0',
+    minimum_chrome_version: '106', permissions: ['storage'],
+    action: { default_popup: 'popup.html', default_icon: { 32: 'icons/neutral.png' } },
+    icons: { 32: 'icons/neutral.png' },
+    background: { service_worker: 'background.js' },
     content_scripts: [{ matches: ['https://*.zendesk.com/agent/*'], js: ['content.js'], css: ['zhroma.css'],
       run_at: 'document_idle', world: 'ISOLATED', all_frames: false }],
   });
-  expect(readdirSync(root).sort()).toEqual(['content.js', 'manifest.json', 'zhroma.css']);
-  for (const name of [...manifest.content_scripts[0].js, ...manifest.content_scripts[0].css]) {
-    expect(name).toMatch(/^[a-z-]+\.(js|css)$/);
+  // Stated again as explicit prohibitions, so a future widening reads as a
+  // deleted assertion rather than as an edited literal.
+  for (const key of ['host_permissions', 'optional_permissions', 'optional_host_permissions',
+    'web_accessible_resources', 'externally_connectable', 'content_security_policy',
+    'declarative_net_request', 'commands', 'devtools_page', 'chrome_url_overrides', 'side_panel']) {
+    expect(Object.hasOwn(manifest, key)).toBe(false);
+  }
+  expect(shippedInventory()).toEqual(['background.js', 'content.js', 'icons/neutral.png', 'icons/working.png',
+    'manifest.json', 'popup.html', 'popup.js', 'zhroma.css']);
+  const declared = [...manifest.content_scripts[0].js, ...manifest.content_scripts[0].css,
+    manifest.action.default_popup, manifest.background.service_worker,
+    ...Object.values(manifest.action.default_icon), ...Object.values(manifest.icons)];
+  for (const name of declared) {
+    expect(name).toMatch(/^(icons\/)?[a-z-]+\.(js|css|html|png)$/);
     expect(realpathSync(new URL(name, root))).toBe(fileURLToPath(new URL(name, root)));
-    expect(asset(name).length).toBeGreaterThan(0);
+    expect(statSync(new URL(name, root)).size).toBeGreaterThan(0);
   }
 });
 
@@ -61,11 +91,16 @@ test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every decla
   const forbiddenCalls = [];
   const deny = (name) => function () { forbiddenCalls.push(name); throw new Error('Forbidden runtime channel'); };
   const storage = new Proxy({}, { get(_target, name) { forbiddenCalls.push(`storage.${String(name)}`); throw new Error('Forbidden storage access'); } });
+  // `chrome` is no longer denied wholesale — the shipped script legitimately
+  // reads one boolean and sends one finite status hint. It is replaced by the
+  // strict harness, which permits exactly those calls and records every other
+  // Chrome surface as a violation. `browser.*` stays denied outright.
+  const harness = createChromeHarness();
   const sentinels = {
     fetch: deny('fetch'), XMLHttpRequest: deny('XHR'), WebSocket: deny('WebSocket'), EventSource: deny('EventSource'),
     Worker: deny('Worker'), SharedWorker: deny('SharedWorker'), Image: deny('Image'),
     localStorage: storage, sessionStorage: storage, indexedDB: storage, caches: storage,
-    chrome: { storage }, browser: { storage }, navigator: { sendBeacon: deny('beacon') },
+    chrome: harness.chrome, browser: { storage }, navigator: { sendBeacon: deny('beacon') },
     console: { log: deny('console.log'), warn: deny('console.warn'), error: deny('console.error'), info: deny('console.info') },
   };
   for (const [name, value] of Object.entries(sentinels)) Object.defineProperty(window, name, { value, configurable: true });
@@ -75,8 +110,11 @@ test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every decla
   }, { codeGeneration: { strings: false, wasm: false } });
   const initialGlobals = Object.keys(context);
   for (const path of manifest.content_scripts[0].js) new Script(asset(path), { filename: path }).runInContext(context);
+  harness.flush();
   vi.advanceTimersByTime(15000);
   expect(forbiddenCalls).toEqual([]);
+  expect(harness.violations).toEqual([]);
+  expect(harness.messages.every((message) => message.type === 'status-invalidated')).toBe(true);
   expect(Object.keys(context)).toEqual(initialGlobals);
   expect(vi.getTimerCount()).toBe(0);
   const markers = [...document.querySelectorAll('[data-zhroma-priority]')];
@@ -99,10 +137,12 @@ test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every decla
     window.dispatchEvent(new window.Event('pagehide'));
     document.body.innerHTML = before;
     window.dispatchEvent(new window.Event('pageshow'));
+    harness.flush();
     vi.runOnlyPendingTimers();
     expect(vi.getTimerCount()).toBe(0);
   }
   expect(forbiddenCalls).toEqual([]);
+  expect(harness.violations).toEqual([]);
   expect(Object.keys(context)).toEqual(initialGlobals);
 });
 
@@ -128,7 +168,9 @@ test('ongoing writes target only the owned marker and skip unchanged values', ()
   }
   const writes = vi.spyOn(window.Element.prototype, 'setAttribute');
   const removals = vi.spyOn(window.Element.prototype, 'removeAttribute');
-  new Script(asset('content.js')).runInContext(createContext({ document, window, MutationObserver: Observer, setTimeout, clearTimeout }));
+  const harness = createChromeHarness();
+  new Script(asset('content.js')).runInContext(createContext({ document, window, chrome: harness.chrome, MutationObserver: Observer, setTimeout, clearTimeout }));
+  harness.flush();
   vi.runOnlyPendingTimers();
   expect(writes.mock.calls).toEqual(['Urgent', 'High', 'Normal', 'Low'].map((p) => ['data-zhroma-priority', p]));
   writes.mockClear();
@@ -206,4 +248,95 @@ test('CSS rule reordering preserves hue mapping; CSS-only shade edits leave dete
   expect(tuned[0].style.backgroundColor).not.toBe(rules[0].style.backgroundColor);
   expect(tuned[0].selectorText).toBe(rules[0].selectorText);
   expect(asset('content.js')).toBe(sourceBefore);
+});
+
+// --- the Chrome seam itself is part of the contract -------------------------
+
+test('the strict harness admits exactly the shipped Chrome seam and refuses every other surface', () => {
+  const harness = createChromeHarness();
+  const probes = [
+    ['chrome.tabs', () => harness.chrome.tabs],
+    ['chrome.action', () => harness.chrome.action],
+    ['chrome.scripting', () => harness.chrome.scripting],
+    ['chrome.cookies', () => harness.chrome.cookies],
+    ['chrome.webRequest', () => harness.chrome.webRequest],
+    ['chrome.storage.sync', () => harness.chrome.storage.sync],
+    ['chrome.storage.session', () => harness.chrome.storage.session],
+    ['chrome.storage.managed', () => harness.chrome.storage.managed],
+    ['chrome.storage.local.set', () => harness.chrome.storage.local.set],
+    ['chrome.storage.local.remove', () => harness.chrome.storage.local.remove],
+    ['chrome.runtime.connect', () => harness.chrome.runtime.connect],
+    ['chrome.runtime.getURL', () => harness.chrome.runtime.getURL],
+  ];
+  for (const [name, probe] of probes) expect(probe, name).toThrow(/Unpermitted Chrome usage/);
+  expect(harness.violations).toEqual(probes.map(([name]) => name));
+  // A permitted call with an unpermitted argument shape is refused too.
+  expect(() => harness.chrome.storage.local.get({ enabled: true, extra: 1 }, () => {})).toThrow();
+  expect(() => harness.chrome.storage.local.get({ theme: 'dark' }, () => {})).toThrow();
+  expect(() => harness.chrome.runtime.sendMessage({ type: 'status-invalidated', row: 'Urgent' })).toThrow();
+  expect(() => harness.chrome.runtime.sendMessage({ type: 'anything-else' })).toThrow();
+  // The one permitted read and the one permitted message stay permitted.
+  expect(() => harness.chrome.storage.local.get({ enabled: true }, () => {})).not.toThrow();
+  expect(() => harness.chrome.runtime.sendMessage({ type: 'status-invalidated' })).not.toThrow();
+});
+
+test('an unavailable extension context leaves the page untouched instead of defaulting the tint on', () => {
+  vi.useFakeTimers();
+  const window = createDocument();
+  const { document } = window;
+  const before = document.body.innerHTML;
+  // No `chrome` at all — an extension reload, or an invalidated context. The
+  // shipped script must fail closed. It must never carry a bypass that treats
+  // an unreadable preference as an enabled one.
+  const context = createContext({ document, window, MutationObserver: window.MutationObserver, setTimeout, clearTimeout });
+  new Script(asset('content.js'), { filename: 'content.js' }).runInContext(context);
+  vi.advanceTimersByTime(15000);
+  expect(document.querySelectorAll('[data-zhroma-priority]')).toHaveLength(0);
+  expect(document.body.innerHTML).toBe(before);
+  expect(vi.getTimerCount()).toBe(0);
+  expect(asset('content.js')).not.toMatch(/typeof\s+chrome\s*[!=]==?\s*['"]undefined['"]/);
+});
+
+test.each([
+  ['a read that never resolves', { readMode: 'deferred' }, false],
+  ['a rejected read', { readMode: 'rejected' }, true],
+  ['a throwing storage API', { readMode: 'throws' }, true],
+  ['a stored false', { stored: false }, true],
+  ['a non-boolean stored value', { stored: 1 }, true],
+])('%s writes no marker and drains every timer', (_name, options, confirm) => {
+  vi.useFakeTimers();
+  const window = createDocument();
+  const { document } = window;
+  const before = document.body.innerHTML;
+  const harness = createChromeHarness(options);
+  const context = createContext({ document, window, chrome: harness.chrome,
+    MutationObserver: window.MutationObserver, setTimeout, clearTimeout });
+  new Script(asset('content.js'), { filename: 'content.js' }).runInContext(context);
+  if (confirm) harness.flush();
+  vi.advanceTimersByTime(15000);
+  expect(document.querySelectorAll('[data-zhroma-priority]')).toHaveLength(0);
+  expect(document.body.innerHTML).toBe(before);
+  expect(vi.getTimerCount()).toBe(0);
+  harness.assertClean();
+});
+
+test('the content script reports only the finite status enum, and only to the packaged worker', () => {
+  vi.useFakeTimers();
+  const window = createDocument();
+  const { document } = window;
+  const harness = createChromeHarness();
+  const context = createContext({ document, window, chrome: harness.chrome,
+    MutationObserver: window.MutationObserver, setTimeout, clearTimeout });
+  new Script(asset('content.js'), { filename: 'content.js' }).runInContext(context);
+  harness.flush();
+  vi.advanceTimersByTime(15000);
+  expect(harness.messageListenerCount()).toBe(1);
+  expect(harness.storageListenerCount()).toBe(1);
+  const reply = harness.requestStatus();
+  expect(reply).toEqual({ type: 'status', requestId: 1, diagnosis: 'working', reason: null });
+  // A foreign extension id and a sender carrying a tab are both refused.
+  expect(harness.requestStatus({ sender: { id: 'another-extension-id' } })).toBeUndefined();
+  expect(harness.requestStatus({ sender: { id: undefined, tab: { id: 3 } } })).toBeUndefined();
+  expect(harness.requestStatus({ requestId: 0 })).toBeUndefined();
+  harness.assertClean();
 });
