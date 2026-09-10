@@ -179,7 +179,7 @@ Plans:
   3. The popup carries an on/off switch that is already on; turning it off clears every tint from the view currently on screen without a refresh, and turning it back on restores them.
   4. Quitting Chrome and reopening it preserves whichever way the switch was left.
 
-**Plans**: 5/6 plans executed
+**Plans**: 5/14 plans executed (6 original + 8 gap-closure from 04-REVIEW.md)
 **UI hint**: yes
 
 Plans:
@@ -190,6 +190,14 @@ Plans:
 - [x] 04-03-PLAN.md — Confirm missing-column certainty and distinguish all diagnoses (wave 4)
 - [x] 04-04-PLAN.md — Persist off/on intent and apply it without refreshing (wave 5)
 - [ ] 04-05-PLAN.md — Bind final-source evidence and reach blocking browser acceptance (wave 6)
+- [ ] 04-07-PLAN.md — Tint every English regional locale and win the cascade (CR-01, WR-08) (wave 7, gap closure)
+- [ ] 04-08-PLAN.md — Bound the worker's hops and stop the doubles laundering failures (WR-03, WR-04, WR-10) (wave 7, gap closure)
+- [ ] 04-09-PLAN.md — Stop the workload failing open and measure the real dormancy cost (WR-09) (wave 7, gap closure)
+- [ ] 04-10-PLAN.md — A failed save leaves a truthful, usable switch (WR-04, WR-07) (wave 8, gap closure)
+- [ ] 04-11-PLAN.md — Re-establish the acceptance record on repaired bytes and close the 04-05 record (wave 9, gap closure)
+- [ ] 04-12-PLAN.md — Give the worker's staleness design an executable specification (WR-01) (wave 10, gap closure)
+- [ ] 04-13-PLAN.md — Pin the reply boundary and the finite protocol's completeness (WR-02, WR-05) (wave 11, gap closure)
+- [ ] 04-14-PLAN.md — Cover single-writer serialization and closed-tab cleanup (WR-06) (wave 12, gap closure)
 
 ### Phase 5: Published
 
@@ -216,7 +224,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. DOM Recon Spike | 15/15 | Complete    | 2026-09-08 |
 | 2. First Tint on a Real View | 3/3 | Complete    | 2026-09-09 |
 | 3. The Tint Survives Everything | 3/4 | In Progress|  |
-| 4. Honest Failure and an Off Switch | 5/6 | In Progress|  |
+| 4. Honest Failure and an Off Switch | 5/14 | In Progress|  |
 | 5. Published | 0/TBD | Not started | - |
 
 ## Requirement Coverage
