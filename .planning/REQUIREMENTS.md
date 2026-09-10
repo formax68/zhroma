@@ -44,17 +44,17 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Failure Handling
 
-- [x] **FAIL-01**: Extension distinguishes three states — tinting normally, the view has no Priority column, and priority values are unreadable in this agent's locale
-- [x] **FAIL-02**: When a view genuinely has no Priority column, an unobtrusive hint tells the agent to add one — shown only when that diagnosis is certain
+- [ ] **FAIL-01**: Extension distinguishes three states — tinting normally, the view has no Priority column, and priority values are unreadable in this agent's locale
+- [ ] **FAIL-02**: When a view genuinely has no Priority column, an unobtrusive hint tells the agent to add one — shown only when that diagnosis is certain
 - [ ] **FAIL-03**: When priority values cannot be read because the agent's locale is not supported, no hint claiming a missing column is shown
 - [ ] **FAIL-04**: When the extension cannot do its job for any reason, the Zendesk page is left visually untouched rather than partially or wrongly styled
-- [x] **FAIL-05**: The agent can see which of the three states applies from the toolbar icon, without opening anything
+- [ ] **FAIL-05**: The agent can see which of the three states applies from the toolbar icon, without opening anything
 
 ### Control
 
 - [x] **CTRL-01**: Extension works immediately on install with nothing to configure
-- [x] **CTRL-02**: Agent can turn tinting off and back on from the toolbar popup
-- [x] **CTRL-03**: The on/off setting persists across browser restarts
+- [ ] **CTRL-02**: Agent can turn tinting off and back on from the toolbar popup
+- [ ] **CTRL-03**: The on/off setting persists across browser restarts
 - [ ] **CTRL-04**: Turning tinting off clears tints from the current view without requiring a page refresh
 
 ### Distribution
@@ -124,14 +124,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LIVE-03 | Phase 3 | Pending |
 | LIVE-04 | Phase 3 | Pending |
 | LIVE-05 | Phase 3 | Pending |
-| FAIL-01 | Phase 4 | Complete |
-| FAIL-02 | Phase 4 | Complete |
+| FAIL-01 | Phase 4 | Gaps Found |
+| FAIL-02 | Phase 4 | Gaps Found |
 | FAIL-03 | Phase 4 | Pending |
 | FAIL-04 | Phase 3 | Pending |
-| FAIL-05 | Phase 4 | Complete |
+| FAIL-05 | Phase 4 | Gaps Found |
 | CTRL-01 | Phase 2 | Complete |
-| CTRL-02 | Phase 4 | Complete |
-| CTRL-03 | Phase 4 | Complete |
+| CTRL-02 | Phase 4 | Gaps Found |
+| CTRL-03 | Phase 4 | Gaps Found |
 | CTRL-04 | Phase 4 | Pending |
 | STORE-01 | Phase 5 | Pending |
 | STORE-02 | Phase 2 | Complete |
