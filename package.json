@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "npm run test:recon",
-    "test:recon": "node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js"
+    "test:recon": "node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js",
+    "test:mutants": "node scripts/verify-mutation-kills.js"
   },
   "devDependencies": {
     "happy-dom": "20.13.1",

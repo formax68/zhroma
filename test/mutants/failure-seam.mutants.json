@@ -1,0 +1,50 @@
+[
+  {
+    "id": "worker-lasterror",
+    "file": "extension/background.js",
+    "find": "if (chrome.runtime.lastError) { resolve(null); return; }",
+    "replace": "",
+    "suites": ["test/extension/failure-seam.test.js"],
+    "note": "the worker reads a failed storage read as an absent key (04-REVIEW WR-03; removal previously left 277/277 passing)"
+  },
+  {
+    "id": "content-lasterror",
+    "file": "extension/content.js",
+    "find": "if (chrome.runtime.lastError) { finish(null); return; }",
+    "replace": "",
+    "suites": ["test/extension/failure-seam.test.js"],
+    "note": "the content script reads a failed storage read as an absent key and tints a view the agent may have switched off (04-REVIEW WR-03)"
+  },
+  {
+    "id": "worker-status-unbounded",
+    "file": "extension/background.js",
+    "find": "bounded(chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 }))",
+    "replace": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 })",
+    "suites": ["test/extension/failure-seam.test.js"],
+    "note": "a silent top frame stalls the toolbar projection with no deadline (04-REVIEW WR-04, T-04G-04)"
+  },
+  {
+    "id": "worker-apply-unbounded",
+    "file": "extension/background.js",
+    "find": "bounded(chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 }))",
+    "replace": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 })",
+    "suites": ["test/extension/failure-seam.test.js"],
+    "note": "a silent top frame wedges the single preference writer for every tab (04-REVIEW WR-04, T-04G-04)"
+  },
+  {
+    "id": "worker-status-frameid",
+    "file": "extension/background.js",
+    "find": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 })",
+    "replace": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId })",
+    "suites": ["test/extension/failure-seam.test.js", "test/extension/toolbar-popup.test.js"],
+    "note": "the status request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)"
+  },
+  {
+    "id": "worker-apply-frameid",
+    "file": "extension/background.js",
+    "find": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 })",
+    "replace": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId })",
+    "suites": ["test/extension/failure-seam.test.js", "test/extension/toolbar-popup.test.js"],
+    "note": "the apply request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)"
+  }
+]
