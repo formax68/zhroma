@@ -14,12 +14,44 @@
 // Nothing here reimplements popup behaviour, and no new copy is expected on
 // any path — `COPY.notSaved` is the string the user ratified at the Phase 4
 // checkpoint (WINDOWS entry 11).
+import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
 import { afterEach, expect, test } from 'vitest';
 import {
-  COPY, bootAll, closeWindows, control, createWorld, flip, loadPopup, settle, statusText,
+  COPY, bootAll, closeWindows, control, createWorld, flip, loadPopup, settle, statusText, wait,
 } from './tracer-world.js';
 
 afterEach(closeWindows);
+
+// The shipped deadline, derived from the bytes that ship rather than copied
+// into this file, exactly as `failure-seam.test.js` derives the worker's. A
+// source edit that moves it moves every assertion below.
+const popupSource = readFileSync(new URL('../../extension/popup.js', import.meta.url), 'utf8');
+const bound = () => {
+  const match = popupSource.match(/const REQUEST_TIMEOUT_MS = (\d+);/);
+  if (match === null) throw new Error('Final source setting could not be extracted: REQUEST_TIMEOUT_MS');
+  return Number(match[1]);
+};
+
+// A test-local patience limit, deliberately NOT a copy of the shipped
+// constant: it is the point past which "bounded" stops being a meaningful
+// claim. The tie back to the shipped value is asserted separately.
+const CEILING = 5000;
+// The double's own port-close fallback must outlive that limit, or the double
+// closes the channel first and the test proves nothing about the popup.
+const PORT_CLOSE = CEILING + 1000;
+const SLOW = 15000;
+
+/** Poll until the predicate holds; `null` means it never did within `limit`. */
+async function until(predicate, limit = CEILING) {
+  const started = Date.now();
+  while (Date.now() - started < limit) {
+    await settle(2);
+    if (predicate()) return Date.now() - started;
+    await wait(25);
+  }
+  return null;
+}
 
 /** A reply that never comes: the listener claims the channel and stays silent. */
 const WEDGE = Symbol('wedged');
@@ -231,3 +263,66 @@ test('a successful save is unchanged, including the click that arrives while one
   expect(statusText(popup.document)).toBe(COPY.off);
   expect(world.forbidden).toEqual([]);
 });
+
+// --- WR-04, the popup hop: a silent worker costs one bounded wait ----------
+
+test('a worker that never answers set-enabled costs one bounded wait and the ratified line', async () => {
+  const world = createWorld({ portCloseMs: PORT_CLOSE });
+  // The status reply lands, so a confirmed value exists; the write request is
+  // received and never answered.
+  fakeWorker(world, { enabled: true, setEnabled: () => WEDGE });
+  const popup = loadPopup(world);
+  await settle();
+  const box = control(popup.document);
+  expect(box.checked).toBe(true);
+
+  box.checked = false;
+  box.dispatchEvent(new popup.window.Event('change', { bubbles: true }));
+  const elapsed = await until(() => statusText(popup.document) === COPY.notSaved);
+
+  // The switch answered at all: this is the whole of WR-04's popup half.
+  expect(elapsed).not.toBeNull();
+  // Bounded by the SHIPPED constant, not by the double's port-close fallback.
+  expect(elapsed).toBeGreaterThanOrEqual(bound() - 200);
+  expect(elapsed).toBeLessThan(bound() * 2);
+  // The timeout reaches the corrected failure path: no new copy, no new state.
+  expect(box.checked).toBe(true);
+  expect(box.disabled).toBe(false);
+  expect(world.forbidden).toEqual([]);
+}, SLOW);
+
+test('a worker that never answers the opening refresh leaves the control out of service', async () => {
+  const world = createWorld({ portCloseMs: PORT_CLOSE });
+  // Every request is received and none is ever answered.
+  world.workerChrome.runtime.onMessage.addListener(() => true);
+  const popup = loadPopup(world);
+
+  const elapsed = await until(() => statusText(popup.document) === COPY.unavailable);
+
+  expect(elapsed).not.toBeNull();
+  expect(elapsed).toBeLessThan(bound() * 2);
+  // Nothing was confirmed, so no position is shown and no write may originate
+  // from an unknown baseline.
+  expect(control(popup.document).disabled).toBe(true);
+  expect(world.forbidden).toEqual([]);
+}, SLOW);
+
+test('a worker that answers normally is not slowed by the deadline', async () => {
+  const { world, popup } = await bootAll({ stored: { enabled: true } });
+  const box = control(popup.document);
+  expect(statusText(popup.document)).toBe(COPY.working);
+  expect(box.checked).toBe(true);
+  expect(box.disabled).toBe(false);
+
+  const started = Date.now();
+  await flip(popup, false);
+  const elapsed = Date.now() - started;
+
+  // A normal round trip settles well inside the deadline, so the bound adds
+  // latency to nothing that was already answering.
+  expect(elapsed).toBeLessThan(bound() / 2);
+  expect(statusText(popup.document)).toBe(COPY.off);
+  expect(box.checked).toBe(false);
+  expect(box.disabled).toBe(false);
+  expect(world.forbidden).toEqual([]);
+}, SLOW);
