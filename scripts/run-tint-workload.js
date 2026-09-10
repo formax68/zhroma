@@ -48,14 +48,22 @@ export function summarizeSamples(samples) {
     callbacks: samples.reduce((n, s) => n + s.callbacks, 0), passes: samples.reduce((n, s) => n + s.passes, 0), writes: samples.reduce((n, s) => n + s.writes, 0) };
 }
 export function validateWorkloadReport(run) {
-  requireValue([30, 200, 1000].includes(run.size) && ['enabled', 'disabled'].includes(run.mode), 'Invalid run scope');
+  requireValue([30, 200, 1000].includes(run.size) && ['enabled', 'disabled', 'dormant'].includes(run.mode), 'Invalid run scope');
+  // Only the dormant mode is required to declare a runtime. Enabled and
+  // disabled runs — including Phase 3's historical samples, which predate the
+  // field entirely — validate exactly as they always have.
+  if (run.mode === 'dormant') requireValue(run.runtime === 'loaded', 'Dormant run must report a loaded runtime');
   requireValue(run.warmups === 10 && run.measured === 100, 'Incomplete protocol');
   requireValue(run.operations && Object.keys(run.operations).length === 6 && OPERATIONS.every((op) => Object.hasOwn(run.operations, op)), 'Incomplete operation matrix');
   let failed = false;
   for (const op of OPERATIONS) {
     const samples = run.operations[op]; requireValue(samples.length === 100, 'Incomplete sample matrix');
     const metrics = summarizeSamples(samples);
-    if (run.mode === 'disabled') requireValue(metrics.callbacks === 0 && metrics.writes === 0, 'Extension callbacks in disabled control');
+    // A loaded controller that declines to act must cost nothing observable.
+    // No timing budget applies: the claim dormancy makes is zero work, not a
+    // fast amount of it.
+    if (run.mode === 'dormant') requireValue(metrics.callbacks === 0 && metrics.writes === 0, 'Extension callbacks in dormant run');
+    else if (run.mode === 'disabled') requireValue(metrics.callbacks === 0 && metrics.writes === 0, 'Extension callbacks in disabled control');
     else {
       if (op !== 'unrelated') requireValue(samples.every((s) => s.passes > 0 && s.segments.some((p) => p.category === 'observer')), 'Missing extension callback categories');
       if (metrics.max >= 16 || (run.size === 30 && metrics.median >= 2)) failed = true;
@@ -193,6 +201,12 @@ export async function runWorkload(options) {
       result.metrics = Object.fromEntries(Object.entries(result.operations).map(([key, samples]) => [key, summarizeSamples(samples)]));
       result.status = options.smoke ? 'smoke_passed' : validateWorkloadReport(result);
       if (options.smoke && options.mode === 'enabled') requireValue(result.metrics.edit.callbacks > 0, 'Smoke missing extension callbacks');
+      // The claim the dormant mode exists to make, asserted rather than assumed.
+      if (options.smoke && options.mode === 'dormant') {
+        requireValue(result.runtime === 'loaded', 'Dormant smoke did not load the runtime');
+        requireValue(result.metrics.edit.callbacks === 0 && result.metrics.edit.writes === 0, 'Dormant smoke recorded extension callbacks or writes');
+        requireValue(result.resources.observers === 0 && result.resources.pendingTimers === 0, 'Dormant smoke retained observers or pending timers');
+      }
     }
     if (options.output) {
       const output = resolve(options.output); let previous;

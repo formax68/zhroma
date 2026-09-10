@@ -44,7 +44,11 @@
   // is pinned by runtime-contract.test.js and toolbar-popup.test.js.
   let confirmPreference;
   const preferenceConfirmed = new Promise((resolve) => { confirmPreference = resolve; });
-  function installPreferenceSeam() {
+  // `stored` is the storage area's actual contents. It used to be absent and
+  // `get` always echoed the caller's defaults, so no run ever exercised a
+  // stored `false` — the "disabled control" was a page with no extension on it.
+  function installPreferenceSeam(stored = {}) {
+    const store = { ...stored };
     const storageListeners = [];
     const seam = {
       runtime: {
@@ -67,7 +71,13 @@
         local: {
           // Asynchronous, exactly like Chrome: never resolved inside the call,
           // and only an absent key is filled by the caller's default.
-          get(defaults, callback) { nativeTimer(() => { callback({ ...defaults }); confirmPreference(); }, 0); },
+          get(defaults, callback) {
+            nativeTimer(() => {
+              const values = {};
+              for (const key of Object.keys(defaults)) values[key] = Object.hasOwn(store, key) ? store[key] : defaults[key];
+              callback(values); confirmPreference();
+            }, 0);
+          },
         },
       },
     };
@@ -167,8 +177,10 @@
     // Retain only a clean construction template, never old measured tables.
     template.querySelector('tbody').replaceChildren(template.querySelector('tbody tr').cloneNode(true));
     view.append(buildSyntheticTable());
-    if (enabled) {
-      installPreferenceSeam();
+    if (runtimeLoaded) {
+      // `dormant` seeds the stored preference with a real `false`, so the
+      // shipped controller confirms an off preference rather than an absent one.
+      installPreferenceSeam(enabled ? {} : { enabled: false });
       await new Promise((resolve, reject) => {
         const script = document.createElement('script'); script.src = '/extension/content.js';
         script.onload = () => { registering = false; resolve(); }; script.onerror = () => reject(new Error('Runtime load failed'));
@@ -178,8 +190,10 @@
       // before that would time an extension that is deliberately dormant.
       await preferenceConfirmed;
     }
-    // Disabled mode installs no seam and loads no runtime, so the control is
-    // genuinely disabled rather than merely switched off.
+    // `disabled` installs no seam and loads no runtime, so it is a NO-RUNTIME
+    // BASELINE — a page with no extension on it — and not a measurement of the
+    // shipped off state. `dormant` is the run that measures the shipped off
+    // state: the controller is loaded and has confirmed a stored `false`.
     await settle(); verify();
   })();
   window.tintWorkload = {
