@@ -881,13 +881,29 @@ test('a frozen tab applies the preference when it is resumed, and not before', a
 });
 
 test('two popups asking for opposite values are serialized, and neither inverts the other', async () => {
-  const world = createWorld();
+  // Deferred writes are what make this test load-bearing. Under IMMEDIATE
+  // write mode both tasks commit in arrival order whether or not the queue
+  // exists, so the final stored value cannot tell a serialized worker from an
+  // unserialized one — the test passed with `serializePreference` collapsed to
+  // a bare call (04-REVIEW WR-06). With the first write parked unresolved, a
+  // collapsed queue is visible directly, as a SECOND write in flight.
+  const world = createWorld({ writeMode: 'deferred' });
   loadWorker(world);
   const content = loadContent(world);
   await settle();
   const first = loadPopup(world);
   const second = loadPopup(world);
   await settle();
+
+  // The single-writer rule as an INVARIANT, checked at every point it can be
+  // observed rather than inferred once from a final value: at no moment are
+  // two preference writes in flight together.
+  const inFlight = [];
+  const observe = () => {
+    const pending = world.pendingWriteCount();
+    expect(pending, `${pending} preference writes in flight at once`).toBeLessThan(2);
+    inFlight.push(pending);
+  };
 
   // Both requests are issued before either can complete.
   const a = control(first.document);
@@ -899,12 +915,78 @@ test('two popups asking for opposite values are serialized, and neither inverts 
   await settle();
   await settle();
 
+  // The first request's write is parked mid-flight; the second is chained
+  // behind it and has not touched storage at all.
+  observe();
+  expect(world.writeLog).toEqual([{ enabled: false }]);
+  expect(world.getStored('enabled')).toBeUndefined();
+
+  // Flushing commits the first value and releases the second request, whose
+  // write takes the one slot the first has just vacated.
+  world.flushWrites();
+  await settle();
+  await settle();
+  observe();
+  expect(world.getStored('enabled')).toBe(false);
+
+  world.flushWrites();
+  await settle();
+  await settle();
+  observe();
+
   // Exactly the two desired values, in arrival order. Never a third value, and
-  // never an inversion of a stale reading.
+  // never an inversion of a stale reading. The last request is the survivor.
+  expect(inFlight).toEqual([1, 1, 0]);
   expect(world.writeLog).toEqual([{ enabled: false }, { enabled: true }]);
   expect(world.getStored('enabled')).toBe(true);
   expect(control(second.document).checked).toBe(true);
   expect(markers(content.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  expect(world.forbidden).toEqual([]);
+});
+
+test("a closed tab's per-tab state is released without disturbing its neighbour", async () => {
+  // HALF OF THIS IS A SHAPE GUARD, AND IT SAYS SO RATHER THAN PRETENDING
+  // OTHERWISE. The `tabs` map has no external observable: `stateFor` mints a
+  // fresh entry for an unknown id, so a leaked entry and a released one are
+  // indistinguishable from outside the worker — a reused id gets a generation
+  // no held reply matches either way. Exposing a count would change a shipped
+  // byte and re-invalidate the acceptance binding 04-11 re-established, so the
+  // release is guarded by reading the shipped source, the same idiom this file
+  // already uses for the storage-method allowlist and the icon inventory. It
+  // kills the mutant; it does not prove the map is bounded at runtime.
+  const removals = [...asset('background.js')
+    .matchAll(/chrome\.tabs\.onRemoved\.addListener\(\((\w+)\) => \{([\s\S]*?)\n {2}\}\);/g)];
+  // Two halves, asserted separately on purpose: deleting the registration and
+  // gutting its body are different mutants and must fail distinguishably.
+  expect(removals).toHaveLength(1);
+  const [, parameter, listenerBody] = removals[0];
+  expect(listenerBody).toContain(`tabs.delete(${parameter});`);
+
+  const { world } = await twoTabWorld();
+  const neighbour = { ...world.action(OTHER_TAB_ID) };
+  const beforeClose = world.actionLog.length;
+  world.closeTab(TAB_ID);
+  await settle();
+  // Releasing one tab's state leaves the other tab's toolbar exactly as it was.
+  expect(world.action(OTHER_TAB_ID)).toEqual(neighbour);
+  expect(world.actionLog.length).toBe(beforeClose);
+
+  // A projection for the tab that is gone resolves rather than throwing. What
+  // it writes is the operational connection fact, on the dead tab alone: never
+  // a diagnosis about a view, and never a write against a living neighbour.
+  // (The double does not model Chrome refusing an action write for a closed
+  // tab, so the write is observed here rather than absent.)
+  const beforeProjection = world.actionLog.length;
+  world.activateTab(TAB_ID);
+  await settle();
+  await wait(CONFIRMED);
+  await settle();
+  const projected = world.actionLog.slice(beforeProjection);
+  expect(projected.map((entry) => entry.tabId)).toEqual(projected.map(() => TAB_ID));
+  expect(projected.filter((entry) => entry.icon)).toEqual([{ tabId: TAB_ID, icon: ICON.neutral }]);
+  expect(projected.filter((entry) => entry.title)).toEqual([{ tabId: TAB_ID, title: COPY.unavailable }]);
+  expect(world.action(OTHER_TAB_ID)).toEqual(neighbour);
+  expect(world.forbidden).toEqual([]);
 });
 
 test('a worker stopped and recreated after an off serves the persisted value, not a memory of it', async () => {
