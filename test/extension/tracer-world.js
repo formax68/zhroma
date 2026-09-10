@@ -101,7 +101,9 @@ export function inertWindow(bodyHTML) {
 
 // --- strict fake Chrome -----------------------------------------------------
 
-export function createWorld({ stored = null, readMode = 'immediate', writeMode = 'immediate', replyDelays = [] } = {}) {
+export function createWorld({
+  stored = null, readMode = 'immediate', writeMode = 'immediate', replyDelays = [], portCloseMs = 500,
+} = {}) {
   const forbidden = [];
   const traffic = [];
   const actionLog = [];
@@ -132,6 +134,11 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
   let queryAvailable = true;
   let currentWriteMode = writeMode;
   let currentReadMode = readMode;
+  // How long a listener that answered `true` may hold the channel before Chrome
+  // reports the port closed. Configurable because a frame that accepts a
+  // message and never answers is only modellable if the double's own fallback
+  // outlives the deadline the shipped worker is being tested against.
+  let currentPortCloseMs = portCloseMs;
 
   const deny = (name) => function () { forbidden.push(name); throw new Error('Forbidden runtime channel'); };
   const denyStore = (name) => new Proxy({}, { get() { forbidden.push(name); throw new Error('Forbidden store access'); } });
@@ -151,7 +158,7 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
           if (result === true) asyncPending = true;
         }
         if (!settled && !asyncPending) reject(new Error('The message port closed before a response was received.'));
-        else if (!settled) setTimeout(() => { if (!settled) reject(new Error('The message port closed before a response was received.')); }, 500);
+        else if (!settled) setTimeout(() => { if (!settled) reject(new Error('The message port closed before a response was received.')); }, currentPortCloseMs);
       }, delay);
     });
   }
@@ -326,6 +333,8 @@ export function createWorld({ stored = null, readMode = 'immediate', writeMode =
     storageKeys: () => [...storage.keys()].sort(),
     setReadMode(mode) { currentReadMode = mode; },
     setWriteMode(mode) { currentWriteMode = mode; },
+    /** Hold an accepted-but-unanswered channel open for `ms` before closing it. */
+    setPortCloseMs(ms) { currentPortCloseMs = ms; },
     disconnectContent(tabId = TAB_ID) { disconnected.add(tabId); listenersFor(tabId).splice(0); },
     openTab(tabId) { tabs.push({ id: tabId, active: false, currentWindow: true }); },
     activateTab(tabId) {
