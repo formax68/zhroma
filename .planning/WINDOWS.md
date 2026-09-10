@@ -156,9 +156,21 @@ last_updated: 2026-09-10T06:49:17.218Z
     "file": "extension/popup.js",
     "line": null,
     "description": "Two operational copy strings added beyond the 04-01 decided set ('Zhroma could not save that setting', 'Setting saved, but this view did not update'); the plan mandates finite honest failure text and the decided set contained none. Needs user ratification before ship.",
-    "status": "open",
-    "reason": "",
+    "status": "fixed",
+    "reason": "Ratified by the user at the Phase 4 UAT checkpoint on 2026-09-10 (04-UAT.md test 21). Both operational copy strings accepted; the three product diagnoses remain three.",
     "recorded_at": "2026-09-10T06:49:17.218Z",
+    "resolved_at": "2026-09-10T10:56:00.000Z"
+  },
+  {
+    "id": 12,
+    "kind": "accepted-risk",
+    "phase": "04",
+    "file": ".planning/phases/04-honest-failure-and-an-off-switch/04-RISK-ACCEPTANCE.md",
+    "line": null,
+    "description": "AR-04-01: FAIL-03 ships with automated coverage and zero live browser evidence. Its only two live checks (language-icon-copy, structure-copy) were unobservable and are waived by the user as accepted residual risk. Both remain status: pending in 04-LIVE-ACCEPTANCE.md; the record stays human_needed. Not evidence, not carried to later phases, and not a basis for describing non-English behaviour as verified.",
+    "status": "accepted",
+    "reason": "User waiver 2026-09-10, verbatim: \"waive the pendings one from FAIL-03\"",
+    "recorded_at": "2026-09-10T10:58:00.000Z",
     "resolved_at": null
   }
 ]

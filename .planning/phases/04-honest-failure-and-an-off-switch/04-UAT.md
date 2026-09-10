@@ -3,7 +3,7 @@ status: partial
 phase: 04-honest-failure-and-an-off-switch
 source: 04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md, 04-06-SUMMARY.md, 04-LIVE-ACCEPTANCE.md, 04-VALIDATION.md
 started: 2026-09-10T07:21:08Z
-updated: 2026-09-10T07:56:44Z
+updated: 2026-09-10T08:22:02Z
 ---
 
 ## Current Test
@@ -390,6 +390,9 @@ blocked: 3
 
 - id: AR-04-UAT-01
   statement: "The two blocked live checks are accepted as non-blocking for phase progression."
+  formalized_as: "AR-04-01 — .planning/phases/04-honest-failure-and-an-off-switch/04-RISK-ACCEPTANCE.md"
+  second_waiver_verbatim: "waive the pendings one from FAIL-03"
+  windows_ledger_entry: 12
   attributed_to: user
   verbatim: "it's a pass, the blocked tests are no blockers"
   date: 2026-09-10
@@ -428,6 +431,11 @@ blocked: 3
   of running UAT. Nothing turns on it while two checks are pending.
 - WINDOWS.md entry 11 — copy set RATIFIED by user (test 21). Both operational strings
   accepted: "Zhroma could not save that setting" / "Setting saved, but this view did not update".
+  Ledger entry 11 now closed as status: fixed with the ratification recorded.
+- FAIL-03 live evidence — WAIVED by user as accepted residual risk AR-04-01
+  (04-RISK-ACCEPTANCE.md); WINDOWS.md entry 12 opened as kind: accepted-risk. The two
+  checks remain status: pending in the canonical record: a waiver permits progression,
+  it does not create evidence and cannot promote the record.
 
 ## Outstanding — not resolvable in this session
 

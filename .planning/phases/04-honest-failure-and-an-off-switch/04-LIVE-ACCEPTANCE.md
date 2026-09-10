@@ -19,9 +19,11 @@ non-English tenant context available) and `structure-copy` (no safely prepared
 uninterpretable-table context available). Both are recorded in
 `limitations.unavailable_scenarios` with reasons. They are **FAIL-03's only two
 live checks**, so that requirement carries automated coverage and **zero live
-evidence**. The user accepted them as non-blocking for phase progression; that
-waiver is attributed acknowledged risk (`AR-04-UAT-01` in `04-UAT.md`) and is
-**not** evidence.
+evidence**. The user has **waived** both as accepted residual risk **`AR-04-01`**
+(`04-RISK-ACCEPTANCE.md`, recorded 2026-09-10). The waiver permits Phase 04 to
+proceed to its remaining gates. It is **not evidence**: FAIL-03 still has no live
+observation, both checks stay `pending`, and this record's disposition is
+unchanged at `human_needed`.
 
 The three product prohibitions were **ratified by the user** at the checkpoint, and
 `WINDOWS.md` entry 11's copy set with them. Their `status` fields are nonetheless
@@ -386,11 +388,11 @@ rather than hiding behind an unchanged `content.js`.
     "unavailable_scenarios": [
       {
         "id": "language-icon-copy",
-        "reason": "No non-English tenant context available to the user; deferred at the Phase 4 checkpoint rather than manufactured. Recorded verbatim in 04-UAT.md test 6."
+        "reason": "No non-English tenant context available to the user; deferred at the Phase 4 checkpoint rather than manufactured. Recorded verbatim in 04-UAT.md test 6. Waived by the user on 2026-09-10 as accepted residual risk AR-04-01 (04-RISK-ACCEPTANCE.md): the user accepted that FAIL-03 carries no live evidence. The check remains pending because a waiver is not an observation \u2014 it permits progression, it does not create evidence, and it cannot promote this record."
       },
       {
         "id": "structure-copy",
-        "reason": "No safely prepared, user-approved uninterpretable-table context available; an operational view was deliberately not edited to manufacture the state. Recorded in 04-UAT.md test 7."
+        "reason": "No safely prepared, user-approved uninterpretable-table context available; an operational view was deliberately not edited to manufacture the state. Recorded in 04-UAT.md test 7. Waived by the user on 2026-09-10 as accepted residual risk AR-04-01 (04-RISK-ACCEPTANCE.md): the user accepted that FAIL-03 carries no live evidence. The check remains pending because a waiver is not an observation \u2014 it permits progression, it does not create evidence, and it cannot promote this record."
       }
     ]
   }
