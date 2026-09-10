@@ -9,5 +9,13 @@
     "requires_replan": false,
     "requirements": ["FAIL-01", "FAIL-05"],
     "recorded_by": "04-01 Task 1"
+  },
+  "preference": {
+    "choice": "global-local",
+    "response": "Global, storage.local (proposed) — Persist only {enabled: boolean} in chrome.storage.local; a missing key means true. The current tab must acknowledge cleanup/reconciliation; other runnable tabs converge via storage.onChanged; frozen tabs re-read on resume. Survives browser restart in both states. Delivery is asynchronous — no promise of atomic application across frozen tabs.",
+    "confirmed": true,
+    "requires_replan": false,
+    "requirements": ["CTRL-02", "CTRL-03", "CTRL-04"],
+    "recorded_by": "04-01 Task 2"
   }
 }
