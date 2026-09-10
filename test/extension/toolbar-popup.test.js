@@ -6,6 +6,7 @@
 // Nothing here reimplements extension behaviour: every assertion is about bytes
 // that ship. Simulated delivery is not browser acceptance; live observation of
 // the icon and popup is reached in 04-05.
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { createContext, Script } from 'node:vm';
@@ -21,6 +22,7 @@ const EXTENSION_ID = 'zhromatracercontextidnotarealone';
 const POPUP_PATH = 'popup.html';
 const POPUP_URL = `chrome-extension://${EXTENSION_ID}/${POPUP_PATH}`;
 const TAB_ID = 7;
+const OTHER_TAB_ID = 9;
 const DOCUMENT_ID = 'document-alpha';
 const MAX_REQUEST_ID = 1000000;
 
@@ -35,6 +37,16 @@ const COPY = {
   structure: "Zhroma cannot read this view's ticket table",
   checking: 'Checking this view',
   unavailable: 'No readable view is connected',
+};
+
+// Five decided shape treatments; four of them reachable in this plan (the
+// power symbol arrives with the switch in 04-04). Three product diagnoses map
+// to three distinct shapes; neutral is the operational one.
+const ICON = {
+  working: 'icons/working.png',
+  missing: 'icons/missing.png',
+  unreadable: 'icons/unreadable.png',
+  neutral: 'icons/neutral.png',
 };
 
 // Text that exists only inside the admitted fixture. None of it may ever appear
@@ -74,15 +86,21 @@ function createWorld({ stored = null, readMode = 'immediate', replyDelays = [] }
   const traffic = [];
   const actionLog = [];
   const actions = new Map();
-  const workerListeners = [];
-  const contentListeners = [];
+  let workerListeners = [];
+  // One listener list per tab: a browser has more than one tab, and a per-tab
+  // projection that is only ever exercised with one tab proves nothing.
+  const contentListeners = new Map();
+  const listenersFor = (tabId) => {
+    if (!contentListeners.has(tabId)) contentListeners.set(tabId, []);
+    return contentListeners.get(tabId);
+  };
   const storageListeners = [];
   const storage = new Map(stored === null ? [] : Object.entries(stored));
   const pendingReads = [];
-  const tabs = [{ id: TAB_ID, active: true }];
+  const tabs = [{ id: TAB_ID, active: true, currentWindow: true }];
   const replyQueue = [...replyDelays];
   const tabsEvents = { activated: [], updated: [], removed: [] };
-  let contentConnected = true;
+  const disconnected = new Set();
   let actionAvailable = true;
   let queryAvailable = true;
 
@@ -109,15 +127,15 @@ function createWorld({ stored = null, readMode = 'immediate', replyDelays = [] }
     });
   }
 
-  function runtimeFor(chromeObject, callbackErrors = true) {
+  function runtimeFor(chromeObject, tabId = TAB_ID, callbackErrors = true) {
     return {
       id: EXTENSION_ID,
       lastError: undefined,
       getURL: (path) => `chrome-extension://${EXTENSION_ID}/${path}`,
-      onMessage: { addListener: (listener) => { workerListeners.push(listener); } },
+      onMessage: { addListener: (listener) => { listenersFor(tabId).push(listener); } },
       sendMessage(message, callback) {
         record('to-worker', message);
-        const sender = { id: EXTENSION_ID, frameId: 0, documentId: DOCUMENT_ID, tab: { id: TAB_ID } };
+        const sender = { id: EXTENSION_ID, frameId: 0, documentId: `${DOCUMENT_ID}-${tabId}`, tab: { id: tabId } };
         const promise = deliver(workerListeners, message, sender);
         if (typeof callback !== 'function') return promise;
         promise.then((value) => {
@@ -157,9 +175,16 @@ function createWorld({ stored = null, readMode = 'immediate', replyDelays = [] }
     };
   }
 
-  const contentChrome = {};
-  contentChrome.runtime = runtimeFor(contentChrome);
-  contentChrome.storage = storageFor(contentChrome);
+  const contentChromes = new Map();
+  function contentChromeFor(tabId) {
+    if (contentChromes.has(tabId)) return contentChromes.get(tabId);
+    const object = {};
+    object.runtime = runtimeFor(object, tabId);
+    object.storage = storageFor(object);
+    contentChromes.set(tabId, object);
+    return object;
+  }
+  const contentChrome = contentChromeFor(TAB_ID);
 
   const popupChrome = {};
   popupChrome.runtime = {
@@ -185,15 +210,15 @@ function createWorld({ stored = null, readMode = 'immediate', replyDelays = [] }
       onRemoved: { addListener: (listener) => { tabsEvents.removed.push(listener); } },
       query() {
         if (!queryAvailable) return Promise.reject(new Error('Tabs unavailable'));
-        return Promise.resolve(tabs.filter((tab) => tab.active).map((tab) => ({ ...tab })));
+        return Promise.resolve(tabs.filter((tab) => tab.active && tab.currentWindow).map((tab) => ({ ...tab })));
       },
       sendMessage(tabId, message, options) {
         record('to-content', message);
         expect(options).toEqual({ frameId: 0 });
-        if (!contentConnected || tabId !== TAB_ID) {
+        if (disconnected.has(tabId) || !tabs.some((tab) => tab.id === tabId)) {
           return Promise.reject(new Error('Could not establish connection. Receiving end does not exist.'));
         }
-        return deliver(contentListeners, message, { id: EXTENSION_ID }, replyQueue.length > 0 ? replyQueue.shift() : 0);
+        return deliver(listenersFor(tabId), message, { id: EXTENSION_ID }, replyQueue.length > 0 ? replyQueue.shift() : 0);
       },
     },
     action: {
@@ -212,18 +237,35 @@ function createWorld({ stored = null, readMode = 'immediate', replyDelays = [] }
     },
   };
 
-  // Content registers into contentListeners rather than workerListeners.
-  contentChrome.runtime.onMessage.addListener = (listener) => { contentListeners.push(listener); };
-
   return {
-    contentChrome, workerChrome, popupChrome, forbidden, traffic, actions, actionLog, tabsEvents,
+    contentChrome, contentChromeFor, workerChrome, popupChrome, forbidden, traffic, actions, actionLog, tabsEvents,
     deny, denyStore,
     action: (tabId = TAB_ID) => actions.get(tabId),
     flushReads() { for (const read of pendingReads.splice(0)) read(); },
     pendingReadCount: () => pendingReads.length,
     setStored(key, value) { storage.set(key, value); },
-    disconnectContent() { contentConnected = false; contentListeners.splice(0); },
+    disconnectContent(tabId = TAB_ID) { disconnected.add(tabId); listenersFor(tabId).splice(0); },
+    openTab(tabId) { tabs.push({ id: tabId, active: false, currentWindow: true }); },
+    activateTab(tabId) {
+      for (const tab of tabs) tab.active = tab.id === tabId;
+      for (const listener of tabsEvents.activated.slice()) listener({ tabId, windowId: 1 });
+    },
+    /** Move the focused window elsewhere: no tab of this window is current. */
+    leaveWindow() { for (const tab of tabs) tab.currentWindow = false; },
+    closeTab(tabId) {
+      const index = tabs.findIndex((tab) => tab.id === tabId);
+      if (index >= 0) tabs.splice(index, 1);
+      disconnected.add(tabId);
+      listenersFor(tabId).splice(0);
+      for (const listener of tabsEvents.removed.slice()) listener(tabId, { windowId: 1, isWindowClosing: false });
+    },
+    /** Terminate the worker: every global it held is gone, as Chrome does. */
+    terminateWorker() {
+      workerListeners = [];
+      tabsEvents.activated.splice(0); tabsEvents.updated.splice(0); tabsEvents.removed.splice(0);
+    },
     breakAction() { actionAvailable = false; },
+    repairAction() { actionAvailable = true; },
     breakQuery() { queryAvailable = false; },
     emitStorageChange(changes, areaName = 'local') {
       for (const listener of storageListeners.slice()) listener(structuredClone(changes), areaName);
@@ -235,7 +277,7 @@ function createWorld({ stored = null, readMode = 'immediate', replyDelays = [] }
 
 // --- context loaders --------------------------------------------------------
 
-function loadContent(world, { html = fixture() } = {}) {
+function loadContent(world, { html = fixture(), tabId = TAB_ID } = {}) {
   const window = inertWindow(html);
   const { document } = window;
   const sentinels = {
@@ -246,7 +288,7 @@ function loadContent(world, { html = fixture() } = {}) {
     console: { log: world.deny('console.log'), warn: world.deny('console.warn'), error: world.deny('console.error'), info: world.deny('console.info') },
   };
   for (const [name, value] of Object.entries(sentinels)) Object.defineProperty(window, name, { value, configurable: true });
-  const context = createContext({ ...sentinels, document, window, chrome: world.contentChrome,
+  const context = createContext({ ...sentinels, document, window, chrome: world.contentChromeFor(tabId),
     MutationObserver: window.MutationObserver, setTimeout, clearTimeout, Promise, Object, JSON,
   }, { codeGeneration: { strings: false, wasm: false } });
   const before = Object.keys(context);
@@ -328,19 +370,36 @@ test('every packaged asset the manifest names exists locally and no remote resou
     expect(realpathSync(new URL(name, root))).toBe(fileURLToPath(new URL(name, root)));
   }
   expect(readdirSync(root).sort()).toEqual(['background.js', 'content.js', 'icons', 'manifest.json', 'popup.html', 'popup.js', 'zhroma.css']);
-  expect(readdirSync(new URL('icons/', root)).sort()).toEqual(['neutral.png', 'working.png']);
+  expect(readdirSync(new URL('icons/', root)).sort()).toEqual(['missing.png', 'neutral.png', 'unreadable.png', 'working.png']);
+  // Every icon the worker can project must be packaged: an icon set at runtime
+  // is not declared in the manifest, so the inventory is the only thing that
+  // can prove it will exist in the store package.
+  const projected = [...asset('background.js').matchAll(/'(icons\/[a-z]+\.png)'/g)].map(([, path]) => path);
+  expect(new Set(projected).size).toBe(4);
+  for (const path of new Set(projected)) expect(realpathSync(new URL(path, root))).toBe(fileURLToPath(new URL(path, root)));
   for (const name of ['content.js', 'background.js', 'popup.js', 'popup.html']) {
     expect(asset(name)).not.toMatch(/https?:\/\/|@import|url\(\s*['"]?https?:/);
   }
 });
 
-test.each(['working.png', 'neutral.png'])('%s is a locally authored 32x32 PNG', (name) => {
+const ICON_FILES = ['working.png', 'missing.png', 'unreadable.png', 'neutral.png'];
+
+test.each(ICON_FILES)('%s is a locally authored 32x32 PNG', (name) => {
   const bytes = readFileSync(new URL(`icons/${name}`, root));
   expect([...bytes.subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   expect(bytes.subarray(12, 16).toString('latin1')).toBe('IHDR');
   expect(bytes.readUInt32BE(16)).toBe(32);
   expect(bytes.readUInt32BE(20)).toBe(32);
   expect(statSync(new URL(`icons/${name}`, root)).size).toBeLessThan(8192);
+});
+
+test('the four icons are four different images, so shape can carry the meaning', () => {
+  // FAIL-05 asks the agent to tell the states apart from the toolbar alone.
+  // Byte-distinctness is the automatable floor; whether a person recognises a
+  // column-plus from a question mark at 16px is a human check in 04-05.
+  const digests = ICON_FILES.map((name) => createHash('sha256')
+    .update(readFileSync(new URL(`icons/${name}`, root))).digest('hex'));
+  expect(new Set(digests).size).toBe(4);
 });
 
 test('shipped JavaScript carries no colour value and builds no page markup', () => {
@@ -461,7 +520,7 @@ test('a genuinely Priority-less view reaches the popup as the add-a-column hint,
   expect(statusText(early.document)).toBe(COPY.checking);
   await new Promise((resolve) => { setTimeout(resolve, CONFIRMED); });
   await settle();
-  expect(world.action().title).toBe(COPY.missing);
+  expect(world.action()).toEqual({ icon: ICON.missing, title: COPY.missing });
   const popup = loadPopup(world);
   await settle();
   expect(statusText(popup.document)).toBe(COPY.missing);
@@ -480,7 +539,7 @@ test('an unsupported interface language reaches the popup as a language message,
   const popup = loadPopup(world);
   await settle();
   expect(statusText(popup.document)).toBe(COPY.language);
-  expect(world.action().title).toBe(COPY.language);
+  expect(world.action()).toEqual({ icon: ICON.unreadable, title: COPY.language });
   expect(JSON.stringify(world.traffic)).not.toContain('fr');
 });
 
@@ -495,7 +554,7 @@ test('a structurally unreadable English view is told so, and is never blamed on 
   const popup = loadPopup(world);
   await settle();
   expect(statusText(popup.document)).toBe(COPY.structure);
-  expect(world.action().title).toBe(COPY.structure);
+  expect(world.action()).toEqual({ icon: ICON.unreadable, title: COPY.structure });
   expect(markers(content.document)).toEqual([]);
 });
 
@@ -681,6 +740,113 @@ test('a rejected action or tab query degrades quietly rather than throwing acros
   await settle();
   expect(statusText(popup.document)).toBe(COPY.unavailable);
   expect(world.forbidden).toEqual([]);
+});
+
+// --- per-tab projection ------------------------------------------------------
+
+/** Two tabs, deliberately in different states, both fully settled. */
+async function twoTabWorld() {
+  const world = createWorld();
+  loadWorker(world);
+  world.openTab(OTHER_TAB_ID);
+  const working = loadContent(world, { tabId: TAB_ID });
+  const missing = loadContent(world, { tabId: OTHER_TAB_ID });
+  missing.document.querySelector('thead tr').children[6].textContent = 'Other';
+  await settle();
+  await new Promise((resolve) => { setTimeout(resolve, CONFIRMED); });
+  await settle();
+  return { world, working, missing };
+}
+
+test('two tabs with different diagnoses hold different toolbar states at the same time', async () => {
+  const { world } = await twoTabWorld();
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
+  expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.missing, title: COPY.missing });
+  // Neither tab's result was ever projected globally onto the other.
+  for (const entry of world.actionLog) expect([TAB_ID, OTHER_TAB_ID]).toContain(entry.tabId);
+});
+
+test('the popup answers about the active tab, and a window with no current tab is unavailable', async () => {
+  const { world } = await twoTabWorld();
+  world.activateTab(OTHER_TAB_ID);
+  await settle();
+  const onMissing = loadPopup(world);
+  await settle();
+  expect(statusText(onMissing.document)).toBe(COPY.missing);
+  world.activateTab(TAB_ID);
+  await settle();
+  const onWorking = loadPopup(world);
+  await settle();
+  expect(statusText(onWorking.document)).toBe(COPY.working);
+  // No tab of the focused window: an operational fact about the connection,
+  // never a claim that the tab is outside Zendesk.
+  world.leaveWindow();
+  const orphan = loadPopup(world);
+  await settle();
+  expect(statusText(orphan.document)).toBe(COPY.unavailable);
+});
+
+test('a recreated worker reconstructs from a fresh handshake, never from a remembered diagnosis', async () => {
+  const world = createWorld();
+  loadWorker(world);
+  const content = loadContent(world);
+  await settle();
+  expect(world.action()).toEqual({ icon: ICON.working, title: COPY.working });
+  // The worker is terminated and the view changes while nothing is listening.
+  world.terminateWorker();
+  content.document.querySelector('thead tr').children[6].textContent = 'Other';
+  await settle();
+  loadWorker(world);
+  world.activateTab(TAB_ID);
+  await new Promise((resolve) => { setTimeout(resolve, CONFIRMED); });
+  await settle();
+  expect(world.action()).toEqual({ icon: ICON.missing, title: COPY.missing });
+  expect(asset('background.js')).not.toMatch(/chrome\.storage|onInstalled|onStartup/);
+});
+
+test('a tab closed while its status request is in flight can no longer be painted by that reply', async () => {
+  const world = createWorld({ replyDelays: [300] });
+  loadWorker(world);
+  loadContent(world);
+  await settle(4);
+  expect(world.action()).toBeUndefined();
+  world.closeTab(TAB_ID);
+  await new Promise((resolve) => { setTimeout(resolve, 500); });
+  await settle();
+  const painted = world.actionLog.filter((entry) => entry.icon === ICON.working || entry.title === COPY.working);
+  expect(painted).toEqual([]);
+  expect(world.forbidden).toEqual([]);
+});
+
+test('a failed action write is never remembered as success and a later projection still lands', async () => {
+  const world = createWorld();
+  loadWorker(world);
+  loadContent(world);
+  world.breakAction();
+  await settle();
+  expect(world.action()).toBeUndefined();
+  world.repairAction();
+  world.activateTab(TAB_ID);
+  await settle();
+  expect(world.action()).toEqual({ icon: ICON.working, title: COPY.working });
+  expect(world.forbidden).toEqual([]);
+});
+
+test('a navigation event only invalidates and requeries; it never reads the URL it carries', async () => {
+  const world = createWorld();
+  loadWorker(world);
+  const content = loadContent(world);
+  await settle();
+  content.document.querySelector('thead tr').children[6].textContent = 'Other';
+  for (const listener of world.tabsEvents.updated) {
+    listener(TAB_ID, { status: 'loading', url: 'https://example.zendesk.com/agent/filters/1' }, { id: TAB_ID });
+  }
+  await new Promise((resolve) => { setTimeout(resolve, CONFIRMED); });
+  await settle();
+  expect(world.action()).toEqual({ icon: ICON.missing, title: COPY.missing });
+  // D-09: mutation stays the discovery mechanism. No route detection.
+  expect(asset('background.js')).not.toContain('changeInfo.url');
+  expect(asset('background.js')).not.toMatch(/zendesk|agent\/|webNavigation|history/);
 });
 
 test('neither the worker nor the popup nor the content script leaks a global', async () => {

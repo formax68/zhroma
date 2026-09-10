@@ -69,8 +69,8 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
     'declarative_net_request', 'commands', 'devtools_page', 'chrome_url_overrides', 'side_panel']) {
     expect(Object.hasOwn(manifest, key)).toBe(false);
   }
-  expect(shippedInventory()).toEqual(['background.js', 'content.js', 'icons/neutral.png', 'icons/working.png',
-    'manifest.json', 'popup.html', 'popup.js', 'zhroma.css']);
+  expect(shippedInventory()).toEqual(['background.js', 'content.js', 'icons/missing.png', 'icons/neutral.png',
+    'icons/unreadable.png', 'icons/working.png', 'manifest.json', 'popup.html', 'popup.js', 'zhroma.css']);
   const declared = [...manifest.content_scripts[0].js, ...manifest.content_scripts[0].css,
     manifest.action.default_popup, manifest.background.service_worker,
     ...Object.values(manifest.action.default_icon), ...Object.values(manifest.icons)];
@@ -79,6 +79,24 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
     expect(realpathSync(new URL(name, root))).toBe(fileURLToPath(new URL(name, root)));
     expect(statSync(new URL(name, root)).size).toBeGreaterThan(0);
   }
+});
+
+// Runtime-projected icons are not named in the manifest, so nothing but the
+// package inventory can prove they will exist in the store zip. Pin the exact
+// set, the exact bytes' shape, and that the worker projects only those four.
+test('every packaged icon is a 32x32 8-bit RGBA PNG and the worker projects no other artwork', () => {
+  const icons = readdirSync(new URL('icons/', root)).sort();
+  expect(icons).toEqual(['missing.png', 'neutral.png', 'unreadable.png', 'working.png']);
+  for (const name of icons) {
+    const bytes = readFileSync(new URL(`icons/${name}`, root));
+    expect([...bytes.subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    expect(bytes.subarray(12, 16).toString('latin1')).toBe('IHDR');
+    expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)]).toEqual([32, 32]);
+    expect([bytes[24], bytes[25], bytes[28]]).toEqual([8, 6, 0]);
+    expect(bytes.length).toBeLessThan(8192);
+  }
+  const projected = [...asset('background.js').matchAll(/'(icons\/[a-z]+\.png)'/g)].map(([, path]) => path);
+  expect([...new Set(projected)].sort()).toEqual(icons.map((name) => `icons/${name}`));
 });
 
 test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every declared script executes without data channels on %s', (mode) => {
