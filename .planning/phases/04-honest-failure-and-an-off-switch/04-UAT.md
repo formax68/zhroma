@@ -1,14 +1,14 @@
 ---
-status: partial
+status: diagnosed
 phase: 04-honest-failure-and-an-off-switch
 source: 04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md, 04-06-SUMMARY.md, 04-LIVE-ACCEPTANCE.md, 04-VALIDATION.md
 started: 2026-09-10T07:21:08Z
-updated: 2026-09-10T08:22:02Z
+updated: 2026-09-10T10:03:42Z
 ---
 
 ## Current Test
 
-[testing paused — 4 items outstanding: 3 blocked live/review checks + null environment block]
+[testing complete]
 
 ## Notes
 
@@ -56,16 +56,14 @@ result: pass
 
 ### 6. language-icon-copy
 expected: In a context YOU control, switch the Zendesk interface to a non-English language, then open a ticket view. The toolbar shows the QUESTION-MARK artwork and the popup reads "This interface language is not supported". It does NOT claim a Priority column is missing and does not echo any view content. Report only the language tag (e.g. `de`). (D-04, D-08, FAIL-03)
-result: blocked
-blocked_by: other
-reason: "defer, I cannot test this"
+result: skipped
+reason: "defer, I cannot test this — subsequently WAIVED by the user as accepted residual risk AR-04-01 (04-RISK-ACCEPTANCE.md, WINDOWS.md entry 12). Reclassified blocked -> skipped because the waiver resolves it as a decision; it is no longer awaiting a prerequisite. The check itself remains status: pending in 04-LIVE-ACCEPTANCE.md — the waiver permits progression, it does not create evidence."
 disposition: "Stays pending in 04-LIVE-ACCEPTANCE.md with a reason under limitations.unavailable_scenarios. No non-English tenant context available to the user. NOT a defect and NOT a gap — a prerequisite gate. FAIL-03 remains pending-human and this blocks a passed disposition on the canonical record (promotion rule 1)."
 
 ### 7. structure-copy
 expected: In a safely prepared, user-approved context where the ticket table cannot be interpreted (NOT an operational view, and no ticket data mutated): the toolbar shows the QUESTION-MARK artwork and the popup reads "Zhroma cannot read this view's ticket table". An English view is never told its language is unsupported. If no safe context exists, this stays pending with a reason — do not edit an operational view to manufacture it. (D-04, FAIL-03)
-result: blocked
-blocked_by: other
-reason: "defer"
+result: skipped
+reason: "defer — no safe context available; subsequently WAIVED by the user as accepted residual risk AR-04-01 (04-RISK-ACCEPTANCE.md, WINDOWS.md entry 12). Reclassified blocked -> skipped for the same reason as test 6. The check itself remains status: pending in 04-LIVE-ACCEPTANCE.md."
 disposition: "No safely prepared, user-approved uninterpretable-table context available. Stays pending in 04-LIVE-ACCEPTANCE.md under limitations.unavailable_scenarios, exactly as the check itself prescribes. NOT a defect and NOT a gap. FAIL-03 now has BOTH its live checks (language-icon-copy, structure-copy) unobserved."
 
 ### 8. off-clears
@@ -134,7 +132,9 @@ disposition: "User RATIFIED both operational copy strings — \"Zhroma could not
 
 ### 22. Independent code review — suite adequacy (04-06 D7)
 expected: A reviewer other than the implementing agent judges, against the final Phase 4 source, whether the restored assertion set is the right one. A green suite proves the assertions run and hold; it cannot establish that the assertion set is adequate.
-result: blocked
+result: issue
+reported: "gsd-code-reviewer, 04-REVIEW.md: 1 Critical, 10 Warnings, 9 Info across 17 files. suite_adequacy: ADEQUATE-WITH-GAPS (43 mutants, 17 survived). regression_hazard: CORRECT-AS-DOCUMENTED."
+severity: blocker
 blocked_by: third-party
 reason: "04-VALIDATION.md records independent_code_review: not-performed and security_asvs_level1: not-performed. Not self-awardable by the implementing agent or by this UAT session. Run /gsd-code-review 4 and /gsd-secure-phase 4."
 
@@ -379,10 +379,10 @@ coverage_note: malformed-kind-remeasured (classifier reason: validation_failed)
 
 total: 53
 passed: 50
-issues: 0
+issues: 1
 pending: 0
-skipped: 0
-blocked: 3
+skipped: 2
+blocked: 0
 
 ## Acknowledged Risk
 
@@ -452,5 +452,44 @@ blocked: 3
 
 ## Gaps
 
-[none — 0 issues reported across 21 human checkpoints; the 3 blocked items are prerequisite
-gates and independent-gate deferrals, not code defects, and correctly produce no fix plans]
+<!-- 0 issues from the 21 human checkpoints. Both gaps below come from the independent
+     code review (04-REVIEW.md), which is the gate the human checkpoints could not supply. -->
+
+- gap_id: G-04-22a
+  truth: "An unsupported interface language is never falsely claimed, and a supported English interface always tints (FAIL-03, D-04)"
+  status: failed
+  reason: "Independent review CR-01: extension/content.js:64 compares document.documentElement.lang !== 'en' as an exact case-sensitive string, so en-US, en-GB, en-AU and every other English regional locale is diagnosed 'This interface language is not supported' and never tints. zhroma.css:1,8,15,22 independently require html[lang=\"en\"], so a JS-only fix reports working with no paint — both must change together. Pinned as intended by initial-tint.test.js:166, persistent-tint.test.js:122 and runtime-contract.test.js:261, so those tests must change too."
+  severity: blocker
+  test: 22
+  artifacts:
+    - path: extension/content.js
+      issue: "exact-match lang comparison at :64 rejects every English regional locale"
+    - path: extension/zhroma.css
+      issue: "all four tint rules require html[lang=\"en\"] exactly (:1,:8,:15,:22)"
+    - path: test/extension/initial-tint.test.js
+      issue: "':166' pins 'en-US' as an invalid variant"
+    - path: test/extension/persistent-tint.test.js
+      issue: "':122' pins 'en-US' as an invalid variant"
+    - path: test/extension/runtime-contract.test.js
+      issue: "':261' pins the exact-match behaviour"
+  missing:
+    - "Compare the primary language subtag (case-insensitive) instead of the full tag"
+    - "Widen the CSS to [lang|=\"en\" i] so paint follows the diagnosis"
+    - "Invert the three tests that currently assert en-US is unsupported"
+  verified_by_orchestrator: "Confirmed independently: content.js:64 and zhroma.css lang selectors read as reported; en-US appears in invalidVariants in both tint suites."
+
+- gap_id: G-04-22b
+  truth: "The worker's staleness and serialization machinery is actually held by the test suite"
+  status: failed
+  reason: "Independent review WR-01/WR-02/WR-06, mutation-proven: removing EVERY generation guard (generationOf down to zero call sites) AND the per-tab serialization queue still passed 277/277 behavioural tests — only the SHA byte-pin objected. Root cause: tracer-world.js:142-157 delays delivery rather than the response, so a stale payload cannot be constructed. 17 of 43 mutants survived overall; lastError branches, the reply-shape/TITLES pairing gate, serializePreference and onRemoved cleanup all survive deletion. The 04-VALIDATION.md tripwire is one-directional: it catches ADDING a wrong guard but not REMOVING the right one."
+  severity: major
+  test: 22
+  artifacts:
+    - path: test/extension/tracer-world.js
+      issue: ":142-157 delays delivery, not the response, so no test can construct a stale reply"
+    - path: extension/background.js
+      issue: "staleness + serialization behaviour is unpinned by any behavioural assertion"
+  missing:
+    - "Make the harness able to delay a RESPONSE so a genuinely stale reply is constructible"
+    - "Add assertions that fail when a generation guard or the serialization queue is removed"
+    - "Cover lastError branches, the {diagnosis, reason} pairing gate and onRemoved cleanup"
