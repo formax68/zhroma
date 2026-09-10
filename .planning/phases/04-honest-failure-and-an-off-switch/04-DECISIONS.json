@@ -17,5 +17,13 @@
     "requires_replan": false,
     "requirements": ["CTRL-02", "CTRL-03", "CTRL-04"],
     "recorded_by": "04-01 Task 2"
+  },
+  "popup": {
+    "choice": "concise-no-link",
+    "response": "Concise, no link (proposed) — Fixed messages: 'Priority tinting is working'; 'Priority column found. These tickets have no priority values set'; 'Add a Priority column to this view to use tinting'; 'This interface language is not supported'; 'Zhroma cannot read this view's ticket table'. Operational: 'Tinting is off'; 'Checking this view'; 'No readable view is connected'. Switch labelled 'Enable priority tinting'. No outbound help link; never claims the tab is definitively outside Zendesk.",
+    "confirmed": true,
+    "requires_replan": false,
+    "requirements": ["FAIL-02", "FAIL-03", "CTRL-02"],
+    "recorded_by": "04-01 Task 3"
   }
 }
