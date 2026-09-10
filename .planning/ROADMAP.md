@@ -179,7 +179,7 @@ Plans:
   3. The popup carries an on/off switch that is already on; turning it off clears every tint from the view currently on screen without a refresh, and turning it back on restores them.
   4. Quitting Chrome and reopening it preserves whichever way the switch was left.
 
-**Plans**: 7/14 plans executed (6 original + 8 gap-closure from 04-REVIEW.md)
+**Plans**: 8/14 plans executed (6 original + 8 gap-closure from 04-REVIEW.md)
 **UI hint**: yes
 
 Plans:
@@ -211,7 +211,7 @@ Plans:
 
 - [x] 04-07-PLAN.md — Tint every English regional locale and win the cascade (CR-01, WR-08) (wave 7, gap closure)
 - [x] 04-08-PLAN.md — Bound the worker's hops and stop the doubles laundering failures (WR-03, WR-04, WR-10) (wave 7, gap closure)
-- [ ] 04-09-PLAN.md — Stop the workload failing open and measure the real dormancy cost (WR-09) (wave 7, gap closure)
+- [x] 04-09-PLAN.md — Stop the workload failing open and measure the real dormancy cost (WR-09) (wave 7, gap closure)
 
 **Wave 8** *(blocked on Wave 7 completion)*
 
@@ -258,7 +258,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. DOM Recon Spike | 15/15 | Complete    | 2026-09-08 |
 | 2. First Tint on a Real View | 3/3 | Complete    | 2026-09-09 |
 | 3. The Tint Survives Everything | 3/4 | In Progress|  |
-| 4. Honest Failure and an Off Switch | 7/14 | In Progress|  |
+| 4. Honest Failure and an Off Switch | 8/14 | In Progress|  |
 | 5. Published | 0/TBD | Not started | - |
 
 ## Requirement Coverage

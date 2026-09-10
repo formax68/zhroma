@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 9
+open_count: 10
 waived_count: 0
 fixed_count: 3
-total_count: 14
-last_updated: 2026-09-10T15:31:12.000Z
+total_count: 15
+last_updated: 2026-09-10T15:45:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -27,6 +27,7 @@ last_updated: 2026-09-10T15:31:12.000Z
 | 10 | 04 | unrun-verify | test/extension/persistent-tint.test.js |  | 66 of 68 tests fail: same missing chrome mock plus the one-active-observer assertion, which must assert zero while unconfirmed. Harness adaptation ordered in 04-06. | fixed |  | 2026-09-10T05:32:58.028Z | 2026-09-10T05:51:04.566Z |
 | 11 | 04 | deviation | extension/popup.js |  | Two operational copy strings added beyond the 04-01 decided set ('Zhroma could not save that setting', 'Setting saved, but this view did not update'); the plan mandates finite honest failure text and the decided set contained none. Needs user ratification before ship. | open |  | 2026-09-10T06:49:17.218Z |  |
 | 14 | 04 | deviation | test/extension/failure-seam.test.js |  | Timeout path asserts the ratified 'No readable view is connected' line, not the plan's named not-applied line: a timed-out apply yields outcome null, so setEnabled reports status 'unavailable' and popup.js renders that branch before the applied branch. Producing NOT_APPLIED would require inventing a status the document never reported. | open |  | 2026-09-10T15:31:12.000Z |  |
+| 15 | 04 | deviation | .planning/phases/04-honest-failure-and-an-off-switch/04-PERFORMANCE-SAMPLES.json |  | 04-09 changed both files behind identity.harnessHash (f889a9eb -> 285074ea), so mergeReport now refuses the recorded six-run file as a mixed identity. Expected intermediate state declared in 04-09; the file is preserved as history and 04-11 regenerates it against final source. | open |  | 2026-09-10T15:45:00.000Z |  |
 
 ````json
 [
@@ -196,6 +197,18 @@ last_updated: 2026-09-10T15:31:12.000Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-10T15:31:12.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 15,
+    "kind": "deviation",
+    "phase": "04",
+    "file": ".planning/phases/04-honest-failure-and-an-off-switch/04-PERFORMANCE-SAMPLES.json",
+    "line": null,
+    "description": "04-09 changed both files behind identity.harnessHash (f889a9eb -> 285074ea), so mergeReport now refuses the recorded six-run file as a mixed identity. Expected intermediate state declared in 04-09; the file is preserved as history and 04-11 regenerates it against final source.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T15:45:00.000Z",
     "resolved_at": null
   }
 ]

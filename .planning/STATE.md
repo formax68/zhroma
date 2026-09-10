@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: Completed 04-08-PLAN.md
-last_updated: "2026-09-10T15:33:49.405Z"
+stopped_at: Completed 04-09-PLAN.md
+last_updated: "2026-09-10T15:46:50.396Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 04 execution started
-state_head: 65f94d48856114700aeac09da3ed638d3babf0ed
+state_head: 43cfb4a04959e443412970ae1a91379c8c01efc8
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 36
-  completed_plans: 29
+  completed_plans: 30
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 3 of 14
+Plan: 4 of 14
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 04 execution started
 
@@ -76,6 +76,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P04 | 38 min | 2 tasks | 9 files |
 | Phase 04 P07 | 11 min | 3 tasks | 5 files |
 | Phase 04 P08 | 16 min | 3 tasks | 7 files |
+| Phase 04 P09 | 8 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Both worker sendMessage hops are bounded by a shipped REQUEST_TIMEOUT_MS = 2000 that resolves null, so a silent top frame costs one wait rather than the off switch, and the timeout path mints no new state and no new copy
 - [Phase 04]: A timed-out apply reports the ratified 'No readable view is connected' line, not the not-applied line the plan named; producing the latter would require inventing a status the document never gave
 - [Phase 04]: npm run test:mutants is a committed out-of-tree mutation gate: 6/6 killed, each by a named behavioural test, with the acceptance byte pin excluded from every mutant's suites
+- [Phase 04]: The workload page validates size as any positive integer while the CLI keeps its 30/200/1000 set: two different questions — which runs are canonical evidence versus whether a run can be measured at all — so the constraint is not duplicated where it could drift
+- [Phase 04]: A dormant run mode stores a real false through the shipped controller and is the run that measures the off state; the old disabled control is renamed runtime 'absent' and kept as a no-runtime baseline. The runtime field is required only for dormant, so Phase 3's historical samples validate unchanged, and no timing budget applies to dormancy because its claim is zero work, not fast work
 
 ### Pending Todos
 
@@ -149,8 +152,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T15:33:42.851Z
-Stopped at: Completed 04-08-PLAN.md
+Last session: 2026-09-10T15:46:50.313Z
+Stopped at: Completed 04-09-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
