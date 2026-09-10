@@ -183,20 +183,54 @@ Plans:
 **UI hint**: yes
 
 Plans:
+**Wave 1**
 
 - [x] 04-01-PLAN.md — Resolve the three product choices before implementation (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [x] 04-02-PLAN.md — Trace supported-view status through content, worker, toolbar and popup (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [x] 04-06-PLAN.md — Integrate inherited regressions and the preference-aware browser workload (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [x] 04-03-PLAN.md — Confirm missing-column certainty and distinguish all diagnoses (wave 4)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [x] 04-04-PLAN.md — Persist off/on intent and apply it without refreshing (wave 5)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 04-05-PLAN.md — Bind final-source evidence and reach blocking browser acceptance (wave 6)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [ ] 04-07-PLAN.md — Tint every English regional locale and win the cascade (CR-01, WR-08) (wave 7, gap closure)
 - [ ] 04-08-PLAN.md — Bound the worker's hops and stop the doubles laundering failures (WR-03, WR-04, WR-10) (wave 7, gap closure)
 - [ ] 04-09-PLAN.md — Stop the workload failing open and measure the real dormancy cost (WR-09) (wave 7, gap closure)
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
 - [ ] 04-10-PLAN.md — A failed save leaves a truthful, usable switch (WR-04, WR-07) (wave 8, gap closure)
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
 - [ ] 04-11-PLAN.md — Re-establish the acceptance record on repaired bytes and close the 04-05 record (wave 9, gap closure)
+
+**Wave 10** *(blocked on Wave 9 completion)*
+
 - [ ] 04-12-PLAN.md — Give the worker's staleness design an executable specification (WR-01) (wave 10, gap closure)
+
+**Wave 11** *(blocked on Wave 10 completion)*
+
 - [ ] 04-13-PLAN.md — Pin the reply boundary and the finite protocol's completeness (WR-02, WR-05) (wave 11, gap closure)
+
+**Wave 12** *(blocked on Wave 11 completion)*
+
 - [ ] 04-14-PLAN.md — Cover single-writer serialization and closed-tab cleanup (WR-06) (wave 12, gap closure)
 
 ### Phase 5: Published
