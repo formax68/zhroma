@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 8
+open_count: 9
 waived_count: 0
 fixed_count: 3
-total_count: 11
-last_updated: 2026-09-10T06:49:17.218Z
+total_count: 14
+last_updated: 2026-09-10T15:31:12.000Z
 ---
 
 # Broken Windows Ledger
@@ -26,6 +26,7 @@ last_updated: 2026-09-10T06:49:17.218Z
 | 9 | 04 | unrun-verify | test/extension/initial-tint.test.js |  | 59 of 60 tests fail: the VM context supplies no chrome, so the content script stays fail-closed unconfirmed and never tints. Chrome-mock harness adaptation ordered in 04-06. | fixed |  | 2026-09-10T05:32:57.952Z | 2026-09-10T05:51:04.489Z |
 | 10 | 04 | unrun-verify | test/extension/persistent-tint.test.js |  | 66 of 68 tests fail: same missing chrome mock plus the one-active-observer assertion, which must assert zero while unconfirmed. Harness adaptation ordered in 04-06. | fixed |  | 2026-09-10T05:32:58.028Z | 2026-09-10T05:51:04.566Z |
 | 11 | 04 | deviation | extension/popup.js |  | Two operational copy strings added beyond the 04-01 decided set ('Zhroma could not save that setting', 'Setting saved, but this view did not update'); the plan mandates finite honest failure text and the decided set contained none. Needs user ratification before ship. | open |  | 2026-09-10T06:49:17.218Z |  |
+| 14 | 04 | deviation | test/extension/failure-seam.test.js |  | Timeout path asserts the ratified 'No readable view is connected' line, not the plan's named not-applied line: a timed-out apply yields outcome null, so setEnabled reports status 'unavailable' and popup.js renders that branch before the applied branch. Producing NOT_APPLIED would require inventing a status the document never reported. | open |  | 2026-09-10T15:31:12.000Z |  |
 
 ````json
 [
@@ -183,6 +184,18 @@ last_updated: 2026-09-10T06:49:17.218Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-10T15:06:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 14,
+    "kind": "deviation",
+    "phase": "04",
+    "file": "test/extension/failure-seam.test.js",
+    "line": null,
+    "description": "Timeout path asserts the ratified 'No readable view is connected' line, not the plan's named not-applied line: a timed-out apply yields outcome null, so setEnabled reports status 'unavailable' and popup.js renders that branch before the applied branch. Producing NOT_APPLIED would require inventing a status the document never reported.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T15:31:12.000Z",
     "resolved_at": null
   }
 ]
