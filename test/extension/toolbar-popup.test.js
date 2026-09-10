@@ -536,7 +536,8 @@ test('a slow earlier reply cannot repaint over a newer projection', async () => 
   await settle(4);
   // A second invalidation lands while the first request is still in flight.
   content.document.querySelector('table').remove();
-  await settle(60);
+  await new Promise((resolve) => { setTimeout(resolve, 500); });
+  await settle();
   expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.checking });
   const icons = world.actionLog.filter((entry) => entry.icon).map((entry) => entry.icon);
   expect(icons.at(-1)).toBe('icons/neutral.png');
