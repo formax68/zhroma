@@ -122,12 +122,19 @@ test('a stored false leaves zero markers and never flashes tint during an asynch
   // Startup is still in flight: nothing may be painted on the strength of a
   // guess about what the preference will turn out to be.
   expect(markers(content.document)).toEqual([]);
-  expect(world.pendingReadCount()).toBe(1);
+  // Two readers are in flight and neither has resolved: the content script's
+  // startup read, and the worker's on-demand read for the popup projection.
+  // 04-04 made the worker read the preference per projection rather than
+  // remember it, which is the second one.
+  expect(world.pendingReadCount()).toBe(2);
   world.flushReads();
   await settle();
   expect(markers(content.document)).toEqual([]);
-  expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.checking });
-  expect(statusText(popup.document)).toBe(COPY.checking);
+  // A confirmed stored false is an operational state the extension can name,
+  // not the "still looking" state. 04-04 replaced the placeholder `checking`
+  // projection here with the decided off copy.
+  expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.off });
+  expect(statusText(popup.document)).toBe(COPY.off);
 });
 
 test.each([
@@ -483,7 +490,18 @@ test('a recreated worker reconstructs from a fresh handshake, never from a remem
   await new Promise((resolve) => { setTimeout(resolve, CONFIRMED); });
   await settle();
   expect(world.action()).toEqual({ icon: ICON.missing, title: COPY.missing });
-  expect(asset('background.js')).not.toMatch(/chrome\.storage|onInstalled|onStartup/);
+  // The worker is still not a database. It now reads and writes the one
+  // persisted boolean (04-04 made it the single writer), and that is the whole
+  // extent of its persistence: no diagnosis, no per-tab value, no revision and
+  // no install-time or startup-time seeding of state it could later trust.
+  expect(asset('background.js')).not.toMatch(/onInstalled|onStartup/);
+  expect(asset('background.js')).not.toMatch(/chrome\.storage\.(sync|session|managed)/);
+  expect([...asset('background.js').matchAll(/chrome\.storage\.local\.(\w+)/g)]
+    .map(([, member]) => member).sort()).toEqual(['get', 'set']);
+  // The only thing the single writer can write is the one boolean, under the
+  // one key. `toggle.test.js` proves the same thing from the write log.
+  expect([...asset('background.js').matchAll(/chrome\.storage\.local\.set\(([^,]+),/g)]
+    .map(([, argument]) => argument.trim())).toEqual(['{ [PREFERENCE_KEY]: enabled }']);
 });
 
 test('a tab closed while its status request is in flight can no longer be painted by that reply', async () => {
@@ -620,5 +638,5 @@ test('a stored false reaches the same dormant state through both doubles', async
 
   const { world, content } = await bootAll({ stored: { enabled: false } });
   expect(markers(content.document)).toEqual([]);
-  expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.checking });
+  expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.off });
 });

@@ -2,17 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Zhroma</title>
+<title>Zhroma — priority tinting status</title>
 <style>
   /* Layout only. The product palette lives in zhroma.css and nowhere else. */
   body { width: 17rem; margin: 0; padding: 0.9rem 1rem; font: 0.875rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
   h1 { margin: 0 0 0.35rem; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   p { margin: 0; }
+  label { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.55rem; }
+  input:disabled + span { opacity: 0.55; }
 </style>
 </head>
 <body>
 <h1>Zhroma</h1>
-<p id="zhroma-status">Checking this view</p>
+<label><input type="checkbox" id="zhroma-enabled" disabled><span>Enable priority tinting</span></label>
+<p id="zhroma-status" role="status">Checking this view</p>
 <script src="popup.js"></script>
 </body>
 </html>

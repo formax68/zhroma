@@ -262,9 +262,12 @@
     }
   }
 
+  // Returns whether the page actually reached the state the current inputs
+  // call for. The caller may be an acknowledgement the agent will read, so a
+  // failed marker write or a failed removal must never be reported as done.
   function reconcileCurrentTable() {
     reconcileTimer = null;
-    if (!active) return;
+    if (!active) return false;
     try {
       const snapshot = inspectCandidateTable(document);
       candidate = snapshot.table;
@@ -273,22 +276,24 @@
         const [diagnosis, reason] = statusForState(snapshot.state);
         // A rolled back write never reports as working: the agent is told the
         // page reached the intended state only when it actually did.
-        if (commitSnapshot(snapshot)) publishStatus(diagnosis, reason);
-        else publishStatus('neutral', null);
-        return;
+        if (commitSnapshot(snapshot)) { publishStatus(diagnosis, reason); return true; }
+        publishStatus('neutral', null);
+        return false;
       }
-      clearOwnedMarkers();
+      const cleared = clearOwnedMarkers();
       if (snapshot.state === 'missing') {
         if (!missingConfirmed) { publishStatus('neutral', null); armConfirmation(); }
-        return;
+        return cleared;
       }
       cancelConfirmation();
       const [diagnosis, reason] = statusForState(snapshot.state);
       publishStatus(diagnosis, reason);
+      return cleared;
     } catch {
       cancelConfirmation();
       clearOwnedMarkers();
       publishStatus('neutral', null);
+      return false;
     }
   }
 
@@ -335,6 +340,9 @@
     return preferenceReady && preferenceEnabled && !suspended && !document.hidden;
   }
 
+  // Teardown returns whether ownership was actually released. A permanently
+  // broken native removal API is a real failure and is propagated as one
+  // rather than swallowed, because the popup will report it to the agent.
   function pauseController() {
     active = false;
     observer?.disconnect();
@@ -344,14 +352,15 @@
     // it alive or settle one that was in flight.
     cancelConfirmation();
     adoptCopiedMarkers(document);
-    clearOwnedMarkers();
+    const complete = clearOwnedMarkers();
     candidate = null;
     publishStatus('neutral', null);
+    return complete;
   }
 
   function resumeController() {
     // Never resume on visibility alone: the preference must be confirmed too.
-    if (!runnable()) { pauseController(); return; }
+    if (!runnable()) return pauseController();
     try {
       if (!active) {
         adoptCopiedMarkers(document);
@@ -360,12 +369,19 @@
         active = true;
       }
       scheduleReconcile();
-    } catch { pauseController(); }
+      return true;
+    } catch { pauseController(); return false; }
   }
 
-  function syncController() {
-    if (runnable()) resumeController();
-    else pauseController();
+  // `immediate` is for a transition somebody is waiting on an answer about:
+  // the fresh pass runs in this turn instead of on the deferred timer, so the
+  // acknowledgement describes a page that has already been updated. Every
+  // other caller keeps the deferred pass unchanged.
+  function syncController(immediate = false) {
+    if (!runnable()) return pauseController();
+    if (!resumeController() || !immediate) return active;
+    if (reconcileTimer !== null) { clearTimeout(reconcileTimer); reconcileTimer = null; }
+    return reconcileCurrentTable();
   }
 
   function onVisibilityChange() {
@@ -385,9 +401,13 @@
     readPreference();
   }
 
-  function applyPreference(value, generation) {
+  // Returns whether this document now reflects the value it was handed. A
+  // superseded generation, an unreadable preference or a failed teardown all
+  // answer false, because none of them left the page where the preference says
+  // it should be.
+  function applyPreference(value, generation, immediate = false) {
     // A newer read or a change event has already spoken; drop this reply.
-    if (generation !== preferenceGeneration) return;
+    if (generation !== preferenceGeneration) return false;
     if (typeof value === 'boolean') {
       preferenceReady = true;
       preferenceEnabled = value;
@@ -397,21 +417,29 @@
       preferenceReady = false;
       preferenceEnabled = false;
     }
-    syncController();
+    const settled = syncController(immediate);
     if (!statusAnnounced) { statusAnnounced = true; announceStatus(); }
+    return preferenceReady && settled;
   }
 
-  function readPreference() {
+  // `done`, when supplied, makes this an acknowledged read: the fresh pass runs
+  // synchronously and the callback reports whether the page actually reached
+  // the persisted state. Called without it, the behaviour is unchanged.
+  function readPreference(done) {
     preferenceGeneration += 1;
     const generation = preferenceGeneration;
+    const finish = (value) => {
+      const applied = applyPreference(value, generation, done !== undefined);
+      if (done !== undefined) done(applied);
+    };
     try {
       chrome.storage.local.get({ [PREFERENCE_KEY]: true }, (values) => {
         // Only an absent key is filled by the default, so a present but
         // non-boolean value is still distinguishable from absence here.
-        if (chrome.runtime.lastError) { applyPreference(null, generation); return; }
-        applyPreference(values ? values[PREFERENCE_KEY] : null, generation);
+        if (chrome.runtime.lastError) { finish(null); return; }
+        finish(values ? values[PREFERENCE_KEY] : null);
       });
-    } catch { applyPreference(null, generation); }
+    } catch { finish(null); }
   }
 
   function onPreferenceChanged(changes, areaName) {
@@ -426,10 +454,10 @@
     applyPreference(value, preferenceGeneration);
   }
 
-  function isStatusRequest(message) {
+  function isRequest(message, type) {
     return message !== null && typeof message === 'object' && !Array.isArray(message)
       && Object.keys(message).length === 2
-      && message.type === 'get-status'
+      && message.type === type
       && Number.isInteger(message.requestId)
       && message.requestId >= 1 && message.requestId <= MAX_REQUEST_ID;
   }
@@ -439,13 +467,32 @@
     // content script, never the worker, and is refused outright.
     if (sender === null || typeof sender !== 'object') return undefined;
     if (sender.id !== chrome.runtime.id || sender.tab !== undefined) return undefined;
-    if (!isStatusRequest(message)) return undefined;
-    sendResponse({
-      type: 'status',
-      requestId: message.requestId,
-      diagnosis: statusDiagnosis,
-      reason: statusReason,
-    });
+    if (isRequest(message, 'get-status')) {
+      sendResponse({
+        type: 'status',
+        requestId: message.requestId,
+        diagnosis: statusDiagnosis,
+        reason: statusReason,
+      });
+      return undefined;
+    }
+    if (isRequest(message, 'apply-preference')) {
+      // The request carries no desired value and none is ever accepted from
+      // it: this document re-reads the persisted boolean itself, so a spoofed
+      // or replayed request cannot set a preference. The reply is deferred
+      // until the read has landed and the page has been brought into line.
+      const requestId = message.requestId;
+      readPreference((applied) => {
+        sendResponse({
+          type: 'applied',
+          requestId,
+          applied,
+          diagnosis: statusDiagnosis,
+          reason: statusReason,
+        });
+      });
+      return true;
+    }
     return undefined;
   }
 
