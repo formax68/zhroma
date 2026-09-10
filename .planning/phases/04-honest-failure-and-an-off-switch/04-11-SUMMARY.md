@@ -26,7 +26,7 @@ actuals:
   tokens: 41500
   tasks: 3
   commits: 3
-  note: "chars/4 over the authored diff. Deliberately EXCLUDES 04-PERFORMANCE-SAMPLES.json (1.4 MB of machine-generated measurement, in the tree twice). Including it would report ~1M tokens and destroy the calibration signal rather than improve it."
+  note: "tokens: chars/4 over the authored diff. Deliberately EXCLUDES 04-PERFORMANCE-SAMPLES.json (1.4 MB of machine-generated measurement, in the tree twice). Including it would report ~1M tokens and destroy the calibration signal rather than improve it. commits: the 3 TASK commits (c694c4f, aee0806, 8dec4f9), measured from the ledger at SUMMARY-write time, matching the sibling-summary convention. git rev-list --count plan_head_before..HEAD reads 5 after close-out: the two extra are the SUMMARY commit (01336f0) and the metadata commit (b4c1ba7), both of which necessarily land after the count is taken."
 plan_head_before: 77b3a19f3f96fa99b97b47930cd44f75bc52dd57
 
 tech-stack:
