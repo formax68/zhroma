@@ -2,7 +2,7 @@
 phase: 04-honest-failure-and-an-off-switch
 plan: "05"
 technical_tests: passed
-browser_timing: not-yet-run
+browser_timing: passed
 independent_code_review: not-performed
 security_asvs_level1: not-performed
 goal_verification: not-performed
@@ -17,16 +17,16 @@ change that.** The five gates below are five separate verdicts. Only the first
 has been executed by this plan. Preparation tests passing is evidence about the
 tests.
 
-> Timing rows are filled by 04-05 Task 2. At the time Task 1 committed this
-> document they had not been run, and are recorded as `not-yet-run` rather than
-> assumed.
+> Timing rows were filled by 04-05 Task 2 after the six runs actually executed.
+> Task 1 committed this document with them recorded as `not-yet-run` rather than
+> assumed; the history of this file shows that ordering.
 
 ## Gate inventory — five verdicts, kept apart
 
 | Gate | Verdict | Who can supply it | Notes |
 |---|---|---|---|
 | **Automated technical tests** | `passed` | This plan | 65 `node --test` + 518 Vitest, exit 0. See results below. |
-| **Browser timing (synthetic)** | `not-yet-run` → see Task 2 | This plan | Finite measurement only. Never a statement about felt responsiveness. |
+| **Browser timing (synthetic)** | `passed` | This plan | Finite measurement only — 3600 samples inside the inherited budget. **Layout and retainer attribution were not taken**, and felt responsiveness stays `pending-human`. See `04-PERFORMANCE.md`. |
 | **Independent code review** | `not-performed` | A reviewer other than the implementing agent | Must run against the final Phase 4 source. Not self-awardable. |
 | **Security — ASVS level 1, high/critical blocking** | `not-performed` | Independent security review | This plan prepares its evidence; it does not issue the verdict. |
 | **Phase goal verification** | `not-performed` | `/gsd-verify-work` | Separate from both review and human acceptance. |
@@ -52,8 +52,9 @@ this plan.
 |---|---|
 | `node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension/phase-04-live-acceptance.test.js` | **38 passed**, exit 0. Prints `PHASE 04 LIVE ACCEPTANCE STATUS: human_needed`. |
 | `npm test` (recon smoke + full Vitest) | **65** `node --test` + **518** Vitest passed across 14 files, exit **0**. |
-| `env GSD_FIXTURE_MANIFEST=test/fixtures/manifest.json npm run test:recon` | *Task 2* |
-| `node scripts/run-tint-workload.js --size {30,200,1000} --mode {enabled,disabled} --output …/04-PERFORMANCE-SAMPLES.json` | *Task 2* |
+| `env GSD_FIXTURE_MANIFEST=test/fixtures/manifest.json npm run test:recon` | **65** + **518 passed** across 14 files, exit 0. |
+| `node scripts/run-tint-workload.js --size 30 --mode enabled --smoke` | `TINT WORKLOAD SMOKE: passed`, exit 0; identity hashes match current source. |
+| `node scripts/run-tint-workload.js --size {30,200,1000} --mode {enabled,disabled} --output …/04-PERFORMANCE-SAMPLES.json` | All six runs `TINT WORKLOAD: passed`, exit 0. Report `timingStatus: passed`. 3600 measured operations (6 × 6 × 100 after 10 warmups). Worst 30-row median **1.300 ms** (budget 2 ms); worst enabled batch **13.900 ms** (budget 16 ms); all three disabled controls **0 callbacks / 0 writes**. |
 | `node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension/phase-03-live-acceptance.test.js` | **30 passed**; prints `PHASE 03 LIVE ACCEPTANCE STATUS: human_needed`. File untouched by this plan and still bound to `382cc88`. |
 
 ### What the automated suite does and does not establish
@@ -68,6 +69,16 @@ five byte-distinct 32×32 RGBA PNGs and the worker's exact projection set; the
 frozen permission surface, match pattern, `world: "ISOLATED"` and
 `all_frames: false`; and the absence of colour literals, CSS writes, DOM
 construction, network, console and web-storage use in every shipped script.
+
+Timing establishes, on final source: that the controller stays inside the
+inherited Phase 3 budget at 30, 200 and 1000 rows; that mutation filtering costs
+~0 ms and zero timer passes for an irrelevant change even at 1000 rows; and that
+disabled mode genuinely loads no runtime rather than loading one that declines to
+act. It does **not** establish attributed forced layouts or attributed detached
+retention — **no `--profile` run was taken in this plan**, so those are recorded
+as *not-taken*, never as zero. Phase 3's manual profiling stays deferred at the
+user's request and its own `human_needed` attribution disposition stands
+unchanged; aggregate counters were not substituted for it.
 
 It does **not** establish anything a person has to see: that the artwork is
 distinguishable at 16 px, that tint visibly disappears on click, that a genuine
@@ -155,6 +166,22 @@ test does not resolve a probe classification**, and none is marked resolved here
   product diagnoses stay three. The copy set was a **user decision**; this
   addition is surfaced at the Phase 4 checkpoint for the user to ratify or
   reject. It is not ratified here.
+
+## Handoff facts for the store listing and for review
+
+- **Chrome 106 compatibility floor.** `minimum_chrome_version: "106"` exists
+  because `sender.documentId` is load-bearing for content-script identity at the
+  worker's trust boundary. Lowering it would remove the worker's ability to tell
+  two documents in the same tab apart. It is a security decision, not a
+  convenience, and it deliberately excludes installs below Chrome 106.
+- **`storage.local`, exactly one boolean, no `sync`.** `{enabled: boolean}` in
+  `chrome.storage.local`, written by the worker alone; an absent key means
+  `true`, preserving zero-configuration install. `chrome.storage.sync`,
+  `session` and `managed` are pinned absent by name. Two consequences the product
+  must not overstate: the preference does **not** follow the agent to another
+  machine, and cross-tab delivery is **asynchronous** — a frozen tab converges on
+  resume rather than atomically. The `global-local` decision states that limit
+  explicitly.
 
 ## Silent-regression hazard to carry into review
 
