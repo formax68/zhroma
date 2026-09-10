@@ -16,7 +16,7 @@
 // may not. A content-side `set` is recorded as a forbidden channel exactly
 // like a `fetch` would be, so the single-writer rule is enforced by the double
 // rather than merely intended by the source.
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { URL } from 'node:url';
 import { createContext, Script } from 'node:vm';
 import { Window } from 'happy-dom';
@@ -64,6 +64,16 @@ export const ICON = {
 // Text that exists only inside the admitted fixture. None of it may ever appear
 // in a message, a response, an action title or the popup (T-04-04).
 export const TICKET_TOKENS = ['Urgent', 'High', 'Normal', 'Low', 'TEXT-0', 'ARIA-0', 'zendesk', 'http', 'tables.'];
+
+// Every artwork the store package actually contains, READ FROM THE DIRECTORY
+// rather than transcribed: a shape added in a later phase must not be able to
+// leave this inventory stale, which is the same defect class the transcribed
+// `find` literal of a mutation entry can carry. Chrome rejects `setIcon` for a
+// path the package does not contain, so the double refuses one too — without
+// that, a status with no packaged artwork records an `actionLog` entry naming
+// `undefined` and the platform's real failure mode is never reproduced.
+export const PACKAGED_ICON_PATHS = readdirSync(new URL('icons/', root)).sort().map((name) => `icons/${name}`);
+const PACKAGED_ICONS = new Set(PACKAGED_ICON_PATHS);
 
 export const fixture = () => readFileSync(new URL('../fixtures/zendesk-view-priority-present.html', import.meta.url), 'utf8');
 export const popupBody = () => asset(POPUP_PATH).match(/<body[^>]*>([\s\S]*?)<\/body>/i)[1].replace(/<script[\s\S]*?<\/script>/gi, '');
@@ -351,6 +361,11 @@ export function createWorld({
     action: {
       setIcon({ tabId, path }) {
         if (!actionAvailable) return Promise.reject(new Error('Action unavailable'));
+        // Chrome refuses artwork the package does not contain, and the refusal
+        // is what makes the review's stated impact reachable: the worker's
+        // `catch` swallows it, `setTitle` is never reached, and the tab keeps
+        // its previous claim about the view.
+        if (!PACKAGED_ICONS.has(path)) return Promise.reject(new Error('Icon path is not packaged'));
         const land = () => {
           actions.set(tabId, { ...actions.get(tabId), icon: path });
           actionLog.push({ tabId, icon: path });
