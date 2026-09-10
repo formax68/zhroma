@@ -33,14 +33,22 @@ const bound = () => {
   return Number(match[1]);
 };
 
+/** The worker's own deadline, read from its shipped bytes for the same reason. */
+const workerSource = readFileSync(new URL('../../extension/background.js', import.meta.url), 'utf8');
+const workerBound = () => {
+  const match = workerSource.match(/const REQUEST_TIMEOUT_MS = (\d+);/);
+  if (match === null) throw new Error('Final source setting could not be extracted: REQUEST_TIMEOUT_MS');
+  return Number(match[1]);
+};
+
 // A test-local patience limit, deliberately NOT a copy of the shipped
 // constant: it is the point past which "bounded" stops being a meaningful
 // claim. The tie back to the shipped value is asserted separately.
-const CEILING = 5000;
+const CEILING = 9000;
 // The double's own port-close fallback must outlive that limit, or the double
 // closes the channel first and the test proves nothing about the popup.
 const PORT_CLOSE = CEILING + 1000;
-const SLOW = 15000;
+const SLOW = 20000;
 
 /** Poll until the predicate holds; `null` means it never did within `limit`. */
 async function until(predicate, limit = CEILING) {
@@ -265,6 +273,17 @@ test('a successful save is unchanged, including the click that arrives while one
 });
 
 // --- WR-04, the popup hop: a silent worker costs one bounded wait ----------
+
+test('the popup waits longer than the worker is allowed to, so it cannot cut off a real answer', () => {
+  // Answering the popup can cost the worker a full bounded wait of its own: a
+  // silent top frame makes `get-status` and `apply-preference` each run to the
+  // worker's deadline. A popup deadline at or below the worker's would discard
+  // the honest reply — and the confirmed preference it carries — just before
+  // it arrived, leaving the switch disabled exactly where 04-08 made it
+  // usable. Two processes, two copies of the constant, one ordering; this is
+  // where that ordering is enforced.
+  expect(bound()).toBeGreaterThan(workerBound());
+});
 
 test('a worker that never answers set-enabled costs one bounded wait and the ratified line', async () => {
   const world = createWorld({ portCloseMs: PORT_CLOSE });

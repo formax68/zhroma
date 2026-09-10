@@ -8,6 +8,21 @@
   // report what it was able to read.
 
   const MAX_REQUEST_ID = 1000000;
+  // A hop into the worker is bounded, for the same reason the worker bounds
+  // its own hops into a document: a listener that accepts the message and
+  // never answers would otherwise leave the switch disabled for the life of
+  // the popup, with no reply to re-enable it.
+  //
+  // STRICTLY GREATER than the worker's own deadline, and that ordering is the
+  // whole point of the value. Answering the popup can cost the worker a full
+  // bounded wait of its own — a silent top frame makes `get-status` and
+  // `apply-preference` each run to their deadline — so a popup deadline at or
+  // below the worker's would cut off the worker's honest answer just before it
+  // arrived, throw away the confirmed preference it carried, and cost the
+  // agent the very off switch that bound was added to protect. There is no
+  // shared module to hold one constant (D-06 forbids a build step), so the
+  // ordering is asserted from the shipped bytes in `popup-recovery.test.js`.
+  const REQUEST_TIMEOUT_MS = 5000;
   const STATUSES = ['working', 'missing', 'cannot-read', 'neutral', 'off', 'unavailable'];
   const REASONS = ['blank', 'unsupported-language', 'structure', null];
 
@@ -108,11 +123,21 @@
   }
 
   async function ask(message) {
+    let timer = null;
+    // `null` on the deadline is deliberate rather than a new sentinel: it is
+    // not an object, so `isExact` already refuses it and both callers convert
+    // it into the outcome they already have for an unusable reply. No new
+    // branch, no new reported state, no new copy.
+    const deadline = new Promise((resolve) => { timer = setTimeout(() => resolve(null), REQUEST_TIMEOUT_MS); });
     try {
-      return await chrome.runtime.sendMessage(message);
+      return await Promise.race([chrome.runtime.sendMessage(message), deadline]);
     } catch {
       // A sleeping or missing worker is unavailable, not a diagnosis.
       return null;
+    } finally {
+      // Cleared on every winning path, so a popup that got its answer is not
+      // held open by a timer that no longer has anything to say.
+      if (timer !== null) clearTimeout(timer);
     }
   }
 
