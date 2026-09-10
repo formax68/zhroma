@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 10
+open_count: 7
 waived_count: 0
-fixed_count: 0
+fixed_count: 3
 total_count: 10
-last_updated: 2026-09-10T05:32:58.028Z
+last_updated: 2026-09-10T05:51:04.566Z
 ---
 
 # Broken Windows Ledger
@@ -22,9 +22,9 @@ last_updated: 2026-09-10T05:32:58.028Z
 | 5 | 01 | deviation | test/recon/recon-gate.smoke.js | 242 | Repository final-gate smoke assertion hard-coded the pre-attestation block verdict. | open |  | 2026-09-04T11:29:35.167Z |  |
 | 6 | 01 | deviation | .planning/STATE.md |  | Corrected stale last-plan STATE fields after the SDK update. | open |  | 2026-09-04T11:32:32.566Z |  |
 | 7 | 02 | unrun-verify | .planning/phases/02-first-tint-on-a-real-view/02-LIVE-ACCEPTANCE.md |  | End-of-phase live product gate has eleven pending observations; authentic appearance and source loading remain human_needed. | open |  | 2026-09-08T12:22:33.410Z |  |
-| 8 | 04 | unrun-verify | test/extension/runtime-contract.test.js |  | 6 of 9 tests fail: readdirSync asset inventory, manifest deep-equal and the throwing chrome.storage Proxy all predate the Phase 4 surfaces. Deliberate contract change ordered in 04-06; not adapted here. | open |  | 2026-09-10T05:32:57.876Z |  |
-| 9 | 04 | unrun-verify | test/extension/initial-tint.test.js |  | 59 of 60 tests fail: the VM context supplies no chrome, so the content script stays fail-closed unconfirmed and never tints. Chrome-mock harness adaptation ordered in 04-06. | open |  | 2026-09-10T05:32:57.952Z |  |
-| 10 | 04 | unrun-verify | test/extension/persistent-tint.test.js |  | 66 of 68 tests fail: same missing chrome mock plus the one-active-observer assertion, which must assert zero while unconfirmed. Harness adaptation ordered in 04-06. | open |  | 2026-09-10T05:32:58.028Z |  |
+| 8 | 04 | unrun-verify | test/extension/runtime-contract.test.js |  | 6 of 9 tests fail: readdirSync asset inventory, manifest deep-equal and the throwing chrome.storage Proxy all predate the Phase 4 surfaces. Deliberate contract change ordered in 04-06; not adapted here. | fixed |  | 2026-09-10T05:32:57.876Z | 2026-09-10T05:51:04.409Z |
+| 9 | 04 | unrun-verify | test/extension/initial-tint.test.js |  | 59 of 60 tests fail: the VM context supplies no chrome, so the content script stays fail-closed unconfirmed and never tints. Chrome-mock harness adaptation ordered in 04-06. | fixed |  | 2026-09-10T05:32:57.952Z | 2026-09-10T05:51:04.489Z |
+| 10 | 04 | unrun-verify | test/extension/persistent-tint.test.js |  | 66 of 68 tests fail: same missing chrome mock plus the one-active-observer assertion, which must assert zero while unconfirmed. Harness adaptation ordered in 04-06. | fixed |  | 2026-09-10T05:32:58.028Z | 2026-09-10T05:51:04.566Z |
 
 ````json
 [
@@ -119,10 +119,10 @@ last_updated: 2026-09-10T05:32:58.028Z
     "file": "test/extension/runtime-contract.test.js",
     "line": null,
     "description": "6 of 9 tests fail: readdirSync asset inventory, manifest deep-equal and the throwing chrome.storage Proxy all predate the Phase 4 surfaces. Deliberate contract change ordered in 04-06; not adapted here.",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-09-10T05:32:57.876Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-10T05:51:04.409Z"
   },
   {
     "id": 9,
@@ -131,10 +131,10 @@ last_updated: 2026-09-10T05:32:58.028Z
     "file": "test/extension/initial-tint.test.js",
     "line": null,
     "description": "59 of 60 tests fail: the VM context supplies no chrome, so the content script stays fail-closed unconfirmed and never tints. Chrome-mock harness adaptation ordered in 04-06.",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-09-10T05:32:57.952Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-10T05:51:04.489Z"
   },
   {
     "id": 10,
@@ -143,10 +143,10 @@ last_updated: 2026-09-10T05:32:58.028Z
     "file": "test/extension/persistent-tint.test.js",
     "line": null,
     "description": "66 of 68 tests fail: same missing chrome mock plus the one-active-observer assertion, which must assert zero while unconfirmed. Harness adaptation ordered in 04-06.",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-09-10T05:32:58.028Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-10T05:51:04.566Z"
   }
 ]
 ````
