@@ -28,11 +28,18 @@ const root = new URL('../../', import.meta.url);
 const phase = new URL('.planning/phases/04-honest-failure-and-an-off-switch/', root);
 const priorPhase = new URL('.planning/phases/03-the-tint-survives-everything/', root);
 
-// Sixteen stable IDs. Order is the acceptance walkthrough order; the validator
+// Seventeen stable IDs. Order is the acceptance walkthrough order; the validator
 // requires the set, not the order.
+//
+// `english-regional-locale` was added by 04-11: the CR-01 repair means an
+// English REGIONAL shell (en-GB, en-US, …) now tints instead of being told its
+// language is unsupported, and that behaviour had no live-evidence slot at all.
+// A shipped behaviour with no slot is the silent gap promotion rule 3 exists to
+// prevent.
 const REQUIRED_IDS = [
   'working-icon', 'blank-copy', 'missing-icon-hint', 'missing-settle-transition',
-  'language-icon-copy', 'structure-copy', 'off-clears', 'on-restores',
+  'language-icon-copy', 'structure-copy', 'english-regional-locale',
+  'off-clears', 'on-restores',
   'restart-off', 'restart-on', 'cross-tab-preference', 'frozen-resume',
   'nonreceiver-status', 'navigation-status', 'worker-restart', 'popup-keyboard',
 ];
@@ -192,10 +199,16 @@ export function validatePhase04Acceptance(record, performance = loadPerformance(
     // outcomes only. A URL, an address or a long identifier is ticket-shaped.
     requireEvidence(!/https?:\/\/|@[\w.-]+\.\w{2,}|\b\d{6,}\b/.test(check.evidence), 'confidential-evidence');
     // Language context is a controlled tag, never free text, and belongs to
-    // exactly one check.
+    // exactly two checks — the two whose whole subject IS the shell language.
+    // `language-icon-copy` needs a tag that is NOT English; its opposite,
+    // `english-regional-locale`, needs a tag that is English but is not the
+    // bare `en` (a bare `en` is `working-icon`'s scope, not this check's).
     if (check.id === 'language-icon-copy') {
       requireEvidence(typeof check.language_context === 'string' && /^[a-z]{2}(-[A-Za-z0-9]{2,8})*$/.test(check.language_context)
         && check.language_context !== 'en', 'language-context');
+    } else if (check.id === 'english-regional-locale') {
+      requireEvidence(typeof check.language_context === 'string' && /^[a-z]{2}(-[A-Za-z0-9]{2,8})*$/.test(check.language_context)
+        && check.language_context !== 'en' && check.language_context.split('-')[0] === 'en', 'language-context');
     } else requireEvidence(check.language_context === null, 'language-context-scope');
   }
 
@@ -269,7 +282,8 @@ function example(complete = false) {
       evidence_kind: complete ? 'live' : 'pending',
       observed_on: complete ? '2026-09-10' : null,
       evidence: complete ? 'In-memory validator example only' : null,
-      language_context: complete && id === 'language-icon-copy' ? 'de' : null,
+      language_context: complete && id === 'language-icon-copy' ? 'de'
+        : complete && id === 'english-regional-locale' ? 'en-GB' : null,
     })),
     flagged_unverified: PROHIBITION_IDS.map((id) => ({
       id,
@@ -302,9 +316,9 @@ test('a complete honest pending record validates, and only a fully consistent li
   expect(validatePhase04Acceptance(example(true), acceptedPerformance(), CLOCK)).toBe('passed');
 });
 
-test('all sixteen new live checks stay pending absent an actual observation', () => {
+test('all seventeen new live checks stay pending absent an actual observation', () => {
   const pending = example();
-  expect(pending.checks).toHaveLength(16);
+  expect(pending.checks).toHaveLength(17);
   expect(pending.checks.every((row) => row.status === 'pending')).toBe(true);
   expect(validatePhase04Acceptance(pending, acceptedPerformance(), CLOCK)).toBe('human_needed');
   // Absent timing samples cannot be papered over either.
@@ -337,6 +351,13 @@ test.each([
   ['ticket identifier in evidence', (r) => { r.checks[0].evidence = 'Observed on ticket 1048576'; }],
   ['free-text language context', (r) => { r.checks.find((c) => c.id === 'language-icon-copy').language_context = 'German account of the customer'; }],
   ['language context on an unrelated check', (r) => { r.checks[0].language_context = 'de'; }],
+  // The English-regional check is the CR-01 repair's own slot: its whole point
+  // is a shell that is English but is not the bare `en`, so both near-misses
+  // must be refused rather than quietly admitted.
+  ['bare en claimed as an English REGIONAL locale', (r) => { r.checks.find((c) => c.id === 'english-regional-locale').language_context = 'en'; }],
+  ['a non-English tag claimed as an English regional locale', (r) => { r.checks.find((c) => c.id === 'english-regional-locale').language_context = 'de'; }],
+  ['a near-miss primary subtag claimed as English', (r) => { r.checks.find((c) => c.id === 'english-regional-locale').language_context = 'eng-GB'; }],
+  ['a missing language context on the English-regional check', (r) => { r.checks.find((c) => c.id === 'english-regional-locale').language_context = null; }],
   ['hidden defect', (r) => r.limitations.unresolved_observed_defects.push('Observed issue')],
   ['failed row claimed as passed', (r) => { r.checks[0].status = 'fail'; }],
   ['unavailable scenario claimed as observed', (r) => r.limitations.unavailable_scenarios.push({ id: 'restart-off', reason: 'Unavailable' })],

@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 13
+open_count: 14
 waived_count: 0
 fixed_count: 3
-total_count: 18
-last_updated: 2026-09-10T16:10:00.000Z
+total_count: 19
+last_updated: 2026-09-10T16:35:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -31,6 +31,7 @@ last_updated: 2026-09-10T16:10:00.000Z
 | 16 | 04 | deviation | extension/popup.js |  | The popup's REQUEST_TIMEOUT_MS ships at 5000, not the 2000 the plan named: answering the popup can cost the worker a full bounded wait of its own, so an equal deadline cut off the worker's honest reply and the confirmed preference it carried, regressing failure-seam's 'the switch is usable again'. The ordering between the two processes' copies is asserted from the shipped bytes. | open |  | 2026-09-10T16:10:00.000Z |  |
 | 17 | 04 | deviation | test/mutants/popup-recovery.mutants.json |  | popup-focus-guard mutates the focus restoration itself, not the disabled-state guard 04-10 Task 3 named. Reinstating that guard was measured SURVIVED (0/1 killed): the corrected ordering re-enables the control before end() runs, so the guard is unreachable and cannot be load-bearing. | open |  | 2026-09-10T16:10:00.000Z |  |
 | 18 | 04 | deviation | test/extension/toggle.test.js |  | A file outside the plan's files_modified was edited: 'a rejected read after a write refuses to claim a preference it could not confirm' asserted the control is taken out of service, which is the defect WR-07 reports. Rewritten to the corrected contract (revert to the last confirmed value, stay operable). | open |  | 2026-09-10T16:10:00.000Z |  |
+| 19 | 04 | deviation | .planning/phases/04-honest-failure-and-an-off-switch/04-LIVE-ACCEPTANCE.md |  | The re-enable-not-pressured ratification is qualified rather than carried intact as the plan directed: popup.js changed under WR-04/WR-07, so the popup the user judged at the 2026-09-10 checkpoint is not byte-identical to the one that ships. The repair added no copy and no prompt, but whether the repaired failed-save path still reads as unpressured is a judgment nobody has made against the new bytes. Status stays flagged-unverified; the qualification is recorded in the judgment's own disposition text. | open |  | 2026-09-10T16:35:00.000Z |  |
 
 ````json
 [
@@ -248,6 +249,18 @@ last_updated: 2026-09-10T16:10:00.000Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-10T16:10:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 19,
+    "kind": "deviation",
+    "phase": "04",
+    "file": ".planning/phases/04-honest-failure-and-an-off-switch/04-LIVE-ACCEPTANCE.md",
+    "line": null,
+    "description": "The re-enable-not-pressured ratification is qualified rather than carried intact as the plan directed: popup.js changed under WR-04/WR-07, so the popup the user judged at the 2026-09-10 checkpoint is not byte-identical to the one that ships. The repair added no copy and no prompt, but whether the repaired failed-save path still reads as unpressured is a judgment nobody has made against the new bytes. Status stays flagged-unverified; the qualification is recorded in the judgment's own disposition text.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T16:35:00.000Z",
     "resolved_at": null
   }
 ]
