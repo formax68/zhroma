@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: Completed 04-12-PLAN.md
-last_updated: "2026-09-10T17:18:08.654Z"
+stopped_at: Completed 04-13-PLAN.md
+last_updated: "2026-09-10T17:45:54.628Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 04 execution started
-state_head: 3bd8bae6a4e70a76a1339d15dec205931a20cd2c
+state_head: 43fc00746d1048b52888ef01a246b5fe9b02f043
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 36
-  completed_plans: 34
+  completed_plans: 35
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 7 of 14
+Plan: 8 of 14
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 04 execution started
 
@@ -80,6 +80,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P10 | 19 min | 3 tasks | 4 files |
 | Phase 04 P11 | 23 min | 3 tasks | 14 files |
 | Phase 04 P12 | 30 min | 3 tasks | 4 files |
+| Phase 04 P13 | 21 min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -129,6 +130,10 @@ Recent decisions affecting current work:
 - [Phase 04]: english-regional-locale is added as a seventeenth live check rather than folded into working-icon, and the re-enable-not-pressured ratification is qualified rather than carried intact — The CR-01 repair ships a behaviour (an English regional shell tints) that no existing check covered, and a shipped behaviour with no live-evidence slot is the silent gap promotion rule 3 exists to prevent. Symmetrically, popup.js changed under WR-04/WR-07, so the popup the user judged when ratifying the off-switch prohibition is not the popup that ships.
 - [Phase 04]: [Phase 04]: replyDelays delays DELIVERY so the document always answers with FRESH data; only a RESPONSE-side hold (payload captured when the listener answered, released later) can put a genuinely stale reply in flight. Both are kept as separately named tracer capabilities so the distinction that made the WR-01 guardian test vacuous cannot be lost again.
 - [Phase 04]: [Phase 04]: Two of the seven named worker guard sites cannot be individually fenced and are not registered as if they were: requestStatus's catch-branch guard and its post-await recheck are each redundant with the recheck BOTH callers perform immediately afterwards, with no macrotask able to interleave. Both were MEASURED SURVIVED against the full suite. generation-counter fences them at mechanism level and status-catch-reports-unavailable fences the reporting half of the catch branch; each note states what it does not fence.
+- [Phase 04]: A refused apply reply reports the ratified 'No readable view is connected' line, never the not-applied line: popup.js tests status === 'unavailable' before !applied — The plan called it "the ratified could-not-apply line", but the shipped branch order is the authority. Presenting a reply the worker never accepted as NOT_APPLIED would claim the document answered and declined — a statement nothing has evidence for. Same principle as 04-12's timeout decision.
+- [Phase 04]: The five encodings of the finite {diagnosis, reason} protocol are asserted in agreement by parsing the shipped sources with matchAll, and every parse carries a minimum expected count — D-06 forbids a build step, so DIAGNOSES, REASONS, ICONS, TITLES and the popup's COPY are IIFE-local and cannot be imported. A regex that silently matches nothing would make the completeness assertion pass vacuously — the WR-01 failure class — so a minimum count turns an empty parse into a failure.
+- [Phase 04]: The tracer's action double now refuses an icon path outside the packaged inventory, with the allowed set read from extension/icons/ rather than transcribed — Chrome rejects setIcon for an unpackaged path; until the double did too, a bypassed pairing clause produced an actionLog entry naming undefined instead of the review's stated impact (rejection swallowed by catch, setTitle never reached, tab keeps its previous claim). Deriving the set from the directory means a shape added later cannot leave the check stale.
+- [Phase 04]: [Phase 04]: diagnosis-pairing's registry note records the assertion it was MEASURED to die on — the toolbar deep-equality — and states plainly that the no-valueless-title invariant in the same test is not what fires, because the equality precedes it — Follows 04-12's precedent: a mutant note may not claim a property it does not exercise. The invariant is present, true and load-bearing against a valueless title in the log, but it is not the assertion this mutant trips, and saying otherwise would be the overclaim the plan's own prohibition forbids.
 
 ### Pending Todos
 
@@ -163,8 +168,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T17:17:57.494Z
-Stopped at: Completed 04-12-PLAN.md
+Last session: 2026-09-10T17:45:27.951Z
+Stopped at: Completed 04-13-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
