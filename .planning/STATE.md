@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-09-10T12:37:00.081Z"
+stopped_at: Completed 04-07-PLAN.md
+last_updated: "2026-09-10T15:07:12.215Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 04 execution started
-state_head: 4cf128ee1e3a7dc5eec27e94d9105737c91549db
+state_head: 9bee7a66918e9b6e373d0cdb32ca6dcae6fed1a6
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 36
-  completed_plans: 26
+  completed_plans: 27
   percent: 40
 ---
 
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 ## Current Position
 
-Phase: 04 (Honest Failure and an Off Switch) — READY TO EXECUTE
-Plan: 6 of 6
+Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
+Plan: 2 of 14
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 04 execution started
 
@@ -74,6 +74,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P06 | 12 min | 2 tasks | 6 files |
 | Phase 04 P03 | 28 min | 2 tasks | 9 files |
 | Phase 04 P04 | 38 min | 2 tasks | 9 files |
+| Phase 04 P07 | 11 min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Missing-column certainty is gated on a mutation revision, not a wall clock: the settle callback re-inspects the current DOM and only confirms when the revision that armed it is still current, so a change inside the window restarts a full 100 ms rather than confirming through it.
 - [Phase 04]: Structural unreadability and unsupported locale share the cannot-read diagnosis but carry different fixed reasons; an absent, empty or whitespace lang and a subframe all take the generic structure branch so no language is ever invented.
 - [Phase 04]: The finite {diagnosis, reason} pair is validated as one key in the worker and the popup, so an unpaired combination reports the connection fact rather than falling back to a weaker message.
+- [Phase 04]: The supported interface language is the English language FAMILY (en and every en-* subtag), matched case-insensitively on the raw untrimmed lang value in both encodings — D-08 named html[lang="en"] as the English boundary; D-04 promises an English view is never blamed on its language, and en-GB is English. The family is promoted to the primary representation and the bare tag demoted to one member, so no second predicate exists to drift.
+- [Phase 04]: The single source of truth for the accepted language family is the locale-matrix agreement test, not a shared constant — No build step exists and CSS cannot import from JavaScript, so the predicate is necessarily encoded twice. runtime-contract.test.js writes the accepted and refused sets down once and checks both encodings against them, which is what makes the duplication safe.
 
 ### Pending Todos
 
@@ -142,8 +145,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T06:49:17.938Z
-Stopped at: Completed 04-04-PLAN.md
+Last session: 2026-09-10T15:06:52.928Z
+Stopped at: Completed 04-07-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.

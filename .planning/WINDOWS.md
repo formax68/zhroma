@@ -172,6 +172,18 @@ last_updated: 2026-09-10T06:49:17.218Z
     "reason": "User waiver 2026-09-10, verbatim: \"waive the pendings one from FAIL-03\"",
     "recorded_at": "2026-09-10T10:58:00.000Z",
     "resolved_at": null
+  },
+  {
+    "id": 13,
+    "kind": "deviation",
+    "phase": "04",
+    "file": "test/extension/phase-04-live-acceptance.test.js",
+    "line": null,
+    "description": "Acceptance byte pin fails: 04-07 changed extension/content.js and extension/zhroma.css, so 04-LIVE-ACCEPTANCE.md no longer binds the shipped bytes. Expected intermediate state under 04-VALIDATION.md promotion rule 3; re-establishment is 04-11's work, not a re-point.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T15:06:00.000Z",
+    "resolved_at": null
   }
 ]
 ````
