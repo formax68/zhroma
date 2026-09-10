@@ -101,7 +101,8 @@ export function inertWindow(bodyHTML) {
 // --- strict fake Chrome -----------------------------------------------------
 
 export function createWorld({
-  stored = null, readMode = 'immediate', writeMode = 'immediate', replyDelays = [], portCloseMs = 500,
+  stored = null, readMode = 'immediate', writeMode = 'immediate', replyDelays = [], responseDelays = [],
+  portCloseMs = 500,
 } = {}) {
   const forbidden = [];
   const traffic = [];
@@ -127,6 +128,14 @@ export function createWorld({
   const writeLog = [];
   const tabs = [{ id: TAB_ID, active: true, currentWindow: true }];
   const replyQueue = [...replyDelays];
+  // Two different slownesses, and the difference is the whole point of WR-01.
+  // `replyDelays` defers DELIVERY, so the document computes its answer late and
+  // therefore answers with FRESH data — nothing stale is ever in flight.
+  // `responseDelays` defers THE ANSWER: the document answers on time and the
+  // payload it produced goes stale while it travels. Only the second one can
+  // construct a superseded reply, which is what the worker's generation guards
+  // and its per-tab queue exist to discard.
+  const responseQueue = [...responseDelays];
   const tabsEvents = { activated: [], updated: [], removed: [] };
   const disconnected = new Set();
   let actionAvailable = true;
@@ -138,6 +147,13 @@ export function createWorld({
   // message and never answers is only modellable if the double's own fallback
   // outlives the deadline the shipped worker is being tested against.
   let currentPortCloseMs = portCloseMs;
+  // Applied when the `responseDelays` queue is exhausted, so a hold can be
+  // switched on at the moment a test needs one rather than counted out from
+  // construction time. Zero keeps today's behaviour for every existing caller.
+  let currentResponseDelay = 0;
+  // How long `chrome.action.setIcon` takes to resolve. Zero by default: only a
+  // test that needs a generation bump BETWEEN the two action writes turns it up.
+  let currentActionDelay = 0;
 
   const deny = (name) => function () { forbidden.push(name); throw new Error('Forbidden runtime channel'); };
   const denyStore = (name) => new Proxy({}, { get() { forbidden.push(name); throw new Error('Forbidden store access'); } });
@@ -145,13 +161,25 @@ export function createWorld({
 
   // Deliver exactly like Chrome: asynchronously, resolving only when a listener
   // answers, rejecting when nothing is listening or the channel closes unused.
-  function deliver(listeners, message, sender, delay = 0) {
+  function deliver(listeners, message, sender, delay = 0, responseDelay = 0) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         if (listeners.length === 0) { reject(new Error('Could not establish connection. Receiving end does not exist.')); return; }
         let settled = false;
         let asyncPending = false;
-        const sendResponse = (value) => { if (!settled) { settled = true; record('response', value); resolve(structuredClone(value)); } };
+        const sendResponse = (value) => {
+          if (settled) return;
+          // Mark settled and CAPTURE the payload now, before the delay: the
+          // exchange really is answered at this instant, so the port-close
+          // fallback must not fire, and the value released later must be the
+          // one the listener produced HERE. Recomputing it after the delay
+          // would hand back fresh data and reconstruct the vacuity WR-01 found.
+          settled = true;
+          record('response', value);
+          const captured = structuredClone(value);
+          if (responseDelay > 0) setTimeout(() => { resolve(captured); }, responseDelay);
+          else resolve(captured);
+        };
         for (const listener of listeners) {
           const result = listener(structuredClone(message), structuredClone(sender), sendResponse);
           if (result === true) asyncPending = true;
@@ -313,14 +341,28 @@ export function createWorld({
         if (disconnected.has(tabId) || !tabs.some((tab) => tab.id === tabId)) {
           return Promise.reject(new Error('Could not establish connection. Receiving end does not exist.'));
         }
-        return deliver(listenersFor(tabId), message, { id: EXTENSION_ID }, replyQueue.length > 0 ? replyQueue.shift() : 0);
+        return deliver(
+          listenersFor(tabId), message, { id: EXTENSION_ID },
+          replyQueue.length > 0 ? replyQueue.shift() : 0,
+          responseQueue.length > 0 ? responseQueue.shift() : currentResponseDelay,
+        );
       },
     },
     action: {
       setIcon({ tabId, path }) {
         if (!actionAvailable) return Promise.reject(new Error('Action unavailable'));
-        actions.set(tabId, { ...actions.get(tabId), icon: path });
-        actionLog.push({ tabId, icon: path });
+        const land = () => {
+          actions.set(tabId, { ...actions.get(tabId), icon: path });
+          actionLog.push({ tabId, icon: path });
+        };
+        // The write still happens — a native call already issued cannot be
+        // recalled — it just lands late, which is what opens the window
+        // between the icon and the title that `applyAction` guards.
+        if (currentActionDelay > 0) {
+          const delay = currentActionDelay;
+          return new Promise((resolve) => { setTimeout(() => { land(); resolve(); }, delay); });
+        }
+        land();
         return Promise.resolve();
       },
       setTitle({ tabId, title }) {
@@ -353,6 +395,23 @@ export function createWorld({
     /** Hold an accepted-but-unanswered channel open for `ms` before closing it. */
     setPortCloseMs(ms) { currentPortCloseMs = ms; },
     disconnectContent(tabId = TAB_ID) { disconnected.add(tabId); listenersFor(tabId).splice(0); },
+    /**
+     * Silence a tab's listeners WITHOUT marking the tab disconnected, so
+     * `workerChrome.tabs.sendMessage` still proceeds into `deliver` and the
+     * no-receiver rejection is produced inside the delayed callback rather
+     * than synchronously. That is the only way a LATE rejection is reachable,
+     * which is what `requestStatus`'s catch-branch guard is about.
+     *
+     * The list is REBOUND rather than spliced: a delivery already in flight
+     * holds the old array and must keep finding it empty, while a document
+     * that attaches afterwards is reachable again — a frame that went away
+     * and was replaced, not a tab that closed.
+     */
+    silenceContent(tabId = TAB_ID) { contentListeners.set(tabId, []); },
+    /** Hold every subsequent reply for `ms` after the listener produced it. */
+    setResponseDelay(ms) { currentResponseDelay = ms; },
+    /** Make `chrome.action.setIcon` resolve after `ms`, landing its write then. */
+    setActionDelay(ms) { currentActionDelay = ms; },
     openTab(tabId) { tabs.push({ id: tabId, active: false, currentWindow: true }); },
     activateTab(tabId) {
       for (const tab of tabs) tab.active = tab.id === tabId;
