@@ -341,18 +341,29 @@ test('no ticket value, DOM, URL or raw error crosses any message boundary', asyn
 // --- staleness and lifecycle ------------------------------------------------
 
 test('a slow earlier reply cannot repaint over a newer projection', async () => {
-  const world = createWorld({ replyDelays: [120] });
+  // A DELIVERY delay (`replyDelays`) cannot construct this hazard: it defers the
+  // listener invocation, so the content script computes its answer AFTER the DOM
+  // change and replies with the new status — nothing stale is ever in flight. A
+  // RESPONSE delay holds the answer the listener already produced, so the payload
+  // released late is genuinely the superseded one (04-REVIEW WR-01).
+  const world = createWorld({ responseDelays: [120] });
   loadWorker(world);
   const content = loadContent(world);
   await settle(4);
-  // A second invalidation lands while the first request is still in flight.
+  // A second invalidation lands while the first reply is still in flight.
   content.document.querySelector('table').remove();
   await new Promise((resolve) => { setTimeout(resolve, 500); });
   await settle();
-  expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.checking });
+  expect(world.action()).toEqual({ icon: ICON.neutral, title: COPY.checking });
+  // Fails if either `project` recheck is removed: the superseded working reply
+  // would reach `applyAction` and paint an artwork the view no longer earns.
+  expect(world.actionLog.filter((entry) => entry.icon === ICON.working || entry.title === COPY.working)).toEqual([]);
+  // Fails if the per-tab queue is collapsed: two concurrent projections let the
+  // held stale reply land last.
   const icons = world.actionLog.filter((entry) => entry.icon).map((entry) => entry.icon);
-  expect(icons.at(-1)).toBe('icons/neutral.png');
-});
+  expect(icons.at(-1)).toBe(ICON.neutral);
+  expect(world.forbidden).toEqual([]);
+}, 15000);
 
 test('losing the readable table withdraws the working status without touching the page', async () => {
   const { world, content } = await bootAll();
