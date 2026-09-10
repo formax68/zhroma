@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 14
+open_count: 16
 waived_count: 0
 fixed_count: 3
-total_count: 19
-last_updated: 2026-09-10T16:35:00.000Z
+total_count: 21
+last_updated: 2026-09-10T17:05:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -32,6 +32,8 @@ last_updated: 2026-09-10T16:35:00.000Z
 | 17 | 04 | deviation | test/mutants/popup-recovery.mutants.json |  | popup-focus-guard mutates the focus restoration itself, not the disabled-state guard 04-10 Task 3 named. Reinstating that guard was measured SURVIVED (0/1 killed): the corrected ordering re-enables the control before end() runs, so the guard is unreachable and cannot be load-bearing. | open |  | 2026-09-10T16:10:00.000Z |  |
 | 18 | 04 | deviation | test/extension/toggle.test.js |  | A file outside the plan's files_modified was edited: 'a rejected read after a write refuses to claim a preference it could not confirm' asserted the control is taken out of service, which is the defect WR-07 reports. Rewritten to the corrected contract (revert to the last confirmed value, stay operable). | open |  | 2026-09-10T16:10:00.000Z |  |
 | 19 | 04 | deviation | .planning/phases/04-honest-failure-and-an-off-switch/04-LIVE-ACCEPTANCE.md |  | The re-enable-not-pressured ratification is qualified rather than carried intact as the plan directed: popup.js changed under WR-04/WR-07, so the popup the user judged at the 2026-09-10 checkpoint is not byte-identical to the one that ships. The repair added no copy and no prompt, but whether the repaired failed-save path still reads as unpressured is a judgment nobody has made against the new bytes. Status stays flagged-unverified; the qualification is recorded in the judgment's own disposition text. | open |  | 2026-09-10T16:35:00.000Z |  |
+| 20 | 04 | unmet-truth | .planning/phases/04-honest-failure-and-an-off-switch/04-12-PLAN.md |  | must_haves truth 1 claims removing ANY ONE of the worker's generation guards turns the suite red. Measured false for two of the seven named sites: requestStatus's catch-branch guard and its post-await recheck are each redundant with the recheck BOTH callers (project, popupStatus) perform immediately afterwards, with no macrotask able to interleave, so deleting either alone changes no observable behaviour. Five sites plus the per-tab queue are individually fenced; the redundant pair is fenced only at mechanism level by the generation-counter mutant. | open |  | 2026-09-10T17:05:00.000Z |  |
+| 21 | 04 | deviation | test/mutants/worker-staleness.mutants.json |  | The registry does not carry the plan's status-catch-guard and status-post-await-guard ids: both were MEASURED SURVIVED against the enriched suite (see entry 20 for why they cannot be killed individually). They are replaced by generation-counter (the mechanism-level fence that does reach them) and status-catch-reports-unavailable (which fences the reporting half of the catch branch and says so). project-queue is expressed as `state.queue = Promise.resolve().then(...)` rather than the plan's IIFE: same collapse of serialization, one literal, parse-clean. A fourth harness control, setResponseDelay(ms), was added beyond the three the plan named because a construction-time queue cannot target a reply that is only reachable mid-test. | open |  | 2026-09-10T17:05:00.000Z |  |
 
 ````json
 [
@@ -261,6 +263,30 @@ last_updated: 2026-09-10T16:35:00.000Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-10T16:35:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 20,
+    "kind": "unmet-truth",
+    "phase": "04",
+    "file": ".planning/phases/04-honest-failure-and-an-off-switch/04-12-PLAN.md",
+    "line": null,
+    "description": "must_haves truth 1 claims removing ANY ONE of the worker's generation guards turns the suite red. Measured false for two of the seven named sites: requestStatus's catch-branch guard and its post-await recheck are each redundant with the recheck BOTH callers (project, popupStatus) perform immediately afterwards, with no macrotask able to interleave, so deleting either alone changes no observable behaviour. Five sites plus the per-tab queue are individually fenced; the redundant pair is fenced only at mechanism level by the generation-counter mutant.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T17:05:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 21,
+    "kind": "deviation",
+    "phase": "04",
+    "file": "test/mutants/worker-staleness.mutants.json",
+    "line": null,
+    "description": "The registry does not carry the plan's status-catch-guard and status-post-await-guard ids: both were MEASURED SURVIVED against the enriched suite (see entry 20 for why they cannot be killed individually). They are replaced by generation-counter (the mechanism-level fence that does reach them) and status-catch-reports-unavailable (which fences the reporting half of the catch branch and says so). project-queue is expressed as `state.queue = Promise.resolve().then(...)` rather than the plan's IIFE: same collapse of serialization, one literal, parse-clean. A fourth harness control, setResponseDelay(ms), was added beyond the three the plan named because a construction-time queue cannot target a reply that is only reachable mid-test.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T17:05:00.000Z",
     "resolved_at": null
   }
 ]
