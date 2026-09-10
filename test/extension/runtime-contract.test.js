@@ -263,6 +263,36 @@ test('four CSS rules map exact labels to alpha backgrounds and only direct ticke
   expect(asset('zhroma.css')).not.toMatch(/@|url\(|box-shadow|font|\bopacity\s*:/);
 });
 
+// CR-01: every English regional locale is a supported shell. This is the
+// end-to-end proof for one of them — the detector tints and reports `working`,
+// and the same shell still paints, with each declaration flagged important
+// (WR-08) so the tint keeps winning against a later host stylesheet.
+test('an en-GB shell tints end to end and every tint declaration is flagged important', () => {
+  vi.useFakeTimers();
+  const window = createDocument();
+  const { document } = window;
+  document.documentElement.lang = 'en-GB';
+  const rules = loadRules(window);
+  expect(rules).toHaveLength(4);
+  const harness = createChromeHarness();
+  const context = createContext({ document, window, chrome: harness.chrome,
+    MutationObserver: window.MutationObserver, setTimeout, clearTimeout });
+  new Script(asset('content.js'), { filename: 'content.js' }).runInContext(context);
+  harness.flush();
+  vi.advanceTimersByTime(15000);
+  const ticketRows = [...document.querySelectorAll('tbody > tr')];
+  expect(ticketRows.map((row) => row.getAttribute('data-zhroma-priority')))
+    .toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  expect(harness.requestStatus()).toEqual({ type: 'status', requestId: 1, diagnosis: 'working', reason: null });
+  for (const rule of rules) {
+    const label = rule.selectorText.match(/data-zhroma-priority="(Urgent|High|Normal|Low)"/)?.[1];
+    const target = ticketRows[['Urgent', 'High', 'Normal', 'Low'].indexOf(label)];
+    expect([...document.querySelectorAll(rule.selectorText)]).toEqual([...target.children]);
+    expect(rule.style.getPropertyPriority('background-color')).toBe('important');
+  }
+  harness.assertClean();
+});
+
 test('CSS rule reordering preserves hue mapping; CSS-only shade edits leave detector bytes unchanged', () => {
   const window = createDocument();
   const rules = loadRules(window);
