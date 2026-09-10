@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: Completed 04-07-PLAN.md
-last_updated: "2026-09-10T15:07:12.215Z"
+stopped_at: Completed 04-08-PLAN.md
+last_updated: "2026-09-10T15:33:49.405Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 04 execution started
-state_head: 9bee7a66918e9b6e373d0cdb32ca6dcae6fed1a6
+state_head: 65f94d48856114700aeac09da3ed638d3babf0ed
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 36
-  completed_plans: 27
+  completed_plans: 29
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 2 of 14
+Plan: 3 of 14
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 04 execution started
 
@@ -75,6 +75,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P03 | 28 min | 2 tasks | 9 files |
 | Phase 04 P04 | 38 min | 2 tasks | 9 files |
 | Phase 04 P07 | 11 min | 3 tasks | 5 files |
+| Phase 04 P08 | 16 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,9 @@ Recent decisions affecting current work:
 - [Phase 04]: The finite {diagnosis, reason} pair is validated as one key in the worker and the popup, so an unpaired combination reports the connection fact rather than falling back to a weaker message.
 - [Phase 04]: The supported interface language is the English language FAMILY (en and every en-* subtag), matched case-insensitively on the raw untrimmed lang value in both encodings — D-08 named html[lang="en"] as the English boundary; D-04 promises an English view is never blamed on its language, and en-GB is English. The family is promoted to the primary representation and the bare tag demoted to one member, so no second predicate exists to drift.
 - [Phase 04]: The single source of truth for the accepted language family is the locale-matrix agreement test, not a shared constant — No build step exists and CSS cannot import from JavaScript, so the predicate is necessarily encoded twice. runtime-contract.test.js writes the accepted and refused sets down once and checks both encodings against them, which is what makes the duplication safe.
+- [Phase 04]: Both worker sendMessage hops are bounded by a shipped REQUEST_TIMEOUT_MS = 2000 that resolves null, so a silent top frame costs one wait rather than the off switch, and the timeout path mints no new state and no new copy
+- [Phase 04]: A timed-out apply reports the ratified 'No readable view is connected' line, not the not-applied line the plan named; producing the latter would require inventing a status the document never gave
+- [Phase 04]: npm run test:mutants is a committed out-of-tree mutation gate: 6/6 killed, each by a named behavioural test, with the acceptance byte pin excluded from every mutant's suites
 
 ### Pending Todos
 
@@ -145,8 +149,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T15:06:52.928Z
-Stopped at: Completed 04-07-PLAN.md
+Last session: 2026-09-10T15:33:42.851Z
+Stopped at: Completed 04-08-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
