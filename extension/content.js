@@ -3,6 +3,9 @@
 
   const PRIORITY_ATTRIBUTE = 'data-zhroma-priority';
   const PRIORITY_LABELS = new Set(['Urgent', 'High', 'Normal', 'Low']);
+  const PREFERENCE_KEY = 'enabled';
+  const PREFERENCE_AREA = 'local';
+  const MAX_REQUEST_ID = 1000000;
   const TABLE = 'table[data-garden-id="tables.table"][data-test-id="generic-table"]';
   const HEAD = 'thead[data-garden-id="tables.head"][data-test-id="generic-table-head"]';
   const BODY = 'tbody[data-garden-id="tables.body"][data-test-id="generic-table-body"]';
@@ -19,6 +22,22 @@
   let candidate = null;
   const ownedRows = new Set();
   const expectedMarkers = new WeakMap();
+
+  // Preference readiness, the preference itself, document visibility and
+  // pagehide suspension are four independent inputs. Only their conjunction may
+  // run the controller, so a tab switch or a bfcache round trip can never undo
+  // a stored preference, and a stored preference can never resume a hidden or
+  // suspended document.
+  let preferenceReady = false;
+  let preferenceEnabled = false;
+  let preferenceGeneration = 0;
+  let suspended = false;
+
+  // The only thing this document ever tells the rest of the extension. Finite
+  // values; never a row, a cell value, a language string, a URL or an error.
+  let statusDiagnosis = 'neutral';
+  let statusReason = null;
+  let statusAnnounced = false;
 
   function inspectCandidateTable(document) {
     const result = (state, table = null, entries = []) => ({ state, table, entries });
@@ -109,12 +128,14 @@
 
   function commitSnapshot(snapshot) {
     // The snapshot is inspected and committed in the same synchronous turn.
-    // Never carry DOM interpretations across a timer boundary.
+    // Never carry DOM interpretations across a timer or messaging boundary.
+    // Returns whether the page actually reached the intended state: a rolled
+    // back write must never be reported to the agent as working.
     const keep = new Map(snapshot.entries.filter(({ priority }) => priority !== null)
       .map(({ row, priority }) => [row, priority]));
     if (!clearOwnedMarkers(keep)) {
       clearOwnedMarkers();
-      return;
+      return false;
     }
     try {
       for (const { row, priority } of snapshot.entries) {
@@ -125,7 +146,26 @@
       }
     } catch {
       clearOwnedMarkers();
+      return false;
     }
+    return true;
+  }
+
+  function announceStatus() {
+    // An invalidation hint and nothing more: the worker must fetch a fresh
+    // top-frame reply before it projects anything. No receiver, a reloaded
+    // extension or an unavailable runtime are all silent no-ops.
+    try {
+      chrome.runtime.sendMessage({ type: 'status-invalidated' }, () => { void chrome.runtime.lastError; });
+    } catch { /* the extension context is gone; the page is unaffected */ }
+  }
+
+  function publishStatus(diagnosis, reason) {
+    if (statusAnnounced && diagnosis === statusDiagnosis && reason === statusReason) return;
+    statusDiagnosis = diagnosis;
+    statusReason = reason;
+    statusAnnounced = true;
+    announceStatus();
   }
 
   function reconcileCurrentTable() {
@@ -134,9 +174,19 @@
     try {
       const snapshot = inspectCandidateTable(document);
       candidate = snapshot.table;
-      if (snapshot.state === 'safe') commitSnapshot(snapshot);
-      else clearOwnedMarkers();
-    } catch { clearOwnedMarkers(); }
+      if (snapshot.state === 'safe' || snapshot.state === 'blank') {
+        // A Priority column that is present and unambiguous but carries no
+        // values is working, distinguished only by the blank reason (D-02).
+        if (commitSnapshot(snapshot)) publishStatus('working', snapshot.state === 'blank' ? 'blank' : null);
+        else publishStatus('neutral', null);
+      } else {
+        clearOwnedMarkers();
+        publishStatus('neutral', null);
+      }
+    } catch {
+      clearOwnedMarkers();
+      publishStatus('neutral', null);
+    }
   }
 
   function scheduleReconcile() {
@@ -178,6 +228,10 @@
     return false;
   }
 
+  function runnable() {
+    return preferenceReady && preferenceEnabled && !suspended && !document.hidden;
+  }
+
   function pauseController() {
     active = false;
     observer?.disconnect();
@@ -186,10 +240,12 @@
     adoptCopiedMarkers(document);
     clearOwnedMarkers();
     candidate = null;
+    publishStatus('neutral', null);
   }
 
   function resumeController() {
-    if (document.hidden) return;
+    // Never resume on visibility alone: the preference must be confirmed too.
+    if (!runnable()) { pauseController(); return; }
     try {
       if (!active) {
         adoptCopiedMarkers(document);
@@ -201,9 +257,90 @@
     } catch { pauseController(); }
   }
 
+  function syncController() {
+    if (runnable()) resumeController();
+    else pauseController();
+  }
+
   function onVisibilityChange() {
-    if (document.hidden) pauseController();
-    else resumeController();
+    syncController();
+  }
+
+  function onPageHide() {
+    suspended = true;
+    pauseController();
+  }
+
+  function onPageShow() {
+    // A restored document re-reads the preference rather than trusting the
+    // value it was frozen with, and stays untinted until that read confirms.
+    suspended = false;
+    syncController();
+    readPreference();
+  }
+
+  function applyPreference(value, generation) {
+    // A newer read or a change event has already spoken; drop this reply.
+    if (generation !== preferenceGeneration) return;
+    if (typeof value === 'boolean') {
+      preferenceReady = true;
+      preferenceEnabled = value;
+    } else {
+      // A rejected read or a non-boolean value is a failure, never absence.
+      // Unconfirmed stays untinted rather than defaulting to on.
+      preferenceReady = false;
+      preferenceEnabled = false;
+    }
+    syncController();
+    if (!statusAnnounced) { statusAnnounced = true; announceStatus(); }
+  }
+
+  function readPreference() {
+    preferenceGeneration += 1;
+    const generation = preferenceGeneration;
+    try {
+      chrome.storage.local.get({ [PREFERENCE_KEY]: true }, (values) => {
+        // Only an absent key is filled by the default, so a present but
+        // non-boolean value is still distinguishable from absence here.
+        if (chrome.runtime.lastError) { applyPreference(null, generation); return; }
+        applyPreference(values ? values[PREFERENCE_KEY] : null, generation);
+      });
+    } catch { applyPreference(null, generation); }
+  }
+
+  function onPreferenceChanged(changes, areaName) {
+    if (areaName !== PREFERENCE_AREA) return;
+    if (changes === null || typeof changes !== 'object' || !Object.hasOwn(changes, PREFERENCE_KEY)) return;
+    preferenceGeneration += 1;
+    const change = changes[PREFERENCE_KEY];
+    // A removed key restores the documented default; anything else non-boolean
+    // is corrupt data and must not be read as absence.
+    const value = change !== null && typeof change === 'object' && Object.hasOwn(change, 'newValue')
+      ? change.newValue : true;
+    applyPreference(value, preferenceGeneration);
+  }
+
+  function isStatusRequest(message) {
+    return message !== null && typeof message === 'object' && !Array.isArray(message)
+      && Object.keys(message).length === 2
+      && message.type === 'get-status'
+      && Number.isInteger(message.requestId)
+      && message.requestId >= 1 && message.requestId <= MAX_REQUEST_ID;
+  }
+
+  function onRuntimeMessage(message, sender, sendResponse) {
+    // Only the packaged worker may ask. A sender carrying a tab is another
+    // content script, never the worker, and is refused outright.
+    if (sender === null || typeof sender !== 'object') return undefined;
+    if (sender.id !== chrome.runtime.id || sender.tab !== undefined) return undefined;
+    if (!isStatusRequest(message)) return undefined;
+    sendResponse({
+      type: 'status',
+      requestId: message.requestId,
+      diagnosis: statusDiagnosis,
+      reason: statusReason,
+    });
+    return undefined;
   }
 
   function startPersistentTint() {
@@ -224,17 +361,26 @@
           if (!mutationsAffectInterpretation(records) && !copiedMarkers) return;
           const snapshot = inspectCandidateTable(document);
           candidate = snapshot.table;
+          const readable = snapshot.state === 'safe' || snapshot.state === 'blank';
           const keep = snapshot.state === 'safe'
             ? new Map(snapshot.entries.filter(({ priority }) => priority !== null)
               .map(({ row, priority }) => [row, priority])) : new Map();
           clearOwnedMarkers(keep);
-        } catch { clearOwnedMarkers(); }
+          // Withdraw a working claim in the same turn the evidence for it went
+          // away; only the deferred fresh pass may restore it.
+          if (!readable) publishStatus('neutral', null);
+        } catch { clearOwnedMarkers(); publishStatus('neutral', null); }
         scheduleReconcile();
       });
-      window.addEventListener('pagehide', pauseController);
-      window.addEventListener('pageshow', resumeController);
+      window.addEventListener('pagehide', onPageHide);
+      window.addEventListener('pageshow', onPageShow);
       document.addEventListener('visibilitychange', onVisibilityChange);
-      resumeController();
+      // Register the change listener before starting the read, so a preference
+      // written between the two cannot be lost, and use a read generation so a
+      // slow earlier reply cannot overwrite a newer change.
+      chrome.storage.onChanged.addListener(onPreferenceChanged);
+      chrome.runtime.onMessage.addListener(onRuntimeMessage);
+      readPreference();
     } catch { pauseController(); }
   }
 
