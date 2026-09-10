@@ -5,7 +5,9 @@ import { afterEach, expect, test } from 'vitest';
 import { summarizeSamples, validateWorkloadReport, parseArguments, mergeReport } from '../../scripts/run-tint-workload.js';
 import { closeWindows, inertWindow } from './tracer-world.js';
 const sample = (observer = 0.2, timer = 0.3) => ({ segments: [{ category: 'observer', cpu: observer }, { category: 'timer', cpu: timer }], totalCpu: observer + timer, latency: 2, callbacks: 2, passes: 1, writes: 1 });
-const run = (size = 30, mode = 'enabled') => ({ size, mode, warmups: 10, measured: 100, operations: Object.fromEntries(['edit', 'reorder', 'body', 'table', 'invalid-repair', 'unrelated'].map((name) => [name, Array.from({ length: 100 }, () => mode === 'enabled' ? sample() : { segments: [], totalCpu: 0, latency: 1, callbacks: 0, passes: 0, writes: 0 })])) });
+// A dormant run declares `runtime: 'loaded'`; enabled and disabled runs carry no
+// `runtime` at all, which is exactly the historical shape Phase 3's samples have.
+const run = (size = 30, mode = 'enabled') => ({ size, mode, ...(mode === 'dormant' ? { runtime: 'loaded' } : {}), warmups: 10, measured: 100, operations: Object.fromEntries(['edit', 'reorder', 'body', 'table', 'invalid-repair', 'unrelated'].map((name) => [name, Array.from({ length: 100 }, () => mode === 'enabled' ? sample() : { segments: [], totalCpu: 0, latency: 1, callbacks: 0, passes: 0, writes: 0 })])) });
 test('sums observer and timer CPU, reports all quantiles and distinct latency', () => {
   expect(summarizeSamples([sample(1, 2), sample(2, 3), sample(3, 4)])).toMatchObject({ count: 3, median: 5, p95: 7, max: 7, latencyMedian: 2 });
 });
@@ -17,6 +19,35 @@ test('exact complete workload passes; missing, disabled callbacks and breached b
   const slow = run(); slow.operations.edit[0] = sample(10, 8); expect(validateWorkloadReport(slow)).toBe('gaps_found');
   const typical = run(); typical.operations.edit = Array.from({ length: 100 }, () => sample(1, 1)); expect(validateWorkloadReport(typical)).toBe('gaps_found');
   const disabled = run(30, 'disabled'); disabled.operations.edit[0] = sample(); expect(() => validateWorkloadReport(disabled)).toThrow();
+});
+// The second half of WR-09: a `disabled` run measures a page with NO extension,
+// so it establishes nothing about the cost of the shipped off state. `dormant`
+// is the run that loads the controller and stores a `false`, and the recorded
+// evidence has to keep the two distinguishable.
+test('a dormant run is accepted only when it proves the runtime was actually loaded', () => {
+  expect(validateWorkloadReport(run(30, 'dormant'))).toBe('passed');
+  const noisy = run(30, 'dormant'); noisy.operations.edit[0] = sample();
+  expect(() => validateWorkloadReport(noisy)).toThrow(/dormant/i);
+  const unloaded = { ...run(30, 'dormant'), runtime: 'absent' };
+  expect(() => validateWorkloadReport(unloaded)).toThrow(/dormant/i);
+  const undeclared = run(30, 'dormant'); delete undeclared.runtime;
+  expect(() => validateWorkloadReport(undeclared)).toThrow(/dormant/i);
+});
+test('historical runs carrying no runtime field still validate exactly as before', () => {
+  const disabled = run(30, 'disabled');
+  expect(Object.hasOwn(disabled, 'runtime')).toBe(false);
+  expect(validateWorkloadReport(disabled)).toBe('passed');
+  const enabled = run();
+  expect(Object.hasOwn(enabled, 'runtime')).toBe(false);
+  expect(validateWorkloadReport(enabled)).toBe('passed');
+});
+test('a dormant run is extra evidence, never a seventh required run', () => {
+  const identity = { hashes: { source: 'pinned' }, browser: 'fixed' };
+  let report = mergeReport(null, identity, '30-dormant', run(30, 'dormant'));
+  expect(report.timingStatus).toBe('incomplete');
+  for (const size of [30, 200, 1000]) for (const mode of ['enabled', 'disabled']) report = mergeReport(report, identity, `${size}-${mode}`, run(size, mode));
+  expect(report.timingStatus).toBe('passed');
+  expect(Object.hasOwn(report.runs, '30-dormant')).toBe(true);
 });
 test('CLI validates sizes, modes, missing values and unsupported flags', () => {
   expect(parseArguments(['--size', '30', '--mode', 'enabled', '--smoke'])).toMatchObject({ size: 30, mode: 'enabled', smoke: true });
