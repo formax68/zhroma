@@ -1,0 +1,32 @@
+[
+  {
+    "id": "preference-serialization",
+    "file": "extension/background.js",
+    "find": "    const run = preferenceQueue.then(task, task);\n    preferenceQueue = run.then(() => {}, () => {});\n    return run;\n",
+    "replace": "    return task();\n",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "the single writer's queue is collapsed to a bare call, so two popups asking for opposite values run their writes concurrently and the persisted boolean can be inverted under the agent. This is the mutant 04-REVIEW measured SURVIVING: with immediate writes both tasks commit in arrival order regardless, so the old test's final-value assertions held without the mechanism. MEASURED killed on the single-writer INVARIANT in the rewritten test — '2 preference writes in flight at once: expected 2 to be less than 2' at the first observation point, under deferred writes (04-REVIEW WR-06, T-04G-33)"
+  },
+  {
+    "id": "tabs-onremoved-listener",
+    "file": "extension/background.js",
+    "find": "  chrome.tabs.onRemoved.addListener((tabId) => {\n    tabs.delete(tabId);\n  });\n",
+    "replace": "",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "the tab-removal listener is not registered at all, so the per-tab state map grows for the life of the worker across every tab the browser ever closes. MEASURED killed on the REGISTRATION half of the closed-tab test's source-shape assertion — 'expected [] to have a length of 1'. That half is a shape guard and not a behavioural one: the map has no external observable and exposing one would move a shipped byte, so this does NOT demonstrate bounded growth at runtime (04-REVIEW WR-06, T-04G-34)"
+  },
+  {
+    "id": "tabs-onremoved-delete",
+    "file": "extension/background.js",
+    "find": "    tabs.delete(tabId);\n",
+    "replace": "",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "the listener stays registered but its body no longer deletes the removed id, leaving a listener that does nothing — the same unbounded map behind a registration that looks correct. This is why the two halves are asserted separately: a single combined check would let this hide behind the registration. MEASURED killed on the BODY half — \"expected '' to contain 'tabs.delete(tabId);'\". Also a shape guard, with the same stated limit as tabs-onremoved-listener (04-REVIEW WR-06, T-04G-34)"
+  }
+]
