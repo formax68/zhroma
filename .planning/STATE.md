@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: Completed 04-10-PLAN.md
-last_updated: "2026-09-10T16:13:04.077Z"
+stopped_at: Completed 04-11-PLAN.md
+last_updated: "2026-09-10T16:42:56.885Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 04 execution started
-state_head: b4f454dd889448a51c693d276b788b5a84716b58
+state_head: 01336f094ed4a624f6b284cb9601ddaff83c98cc
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 36
-  completed_plans: 31
+  completed_plans: 33
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 5 of 14
+Plan: 6 of 14
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 04 execution started
 
@@ -78,6 +78,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P08 | 16 min | 3 tasks | 7 files |
 | Phase 04 P09 | 8 min | 2 tasks | 4 files |
 | Phase 04 P10 | 19 min | 3 tasks | 4 files |
+| Phase 04 P11 | 23 min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,8 @@ Recent decisions affecting current work:
 - [Phase 04]: The popup's REQUEST_TIMEOUT_MS is 5000, strictly greater than the worker's 2000 rather than equal to it, and the ordering between the two processes' copies is asserted from the shipped bytes — Answering the popup can cost the worker a full bounded wait of its own, so an equal deadline fires first and discards the worker's honest reply together with the confirmed preference it carried — regressing the "switch is usable again" property 04-08 established. With no build step to share one constant (D-06), a test that reads both sources is what holds the inequality.
 - [Phase 04]: After a failed save the popup reverts the checkbox to lastConfirmed and leaves the control enabled; with nothing ever confirmed it shows no position at all, because defaultChecked would display an unconfirmed off — The change event has already moved control.checked before the request is sent, so leaving it alone displays a position nothing confirmed next to copy saying the save failed. lastConfirmed is assigned in exactly one place — where a reply delivers a boolean — so it can never hold a desired value, and it is display state only, never sent.
 - [Phase 04]: A mutant is registered only after it has been measured killed: popup-focus-guard mutates the focus restoration itself, because reinstating the disabled-state guard the plan named was measured SURVIVED — Task 1's corrected ordering re-enables the control before end() runs, so !control.disabled is unreachable-true on every failure path with a confirmed value, and focusing a disabled control is a no-op in the browser on the other. Registering it would have claimed a kill the gate could not honestly deliver.
+- [Phase 04]: The fourteen live observations attested on 2026-09-10 are preserved as dated history and NOT carried onto the repaired bytes; every check is reset to pending and Phase 4 now carries zero live browser evidence — An observation is evidence about the bytes it was taken on. Promotion rule 3, 04-LIVE-ACCEPTANCE rule 5 and the validator's live-source-evidence gate each independently forbid re-pointing an old observation at new bytes, and CR-01/WR-04/WR-07/WR-08 moved four of the eleven shipped assets.
+- [Phase 04]: english-regional-locale is added as a seventeenth live check rather than folded into working-icon, and the re-enable-not-pressured ratification is qualified rather than carried intact — The CR-01 repair ships a behaviour (an English regional shell tints) that no existing check covered, and a shipped behaviour with no live-evidence slot is the silent gap promotion rule 3 exists to prevent. Symmetrically, popup.js changed under WR-04/WR-07, so the popup the user judged when ratifying the off-switch prohibition is not the popup that ships.
 
 ### Pending Todos
 
@@ -139,6 +142,7 @@ CR-01/CR-02 repairs and independent reverification are complete; 403 tests and f
 - Phase 1 found no locale-independent Priority signal; the observed English-text fallback remains scoped to English current Agent Workspace.
 - Store submission has latency and the direct predecessor was delisted at this step. Register the developer account early; budget one rejection-and-resubmit cycle in Phase 5.
 - Phase 2 product evidence now passes: user clarified both G-02-1 reports meant opening Zendesk then clicking a view, including from a fresh tab. Direct-document controls passed; no runtime repair. UAT 11 live passes and 12 explicit decisions. Independent code review clean; security reassessment 10/10 closed. Independent goal verification passed 25/25. Combined tests 301 passed and post-reconciliation evidence validator 56 passed.
+- ACK-04-01 is outstanding and awaiting the user, not awaiting work: the fourteen observations the user attested on 2026-09-10 no longer count toward Phase 4 acceptance, and the user has not yet acknowledged that. It asks for acknowledgement only and requests no re-observation. No executor may answer it. Routes: 04-VALIDATION.md, and the human-check block on 04-11 Task 3 queued for the end-of-phase harvest.
 
 ### Roadmap Evolution
 
@@ -156,8 +160,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T16:12:57.054Z
-Stopped at: Completed 04-10-PLAN.md
+Last session: 2026-09-10T16:42:29.769Z
+Stopped at: Completed 04-11-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.

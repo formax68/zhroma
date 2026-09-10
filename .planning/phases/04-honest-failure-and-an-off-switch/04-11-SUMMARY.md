@@ -403,10 +403,18 @@ consolidates into `04-UAT.md`.
 - **Verification:** Read-through; the value is neither `not-performed` nor `passed`
 - **Committed in:** `8dec4f9`
 
+**5. [Rule 2 - Missing Critical] `requirements.mark-complete` was deliberately NOT run for the two ready IDs**
+- **Found during:** close-out (`update_requirements`)
+- **Issue:** `requirements.ready-ids` reported `FAIL-03` and `CTRL-04` ready to mark `Complete` — the other five are blocked by siblings 04-12/13/14, which have no SUMMARY yet. Marking those two would directly contradict `04-VALIDATION.md`, which states that none of the seven "should read `Complete` while Phase 4 carries zero live browser evidence", and `FAIL-03` in particular has **zero live evidence** and an active `AR-04-01` waiver that is explicitly not evidence. Flipping it would be the write-off the ratified `untested-is-not-consent` prohibition forbids.
+- **Fix:** All seven requirement IDs are left `Pending` in `REQUIREMENTS.md`, which is also what every prior Phase 4 plan did. The IDs are still declared in this plan's frontmatter and in `requirements-completed` above, so the traceability link exists — what is withheld is the *acceptance* claim, not the link.
+- **Files modified:** none (a deliberate non-action)
+- **Verification:** `grep -nE 'FAIL-0[1235]|CTRL-0[234]' .planning/REQUIREMENTS.md` — all seven still read `Pending`
+- **Committed in:** n/a — no change made
+
 ---
 
-**Total deviations:** 4 auto-fixed (2 missing-critical, 1 bug, 1 blocking)
-**Impact on plan:** All four are honesty corrections in the direction the plan already points. Deviation 1 is the most consequential — it makes the plan's own principle apply to a judgment the plan told me to preserve unchanged. No scope creep; no shipped byte was touched by this plan.
+**Total deviations:** 5 (4 auto-fixed, 1 deliberate non-action) — 3 missing-critical, 1 bug, 1 blocking
+**Impact on plan:** All five are honesty corrections in the direction the plan already points. Deviation 1 is the most consequential — it makes the plan's own principle apply to a judgment the plan told me to preserve unchanged. Deviation 5 withholds a mechanical status flip that the phase's own contract forbids. No scope creep; no shipped byte was touched by this plan.
 
 ## Issues Encountered
 
@@ -466,3 +474,13 @@ None — no external service configuration required.
 ---
 *Phase: 04-honest-failure-and-an-off-switch*
 *Completed: 2026-09-10*
+
+## Self-Check: PASSED
+
+All eight created/regenerated files exist on disk. All four commits
+(`c694c4f`, `aee0806`, `8dec4f9`, `01336f0`) are present in `git log`.
+Plan verification re-run at close: `npm test` exit 0 (65 + 574 passed),
+phase-04 validator exit 0 printing `human_needed`, `test:mutants` 10/10,
+`test:recon` exit 0, 17 pending / 0 pass / 3 flagged-unverified, 7 timing
+runs with `timingStatus: passed`, history directory holds 5 files with 14
+preserved passes, and `ACK-04-01` is present in `04-VALIDATION.md`.
