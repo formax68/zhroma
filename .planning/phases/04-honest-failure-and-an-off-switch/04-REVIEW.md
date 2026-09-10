@@ -1,530 +1,461 @@
 ---
 phase: 04-honest-failure-and-an-off-switch
 reviewer: gsd-code-reviewer
-reviewed: 2026-09-10T13:05:00Z
+reviewed: 2026-09-10T18:35:00Z
 depth: standard
-files_reviewed: 17
+review_pass: 2 (incremental — scope is everything changed since bc25a2c)
+files_reviewed: 25
 files_reviewed_list:
-  - extension/manifest.json
   - extension/background.js
   - extension/content.js
-  - extension/popup.html
   - extension/popup.js
   - extension/zhroma.css
+  - package.json
+  - scripts/run-tint-workload.js
+  - scripts/verify-mutation-kills.js
   - test/extension/chrome-harness.js
-  - test/extension/tracer-world.js
-  - test/extension/diagnosis.test.js
+  - test/extension/failure-seam.test.js
   - test/extension/initial-tint.test.js
+  - test/extension/performance-harness.test.js
   - test/extension/persistent-tint.test.js
+  - test/extension/phase-04-live-acceptance.test.js
+  - test/extension/popup-recovery.test.js
   - test/extension/runtime-contract.test.js
   - test/extension/toggle.test.js
   - test/extension/toolbar-popup.test.js
-  - test/extension/phase-03-live-acceptance.test.js
-  - test/extension/phase-04-live-acceptance.test.js
+  - test/extension/tracer-world.js
+  - test/extension/worker-integrity.test.js
+  - test/mutants/failure-seam.mutants.json
+  - test/mutants/popup-recovery.mutants.json
+  - test/mutants/worker-boundary.mutants.json
+  - test/mutants/worker-lifecycle.mutants.json
+  - test/mutants/worker-staleness.mutants.json
   - test/performance/tint-workload.js
 findings:
   critical: 1
-  warning: 10
-  info: 9
-  total: 20
+  warning: 6
+  info: 5
+  total: 12
 critical: 1
-warnings: 10
-info: 9
-suite_adequacy: ADEQUATE-WITH-GAPS
-regression_hazard: CORRECT-AS-DOCUMENTED
+warnings: 6
+info: 5
 status: issues_found
-verdict: "The named regression is correctly fixed and the privacy/trust surface holds under attack; one shipped defect (every English regional locale is told its language is unsupported) and a mutation-proven blind spot over the worker's entire staleness machinery keep this short of clean."
+verdict: "Eleven of the twelve prior findings are genuinely closed and the mutation gate kills 25/25 independently. But the WR-07 repair introduced a new shipped defect: after a save that succeeds and a read-back that fails, the popup displays the OPPOSITE of the persisted preference under copy claiming the save failed — and the rewritten toggle test asserts that display as correct without ever checking what storage holds."
 ---
 
-# Phase 4: Code Review Report
+# Phase 4: Code Review Report (incremental pass 2)
 
 **Reviewed:** 2026-09-10
-**Depth:** standard (with adversarial mutation probing of the shipped scripts)
-**Files Reviewed:** 17
+**Depth:** standard, plus independent execution of the shipped mutation gate and five targeted out-of-tree behavioural probes
+**Files Reviewed:** 25
 **Status:** issues_found
 
 ## Summary
 
-I read all six text assets of the packaged product plus the eleven test/harness
-files, then attacked the claims instead of the code's self-description. Method,
-so the findings are checkable:
+Scope is the gap-closure work only: `git diff bc25a2c..HEAD` over the shipped
+extension, the two scripts, the twelve test/harness files and the five mutant
+registries. I did not re-audit the prior findings; I attacked the new code.
 
-- **Static review** of `manifest.json`, `background.js`, `content.js`,
-  `popup.html`, `popup.js`, `zhroma.css` against the project constraints in
-  `CLAUDE.md` (zero permissions beyond `storage`, no host permissions, no
-  network, no telemetry, no remote code, attributes-only DOM contract).
-- **A channel sweep** of every shipped script for `console.*`, `fetch`, `XHR`,
-  `WebSocket`, `sendBeacon`, `localStorage`/`sessionStorage`/`indexedDB`,
-  `eval`, `innerHTML`, `createElement`, `document.write`, `chrome.storage.sync|
-  session|managed`, `location.*`, `document.cookie`, `tab.url`,
-  `changeInfo.url`. **One hit total:** `background.js:259`, which *compares*
-  `sender.url` to `chrome.runtime.getURL('popup.html')` and never stores,
-  transmits or logs it. The message protocol really is finite and value-free.
-- **Mutation probing.** I copied the repo (`git archive`) into a scratch tree
-  with a symlinked `node_modules` — **no file under `/Users/mike/code/zhroma`
-  was modified by this review** — and applied **43 single-clause mutants** to
-  the three shipped scripts, running six behavioural suites (`toolbar-popup`,
-  `toggle`, `diagnosis`, `initial-tint`, `persistent-tint`, `runtime-contract`,
-  277 tests) against each. **26 mutants were caught. 17 survived.** The
-  survivors are not scattered; they cluster in two places, and that clustering
-  is the substance of the suite-adequacy judgment below.
-- I confirmed the baseline first: `npm test` → **65 `node --test` + 518 Vitest,
-  exit 0**, and `git status --short` is unchanged by this review.
+**What I verified independently, not by reading the summaries:**
 
-The good news is real and should be recorded as such. The trust boundary
-survived direct attack: no `externally_connectable`, no
-`web_accessible_resources`, `world: "ISOLATED"`, so page script and foreign
-extensions cannot reach `chrome.runtime.onMessage` at all, and `fromContent` /
-`fromPopup` (`background.js:250-259`) are each pinned by named negative tests —
-mutating away `frameId === 0`, the `documentId` identity, the popup URL check or
-the content script's own `sender.tab !== undefined` refusal all fail the suite.
-Storage is exactly one boolean, exactly one writer: `background.js` is the only
-file containing `chrome.storage.local.set`, the content script and popup are
-denied write surfaces by the doubles, and absent-key default-on comes from
-`get({enabled: true})` in both processes. Nothing in the shipped scripts
-constructs DOM, writes CSS, or carries a colour literal.
+- `npm test` → 65 `node --test` + **606 Vitest, exit 0**.
+- `npm run test:mutants` → **25/25 killed**, run end to end by me. Every mutant
+  the prior review measured as SURVIVING is now dead, including all four in
+  group A (`project-guard-after-status`, `project-guard-after-preference`,
+  `apply-action-guard`, `popup-status-guard`), the per-tab queue
+  (`project-queue`), the two `lastError` branches, both `serializePreference`
+  and the `onRemoved` pair, and the whole reply-validation set.
+- **Registry integrity, checked myself:** all 25 `find` literals occur exactly
+  the declared number of times in the current sources, and all 15 referenced
+  suite paths exist.
+- **Channel sweep** over `extension/*.js`: zero hits for `console.*`, `fetch`,
+  XHR, WebSocket, `sendBeacon`, any web storage, `eval`, `innerHTML`,
+  `createElement`, `document.write`, `chrome.storage.sync|session|managed`,
+  `document.cookie`, `tab.url`, `changeInfo.url`. No debug artifacts, no empty
+  catch blocks, no hardcoded secrets. The privacy story still holds.
+- **`rmSync` symlink safety** in the new mutation gate: confirmed by experiment
+  that Node's recursive removal unlinks the symlinked `.git`/`node_modules`
+  rather than recursing into them. The real repository cannot be deleted by an
+  interrupted run.
+- `git status --short` is byte-identical to the state at review start. **No file
+  in the repository was modified by this review**; every probe ran from a
+  temporary file that was deleted in the same command.
 
-What follows is what I can prove is wrong or unguarded.
+**The four documented judgment calls, checked rather than re-litigated:**
 
-## Required judgment 1 — Suite adequacy (04-06 coverage entry D7)
+1. **Popup deadline 5000 > worker 2000, asserted from both shipped sources.**
+   Correct in direction and the assertion does read both files
+   (`popup-recovery.test.js:29-42,277-286`). But the property it proves is
+   weaker than the one its comment claims — see WR-03.
+2. **Two redundant guard sites in `requestStatus`, fenced at mechanism level by
+   `generation-counter`.** Verified: `project` and `popupStatus` both recheck
+   immediately after their `await requestStatus(...)` with no macrotask able to
+   interleave, so neither inner recheck is individually observable. The registry
+   note at `worker-staleness.mutants.json:60` and
+   `status-catch-reports-unavailable`'s note both say exactly what they do and
+   do not fence. Honest.
+3. **A refused apply reports `unavailable`, not `NOT_APPLIED`.** Verified in
+   source order: `popup.js:190` tests `reply.status === 'unavailable'` before
+   `popup.js:191` tests `!reply.applied`, and `background.js:258-261` maps
+   `outcome === null` to `status: 'unavailable'`. The branch really is
+   unreachable, and WINDOWS entry 14 records it rather than asserting it away.
+4. **Projection for a closed tab still paints against the dead tab id.**
+   Verified in `background.js:217-219`: `project` → `invalidate` → `stateFor`
+   mints a fresh entry after `onRemoved` deleted it. WINDOWS entry 22 states
+   this as an unmet truth and the test asserts only the honest form.
 
-**Verdict: ADEQUATE-WITH-GAPS.**
+**Language-family agreement (the CR-01 repair).** `content.js:71-72`
+(`lower !== 'en' && !lower.startsWith('en-')` after `toLowerCase()`) and
+`zhroma.css`'s `html[lang|="en" i]` do agree on `en`, `EN`, `en-US`, `en-GB`,
+`EN-gb`, `en-Latn-GB`, and both refuse `fr`, `fr-CA`, `eng`, `ende`, `''`. The
+fix is real. Two things it does not cover are WR-01 and WR-06 below.
 
-The assertion *set* is unusually strong on the two things this phase is about —
-the diagnosis detector and the preference state machine. Mutants that break
-those are caught hard and by name: shrinking `SETTLE_MS` 100→40 fails 3 tests;
-accepting an unrecognised priority string fails 21; claiming `missing` without a
-width-matched row witness fails 10; accepting malformed rows fails 13; removing
-the `document.hidden` gate fails 4; treating a non-boolean stored value as
-enabled fails 6; projecting `off` as `neutral` fails 8. The popup's honesty
-branches (`NOT_SAVED`, `NOT_APPLIED`, the one-request-at-a-time guard) are each
-pinned. That is a genuinely good suite for `content.js` and for the popup's
-reporting logic.
+What follows is what I can prove is wrong.
 
-The gaps are concentrated in **`background.js`'s ordering, staleness and cleanup
-machinery**, and in **failure discrimination at the storage seam**. Seventeen
-surviving mutants, grouped:
+---
 
-**A. The worker's entire staleness mechanism is unguarded (the largest gap).**
-I deleted, in one mutant, *every* generation guard in the worker — both
-post-await rechecks in `project()` (`background.js:202,206`), the recheck inside
-`applyAction()` (`:190`), both in `requestStatus()` (`:152,154`), the one in
-`popupStatus()` (`:218`) — leaving `generationOf(` with **zero call sites**, so
-`invalidate()`'s only purpose was gone. Result across all of `test/extension`:
-**1 failed test, and it was the SHA-256 byte pin in
-`phase-04-live-acceptance.test.js`**, which fires on any edit whatsoever. Not
-one behavioural assertion noticed. Separately, deleting the per-tab
-serialization (`state.queue.then(...)` → an immediately-invoked async function,
-`background.js:200`) also failed nothing.
-
-The reason is diagnosable, not mysterious: the test named as this property's
-guardian — `toolbar-popup.test.js:343` *"a slow earlier reply cannot repaint
-over a newer projection"* — cannot construct the hazard it names. The tracer's
-`replyDelays` is applied inside `deliver()` (`tracer-world.js:142-157`), which
-delays **delivery to the listener**, so the content script's handler runs 120 ms
-late and answers with the status it holds *at that moment* — already the new
-one. There is no stale payload in flight, so no guard is needed to make the
-assertion pass. The test is vacuous for its stated purpose (see WR-01).
-
-**B. Failure is not distinguished from absence anywhere it is claimed to be.**
-Removing `if (chrome.runtime.lastError) …` from `background.js:85` *and*
-independently from `content.js:439` both survive. Both doubles model a rejected
-read as `callback(undefined)` (`chrome-harness.js:123`,
-`tracer-world.js:196-203`), so the observed dormancy comes from the
-`values ? … : null` falsy path, never from the `lastError` branch. `04-06`
-coverage entry D2 claims "a rejected read … stays dormant" is verified; the
-*mechanism* the source comments call load-bearing is not (WR-03).
-
-**C. Boundary validation of replies is unverified.** Replacing the worker's
-whole reply gate — `isExact(reply, [...]) || !validDiagnosis(...)` at
-`background.js:155-158` — with `if (false)` survives. So does deleting
-`reply.requestId === requestId` (`:136`) and the `Object.hasOwn(TITLES, …)`
-pairing clause (`:139`). So does deleting the popup's own `validStatus` /
-`validPreference` gate (`popup.js:109`) and its unknown-key fallback
-(`popup.js:55`). These are defence-in-depth against a compromised or buggy
-peer, so their survival is less alarming than group A — but the pairing clause
-is exactly what a reviewer wants pinned **before 04-03-style taxonomy growth**,
-which is the question D7 asks (WR-05).
-
-**D. Two single-purpose lifecycle mechanisms are untested.** Collapsing
-`serializePreference` to `return task()` survives, even though
-`toolbar-popup.test.js:722` is named *"two popups asking for opposite values are
-serialized, and neither inverts the other"*. Deleting the
-`chrome.tabs.onRemoved` cleanup (`background.js:297-299`) survives; nothing can
-observe the `tabs` Map (WR-06).
-
-**E. Untested-but-benign.** `window.top !== window` (`content.js:62`) is
-unreachable with `all_frames: false` (IN-01); the first-announce nudge
-(`content.js:421`) and `isExact`'s key-count clauses have no isolating test.
-
-**What this means for the D7 question as posed.** "Whether the restored suites
-are the right suites … before 04-03 expands the diagnosis taxonomy": they are
-the right suites for the *detector* and for the *preference*, and they are not
-sufficient for the *worker*. Every property in group A/C/D is one a reviewer
-would want pinned before the taxonomy grows, because each will be edited when it
-does. Concretely, the minimum I would require before calling this ADEQUATE:
-
-1. A tracer capability that delays the **response** rather than the delivery
-   (capture the reply payload, then release it late), so the stale-repaint test
-   can actually fail — then re-assert both `project()` guards and the queue.
-2. A `readMode` that sets `lastError` **and** delivers a values object, in both
-   doubles, so the `lastError` branches become load-bearing.
-3. One test that drives an unpaired `{diagnosis, reason}` from a content double
-   through the worker and asserts the toolbar is not repainted with a stale
-   title, plus a `TITLES`/`ICONS`/`DIAGNOSES`/`REASONS` completeness assertion
-   over the whole product set.
-4. An inversion test with genuinely interleaved writes (deferred write mode)
-   for `serializePreference`, and an observable for closed-tab cleanup.
-
-## Required judgment 2 — The named silent-regression hazard
-
-**Verdict: CORRECT-AS-DOCUMENTED.**
-
-**`requestApply` is keyed on the echoed `requestId`, not on the generation.**
-`extension/background.js:172-182`: `requestId` is minted at `:173`, sent at
-`:176`, and the reply is accepted only if
-`isExact(reply, ['type','requestId','applied','diagnosis','reason'])` and
-`validDiagnosis(reply, requestId, 'applied')` (`:178-180`) — and
-`validDiagnosis` (`:133-140`) tests `reply.requestId === requestId` at `:134`.
-There is **no `generationOf` call anywhere in the function**; the reason is
-written out at `:166-171`.
-
-**`project()` is still generation-guarded.** `extension/background.js:195-210`:
-`const generation = invalidate(tabId)` at `:196`, then a recheck after **every**
-await — `:202` after `requestStatus`, `:206` after `readPreference` — before
-`applyAction` at `:207`, which rechecks again between its own two awaits at
-`:190`. `popupStatus` carries the same guard at `:218`.
-
-I did not take this on reading alone. In the scratch tree I re-introduced the
-historical defect — capture `generationOf(tabId)` before the send in
-`requestApply` and recheck it after the await — and the suite went red with
-precisely the documented symptom:
-
-```
-FAIL test/extension/toggle.test.js
-  > switching back on restores tint for priorities that changed while it was off
-AssertionError: expected 'No readable view is connected' to be 'Priority tinting is working'
-```
-
-So `toggle.test.js:81` is a real, sensitive tripwire against re-adding the wrong
-guard, and the 04-04 fix is genuinely in the shipped bytes.
-
-**One correction to the record.** `04-VALIDATION.md` says both
-`#switching back on restores tint…` **and** `#a slow earlier reply cannot
-repaint over a newer projection` "must both keep passing" as the pair that keeps
-this from regressing silently. Only the first is load-bearing. The second passes
-with every generation guard *and* the per-tab queue removed (judgment 1, group
-A), so it protects the "painting stays generation-guarded inside `project()`"
-half of the invariant not at all. The tripwire is half-armed: **adding** a wrong
-guard is caught, **removing** the right one is not — including removing the
-echoed-`requestId` check itself, which also survives. That asymmetry is the
-residual silent-regression risk, and it is filed as WR-01 and WR-02 rather than
-as a defect in the fix.
+## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: Every English regional locale is told its interface language is unsupported
+### CR-01: After a save that succeeds and a read-back that fails, the popup displays the OPPOSITE of the persisted preference, under copy saying the save failed
 
-**File:** `extension/content.js:63-68` (with `extension/zhroma.css:1,8,15,22`)
-**Evidence:**
+**Severity:** BLOCKER
+**Files:** `extension/popup.js:77-100,185-192` (with `extension/background.js:246-270`), locked in by `test/extension/toggle.test.js:233-244`
+
+**Evidence — measured, not inferred.** I drove the shipped bytes through the
+tracer world: `stored: {enabled: true}`, popup open and confirmed, then
+`setReadMode('rejected')` and a flip to OFF. The write commits; only the
+read-back fails.
+
+```
+stored   : false          <- the setting WAS saved, and the page obeyed it
+markers  : []             <- the tint is gone; the document is already off
+checkbox : true           <- the switch displays ON
+disabled : false
+status   : "Zhroma could not save that setting"
+writeLog : [ { "enabled": false } ]
+```
+
+The agent is shown a switch reading **ON**, next to copy saying the save
+**failed**, on a view whose tint has **already disappeared** — while storage
+holds `false`. Three surfaces, three different answers, and the one the agent
+acts on is the wrong one.
+
+**Mechanism.** `background.js:251-253` reports `saved`, `enabled` and `applied`
+as three separate facts, correctly: here `saved: true`, `enabled: null`.
+`popup.js:189` then collapses two of them — `if (!reply.saved || reply.enabled === null) say(NOT_SAVED)` — so a write that succeeded is reported as
+"could not save". That conflation predates this pass. What is **new** is
+`popup.js:89-92`: the WR-07 repair makes `showPreference(null)` revert
+`control.checked` to `lastConfirmed`, which is the value from *before* the
+successful write. Before this pass the control stayed at the clicked position —
+which in this exact scenario is the value storage actually holds — and was
+merely disabled. The repair traded "a position nothing confirmed" for a position
+that is actively, provably wrong.
+
+**Why the suite does not catch it.** `toggle.test.js:233-244`, named *"a
+rejected read after a write refuses to claim a preference it could not
+confirm"*, now asserts `checked === true` and `disabled === false`. It never
+asserts `world.getStored('enabled')`, so the contradiction is invisible to it.
+The test's own name is falsified by its assertion: the popup **does** claim a
+preference — it claims ON while storage holds OFF. `popup-recovery.test.js`'s
+two sibling cases both happen to be the benign direction (write rejected →
+storage still holds the old value → the revert is correct), which is why the
+whole cluster is green.
+
+**Fix.** A successful write is itself confirmation of the value that was
+written; a failed read-back does not un-write it. In `popup.js`, distinguish the
+two facts the worker already sends separately:
 
 ```js
-const shellLanguage = document.documentElement.lang;
-if (shellLanguage !== 'en') {
-  return result(shellLanguage.trim() === '' ? 'unsafe' : 'unsupported');
+// requestEnabled, replacing the single showPreference/NOT_SAVED pair
+outstanding = false;
+if (!reply.saved) {
+  // Nothing was persisted: the last confirmed value is still what storage holds.
+  showPreference(null);
+  say(NOT_SAVED);
+} else {
+  // The write landed. `desired` is what storage holds, even if the read-back
+  // could not confirm it, so never revert away from it.
+  showPreference(reply.enabled === null ? desired : reply.enabled);
+  if (reply.status === 'unavailable') render('unavailable', null);
+  else if (!reply.applied) say(NOT_APPLIED);
+  else render(reply.status, reply.reason);
 }
+end(hadFocus);
 ```
 
-`'unsupported'` maps to `['cannot-read', 'unsupported-language']`
-(`content.js:218`) → the popup and toolbar say **"This interface language is not
-supported"** (`popup.js:23`, `background.js:44`). The comparison is exact and
-case-sensitive, so `lang="en-US"`, `en-GB`, `en-AU`, `en-CA`, `en-IN`, or
-`EN` all take that branch. `zhroma.css` encodes the same predicate
-independently as `html[lang="en"]`, so nothing paints either.
+Then repair the test so it can fail: add `expect(world.getStored('enabled')).toBe(false)`
+and `expect(control(popup.document).checked).toBe(false)` to
+`toggle.test.js:233-244`, and add a `popup-recovery` mutant that reverts the
+control after a *successful* write. If the ratified copy set genuinely cannot
+carry a fourth line, the minimum acceptable behaviour is still to show the
+persisted value — never `lastConfirmed` — whenever `reply.saved === true`.
 
-Zendesk ships multiple English agent locales (US, GB, AU, CA, IE, IN, NZ, ZA),
-all of which render the priority labels this detector already accepts —
-`Urgent`, `High`, `Normal`, `Low` (`content.js:5`). For any agent on one of
-them, Zhroma is silently inert **and** makes a false statement about their
-interface, in the phase whose entire subject is honest failure. It is the exact
-mirror of FAIL-03/D-04 ("an English view is never blamed on its language",
-`04-LIVE-ACCEPTANCE.md` `structure-copy`).
-
-This is not an oversight that a later phase will notice: it is **locked in by
-tests as intended behaviour** — `initial-tint.test.js:166` and
-`persistent-tint.test.js:122` list `'en-US'` among the variants that must
-produce zero writes, and `runtime-contract.test.js:261` asserts that setting
-`lang = 'en-US'` makes every CSS rule stop matching.
-
-Mitigating context, stated fairly: `03-LIVE-ACCEPTANCE.md` records an observed
-`html_lang: "en"` on the real tenant, and `04-LIVE-ACCEPTANCE.md` pins
-`scope.html_lang: 'en'`, so the shipping default locale is empirically fine. The
-claim is not "this is broken today for the author" but "this is broken for a
-class of users the product promises to serve with zero setup", and
-`CLAUDE.md` already flags Zendesk's DOM/locale behaviour as the project's
-standing unverified risk.
-
-**Fix:** compare the BCP-47 primary subtag, case-insensitively, in both places —
-and change them together, because they are two copies of one predicate with no
-shared source:
-
-```js
-// content.js
-const shellLanguage = document.documentElement.lang.trim();
-const primary = shellLanguage.toLowerCase().split('-')[0];
-if (primary !== 'en') {
-  return result(shellLanguage === '' ? 'unsafe' : 'unsupported');
-}
-```
-
-```css
-/* zhroma.css — repeat for High, Normal, Low */
-html[lang="en" i] table[...],
-html[lang|="en" i] table[...] { background-color: rgb(220 38 38 / 0.14); }
-```
-
-Then move `'en-US'` out of the invalid-variant lists into a positive case
-(`en-US`/`en-GB` tint exactly as `en` does), keep `fr` and `''` where they are,
-and add one test that fails if the JS predicate and the CSS predicate disagree —
-the drift hazard here is a shipped state where the popup says "working" and
-nothing paints. Re-bind the acceptance record afterwards
-(`04-VALIDATION.md` promotion rule 3).
+---
 
 ## Warnings
 
-### WR-01: The stale-repaint test cannot fail, so the worker's generation machinery is unguarded
+### WR-01: A whitespace- or underscore-padded English shell is still told its language is unsupported
 
-**File:** `test/extension/toolbar-popup.test.js:343-354`, `test/extension/tracer-world.js:142-157`, `extension/background.js:74-75,190,195-210,218`
-**Evidence:** `replyDelays` is consumed as the `delay` argument of `deliver()`,
-which wraps the *listener invocation* in `setTimeout`. The content script
-therefore computes its reply after the DOM change, so the "slow earlier reply"
-carries the current status and the assertion (`icons.at(-1) === neutral`) holds
-with or without any ordering guard. Proven: with `generationOf(` reduced to zero
-call sites and the per-tab queue removed, all 277 behavioural tests still pass.
-**Impact:** the worker's staleness design has no executable specification. A
-refactor that drops it — the single most likely edit when 04-03 adds diagnoses —
-lands silently, and the failure it re-enables (one tab's diagnosis painted onto
-another tab's toolbar, a positive `working` surviving a navigation) is exactly
-what FAIL-05's `navigation-status` check exists to catch, unobserved.
-**Fix:** give the tracer a response-side delay — have the content double capture
-`sendResponse`'s payload immediately and release it after a delay (or add a
-`stalePayload` mode that replies with a snapshot taken before the DOM change) —
-then assert (a) the icon never shows `working` after the table is removed, and
-(b) `actionLog` contains no write attributable to the superseded generation.
-Re-run the four mutants in group A and require each to fail.
+**Severity:** WARNING
+**Files:** `extension/content.js:71-76`; encoded into the test set at `test/extension/runtime-contract.test.js:333`, `test/extension/initial-tint.test.js:175`, `test/extension/persistent-tint.test.js:135`
 
-### WR-02: The echoed-requestId guard and the whole reply-shape gate can be deleted without failing a test
+**Evidence — measured against the shipped bytes:**
 
-**File:** `extension/background.js:133-140,155-158,178-180`
-**Evidence:** three surviving mutants — deleting `&& reply.requestId ===
-requestId` (`:134`); replacing `if (!isExact(reply, [...]) ||
-!validDiagnosis(reply, requestId, 'status'))` with `if (false)` (`:155`);
-deleting the `Object.hasOwn(TITLES, statusKey(...))` clause (`:139`).
-**Impact:** the property `04-VALIDATION.md` names as `requestApply`'s *only*
-staleness key is unprotected in the removal direction. The suite catches the
-wrong guard being added but not the right one being taken away, so the
-"silent regression" the document warns about is only half-fenced.
-**Fix:** one test per clause. For the requestId echo, have the content double
-reply with `requestId + 1` and assert the worker treats it as `unavailable`
-(status path) / `null` (apply path); for the shape gate, reply with an extra
-member and with an out-of-set `diagnosis`.
+```
+lang=" en"      -> cannot-read / unsupported-language
+lang="en "      -> cannot-read / unsupported-language
+lang=" en-GB "  -> cannot-read / unsupported-language
+lang="en_US"    -> cannot-read / unsupported-language
+lang="en"       -> working / null
+```
 
-### WR-03: `lastError` is never exercised, so "a failure is never absence" is unverified in both processes
+All four rejected shells produce the toolbar and popup line **"This interface
+language is not supported"** (`background.js:50`, `popup.js:38`) for an agent
+whose interface is English. That is the same false claim CR-01 was raised
+against, narrowed from "every regional locale" to "any tag with stray
+whitespace or a Java-style underscore separator". Browsers trim `lang` when
+computing the document language for `:lang()`, so `lang=" en"` is English to
+Chrome and unsupported to Zhroma.
 
-**File:** `extension/background.js:85`, `extension/content.js:439`; doubles at `test/extension/chrome-harness.js:122-126`, `test/extension/tracer-world.js:196-203`
-**Evidence:** both doubles implement a rejected read as
-`lastError = {...}; callback(undefined)`. Deleting either shipped `lastError`
-check leaves 277/277 passing, because `values ? values[KEY] : null` /
-`isObject(values) ? … : undefined` already yields the dormant answer.
-**Impact:** the mechanism that keeps a *failed* read from being read as an
-*absent* key — i.e. the thing standing between a storage error and tinting a
-view the agent switched off — has no coverage. If Chrome ever invokes the
-callback with the defaults object alongside `lastError` (quota/IO paths), the
-only code that prevents default-on is the untested branch.
-**Fix:** add a `readMode: 'rejected-with-values'` to both doubles that sets
-`lastError` *and* delivers `{ enabled: true }`, and assert dormancy in
-`content.js` and `enabled === null` in the worker.
+The refusal itself is defensible — `zhroma.css` cannot trim, so if the JS
+accepted these the popup would say `working` while nothing painted, which is
+the exact drift `runtime-contract.test.js:330-344` exists to prevent. The defect
+is not the refusal, it is the **reason attached to it**: `content.js:76` sends
+`unsupported` for anything whose `trim()` is non-empty, which blames the
+language for what is really a shell the stylesheet cannot select.
+`runtime-contract.test.js:333` lists `' '` and `' en'` among `refused` but only
+asserts that no markers are written — it never asserts which diagnosis is
+published, so the false claim is silently locked in.
 
-### WR-04: An unresponsive document wedges the extension's only preference writer, with no timeout anywhere
+**Fix.** Keep the untrimmed comparison that governs painting, and decide the
+*reason* from the trimmed value so an English shell is never blamed on its
+language:
 
-**File:** `extension/background.js:105-109,172-182,229-247`; `extension/content.js:479-495`; `extension/popup.js:91-98`
-**Evidence:** `setEnabled` awaits `requestApply` (`:235`) with no bound;
-`requestApply` awaits `chrome.tabs.sendMessage` with no bound; the content
-handler returns `true` and defers `sendResponse` until a
-`chrome.storage.local.get` callback that is itself unbounded
-(`content.js:485-493`). Every subsequent write chains behind the pending task in
-`serializePreference` (`:106-107`). The popup's `ask()` has no timeout either.
-**Impact:** a single top frame that receives `apply-preference` and never
-answers (a document that stops running JS at that instant, a storage callback
-that never lands) leaves the off switch inoperative **in every tab** — the popup
-shows the disabled control and stale copy, and each retry queues behind the
-wedged task — until Chrome terminates the worker. The user-visible failure is
-"the off switch stopped working", with no honest message, in a phase whose
-promise is control without uninstalling.
-**Fix:** bound both hops. In the worker,
-`Promise.race([sendMessage(...), timeout(2000).then(() => TIMED_OUT)])` and
-treat a timeout as `outcome === null` (already reported honestly as
-`applied: false` + "Setting saved, but this view did not update"). In the popup,
-race `ask()` against a timeout and fall back to `NOT_SAVED` with the control
-re-enabled. Optionally guard `readPreference(done)` so `done` cannot be dropped.
+```js
+const raw = document.documentElement.lang;
+const lower = raw.toLowerCase();
+const supported = (tag) => tag === LANGUAGE_PRIMARY || tag.startsWith(LANGUAGE_PREFIX);
+if (!supported(lower)) {
+  const trimmed = lower.trim();
+  // An empty shell, or an English shell the stylesheet cannot select, is a
+  // structural fact about this view — never a claim about the agent's language.
+  if (trimmed === '' || supported(trimmed)) return result('unsafe');
+  return result('unsupported');
+}
+```
 
-### WR-05: The `{diagnosis, reason}` pairing gate is untested, and bypassing it leaves a stale toolbar rather than a clean fallback
+Then extend `runtime-contract.test.js`'s refused set to assert the published
+`{diagnosis, reason}`, not just the absence of markers.
 
-**File:** `extension/background.js:24-49,133-140,184-193`
-**Evidence:** `TITLES` is keyed by the whole pair while `ICONS` is keyed by
-status alone; the only thing stopping an unpaired combination is
-`Object.hasOwn(TITLES, statusKey(...))` at `:139`, whose deletion survives the
-suite. If an unpaired or unknown status does reach `applyAction`,
-`ICONS[result.status]` / `TITLES[key]` are `undefined`, `chrome.action.setIcon`
-rejects, the `catch` at `:192` swallows it, and `setTitle` is never reached — so
-**the tab keeps the previous icon and title**, i.e. a stale claim about the view,
-which is the failure mode FAIL-05 exists to prevent.
-**Impact:** this is the specific hazard D7 asks about. 04-03-style taxonomy
-growth means editing `DIAGNOSES`, `REASONS`, `ICONS`, `TITLES` and `popup.js`'s
-`COPY` in five places; nothing asserts they stay in agreement, and the penalty
-for disagreement is a silently stale toolbar.
-**Fix:** add a structural test — every `status:reason` pair derivable from
-`DIAGNOSES × REASONS` that `validDiagnosis` admits must have a `TITLES` entry, an
-`ICONS` entry for its status, and a `popup.js` `COPY` entry; plus a behavioural
-test that an out-of-set diagnosis from a content double leaves `actionLog`
-untouched instead of half-written.
+### WR-02: The bound was applied to the two document hops only — the preference writer is still wedgeable, and the source comment overstates the fix
 
-### WR-06: Single-writer serialization and closed-tab cleanup have no coverage
+**Severity:** WARNING
+**Files:** `extension/background.js:14-19,103-131,246-270`
 
-**File:** `extension/background.js:105-109,297-299`
-**Evidence:** collapsing `serializePreference` to `return task()` survives, as
-does deleting the `chrome.tabs.onRemoved` listener entirely. The test named
-*"two popups asking for opposite values are serialized, and neither inverts the
-other"* (`toolbar-popup.test.js:722`) passes without the queue, because with
-immediate write mode the two tasks commit in arrival order anyway.
-**Impact:** the two mechanisms that keep the preference from inverting and the
-`tabs` Map from growing without bound are effectively unspecified. `04-06`
-lists single-writer serialization as a headline property.
-**Fix:** drive the inversion test with `setWriteMode('deferred')` so the two
-tasks genuinely interleave, flush in reverse order, and assert the last request
-wins; expose a projection/known-tab count (or assert via a per-tab observable)
-so closed-tab cleanup is checkable.
+**Evidence — measured.** With the tracer's storage read parked (`readMode: 'deferred'`, never flushed) I sent two `set-enabled` requests from the popup
+sender:
 
-### WR-07: After a failed save the checkbox displays a value nothing confirmed, and the control is then dead with focus dropped
+```
+first  : NEVER RESOLVED   (9 s ceiling)
+second : NEVER RESOLVED   (9 s ceiling)
+stored : false
+```
 
-**File:** `extension/popup.js:58-68,127-137`
-**Evidence:** the `change` event has already moved `control.checked` to the
-desired value before the request is sent. On the illegible-reply path,
-`showPreference(null)` deliberately leaves `checked` alone — but the comment says
-"leave the control exactly where the agent last saw it", and where the agent last
-saw it is the *new*, unconfirmed position. `control.disabled = true` then makes
-the switch permanently inert for the life of the popup, and `end(hadFocus)`
-cannot restore focus because it is guarded by `!control.disabled` (`:88`).
-**Impact:** the agent sees an unchecked box next to "Zhroma could not save that
-setting" — the copy is honest and the control contradicts it, which is precisely
-the ambiguity this phase set out to remove; a keyboard user additionally loses
-focus into `body` with no recovery. `popup-keyboard` is still a pending human
-check, so this will be judged by a person against the code as it stands.
-**Fix:** on an illegible or unsaved reply, revert `control.checked` to
-`control.defaultChecked` (or to the last confirmed value, kept in a variable) and
-leave the control **enabled** so a retry is possible, keeping `NOT_SAVED` as the
-copy; restore focus unconditionally when `hadFocus`.
+`setEnabled` awaits `writePreference` (`:251`), `readPreference` (`:252`) and
+`activeTab` (`:253`) — **none of which is passed through `bounded()`** — before
+it ever reaches the one hop that is bounded. Because every write chains through
+`serializePreference` (`:127-131`), the second request never even started. This
+is precisely the failure WR-04 described, reproduced on a different seam.
 
-### WR-08: The tint stylesheet uses no `!important`, contrary to the project's explicit styling directive
+The comment at `background.js:14-19` states the guarantee as closed: *"A top
+frame that receives a message and never answers must cost one wait, not the off
+switch: every preference write chains behind the pending task below, so an
+unbounded await here would leave the switch inoperative in EVERY tab."* That
+reasoning applies verbatim to the three unbounded awaits immediately below it,
+so the comment now claims more than the code delivers.
 
-**File:** `extension/zhroma.css:1-27` (inherited from Phase 3; not modified by Phase 4)
-**Evidence:** all four rules are plain declarations. `CLAUDE.md` prescribes
-"Plain unlayered rules with `!important`" and warns that "`!important` vs
-`!important` falls through to specificity, then source order — and their
-runtime-injected styles win source order".
-**Impact:** the tint currently wins on selector specificity alone against
-Zendesk Garden's CSS-in-JS. It was observed painting live (Phase 3
-`in-app-entry`, `native-states`, `tab-return` all `pass`), so this is fragility
-rather than breakage — but a single Garden restyle that adds a `td` background
-at equal-or-greater specificity, or with `!important`, silently un-tints every
-row, and the cascade check is exactly the item Phase 3 left to a deferred
-Playwright/manual step.
-**Fix:** add `!important` to the four `background-color` declarations, keeping
-the existing high-specificity selectors, and re-bind the acceptance hashes. The
-`runtime-contract` paint assertions read `rule.style.backgroundColor`, which is
-unaffected by the priority flag.
+From the agent's side the popup does recover visually (its own 5000 ms deadline
+fires and it reports the failed-save path), but the off switch is inoperative
+for the life of the worker, with no honest message distinguishing that from a
+transient failure.
 
-### WR-09: The workload's `mode` parameter fails open, and "disabled" measures a page with no extension
+**Fix.** Reuse the existing helper — it already resolves `null` on the deadline,
+which both `readPreference` and `activeTab` already treat as an unusable answer:
 
-**File:** `test/performance/tint-workload.js:13,29-57,152-165`
-**Evidence:** `const enabled = params.get('mode') === 'enabled';` — any other
-value, including a typo or an omitted parameter, silently means *disabled*, and
-disabled mode installs no seam and never loads `content.js`. `verify()` then
-expects zero markers and zero observers, so the run reports `passed` with
-0 callbacks / 0 writes. Separately, the seam's `get` always answers
-`{...defaults}` (`:52`), so no run ever exercises a **stored `false`**.
-**Impact:** two ways to be misled. A mis-invoked "enabled" run measures nothing
-and still exits 0 — and six such runs are the timing evidence
-`04-VALIDATION.md` records as `passed` and
-`phase-04-live-acceptance.test.js` consumes (`validateWorkloadReport`, which
-accepts `callbacks: 0` for `mode: 'disabled'`). And the "disabled control"
-measures a *different program*, so it establishes nothing about the cost of the
-shipped off state (a loaded controller that declines to act) — a claim the
-validation document words carefully but which the report's `mode: "disabled"`
-label invites readers to over-read.
-**Fix:** validate the parameter (`throw` unless mode is exactly `enabled` or
-`disabled`, and unless `size` is a positive integer); add a third mode that
-installs the seam, stores `false`, loads `content.js`, and asserts 0 markers /
-0 observers / 0 pending timers — that is the real dormancy cost — keeping the
-no-runtime run as a separately named baseline.
+```js
+function readPreference() {
+  return bounded(new Promise((resolve) => { /* unchanged body */ }));
+}
+function writePreference(enabled) {
+  // `null` on the deadline is falsy, which is exactly the `saved: false` the
+  // popup already reports honestly.
+  return bounded(new Promise((resolve) => { /* unchanged body */ })).then(Boolean);
+}
+```
 
-### WR-10: An assertion inside the fake Chrome is swallowed by the shipped script's try/catch
+and wrap `chrome.tabs.query` in `activeTab` the same way. Then add a
+`failure-seam` mutant per site (unwrap each `bounded(...)`) driven by a
+never-flushed `deferred` read, mirroring `worker-status-unbounded`. Correct the
+comment at `:14-19` to name what is and is not bounded.
 
-**File:** `test/extension/tracer-world.js:288`
-**Evidence:** `expect(options).toEqual({ frameId: 0 })` runs inside
-`workerChrome.tabs.sendMessage`, which the worker calls inside `try { await … }
-catch { … }` (`background.js:147-153,175-177`). A thrown assertion is caught by
-production code and converted into `unavailable` / `null`.
-**Impact:** a real contract violation (a missing or wrong `frameId`, which would
-let a subframe answer for the document) degrades into a plausible-looking
-"no receiver" result instead of a red test, and only fails indirectly where a
-test happens to expect a positive projection. `chrome-harness.js:56-59` already
-solved this — record the violation, throw, and fail via `assertClean()`.
-**Fix:** in `tracer-world.js`, push `frameId` violations onto the existing
-`forbidden` array (which suites already assert empty) instead of calling
-`expect` inside the double.
+### WR-03: The deadline-ordering test asserts a strictly weaker property than the one its own comment names
+
+**Severity:** WARNING
+**File:** `test/extension/popup-recovery.test.js:277-286` (with `extension/popup.js:16-25`)
+
+**Evidence.** The test body is one comparison of two parsed constants:
+
+```js
+expect(bound()).toBeGreaterThan(workerBound());   // 5000 > 2000
+```
+
+Its comment asserts the safety property: *"a popup deadline at or below the
+worker's would cut off the worker's honest answer just before it arrived."* That
+property requires `popupBound > worst-case worker answer latency`, and the
+worker's answer latency is **not** bounded by `REQUEST_TIMEOUT_MS`. Two
+measurable reasons: the three unbounded awaits in WR-02, and the serialized
+queue — `failure-seam.test.js:115-132` itself measures two chained `set-enabled`
+requests against a silent frame and only asserts `elapsed < bound() * 4`
+(i.e. under 8000 ms), which is already past the popup's 5000 ms deadline.
+
+So a future edit that raises the worker's deadline to 4900 ms would keep this
+test green while destroying the property it is named for, and an edit that adds
+a second serialized await would destroy it without touching either constant.
+This is the same failure class the prior review's WR-01 identified: a named
+guardian test that cannot construct the hazard it names.
+
+**Fix.** Replace the constant comparison with a behavioural bound. Drive the
+whole worker (not a `fakeWorker`) against a silent top frame and assert that the
+popup receives a legible reply — `expect(box.disabled).toBe(false)` and
+`expect(lastConfirmed)`-equivalent — rather than the timeout path. Keep the
+constant comparison as a cheap secondary assertion, but stop describing it as
+the enforcement of the ordering.
+
+### WR-04: The mutation gate cannot distinguish "the suite refused the mutant" from "the suite never ran"
+
+**Severity:** WARNING
+**File:** `scripts/verify-mutation-kills.js:116-134,151-175`
+
+**Evidence.** `runMutant` returns `{ killed: result.status !== 0 }`. I verified
+that `node node_modules/vitest/vitest.mjs run --config vitest.config.js
+test/extension/does-not-exist.test.js` **exits 1**. Therefore a registry entry
+naming a suite path that does not exist — a typo, or a suite renamed in a later
+phase — reports its mutant as `killed`. The same is true of any mutant whose
+`replace` produces unparseable JavaScript, of a `node_modules` symlink that goes
+stale, and of a `spawnSync` that fails outright (`result.status` is `null`,
+which `!== 0`).
+
+The gate has an excellent guard against a stale `find` literal
+(`assertFindCounts`, and I confirmed all 25 currently match) but **no baseline
+run**: nothing ever establishes that the named suites pass *unmutated* inside
+the throwaway copy. A copy that is broken for any reason reports
+`MUTATION KILLS: 25/25 killed` and exits 0. Given that this script exists
+specifically to make "the mutant is dead" checkable rather than trusted, the
+inverse claim being uncheckable is the defect that matters most in it.
+
+Today's 25/25 is genuine — I confirmed every suite path exists and every find
+count matches before running it — but the gate cannot tell you that next time.
+
+**Fix.** Two cheap additions:
+
+```js
+// 1. Refuse a registry entry whose suites are not on disk, alongside the
+//    find-count check, before anything runs.
+for (const suite of entry.suites) {
+  requireValue(existsSync(join(REPOSITORY_ROOT, suite)), 'mutant-suite-missing', `${entry.id} ${suite}`);
+}
+
+// 2. Prove the copy is green before trusting a red. Once per run, over the
+//    union of every selected entry's suites.
+const baseline = spawnSync(process.execPath, [...], { cwd: buildCopy(), ... });
+requireValue(baseline.status === 0, 'baseline-not-green');
+```
+
+Optionally also treat `result.signal !== null` / `result.error` as
+`gate-error` rather than `killed`, so a timeout is reported as its own outcome.
+
+### WR-05: The only thing keeping the mutant registry honest is never run by `npm test`
+
+**Severity:** WARNING
+**Files:** `package.json:10-13`, `scripts/verify-mutation-kills.js:89-102`
+
+**Evidence.** `npm test` runs `test:recon` only. `test:mutants` is a separate,
+opt-in script, and `grep -rn "mutants" test/ vitest.config.js` finds no test
+that reads `test/mutants/*.json` at all. So `assertFindCounts` — the mechanism
+that catches a `find` literal going stale, which the file's own header calls
+"the exact class of defect this gate exists to catch" — executes only when
+somebody remembers to type the command.
+
+The realistic failure is not malice, it is the project's own maintenance
+pattern: `CLAUDE.md` describes "Zendesk broke a selector, fix it today". One
+such edit to `background.js` silently invalidates the `find` literals of up to
+fourteen mutants, and nothing in the green CI run says so. The registry then
+documents guards that are no longer being checked.
+
+**Fix.** Add a cheap Vitest file (a few hundred milliseconds, no mutants run)
+that loads every `test/mutants/*.json`, validates the schema, and asserts each
+`find` occurs exactly `count` times in its `file` and each `suites` entry
+exists. Export `loadRegistry`/`assertFindCounts` from the script so the test
+uses the shipped implementation rather than a second copy. Leave the expensive
+`test:mutants` opt-in.
+
+### WR-06: The JS/CSS language-agreement guard is only as good as happy-dom's selector engine, which the test itself records as already diverging
+
+**Severity:** WARNING
+**File:** `test/extension/runtime-contract.test.js:298-344`
+
+**Evidence.** `cssAcceptsShell` decides whether the stylesheet accepts a shell
+by asking **happy-dom** to evaluate `html[lang|="en" i] …`. The test's own
+comment at `:340-343` records that happy-dom's `|=` matches a right-padded value
+where Chrome does not, and excludes `'en '` from the agreement assertion for
+that reason. So the guard added specifically to prevent JS/CSS drift is measured
+against a matcher that has already been shown to disagree with the target
+browser once, in the very predicate under test.
+
+A second, smaller point in the same area: in HTML documents `lang` is one of the
+attributes whose *value* is matched ASCII case-insensitively by default, so the
+` i` flag in `html[lang|="en" i]` is redundant in Chrome. The `EN` and `EN-gb`
+rows therefore pass whether or not the flag is present, and nothing in the suite
+would notice its removal.
+
+**Fix.** Do not rely on the double for the encoding half. Assert the shipped
+CSS text directly — every rule's selector must begin with the exact string
+`html[lang|="en" i] `, checked with string equality across all four rules — so a
+hand-edit to the selector head fails on the bytes rather than on happy-dom's
+opinion of them. Keep `cssAcceptsShell` as the semantic cross-check, and move
+the real browser confirmation of a regional shell into the
+`english-regional-locale` live-acceptance slot (which 04-11 has already created)
+or a Playwright check.
+
+---
 
 ## Info
 
-### IN-01: Unreachable subframe guard
+### IN-01: `serializePreference`'s rejection handler is unreachable
 
-**File:** `extension/content.js:62` — `if (window.top !== window) return result('unsafe');` cannot be true while the manifest declares `all_frames: false`. Dead defensive code (its removal survives the suite). Keep it if `all_frames` may ever change, but note it is unverifiable today.
+**File:** `extension/background.js:127-131` — `preferenceQueue.then(task, task)` supplies `task` as both handlers, but `preferenceQueue` is only ever reassigned to `run.then(() => {}, () => {})`, which can never reject. The second `task` is dead. Harmless, but it reads as a deliberate guard against something that cannot happen. Either drop it or note why it is defensive.
 
-### IN-02: `content_scripts[].world` is below its platform floor
+### IN-02: The acceptance record's declared scope now contradicts a check it is required to carry
 
-**File:** `extension/manifest.json:5,20` — `world` in `content_scripts` is honoured from Chrome 111, while `minimum_chrome_version` is `"106"` (set for `sender.documentId`). On 106–110 the key is ignored with a manifest warning; behaviour is unchanged because ISOLATED is the default, so this is cosmetic — but the "world is pinned twice over" guarantee is not platform-enforced across the whole supported range. Either raise the floor to 111 or record that ISOLATED there is a default, not a declaration.
+**File:** `test/extension/phase-04-live-acceptance.test.js:46,209-212` — `SCOPE` pins `html_lang: 'en'` and the validator enforces whole-object equality on it, while the new `english-regional-locale` check must carry a `language_context` that is English but explicitly **not** `en`. The record therefore declares an environment its own required observation is defined to contradict. Not a validator bug (scope describes the primary walkthrough environment), but the scope object no longer describes the full set of shells the record must evidence. Consider adding `html_lang_variants` or widening `scope.html_lang` to a list.
 
-### IN-03: Only a 32 px icon ships
+### IN-03: `refresh()` has no in-flight guard; only the markup keeps the two request paths apart
 
-**File:** `extension/manifest.json:9,11` — matches the recorded user decision ("Five static shape treatments in 32x32 PNG … Store artwork stays Phase 5"), so not a defect here. Carry forward: `CLAUDE.md` lists 128 as store-required and 48 as strongly recommended; Chrome upscales 32→48 on `chrome://extensions`. Adding them in Phase 5 will require updating the manifest deep-equal (`runtime-contract.test.js`), the icon inventory (`toolbar-popup.test.js`) and the acceptance byte binding together.
+**File:** `extension/popup.js:147-161,196-201` — the `change` listener guards on `outstanding`, which `refresh()` never sets. The only thing preventing an overlapping `set-enabled` during the opening `refresh()` (now up to 5000 ms) is that `popup.html:16` ships the checkbox with the `disabled` attribute. That is load-bearing markup with no assertion tying it to the invariant it protects. Add `expect(control(popup.document).disabled).toBe(true)` immediately after `loadPopup` in one suite, or set `outstanding` around `refresh()`.
 
-### IN-04: The worker projects into every tab in the browser
+### IN-04: The `i` flag in the tint selectors is redundant
 
-**File:** `extension/background.js:287-295` — `tabs.onActivated` / `tabs.onUpdated` are unfiltered, so every navigation and tab switch anywhere triggers `project()`, a `tabs.sendMessage` that rejects, and a tab-scoped `setIcon`/`setTitle` writing "No readable view is connected". No data is read or leaked (verified: `changeInfo.url` and `tab.url` are never touched), and the copy is the decided non-committal line, so this is intentional. Worth stating explicitly in the store-review notes: the worker reacts to all navigations while reading nothing about them.
+**File:** `extension/zhroma.css:1,8,15,22` — `lang` is on HTML's ASCII-case-insensitive attribute-value list, so `[lang|="en"]` already matches `EN` and `EN-gb` in an HTML document. Keeping the flag is correct and defensive (it also holds in XML contexts), but no test can show it is doing work, so do not treat it as a guarded property.
 
-### IN-05: The popup never updates after its first render
+### IN-05: The project's prescribed type-safety mechanism is still absent, in a pass that touched `package.json`
 
-**File:** `extension/popup.js:103-117,156-157` — `refresh()` runs once on open with no subscription to `storage.onChanged` or to status pushes. Re-enabling on a Priority-less view answers `neutral` ("Checking this view") and the popup keeps that text while the toolbar transitions to the missing-column hint ~100 ms later. The acceptance script watches the **icon** for `missing-settle-transition`, so this does not contradict a check; it is a known transient inconsistency between two surfaces that are asserted elsewhere to "agree".
-
-### IN-06: The project's prescribed type-safety mechanism is absent
-
-**Files:** `extension/*.js`, `package.json` — no `// @ts-check` and no JSDoc annotations in any shipped script, and no `typescript` devDependency, though `CLAUDE.md` specifies "JavaScript files with JSDoc types, checked by `tsc --noEmit --checkJs`" as the stack's answer to type safety ("Always"). Adding `// @ts-check` + `@types/chrome` costs no build step and no shipped bytes.
-
-### IN-07: Harness hygiene
-
-**File:** `test/extension/chrome-harness.js:120-126,154-162` — `reads += 1` is counted before the `readMode === 'throws'` throw (a read that never happened is tallied), and `flush()` drains with an unbounded `while (pending.length > 0)`, so a double that re-queues on release would hang the suite rather than fail it. Add a drain-generation cap.
-
-### IN-08: The predecessor revision is transcribed, not derived
-
-**File:** `test/extension/phase-04-live-acceptance.test.js:132` — `revision: '382cc881…'` is a literal. Phase 3's *counts* and *status* are read from its own file (good), but the revision it is bound to is asserted only against the record's copy of the same literal. Deriving it (or hashing Phase 3's three assets) would close the loop.
-
-### IN-09: Parameter shadows the global `document`
-
-**File:** `extension/content.js:58` — `function inspectCandidateTable(document)` shadows the global it is always called with. Harmless today; it makes `confirmMissingColumn`/`reconcileCurrentTable`'s "inspect the CURRENT document" invariant read as a promise about a parameter rather than about the global, which is the sort of ambiguity that invites a future caller to pass a snapshot.
+**Files:** `extension/*.js`, `package.json:14-17` — still no `// @ts-check`, no JSDoc annotations, and no `typescript`/`@types/chrome` devDependency, though `CLAUDE.md` specifies "JavaScript files with JSDoc types, checked by `tsc --noEmit --checkJs`" as the stack's answer and marks it "Always". Carried forward from the prior review's IN-06; noted again only because `package.json` was in scope this pass and would have been the place to add it. Costs no build step and no shipped bytes.
 
 ---
 
 _Reviewed: 2026-09-10_
-_Reviewer: Claude (gsd-code-reviewer) — independent of the implementing agent_
-_Depth: standard, plus 43 single-clause mutants run against six behavioural suites in an out-of-tree copy_
-_No file in the repository was modified by this review._
+_Reviewer: Claude (gsd-code-reviewer) — independent of the implementing agents_
+_Depth: standard, plus an independent 25/25 run of `npm run test:mutants` and five out-of-tree behavioural probes_
+_No file in the repository was modified by this review (`git status --short` unchanged)._
