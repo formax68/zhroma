@@ -1,0 +1,72 @@
+[
+  {
+    "id": "project-guard-after-status",
+    "file": "extension/background.js",
+    "find": "      if (result === null || generationOf(tabId) !== generation) return;\n",
+    "replace": "",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "a superseded status result proceeds to the preference read instead of being dropped, so a discarded projection still does work on behalf of a view that has moved on (04-REVIEW WR-01, T-04G-23)"
+  },
+  {
+    "id": "project-guard-after-preference",
+    "file": "extension/background.js",
+    "find": "      const enabled = await readPreference();\n      if (generationOf(tabId) !== generation) return;\n",
+    "replace": "      const enabled = await readPreference();\n",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "a preference read that lands after a newer invalidation paints the superseded status, so a positive working icon survives losing the table (04-REVIEW WR-01, T-04G-23)"
+  },
+  {
+    "id": "apply-action-guard",
+    "file": "extension/background.js",
+    "find": "      await chrome.action.setIcon({ tabId, path: ICONS[result.status] });\n      if (generationOf(tabId) !== generation) return;\n",
+    "replace": "      await chrome.action.setIcon({ tabId, path: ICONS[result.status] });\n",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "a generation bump between the icon and the title write no longer stops the title, so the agent reads a sentence about a view that is gone (04-REVIEW WR-01, T-04G-23)"
+  },
+  {
+    "id": "popup-status-guard",
+    "file": "extension/background.js",
+    "find": "    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, enabled);\n",
+    "replace": "",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "a superseded popup projection loses the confirmed preference along with the diagnosis: the popup reports the connection line with enabled null and takes the switch out of service (04-REVIEW WR-01, T-04G-23)"
+  },
+  {
+    "id": "project-queue",
+    "file": "extension/background.js",
+    "find": "    state.queue = state.queue.then(async () => {",
+    "replace": "    state.queue = Promise.resolve().then(async () => {",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "the per-tab serialization is collapsed so two projections for one tab run concurrently and a held earlier reply lands last (04-REVIEW WR-01, T-04G-23)"
+  },
+  {
+    "id": "generation-counter",
+    "file": "extension/background.js",
+    "find": "const invalidate = (tabId) => { const state = stateFor(tabId); state.generation += 1; return state.generation; };",
+    "replace": "const invalidate = (tabId) => { const state = stateFor(tabId); return state.generation; };",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "invalidation stops advancing the counter, so every generation recheck in the worker becomes a no-op at once. Registered deliberately as the mechanism-level fence: requestStatus's own two rechecks are provably redundant with the rechecks its two callers perform immediately afterwards, so neither can be killed on its own — see 04-12-SUMMARY (04-REVIEW WR-01, T-04G-23)"
+  },
+  {
+    "id": "status-catch-reports-unavailable",
+    "file": "extension/background.js",
+    "find": "      return generationOf(tabId) === generation ? { status: 'unavailable', reason: null } : null;",
+    "replace": "      return null;",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "the catch branch stops reporting the connection fact for a CURRENT rejection, so no receiver silently paints nothing. This fences the REPORTING half of that line only; its staleness half (=== generation) is redundant with the callers' rechecks and is fenced by generation-counter instead (04-REVIEW WR-01, T-04G-23)"
+  }
+]
