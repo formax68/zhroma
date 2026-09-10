@@ -134,7 +134,7 @@ test('a stored false leaves zero markers and never flashes tint during an asynch
   // A confirmed stored false is an operational state the extension can name,
   // not the "still looking" state. 04-04 replaced the placeholder `checking`
   // projection here with the decided off copy.
-  expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.off });
+  expect(world.action()).toEqual({ icon: ICON.off, title: COPY.off });
   expect(statusText(popup.document)).toBe(COPY.off);
 });
 
@@ -639,7 +639,7 @@ test('a stored false reaches the same dormant state through both doubles', async
 
   const { world, content } = await bootAll({ stored: { enabled: false } });
   expect(markers(content.document)).toEqual([]);
-  expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.off });
+  expect(world.action()).toEqual({ icon: ICON.off, title: COPY.off });
 });
 
 // --- the off state, its races and its faults (04-04) ------------------------
@@ -658,26 +658,32 @@ async function twoTintedTabs() {
 }
 
 test('off is projected as its own packaged shape and never as the add-a-column hint', async () => {
-  const { world, popup } = await twoTabWorld();
+  const { world } = await twoTabWorld();
+  // Stand on the tab whose Priority column genuinely IS missing, so the copy
+  // being suppressed is copy the extension would otherwise be right to show.
+  world.activateTab(OTHER_TAB_ID);
+  await settle();
   const onMissing = loadPopup(world);
   await settle();
   expect(statusText(onMissing.document)).toBe(COPY.missing);
+  expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.missing, title: COPY.missing });
 
   await flip(onMissing, false);
 
-  // The tab whose Priority column really is missing is no longer told to add
-  // one: off is an operational state, and while it is on there is no diagnosis
-  // to act on. Three diagnoses stay exactly three.
-  expect(world.action(TAB_ID)).toEqual({ icon: ICON.off, title: COPY.off });
-  world.activateTab(OTHER_TAB_ID);
-  await settle();
+  // That tab is no longer told to add a column: off is an operational state,
+  // and while it is on there is no diagnosis to act on. Three diagnoses stay
+  // exactly three.
   expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.off, title: COPY.off });
+  expect(statusText(onMissing.document)).toBe(COPY.off);
+  world.activateTab(TAB_ID);
+  await settle();
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.off, title: COPY.off });
   const titles = world.actionLog.filter((entry) => entry.title).map((entry) => entry.title);
   expect(titles.at(-1)).toBe(COPY.off);
+  expect(titles.filter((title) => title === COPY.missing).length).toBeGreaterThan(0);
   const afterOff = loadPopup(world);
   await settle();
-  expect(statusText(afterOff.document)).not.toBe(COPY.missing);
-  expect(popup).toBeTruthy();
+  expect(statusText(afterOff.document)).toBe(COPY.off);
 });
 
 test('a background tab converges through onChanged without ever being messaged', async () => {

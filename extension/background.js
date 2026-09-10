@@ -25,11 +25,13 @@
     'working': 'icons/working.png',
     'missing': 'icons/missing.png',
     'cannot-read': 'icons/unreadable.png',
-    // Operational, not a diagnosis: the extension is still looking, switched
-    // off, or unable to reach a document. Never a claim about the tab.
+    // Operational, not a diagnosis: the extension is still looking, or it
+    // could not reach a document. Never a claim about the tab.
     'neutral': 'icons/neutral.png',
-    'off': 'icons/neutral.png',
     'unavailable': 'icons/neutral.png',
+    // Also operational, and the fifth decided shape: a power symbol. The agent
+    // switched it off, which is a fact about Zhroma, not about the view.
+    'off': 'icons/off.png',
   };
 
   // Explanatory titles, never shape or colour alone. Fixed copy, no page input.

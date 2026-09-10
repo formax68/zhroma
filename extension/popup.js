@@ -67,6 +67,15 @@
     control.disabled = true;
   }
 
+  function focusDefault() {
+    // The switch is the only control on the panel, so it is the default focus
+    // and the popup is operable from the keyboard the moment it opens. Focus
+    // the agent has already placed somewhere themselves is never stolen.
+    if (control.disabled) return;
+    const active = document.activeElement;
+    if (active === null || active === document.body || active === document.documentElement) control.focus();
+  }
+
   function begin() {
     outstanding = true;
     control.disabled = true;
@@ -104,6 +113,7 @@
     }
     showPreference(reply.enabled);
     render(reply.status, reply.reason);
+    focusDefault();
   }
 
   async function requestEnabled(desired) {
