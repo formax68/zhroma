@@ -41,6 +41,10 @@
   const control = document.getElementById('zhroma-enabled');
   let requestCounter = 0;
   let outstanding = false;
+  // The last value STORAGE reported back, never a value anyone hoped for.
+  // `null` until a reply has actually delivered a boolean, which is what makes
+  // "there is nothing confirmed to show" distinguishable from "off".
+  let lastConfirmed = null;
 
   function say(text) {
     // Re-writing identical text is not a change, so an assistive technology
@@ -57,13 +61,26 @@
 
   function showPreference(enabled) {
     if (typeof enabled === 'boolean') {
+      lastConfirmed = enabled;
       control.checked = enabled;
       control.disabled = outstanding;
       return;
     }
-    // Nothing read the preference back, so there is no position to show. Leave
-    // the control exactly where the agent last saw it and take it out of
-    // service rather than moving it to a value nobody has confirmed.
+    // Nothing read the preference back. The `change` has already moved the
+    // control to the desired value, so leaving it alone would display a
+    // position nothing confirmed next to copy saying the save failed. Return
+    // it to the last value storage did confirm, and leave it operable so a
+    // retry is possible without reopening the panel.
+    if (typeof lastConfirmed === 'boolean') {
+      control.checked = lastConfirmed;
+      control.disabled = false;
+      return;
+    }
+    // Nothing has ever been confirmed, so there is genuinely no position to
+    // show: leave the control where it is and take it out of service rather
+    // than moving it to a value nobody has confirmed. `defaultChecked` is not
+    // that value — the checkbox ships unchecked, so reverting to it after a
+    // failed attempt to turn tinting ON would display an unconfirmed OFF.
     control.disabled = true;
   }
 
@@ -84,8 +101,10 @@
   function end(hadFocus) {
     outstanding = false;
     // Restore the focus the disable took away, so keyboard operation is not
-    // silently interrupted by the round trip.
-    if (hadFocus && !control.disabled) control.focus();
+    // silently interrupted by the round trip. Unconditional: focusing a
+    // disabled control is a no-op in the browser, and guarding on the disabled
+    // state is what left a keyboard agent stranded in `body` after a failure.
+    if (hadFocus) control.focus();
   }
 
   async function ask(message) {
@@ -130,6 +149,9 @@
       || !validPreference(reply.enabled) || !validStatus(reply.status, reply.reason)) {
       // Nothing legible came back, so nothing may be claimed in either
       // direction: the preference is unknown and the page state is unknown.
+      // The request is released BEFORE the revert, so the control the revert
+      // re-enables is not disabled again by `control.disabled = outstanding`.
+      outstanding = false;
       showPreference(null);
       say(NOT_SAVED);
       end(hadFocus);

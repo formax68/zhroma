@@ -235,9 +235,12 @@ test('a rejected read after a write refuses to claim a preference it could not c
   world.setReadMode('rejected');
   await flip(popup, false);
   expect(statusText(popup.document)).toBe(COPY.notSaved);
-  // Unconfirmed is not a position: the switch is taken out of service rather
-  // than shown at a value nothing has read back.
-  expect(control(popup.document).disabled).toBe(true);
+  // Unconfirmed is not a position: the switch is returned to the last value
+  // storage actually read back, never left at the one the click moved it to.
+  // It stays operable, because taking it out of service for the life of the
+  // popup left the agent unable to retry (04-REVIEW WR-07).
+  expect(control(popup.document).checked).toBe(true);
+  expect(control(popup.document).disabled).toBe(false);
 });
 
 test('a permanent marker-removal fault reports application failure, never a cleared tint', async () => {
