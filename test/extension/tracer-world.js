@@ -20,7 +20,6 @@ import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import { createContext, Script } from 'node:vm';
 import { Window } from 'happy-dom';
-import { expect } from 'vitest';
 
 const root = new URL('../../extension/', import.meta.url);
 export const asset = (name) => readFileSync(new URL(name, root), 'utf8');
@@ -208,6 +207,17 @@ export function createWorld({
             chromeObject.runtime.lastError = undefined;
             return;
           }
+          // A read that failed while still delivering the fully-resolved values
+          // object. Chrome does this on quota and IO paths, and it is the only
+          // shape in which the shipped `lastError` check is load-bearing: with
+          // `undefined` the falsy-values path produces the same dormancy, so
+          // deleting the check changes nothing (04-REVIEW WR-03).
+          if (currentReadMode === 'rejected-with-values') {
+            chromeObject.runtime.lastError = { message: 'Storage read failed' };
+            callback(values);
+            chromeObject.runtime.lastError = undefined;
+            return;
+          }
           callback(values);
         };
         if (currentReadMode === 'deferred') pendingReads.push(resolveRead);
@@ -292,7 +302,14 @@ export function createWorld({
       },
       sendMessage(tabId, message, options) {
         record('to-content', message);
-        expect(options).toEqual({ frameId: 0 });
+        // RECORDED, never thrown. The worker calls this inside try/catch, so a
+        // thrown assertion is swallowed by production code and laundered into
+        // a plausible-looking `unavailable` instead of failing the suite
+        // (04-REVIEW WR-10). Suites already assert `forbidden` is empty, which
+        // is the same route `chrome-harness.js` uses.
+        const targeted = options !== null && typeof options === 'object' && !Array.isArray(options)
+          && Object.keys(options).length === 1 && options.frameId === 0;
+        if (!targeted) forbidden.push('worker chrome.tabs.sendMessage frameId');
         if (disconnected.has(tabId) || !tabs.some((tab) => tab.id === tabId)) {
           return Promise.reject(new Error('Could not establish connection. Receiving end does not exist.'));
         }

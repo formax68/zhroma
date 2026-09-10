@@ -41,10 +41,16 @@ export const HARNESS_EXTENSION_ID = 'zhromaharnesscontextidnotarealone';
 const ABSENT = Symbol('absent');
 
 /**
- * @param {{stored?: unknown, readMode?: 'deferred'|'rejected'|'throws', extensionId?: string}} [options]
+ * `rejected-with-values` is the Chrome path that makes the shipped `lastError`
+ * check load-bearing: the callback receives a fully-populated values object
+ * AND a set last error. Modelling a failed read as `callback(undefined)` alone
+ * lets the falsy-values path produce the dormancy, so deleting the check
+ * changes nothing observable (04-REVIEW WR-03).
+ *
+ * @param {{stored?: unknown, readMode?: 'deferred'|'rejected'|'rejected-with-values'|'throws', extensionId?: string}} [options]
  */
 export function createChromeHarness({ stored = ABSENT, readMode = 'deferred', extensionId = HARNESS_EXTENSION_ID } = {}) {
-  if (!['deferred', 'rejected', 'throws'].includes(readMode)) throw new Error(`Unknown readMode ${readMode}`);
+  if (!['deferred', 'rejected', 'rejected-with-values', 'throws'].includes(readMode)) throw new Error(`Unknown readMode ${readMode}`);
   const violations = [];
   const messages = [];
   const storageListeners = [];
@@ -80,9 +86,12 @@ export function createChromeHarness({ stored = ABSENT, readMode = 'deferred', ex
     sendMessage: null,
   };
 
-  const withLastError = (message, callback) => {
+  // `payload` is what Chrome hands the callback alongside the error. It
+  // defaults to `undefined`, which is the shape every existing call site
+  // already relied on.
+  const withLastError = (message, callback, payload = undefined) => {
     runtimeMembers.lastError = { message };
-    try { callback(undefined); } finally { runtimeMembers.lastError = undefined; }
+    try { callback(payload); } finally { runtimeMembers.lastError = undefined; }
   };
 
   runtimeMembers.onMessage = strict('chrome.runtime.onMessage', {
@@ -122,7 +131,12 @@ export function createChromeHarness({ stored = ABSENT, readMode = 'deferred', ex
       pending.push(() => {
         if (readMode === 'rejected') { withLastError('Storage read failed', callback); return; }
         // Only an absent key is filled by the caller's default.
-        callback({ [PREFERENCE_CONTRACT.key]: storedValue === ABSENT ? defaults[PREFERENCE_CONTRACT.key] : storedValue });
+        const values = { [PREFERENCE_CONTRACT.key]: storedValue === ABSENT ? defaults[PREFERENCE_CONTRACT.key] : storedValue };
+        // The failed-but-populated read: the values object the immediate path
+        // would have delivered, plus a set last error. The only thing standing
+        // between this and default-on is the shipped `lastError` check.
+        if (readMode === 'rejected-with-values') { withLastError('Storage read failed', callback, values); return; }
+        callback(values);
       });
     },
   };
