@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 7
+open_count: 8
 waived_count: 0
 fixed_count: 3
-total_count: 10
-last_updated: 2026-09-10T05:51:04.566Z
+total_count: 11
+last_updated: 2026-09-10T06:49:17.218Z
 ---
 
 # Broken Windows Ledger
@@ -25,6 +25,7 @@ last_updated: 2026-09-10T05:51:04.566Z
 | 8 | 04 | unrun-verify | test/extension/runtime-contract.test.js |  | 6 of 9 tests fail: readdirSync asset inventory, manifest deep-equal and the throwing chrome.storage Proxy all predate the Phase 4 surfaces. Deliberate contract change ordered in 04-06; not adapted here. | fixed |  | 2026-09-10T05:32:57.876Z | 2026-09-10T05:51:04.409Z |
 | 9 | 04 | unrun-verify | test/extension/initial-tint.test.js |  | 59 of 60 tests fail: the VM context supplies no chrome, so the content script stays fail-closed unconfirmed and never tints. Chrome-mock harness adaptation ordered in 04-06. | fixed |  | 2026-09-10T05:32:57.952Z | 2026-09-10T05:51:04.489Z |
 | 10 | 04 | unrun-verify | test/extension/persistent-tint.test.js |  | 66 of 68 tests fail: same missing chrome mock plus the one-active-observer assertion, which must assert zero while unconfirmed. Harness adaptation ordered in 04-06. | fixed |  | 2026-09-10T05:32:58.028Z | 2026-09-10T05:51:04.566Z |
+| 11 | 04 | deviation | extension/popup.js |  | Two operational copy strings added beyond the 04-01 decided set ('Zhroma could not save that setting', 'Setting saved, but this view did not update'); the plan mandates finite honest failure text and the decided set contained none. Needs user ratification before ship. | open |  | 2026-09-10T06:49:17.218Z |  |
 
 ````json
 [
@@ -147,6 +148,18 @@ last_updated: 2026-09-10T05:51:04.566Z
     "reason": "",
     "recorded_at": "2026-09-10T05:32:58.028Z",
     "resolved_at": "2026-09-10T05:51:04.566Z"
+  },
+  {
+    "id": 11,
+    "kind": "deviation",
+    "phase": "04",
+    "file": "extension/popup.js",
+    "line": null,
+    "description": "Two operational copy strings added beyond the 04-01 decided set ('Zhroma could not save that setting', 'Setting saved, but this view did not update'); the plan mandates finite honest failure text and the decided set contained none. Needs user ratification before ship.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T06:49:17.218Z",
+    "resolved_at": null
   }
 ]
 ````
