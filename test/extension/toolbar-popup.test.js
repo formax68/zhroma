@@ -24,9 +24,15 @@ const TAB_ID = 7;
 const DOCUMENT_ID = 'document-alpha';
 const MAX_REQUEST_ID = 1000000;
 
+// Three product diagnoses (working, missing, cannot-read) plus the operational
+// values. `missing` is the only copy that ever asks the agent to add a column,
+// and D-04 splits cannot-read into two truthful branches.
 const COPY = {
   working: 'Priority tinting is working',
   blank: 'Priority column found. These tickets have no priority values set',
+  missing: 'Add a Priority column to this view to use tinting',
+  language: 'This interface language is not supported',
+  structure: "Zhroma cannot read this view's ticket table",
   checking: 'Checking this view',
   unavailable: 'No readable view is connected',
 };
@@ -438,6 +444,61 @@ test('a view whose table cannot be read is neutral, never a positive diagnosis',
   expect(statusText(popup.document)).toBe(COPY.checking);
 });
 
+// The settle period the shipped script waits out before a missing claim, plus
+// enough real time for the confirmation and its projection to land.
+const CONFIRMED = 200;
+
+test('a genuinely Priority-less view reaches the popup as the add-a-column hint, and only after it settles', async () => {
+  const world = createWorld();
+  loadWorker(world);
+  const content = loadContent(world);
+  content.document.querySelector('thead tr').children[6].textContent = 'Other';
+  await settle();
+  // Before the quiet window elapses the extension has evidence but not
+  // certainty, and says so: neutral, never an accusation.
+  const early = loadPopup(world);
+  await settle();
+  expect(statusText(early.document)).toBe(COPY.checking);
+  await new Promise((resolve) => { setTimeout(resolve, CONFIRMED); });
+  await settle();
+  expect(world.action().title).toBe(COPY.missing);
+  const popup = loadPopup(world);
+  await settle();
+  expect(statusText(popup.document)).toBe(COPY.missing);
+  expect(markers(content.document)).toEqual([]);
+  expect(world.forbidden).toEqual([]);
+});
+
+test('an unsupported interface language reaches the popup as a language message, never a missing column', async () => {
+  const world = createWorld();
+  loadWorker(world);
+  const content = loadContent(world);
+  content.document.documentElement.lang = 'fr';
+  await settle();
+  await new Promise((resolve) => { setTimeout(resolve, CONFIRMED); });
+  await settle();
+  const popup = loadPopup(world);
+  await settle();
+  expect(statusText(popup.document)).toBe(COPY.language);
+  expect(world.action().title).toBe(COPY.language);
+  expect(JSON.stringify(world.traffic)).not.toContain('fr');
+});
+
+test('a structurally unreadable English view is told so, and is never blamed on its language', async () => {
+  const world = createWorld();
+  loadWorker(world);
+  const content = loadContent(world);
+  content.document.querySelectorAll('tbody > tr')[2].children[6].textContent = 'Critical';
+  await settle();
+  await new Promise((resolve) => { setTimeout(resolve, CONFIRMED); });
+  await settle();
+  const popup = loadPopup(world);
+  await settle();
+  expect(statusText(popup.document)).toBe(COPY.structure);
+  expect(world.action().title).toBe(COPY.structure);
+  expect(markers(content.document)).toEqual([]);
+});
+
 test('no receiver reads as unavailable and never as a diagnosis about the view', async () => {
   const { world, popup } = await bootAll();
   world.disconnectContent();
@@ -659,6 +720,16 @@ test('the tracer world and the strict inherited-suite harness drive one preferen
   expect(source).toContain(`MAX_REQUEST_ID = ${PREFERENCE_CONTRACT.maxRequestId}`);
   expect(source).toContain(`'${PREFERENCE_CONTRACT.statusMessage.type}'`);
   expect(asset('background.js')).toContain(`'${PREFERENCE_CONTRACT.statusRequestType}'`);
+
+  // The taxonomy is part of the shared contract, not an incidental literal.
+  // Exactly three product diagnoses (FAIL-01) plus the operational `neutral`,
+  // and every one of them present in all three shipped contexts.
+  expect(PREFERENCE_CONTRACT.diagnoses).toEqual(['working', 'missing', 'cannot-read', 'neutral']);
+  expect(PREFERENCE_CONTRACT.reasons).toEqual(['blank', 'unsupported-language', 'structure', null]);
+  for (const value of [...PREFERENCE_CONTRACT.diagnoses, ...PREFERENCE_CONTRACT.reasons]) {
+    if (value === null) continue;
+    for (const name of ['content.js', 'background.js']) expect(asset(name), `${name} ${value}`).toContain(`'${value}'`);
+  }
 
   // Same bytes, same admitted fixture, same absent-key default — driven this
   // time through the strict harness, which refuses any Chrome surface beyond

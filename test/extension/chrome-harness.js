@@ -29,8 +29,10 @@ export const PREFERENCE_CONTRACT = Object.freeze({
   defaults: Object.freeze({ enabled: true }),
   statusMessage: Object.freeze({ type: 'status-invalidated' }),
   statusRequestType: 'get-status',
-  diagnoses: Object.freeze(['working', 'neutral']),
-  reasons: Object.freeze(['blank', null]),
+  // Exactly three product diagnoses (FAIL-01) plus one operational value.
+  // `neutral` describes what the extension is doing, never what the view is.
+  diagnoses: Object.freeze(['working', 'missing', 'cannot-read', 'neutral']),
+  reasons: Object.freeze(['blank', 'unsupported-language', 'structure', null]),
   maxRequestId: 1000000,
 });
 
