@@ -365,6 +365,156 @@ test('a slow earlier reply cannot repaint over a newer projection', async () => 
   expect(world.forbidden).toEqual([]);
 }, 15000);
 
+// One test per generation-guarded site in the worker. Each constructs the
+// specific hazard that site exists to refuse, so the property is named rather
+// than inferred from a passing suite (04-REVIEW WR-01).
+
+test('a rejection that belongs to a superseded projection never paints the connection line', async () => {
+  const world = createWorld({ replyDelays: [300] });
+  loadWorker(world);
+  loadContent(world);
+  await settle(4);
+  expect(world.action()).toBeUndefined();
+  // The frame that was going to answer is gone, but the TAB is not
+  // disconnected: the send proceeds into delivery and the no-receiver
+  // rejection is produced inside the delayed callback. That is the only way a
+  // LATE rejection is reachable, and it is what makes the catch-branch guard
+  // able to matter at all.
+  world.silenceContent(TAB_ID);
+  const reread = loadContent(world, { tabId: TAB_ID });
+  await wait(600);
+  await settle();
+  expect(markers(reread.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  expect(world.action()).toEqual({ icon: ICON.working, title: COPY.working });
+  // The superseded rejection is an operational fact about a connection that no
+  // longer exists. It must never be reported about the document now in front
+  // of the agent.
+  expect(world.actionLog.filter((entry) => entry.title === COPY.unavailable)).toEqual([]);
+  expect(world.forbidden).toEqual([]);
+}, 15000);
+
+test('a superseded status reply is discarded before the preference is ever read', async () => {
+  const world = createWorld({ responseDelays: [120] });
+  loadWorker(world);
+  const content = loadContent(world);
+  await settle(4);
+  // From here every preference read is held, so the reads a projection issues
+  // are countable. The content script's own startup read has already landed.
+  world.setReadMode('deferred');
+  content.document.querySelector('table').remove();
+  await wait(500);
+  await settle();
+  // The superseded projection stopped at the status recheck: it never reached
+  // `readPreference`, so exactly one read — the current projection's — is held.
+  expect(world.pendingReadCount()).toBe(1);
+  world.flushReads();
+  await settle();
+  // One flush is enough precisely because only one projection got that far.
+  expect(world.pendingReadCount()).toBe(0);
+  expect(world.action()).toEqual({ icon: ICON.neutral, title: COPY.checking });
+  expect(world.forbidden).toEqual([]);
+}, 15000);
+
+test('a preference read that lands after a newer invalidation never paints the superseded status', async () => {
+  const world = createWorld();
+  loadWorker(world);
+  const content = loadContent(world);
+  await settle();
+  expect(world.action()).toEqual({ icon: ICON.working, title: COPY.working });
+  const mark = world.actionLog.length;
+  world.setReadMode('deferred');
+  world.activateTab(TAB_ID);
+  await settle();
+  expect(world.pendingReadCount()).toBe(1);
+  // The table goes while the preference read for the working projection is
+  // still in flight.
+  content.document.querySelector('table').remove();
+  await settle();
+  world.setReadMode('immediate');
+  world.flushReads();
+  await wait(500);
+  await settle();
+  const after = world.actionLog.slice(mark);
+  expect(after.filter((entry) => entry.icon === ICON.working || entry.title === COPY.working)).toEqual([]);
+  expect(world.action()).toEqual({ icon: ICON.neutral, title: COPY.checking });
+  expect(world.forbidden).toEqual([]);
+}, 15000);
+
+test('a generation bump between the icon and the title write stops the superseded title', async () => {
+  const world = createWorld();
+  loadWorker(world);
+  const content = loadContent(world);
+  await settle();
+  expect(world.action()).toEqual({ icon: ICON.working, title: COPY.working });
+  const mark = world.actionLog.length;
+  // The icon write is held, so an invalidation can land between the two writes
+  // of a single `applyAction`.
+  world.setActionDelay(200);
+  world.activateTab(TAB_ID);
+  await settle();
+  content.document.querySelector('table').remove();
+  await wait(700);
+  world.setActionDelay(0);
+  await wait(300);
+  await settle();
+  const after = world.actionLog.slice(mark);
+  // The icon write was already issued and lands; the title is the write that
+  // must be refused, because a title is the sentence the agent reads.
+  expect(after.filter((entry) => entry.title === COPY.working)).toEqual([]);
+  expect(world.action().title).toBe(COPY.checking);
+  expect(world.forbidden).toEqual([]);
+}, 15000);
+
+test('a superseded popup projection reports the connection line and still shows the confirmed preference', async () => {
+  const world = createWorld({ stored: { enabled: true } });
+  loadWorker(world);
+  const content = loadContent(world);
+  await settle();
+  world.setResponseDelay(200);
+  const popup = loadPopup(world);
+  await settle(4);
+  // A newer invalidation supersedes the popup's own projection while its
+  // status reply is still in flight.
+  content.document.querySelector('table').remove();
+  await wait(800);
+  world.setResponseDelay(0);
+  await settle();
+  expect(statusText(popup.document)).toBe(COPY.unavailable);
+  // The connection is what went missing, not the preference: the switch still
+  // shows the value storage confirmed, and stays operable.
+  expect(control(popup.document).checked).toBe(true);
+  expect(control(popup.document).disabled).toBe(false);
+  expect(world.forbidden).toEqual([]);
+}, 15000);
+
+test("a held stale reply for one tab never writes to another tab's toolbar", async () => {
+  const world = createWorld();
+  loadWorker(world);
+  world.openTab(OTHER_TAB_ID);
+  const first = loadContent(world, { tabId: TAB_ID });
+  loadContent(world, { tabId: OTHER_TAB_ID });
+  await settle();
+  await wait(CONFIRMED);
+  await settle();
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
+  expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
+  const mark = world.actionLog.length;
+  world.setResponseDelay(200);
+  world.activateTab(TAB_ID);
+  await settle();
+  first.document.querySelector('table').remove();
+  await wait(800);
+  world.setResponseDelay(0);
+  await settle();
+  const after = world.actionLog.slice(mark);
+  // Every write carries the tab it belongs to, so a cross-tab paint is visible
+  // rather than inferred.
+  expect(after.filter((entry) => entry.tabId === OTHER_TAB_ID)).toEqual([]);
+  expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.neutral, title: COPY.checking });
+  expect(world.forbidden).toEqual([]);
+}, 15000);
+
 test('losing the readable table withdraws the working status without touching the page', async () => {
   const { world, content } = await bootAll();
   const table = content.document.querySelector('table');
