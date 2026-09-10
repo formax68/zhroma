@@ -13,10 +13,15 @@
   const DIAGNOSES = ['working', 'missing', 'cannot-read', 'neutral'];
   const REASONS = ['blank', 'unsupported-language', 'structure', null];
 
+  // One packaged shape per diagnosis: a check, a column with a plus, and a
+  // question mark. Shape carries the meaning and the title says it in words —
+  // colour is never the only difference.
   const ICONS = {
     'working': 'icons/working.png',
-    'missing': 'icons/neutral.png',
-    'cannot-read': 'icons/neutral.png',
+    'missing': 'icons/missing.png',
+    'cannot-read': 'icons/unreadable.png',
+    // Operational, not a diagnosis: the extension is still looking, or it
+    // could not reach a document. Never a claim about the tab.
     'neutral': 'icons/neutral.png',
     'unavailable': 'icons/neutral.png',
   };
