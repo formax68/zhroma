@@ -11,6 +11,12 @@
 
   const POPUP_PATH = 'popup.html';
   const MAX_REQUEST_ID = 1000000;
+  // A hop into a document is bounded. A top frame that receives a message and
+  // never answers must cost one wait, not the off switch: every preference
+  // write chains behind the pending task below, so an unbounded await here
+  // would leave the switch inoperative in EVERY tab until Chrome terminated
+  // the worker.
+  const REQUEST_TIMEOUT_MS = 2000;
   const PREFERENCE_KEY = 'enabled';
   // Exactly three product diagnoses (FAIL-01). `neutral`, `off` and the
   // worker-only `unavailable` describe what the extension is doing, not what
@@ -61,6 +67,22 @@
     && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
   const isRequestId = (value) => Number.isInteger(value) && value >= 1 && value <= MAX_REQUEST_ID;
   const nextRequestId = () => { requestCounter = requestCounter % MAX_REQUEST_ID + 1; return requestCounter; };
+
+  // Resolve with `null` when the deadline wins, and let a rejection through
+  // untouched so the caller's own catch still sees a genuine send failure.
+  // `null` is deliberate rather than a new sentinel: it is not an object, so
+  // `isExact` already refuses it and both call sites convert it into the
+  // outcome they already have for an unusable reply. No new branch, no new
+  // reported state, no new copy.
+  function bounded(promise) {
+    let timer = null;
+    const deadline = new Promise((resolve) => { timer = setTimeout(() => resolve(null), REQUEST_TIMEOUT_MS); });
+    const settled = () => { if (timer !== null) { clearTimeout(timer); timer = null; } };
+    return Promise.race([promise, deadline]).then(
+      (value) => { settled(); return value; },
+      (error) => { settled(); throw error; },
+    );
+  }
 
   function stateFor(tabId) {
     let state = tabs.get(tabId);
@@ -145,7 +167,7 @@
     const requestId = nextRequestId();
     let reply;
     try {
-      reply = await chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 });
+      reply = await bounded(chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 }));
     } catch {
       // No receiver, a navigating tab or a reloaded extension. Unavailable is
       // an operational fact about the connection, never a claim about the view.
@@ -173,7 +195,7 @@
     const requestId = nextRequestId();
     let reply;
     try {
-      reply = await chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 });
+      reply = await bounded(chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 }));
     } catch { return null; }
     if (!isExact(reply, ['type', 'requestId', 'applied', 'diagnosis', 'reason'])
       || typeof reply.applied !== 'boolean'
