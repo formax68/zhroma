@@ -136,6 +136,15 @@ test.each([0, 8, 15])('Priority column moved to index %i preserves each mapping'
   runtime.disposed();
 });
 
+// CR-01: an English regional locale is a supported shell, not a falsely-blamed
+// one. The expectation is the same one the bare tag `en` already carries.
+test.each(['en-US', 'en-GB', 'EN', 'EN-gb', 'en-Latn-GB'])('supported English locale %s tints the four admitted canonical rows', (lang) => {
+  const runtime = loadRuntimeFixture({ mutate(document) { document.documentElement.lang = lang; } });
+  runtime.settled();
+  expect(markers(runtime.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  runtime.disposed();
+});
+
 test.each([
   ['single row', ['High'], ['High']],
   ['adjacent duplicates', ['Urgent', 'Urgent', 'Low', 'Low'], ['Urgent', 'Urgent', 'Low', 'Low']],
@@ -163,7 +172,7 @@ test.each([
 
 const invalidVariants = [
   ...['urgent', 'URGENT', 'Very High', 'Low priority', 'Hіgh', 'Élevée'].map((value) => [value, (d) => { rows(d).at(-1).children[6].textContent = value; }]),
-  ...['', 'en-US', 'fr'].map((lang) => [`lang ${lang}`, (d) => { d.documentElement.lang = lang; }]),
+  ...['', ' ', 'fr', 'fr-CA', 'eng', 'ende'].map((lang) => [`lang ${lang}`, (d) => { d.documentElement.lang = lang; }]),
   ['duplicate Priority', (d) => { d.querySelector('th').textContent = 'Priority'; }],
   ['missing Priority', (d) => { d.querySelector('thead tr').children[6].textContent = 'Something'; }],
   ['missing final cell', (d) => rows(d).at(-1).lastElementChild.remove()],

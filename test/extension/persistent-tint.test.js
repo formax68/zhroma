@@ -117,9 +117,22 @@ test.each([false, true])('late entry after 16000ms, removal and reentry use curr
   r.disposed();
 });
 
+// CR-01: a supported English regional locale must survive a re-render, not
+// merely be tinted once at startup.
+test.each(['en-US', 'en-GB', 'EN', 'EN-gb', 'en-Latn-GB'])('supported English locale %s survives a mutation round trip', (lang) => {
+  const r = loadRuntimeFixture({ mutate(d) { d.documentElement.lang = lang; } });
+  r.settled();
+  expect(markers(r.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  r.document.body.innerHTML = fixture();
+  r.deliver(r.document.body, { addedNodes: [...r.document.body.children] });
+  r.settled();
+  expect(markers(r.document)).toEqual(['Urgent', 'High', 'Normal', 'Low']);
+  r.disposed();
+});
+
 const invalidVariants = [
   ...['urgent', 'URGENT', 'Very High', 'Low priority', 'Hіgh', 'Élevée'].map((value) => [value, (d) => { rows(d).at(-1).children[6].textContent = value; }]),
-  ...['', 'en-US', 'fr'].map((lang) => [`lang ${lang}`, (d) => { d.documentElement.lang = lang; }]),
+  ...['', ' ', 'fr', 'fr-CA', 'eng', 'ende'].map((lang) => [`lang ${lang}`, (d) => { d.documentElement.lang = lang; }]),
   ['duplicate Priority', (d) => { d.querySelector('th').textContent = 'Priority'; }],
   ['missing Priority', (d) => { d.querySelector('thead tr').children[6].textContent = 'Something'; }],
   ['missing final cell', (d) => rows(d).at(-1).lastElementChild.remove()],
