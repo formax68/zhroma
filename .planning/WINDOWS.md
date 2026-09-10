@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 16
+open_count: 17
 waived_count: 0
 fixed_count: 3
-total_count: 21
-last_updated: 2026-09-10T17:05:00.000Z
+total_count: 22
+last_updated: 2026-09-10T18:05:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -34,6 +34,7 @@ last_updated: 2026-09-10T17:05:00.000Z
 | 19 | 04 | deviation | .planning/phases/04-honest-failure-and-an-off-switch/04-LIVE-ACCEPTANCE.md |  | The re-enable-not-pressured ratification is qualified rather than carried intact as the plan directed: popup.js changed under WR-04/WR-07, so the popup the user judged at the 2026-09-10 checkpoint is not byte-identical to the one that ships. The repair added no copy and no prompt, but whether the repaired failed-save path still reads as unpressured is a judgment nobody has made against the new bytes. Status stays flagged-unverified; the qualification is recorded in the judgment's own disposition text. | open |  | 2026-09-10T16:35:00.000Z |  |
 | 20 | 04 | unmet-truth | .planning/phases/04-honest-failure-and-an-off-switch/04-12-PLAN.md |  | must_haves truth 1 claims removing ANY ONE of the worker's generation guards turns the suite red. Measured false for two of the seven named sites: requestStatus's catch-branch guard and its post-await recheck are each redundant with the recheck BOTH callers (project, popupStatus) perform immediately afterwards, with no macrotask able to interleave, so deleting either alone changes no observable behaviour. Five sites plus the per-tab queue are individually fenced; the redundant pair is fenced only at mechanism level by the generation-counter mutant. | open |  | 2026-09-10T17:05:00.000Z |  |
 | 21 | 04 | deviation | test/mutants/worker-staleness.mutants.json |  | The registry does not carry the plan's status-catch-guard and status-post-await-guard ids: both were MEASURED SURVIVED against the enriched suite (see entry 20 for why they cannot be killed individually). They are replaced by generation-counter (the mechanism-level fence that does reach them) and status-catch-reports-unavailable (which fences the reporting half of the catch branch and says so). project-queue is expressed as `state.queue = Promise.resolve().then(...)` rather than the plan's IIFE: same collapse of serialization, one literal, parse-clean. A fourth harness control, setResponseDelay(ms), was added beyond the three the plan named because a construction-time queue cannot target a reply that is only reachable mid-test. | open |  | 2026-09-10T17:05:00.000Z |  |
+| 22 | 04 | unmet-truth | .planning/phases/04-honest-failure-and-an-off-switch/04-14-PLAN.md |  | must_haves truth 4 claims a projection for a closed tab "neither throws nor paints". Measured false for the paint half: after chrome.tabs.onRemoved has released the entry, project() mints a fresh generation via stateFor, sendMessage rejects, and requestStatus's catch reports the connection fact — so applyAction writes icons/neutral.png and 'No readable view is connected' against the dead tab id. The tracer's action double does not model Chrome refusing an action write for a closed tab, and making it do so would change a harness this plan does not own. The test asserts the honest form instead: the projection resolves without throwing, every write it makes is scoped to the closed tab, it is the operational connection state and never a diagnosis, and the living neighbour's toolbar is untouched. Truth 3's closed-tab cleanup guard is also source-shape only, as the plan's own <closed_tab_cleanup_constraint> states. | open |  | 2026-09-10T18:05:00.000Z |  |
 
 ````json
 [
@@ -287,6 +288,18 @@ last_updated: 2026-09-10T17:05:00.000Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-10T17:05:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 22,
+    "kind": "unmet-truth",
+    "phase": "04",
+    "file": ".planning/phases/04-honest-failure-and-an-off-switch/04-14-PLAN.md",
+    "line": null,
+    "description": "must_haves truth 4 claims a projection for a closed tab \"neither throws nor paints\". Measured false for the paint half: after chrome.tabs.onRemoved has released the entry, project() mints a fresh generation via stateFor, sendMessage rejects, and requestStatus's catch reports the connection fact \u2014 so applyAction writes icons/neutral.png and 'No readable view is connected' against the dead tab id. The tracer's action double does not model Chrome refusing an action write for a closed tab, and making it do so would change a harness this plan does not own. The test asserts the honest form instead: the projection resolves without throwing, every write it makes is scoped to the closed tab, it is the operational connection state and never a diagnosis, and the living neighbour's toolbar is untouched. Truth 3's closed-tab cleanup guard is also source-shape only, as the plan's own <closed_tab_cleanup_constraint> states.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T18:05:00.000Z",
     "resolved_at": null
   }
 ]

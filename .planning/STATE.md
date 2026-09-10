@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: Completed 04-13-PLAN.md
-last_updated: "2026-09-10T17:45:54.628Z"
+stopped_at: Completed 04-14-PLAN.md
+last_updated: "2026-09-10T18:08:15.134Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 04 execution started
-state_head: 43fc00746d1048b52888ef01a246b5fe9b02f043
+state_head: b43664f6fe8e71be40ba480645c13b4c5e51a15c
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 36
-  completed_plans: 35
+  completed_plans: 36
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 8 of 14
+Plan: 9 of 14
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 04 execution started
 
@@ -81,6 +81,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P11 | 23 min | 3 tasks | 14 files |
 | Phase 04 P12 | 30 min | 3 tasks | 4 files |
 | Phase 04 P13 | 21 min | 3 tasks | 3 files |
+| Phase 04 P14 | 19 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,9 @@ Recent decisions affecting current work:
 - [Phase 04]: The five encodings of the finite {diagnosis, reason} protocol are asserted in agreement by parsing the shipped sources with matchAll, and every parse carries a minimum expected count — D-06 forbids a build step, so DIAGNOSES, REASONS, ICONS, TITLES and the popup's COPY are IIFE-local and cannot be imported. A regex that silently matches nothing would make the completeness assertion pass vacuously — the WR-01 failure class — so a minimum count turns an empty parse into a failure.
 - [Phase 04]: The tracer's action double now refuses an icon path outside the packaged inventory, with the allowed set read from extension/icons/ rather than transcribed — Chrome rejects setIcon for an unpackaged path; until the double did too, a bypassed pairing clause produced an actionLog entry naming undefined instead of the review's stated impact (rejection swallowed by catch, setTitle never reached, tab keeps its previous claim). Deriving the set from the directory means a shape added later cannot leave the check stale.
 - [Phase 04]: [Phase 04]: diagnosis-pairing's registry note records the assertion it was MEASURED to die on — the toolbar deep-equality — and states plainly that the no-valueless-title invariant in the same test is not what fires, because the equality precedes it — Follows 04-12's precedent: a mutant note may not claim a property it does not exercise. The invariant is present, true and load-bearing against a valueless title in the log, but it is not the assertion this mutant trips, and saying otherwise would be the overclaim the plan's own prohibition forbids.
+- [Phase 04]: Single-writer serialization is observed as an invariant under deferred writes — pendingWriteCount() is never 2 — rather than inferred from a final stored value — With immediate writes the two tasks commit in arrival order with or without the queue, so the old assertion held without the mechanism it was named for (WR-06). A reverse flush would have needed a new control on tracer-world.js, owned by 04-13 in the same wave; the pending-write count discriminates the mutant with the controls that already exist.
+- [Phase 04]: The closed-tab map deletion is guarded by a source-shape assertion in two separately-failing halves, and the test body states plainly that this is a shape guard, not proof the map is bounded at runtime — The tabs map has no external observable — stateFor mints a fresh entry for an unknown id — and exposing one would move a shipped byte and re-invalidate the acceptance binding 04-11 re-established. Two mutants (tabs-onremoved-listener, tabs-onremoved-delete) make each half load-bearing, and both notes repeat the limit.
+- [Phase 04]: The plan truth that a projection for a closed tab neither throws nor paints was MEASURED false for the paint half and recorded as WINDOWS entry 22 rather than asserted — After the removal listener releases the entry, project() mints a fresh generation, sendMessage rejects, and requestStatus's catch reports the connection fact — so applyAction writes icons/neutral.png and 'No readable view is connected' against the dead tab id. The honest assertions were substituted: the projection resolves without throwing, every write is scoped to the closed tab, it is the operational state and never a diagnosis, and the living neighbour is untouched.
 
 ### Pending Todos
 
@@ -168,8 +172,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T17:45:27.951Z
-Stopped at: Completed 04-13-PLAN.md
+Last session: 2026-09-10T18:07:44.902Z
+Stopped at: Completed 04-14-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.

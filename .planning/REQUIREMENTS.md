@@ -53,8 +53,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Control
 
 - [x] **CTRL-01**: Extension works immediately on install with nothing to configure
-- [ ] **CTRL-02**: Agent can turn tinting off and back on from the toolbar popup
-- [ ] **CTRL-03**: The on/off setting persists across browser restarts
+- [x] **CTRL-02**: Agent can turn tinting off and back on from the toolbar popup
+- [x] **CTRL-03**: The on/off setting persists across browser restarts
 - [ ] **CTRL-04**: Turning tinting off clears tints from the current view without requiring a page refresh
 
 ### Distribution
@@ -130,8 +130,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FAIL-04 | Phase 3 | Pending |
 | FAIL-05 | Phase 4 | Complete |
 | CTRL-01 | Phase 2 | Complete |
-| CTRL-02 | Phase 4 | Pending |
-| CTRL-03 | Phase 4 | Pending |
+| CTRL-02 | Phase 4 | Complete |
+| CTRL-03 | Phase 4 | Complete |
 | CTRL-04 | Phase 4 | Pending |
 | STORE-01 | Phase 5 | Pending |
 | STORE-02 | Phase 2 | Complete |
