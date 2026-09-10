@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: Completed 04-09-PLAN.md
-last_updated: "2026-09-10T15:46:50.396Z"
+stopped_at: Completed 04-10-PLAN.md
+last_updated: "2026-09-10T16:13:04.077Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 04 execution started
-state_head: 43cfb4a04959e443412970ae1a91379c8c01efc8
+state_head: b4f454dd889448a51c693d276b788b5a84716b58
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 36
-  completed_plans: 30
+  completed_plans: 31
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 4 of 14
+Plan: 5 of 14
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 04 execution started
 
@@ -77,6 +77,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P07 | 11 min | 3 tasks | 5 files |
 | Phase 04 P08 | 16 min | 3 tasks | 7 files |
 | Phase 04 P09 | 8 min | 2 tasks | 4 files |
+| Phase 04 P10 | 19 min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,9 @@ Recent decisions affecting current work:
 - [Phase 04]: npm run test:mutants is a committed out-of-tree mutation gate: 6/6 killed, each by a named behavioural test, with the acceptance byte pin excluded from every mutant's suites
 - [Phase 04]: The workload page validates size as any positive integer while the CLI keeps its 30/200/1000 set: two different questions — which runs are canonical evidence versus whether a run can be measured at all — so the constraint is not duplicated where it could drift
 - [Phase 04]: A dormant run mode stores a real false through the shipped controller and is the run that measures the off state; the old disabled control is renamed runtime 'absent' and kept as a no-runtime baseline. The runtime field is required only for dormant, so Phase 3's historical samples validate unchanged, and no timing budget applies to dormancy because its claim is zero work, not fast work
+- [Phase 04]: The popup's REQUEST_TIMEOUT_MS is 5000, strictly greater than the worker's 2000 rather than equal to it, and the ordering between the two processes' copies is asserted from the shipped bytes — Answering the popup can cost the worker a full bounded wait of its own, so an equal deadline fires first and discards the worker's honest reply together with the confirmed preference it carried — regressing the "switch is usable again" property 04-08 established. With no build step to share one constant (D-06), a test that reads both sources is what holds the inequality.
+- [Phase 04]: After a failed save the popup reverts the checkbox to lastConfirmed and leaves the control enabled; with nothing ever confirmed it shows no position at all, because defaultChecked would display an unconfirmed off — The change event has already moved control.checked before the request is sent, so leaving it alone displays a position nothing confirmed next to copy saying the save failed. lastConfirmed is assigned in exactly one place — where a reply delivers a boolean — so it can never hold a desired value, and it is display state only, never sent.
+- [Phase 04]: A mutant is registered only after it has been measured killed: popup-focus-guard mutates the focus restoration itself, because reinstating the disabled-state guard the plan named was measured SURVIVED — Task 1's corrected ordering re-enables the control before end() runs, so !control.disabled is unreachable-true on every failure path with a confirmed value, and focusing a disabled control is a no-op in the browser on the other. Registering it would have claimed a kill the gate could not honestly deliver.
 
 ### Pending Todos
 
@@ -152,8 +156,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T15:46:50.313Z
-Stopped at: Completed 04-09-PLAN.md
+Last session: 2026-09-10T16:12:57.054Z
+Stopped at: Completed 04-10-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.

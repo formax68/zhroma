@@ -179,7 +179,7 @@ Plans:
   3. The popup carries an on/off switch that is already on; turning it off clears every tint from the view currently on screen without a refresh, and turning it back on restores them.
   4. Quitting Chrome and reopening it preserves whichever way the switch was left.
 
-**Plans**: 8/14 plans executed (6 original + 8 gap-closure from 04-REVIEW.md)
+**Plans**: 9/14 plans executed (6 original + 8 gap-closure from 04-REVIEW.md)
 **UI hint**: yes
 
 Plans:
@@ -215,7 +215,7 @@ Plans:
 
 **Wave 8** *(blocked on Wave 7 completion)*
 
-- [ ] 04-10-PLAN.md — A failed save leaves a truthful, usable switch (WR-04, WR-07) (wave 8, gap closure)
+- [x] 04-10-PLAN.md — A failed save leaves a truthful, usable switch (WR-04, WR-07) (wave 8, gap closure)
 
 **Wave 9** *(blocked on Wave 8 completion)*
 
@@ -258,7 +258,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. DOM Recon Spike | 15/15 | Complete    | 2026-09-08 |
 | 2. First Tint on a Real View | 3/3 | Complete    | 2026-09-09 |
 | 3. The Tint Survives Everything | 3/4 | In Progress|  |
-| 4. Honest Failure and an Off Switch | 8/14 | In Progress|  |
+| 4. Honest Failure and an Off Switch | 9/14 | In Progress|  |
 | 5. Published | 0/TBD | Not started | - |
 
 ## Requirement Coverage

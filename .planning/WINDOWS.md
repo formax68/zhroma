@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 10
+open_count: 13
 waived_count: 0
 fixed_count: 3
-total_count: 15
-last_updated: 2026-09-10T15:45:00.000Z
+total_count: 18
+last_updated: 2026-09-10T16:10:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -28,6 +28,9 @@ last_updated: 2026-09-10T15:45:00.000Z
 | 11 | 04 | deviation | extension/popup.js |  | Two operational copy strings added beyond the 04-01 decided set ('Zhroma could not save that setting', 'Setting saved, but this view did not update'); the plan mandates finite honest failure text and the decided set contained none. Needs user ratification before ship. | open |  | 2026-09-10T06:49:17.218Z |  |
 | 14 | 04 | deviation | test/extension/failure-seam.test.js |  | Timeout path asserts the ratified 'No readable view is connected' line, not the plan's named not-applied line: a timed-out apply yields outcome null, so setEnabled reports status 'unavailable' and popup.js renders that branch before the applied branch. Producing NOT_APPLIED would require inventing a status the document never reported. | open |  | 2026-09-10T15:31:12.000Z |  |
 | 15 | 04 | deviation | .planning/phases/04-honest-failure-and-an-off-switch/04-PERFORMANCE-SAMPLES.json |  | 04-09 changed both files behind identity.harnessHash (f889a9eb -> 285074ea), so mergeReport now refuses the recorded six-run file as a mixed identity. Expected intermediate state declared in 04-09; the file is preserved as history and 04-11 regenerates it against final source. | open |  | 2026-09-10T15:45:00.000Z |  |
+| 16 | 04 | deviation | extension/popup.js |  | The popup's REQUEST_TIMEOUT_MS ships at 5000, not the 2000 the plan named: answering the popup can cost the worker a full bounded wait of its own, so an equal deadline cut off the worker's honest reply and the confirmed preference it carried, regressing failure-seam's 'the switch is usable again'. The ordering between the two processes' copies is asserted from the shipped bytes. | open |  | 2026-09-10T16:10:00.000Z |  |
+| 17 | 04 | deviation | test/mutants/popup-recovery.mutants.json |  | popup-focus-guard mutates the focus restoration itself, not the disabled-state guard 04-10 Task 3 named. Reinstating that guard was measured SURVIVED (0/1 killed): the corrected ordering re-enables the control before end() runs, so the guard is unreachable and cannot be load-bearing. | open |  | 2026-09-10T16:10:00.000Z |  |
+| 18 | 04 | deviation | test/extension/toggle.test.js |  | A file outside the plan's files_modified was edited: 'a rejected read after a write refuses to claim a preference it could not confirm' asserted the control is taken out of service, which is the defect WR-07 reports. Rewritten to the corrected contract (revert to the last confirmed value, stay operable). | open |  | 2026-09-10T16:10:00.000Z |  |
 
 ````json
 [
@@ -209,6 +212,42 @@ last_updated: 2026-09-10T15:45:00.000Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-10T15:45:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 16,
+    "kind": "deviation",
+    "phase": "04",
+    "file": "extension/popup.js",
+    "line": null,
+    "description": "The popup's REQUEST_TIMEOUT_MS ships at 5000, not the 2000 the plan named: answering the popup can cost the worker a full bounded wait of its own, so an equal deadline cut off the worker's honest reply and the confirmed preference it carried, regressing failure-seam's 'the switch is usable again'. The ordering between the two processes' copies is asserted from the shipped bytes.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T16:10:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 17,
+    "kind": "deviation",
+    "phase": "04",
+    "file": "test/mutants/popup-recovery.mutants.json",
+    "line": null,
+    "description": "popup-focus-guard mutates the focus restoration itself, not the disabled-state guard 04-10 Task 3 named. Reinstating that guard was measured SURVIVED (0/1 killed): the corrected ordering re-enables the control before end() runs, so the guard is unreachable and cannot be load-bearing.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T16:10:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 18,
+    "kind": "deviation",
+    "phase": "04",
+    "file": "test/extension/toggle.test.js",
+    "line": null,
+    "description": "A file outside the plan's files_modified was edited: 'a rejected read after a write refuses to claim a preference it could not confirm' asserted the control is taken out of service, which is the defect WR-07 reports. Rewritten to the corrected contract (revert to the last confirmed value, stay operable).",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-10T16:10:00.000Z",
     "resolved_at": null
   }
 ]
