@@ -23,7 +23,8 @@
 // one-request-at-a-time guard); those suites reach these clauses through.
 import { afterEach, expect, test } from 'vitest';
 import {
-  COPY, ICON, TAB_ID, closeWindows, control, createWorld, flip, loadPopup, loadWorker, settle, statusText,
+  COPY, ICON, PACKAGED_ICON_PATHS, TAB_ID, closeWindows, control, createWorld, flip, loadPopup, loadWorker,
+  settle, statusText,
 } from './tracer-world.js';
 
 afterEach(closeWindows);
@@ -38,15 +39,15 @@ const applied = (over = {}) => ({
   type: 'applied', requestId: 0, applied: true, diagnosis: 'working', reason: null, ...over,
 });
 
+const legalStatus = (id) => status({ requestId: id });
+const legalApplied = (id) => applied({ requestId: id });
+
 /**
  * Push a listener onto the same per-tab list `loadContent` uses, so the worker's
  * `chrome.tabs.sendMessage` is answered by this test rather than by the real
  * content script. Either exchange may be left legal, which is how a test can
  * isolate one path while the other keeps behaving.
  */
-const legalStatus = (id) => status({ requestId: id });
-const legalApplied = (id) => applied({ requestId: id });
-
 function rogueContent(world, { tabId = TAB_ID, onStatus = legalStatus, onApply = legalApplied } = {}) {
   world.contentChromeFor(tabId).runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'get-status') { sendResponse(onStatus(message.requestId)); return true; }
@@ -242,5 +243,28 @@ test('a set-enabled reply whose preference is not a boolean is refused, and the 
   await flip(popup, false);
   expect(statusText(popup.document)).toBe(COPY.notSaved);
   expect(control(popup.document).checked).toBe(true);
+  expect(world.forbidden).toEqual([]);
+});
+
+// --- harness fidelity: the double refuses artwork Chrome would refuse -------
+
+test('the action double refuses an icon path outside the packaged inventory, as Chrome does', async () => {
+  const world = createWorld();
+  // Chrome rejects `setIcon` for a path the package does not contain. Until the
+  // double did the same, a bypassed pairing clause produced an actionLog entry
+  // with an undefined icon instead of the review's stated impact — the write
+  // failing, its `catch` swallowing the error, and the tab keeping the previous
+  // claim about the view.
+  await expect(world.workerChrome.action.setIcon({ tabId: TAB_ID, path: 'icons/not-packaged.png' }))
+    .rejects.toThrow();
+  await expect(world.workerChrome.action.setIcon({ tabId: TAB_ID, path: undefined }))
+    .rejects.toThrow();
+  // Nothing was recorded: a rejected native call never landed.
+  expect(world.actionLog).toEqual([]);
+  // Every packaged path is still accepted, so no existing test moves.
+  for (const path of PACKAGED_ICON_PATHS) {
+    await world.workerChrome.action.setIcon({ tabId: TAB_ID, path });
+  }
+  expect(world.actionLog.map((entry) => entry.icon)).toEqual([...PACKAGED_ICON_PATHS]);
   expect(world.forbidden).toEqual([]);
 });
