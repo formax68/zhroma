@@ -3,7 +3,7 @@ status: partial
 phase: 04-honest-failure-and-an-off-switch
 source: 04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md, 04-06-SUMMARY.md, 04-LIVE-ACCEPTANCE.md, 04-VALIDATION.md
 started: 2026-09-10T07:21:08Z
-updated: 2026-09-10T07:48:18Z
+updated: 2026-09-10T07:56:44Z
 ---
 
 ## Current Test
@@ -402,20 +402,30 @@ blocked: 3
     manufacture the observation.
 
 - id: AR-04-UAT-02
-  statement: "Source-confirmation environment details were not supplied."
+  statement: "RESOLVED — source-confirmation environment details were supplied on request."
   attributed_to: user
+  resolved: 2026-09-10
+  supplied: "Chrome 152, macOS 27 beta 6, 30 mounted rows, English + light"
   date: 2026-09-10
   consequence: |
-    04-LIVE-ACCEPTANCE.md environment.browser / os / mounted_rows / interface_language /
-    appearance stay null and source_confirmed_on stays unset. The eleven asset hashes WERE
-    verified mechanically (11/11 match, extension/ clean in git), so the record is validly
-    bound to the bytes under test — but the observation context is unrecorded.
+    Now recorded. 04-LIVE-ACCEPTANCE.md carries loaded_from_repository: true,
+    source_confirmed_on: 2026-09-10, environment {browser: "Chrome 152", os: "macOS 27 beta 6",
+    mounted_rows: 30, interface_language: "en", appearance: "light"}, and the fourteen reachable
+    observations as status: pass / evidence_kind: live. Validator green: 38/38 on
+    phase-04-live-acceptance.test.js, 518/518 full suite. Record disposition remains
+    human_needed — two pending checks, mechanically enforced.
 
 ## Resolved by this session
 
-- prohibition: no-agent-blame — RATIFIED by user (test 18). Was flagged-unverified.
-- prohibition: re-enable-not-pressured — RATIFIED by user (test 19). Was flagged-unverified.
-- prohibition: untested-is-not-consent — RATIFIED by user (test 20). Was flagged-unverified.
+- prohibition: no-agent-blame — RATIFIED by user (test 18).
+- prohibition: re-enable-not-pressured — RATIFIED by user (test 19).
+- prohibition: untested-is-not-consent — RATIFIED by user (test 20).
+  NOTE: all three ratifications are recorded in each entry's `disposition` text in
+  04-LIVE-ACCEPTANCE.md, but their `status` fields remain `flagged-unverified`.
+  phase-04-live-acceptance.test.js asserts the repository record carries all three that
+  way — a guard against an executor self-ratifying them. Promoting the status fields
+  requires changing that guard: a user decision, deliberately NOT taken as a side effect
+  of running UAT. Nothing turns on it while two checks are pending.
 - WINDOWS.md entry 11 — copy set RATIFIED by user (test 21). Both operational strings
   accepted: "Zhroma could not save that setting" / "Setting saved, but this view did not update".
 

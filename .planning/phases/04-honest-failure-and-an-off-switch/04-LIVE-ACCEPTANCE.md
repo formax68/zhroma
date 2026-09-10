@@ -1,19 +1,41 @@
 ---
 phase: 04-honest-failure-and-an-off-switch
 status: human_needed
-source_confirmation: pending
-uat_execution: not-started
+source_confirmation: confirmed
+uat_execution: partial-14-of-16
 prior_phase_status: human_needed
 ---
 
 # Phase 04 Current-Source Live Acceptance
 
-**Nothing in this document has been observed yet.** All sixteen checks below are
-`pending`. They were written by preparation tasks 04-05/1 and 04-05/2 against the
-current shipped bytes; a person still has to load the extension in Chrome and
-watch it behave. A green run of `test/extension/phase-04-live-acceptance.test.js`
-proves this record is *well-formed and correctly bound to current source*. It
-proves nothing about the product.
+**Fourteen of sixteen checks have now been observed.** Source was confirmed on
+2026-09-10 (Chrome 152, macOS 27 beta 6, English `html[lang="en"]` current Agent
+Workspace, light appearance, 30 mounted rows) and the fourteen reachable
+observations passed live, attested by the user at the Phase 4 blocking checkpoint
+recorded in `04-UAT.md`.
+
+**Two checks remain `pending` and are not observed:** `language-icon-copy` (no
+non-English tenant context available) and `structure-copy` (no safely prepared
+uninterpretable-table context available). Both are recorded in
+`limitations.unavailable_scenarios` with reasons. They are **FAIL-03's only two
+live checks**, so that requirement carries automated coverage and **zero live
+evidence**. The user accepted them as non-blocking for phase progression; that
+waiver is attributed acknowledged risk (`AR-04-UAT-01` in `04-UAT.md`) and is
+**not** evidence.
+
+The three product prohibitions were **ratified by the user** at the checkpoint, and
+`WINDOWS.md` entry 11's copy set with them. Their `status` fields are nonetheless
+left at `flagged-unverified`: this file's own test asserts the repository record
+carries all three that way, as a guard against an executor self-ratifying them.
+Each ratification is recorded in its `disposition` text instead. Promoting the
+status fields requires changing that guard — a user decision, not a side effect of
+running UAT. Nothing turns on it today: the two pending checks already hold the
+record at `human_needed`.
+
+**The disposition therefore remains `human_needed`, and correctly so** — promotion
+rule 1 is mechanical: two `pending` checks cannot compute to `passed`. A green run
+of `test/extension/phase-04-live-acceptance.test.js` proves this record is
+*well-formed and correctly bound to current source*. It does not promote it.
 
 ## Relationship to Phase 3 — stated, not restated
 
@@ -190,14 +212,14 @@ rather than hiding behind an unchanged `content.js`.
     "preference_area": "local",
     "minimum_chrome_version": "106"
   },
-  "loaded_from_repository": false,
-  "source_confirmed_on": null,
+  "loaded_from_repository": true,
+  "source_confirmed_on": "2026-09-10",
   "environment": {
-    "browser": null,
-    "os": null,
-    "mounted_rows": null,
-    "interface_language": null,
-    "appearance": null
+    "browser": "Chrome 152",
+    "os": "macOS 27 beta 6",
+    "mounted_rows": 30,
+    "interface_language": "en",
+    "appearance": "light"
   },
   "prior_source": {
     "phase": "03-the-tint-survives-everything",
@@ -212,34 +234,34 @@ rather than hiding behind an unchanged `content.js`.
   "checks": [
     {
       "id": "working-icon",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 2: tint appeared without refreshing; check artwork with the working title, popup agreeing with the icon.",
       "language_context": null
     },
     {
       "id": "blank-copy",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 3: check artwork retained on a valued-column-absent view; popup gave the no-priority-values line and never claimed a missing column.",
       "language_context": null
     },
     {
       "id": "missing-icon-hint",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 4: column-plus artwork distinct from the check; add-a-column copy confined to the popup with nothing written into the page.",
       "language_context": null
     },
     {
       "id": "missing-settle-transition",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 5: neutral hollow circle held during mount; the missing claim appeared only after the table settled and never flashed mid-mount.",
       "language_context": null
     },
     {
@@ -260,82 +282,82 @@ rather than hiding behind an unchanged `content.js`.
     },
     {
       "id": "off-clears",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 8: every tint disappeared from the current view with no reload; off copy and power-symbol artwork shown, with nothing implying an error.",
       "language_context": null
     },
     {
       "id": "on-restores",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 9: tint returned immediately with no reload and matched priorities as they stood at that moment.",
       "language_context": null
     },
     {
       "id": "restart-off",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 10: after a complete browser quit and reopen the switch was still off, the view untinted, power-symbol artwork retained.",
       "language_context": null
     },
     {
       "id": "restart-on",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 11: after a complete browser quit and reopen the switch was on and tint was present.",
       "language_context": null
     },
     {
       "id": "cross-tab-preference",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 12: both view tabs converged on the flipped preference while each retained its own document status.",
       "language_context": null
     },
     {
       "id": "frozen-resume",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 13: a discarded background tab applied the currently persisted intent on resume, with no stale tint and no reversion.",
       "language_context": null
     },
     {
       "id": "nonreceiver-status",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 14: popup reported no readable view connected, without asserting the tab was outside the product or inventing a diagnosis.",
       "language_context": null
     },
     {
       "id": "navigation-status",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 15: icon and popup described the current document on every move; no positive state carried across tabs.",
       "language_context": null
     },
     {
       "id": "worker-restart",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 16: after stopping and restarting the worker, status was rebuilt from a fresh request with no stale diagnosis and no page refresh needed.",
       "language_context": null
     },
     {
       "id": "popup-keyboard",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-10",
+      "evidence": "User-attested, 04-UAT.md test 17: keyboard-only operation reached the switch by default with visible focus, correct label, announced state matching storage, and no nag on turning off.",
       "language_context": null
     }
   ],
@@ -344,24 +366,33 @@ rather than hiding behind an unchanged `content.js`.
       "id": "no-agent-blame",
       "statement": "The diagnosis must not blame an agent or imply they caused an unsupported or malformed view.",
       "status": "flagged-unverified",
-      "disposition": "No fabricated check descriptor was authored for this judgment and none is possible from the repository: whether the decided copy reads as accusatory is a judgment about how wording lands on a person. Offline tests establish only that the copy is finite, fixed and evidence-branched. Requires explicit human or independent-reviewer disposition."
+      "disposition": "Ratified by the user at the Phase 4 blocking checkpoint (04-UAT.md test 18) after observing the diagnosis copy live in the browser: the add-a-Priority-column line and the other diagnosis copy read as help, not as accusation. This is an explicit human disposition, which is the only thing that can close this judgment. USER RATIFICATION RECORDED, GUARD NOT RELAXED: the user ratified this judgment at the Phase 4 blocking checkpoint (see 04-UAT.md '## Resolved by this session'). The status field is deliberately left flagged-unverified because test/extension/phase-04-live-acceptance.test.js asserts the repository record carries all three as flagged-unverified \u2014 a guard against an executor self-ratifying them. Promoting these to reviewed-resolved requires changing that guard, which is a user decision and not a side effect of running UAT. The disposition is unaffected either way: two pending checks already hold the record at human_needed."
     },
     {
       "id": "re-enable-not-pressured",
       "statement": "The off switch must not pressure the agent to re-enable tinting or imply that off is an error.",
       "status": "flagged-unverified",
-      "disposition": "Tests establish that off projects its own packaged artwork, that the popup reads 'Tinting is off', and that no add-a-column hint accompanies it. They cannot establish absence of felt pressure. Requires explicit human or independent-reviewer disposition."
+      "disposition": "Ratified by the user at the Phase 4 blocking checkpoint (04-UAT.md test 19) after observing the off state live: off reads as a legitimate choice rather than a broken or discouraged one, with no nag or prompt to re-enable. USER RATIFICATION RECORDED, GUARD NOT RELAXED: the user ratified this judgment at the Phase 4 blocking checkpoint (see 04-UAT.md '## Resolved by this session'). The status field is deliberately left flagged-unverified because test/extension/phase-04-live-acceptance.test.js asserts the repository record carries all three as flagged-unverified \u2014 a guard against an executor self-ratifying them. Promoting these to reviewed-resolved requires changing that guard, which is a user decision and not a side effect of running UAT. The disposition is unaffected either way: two pending checks already hold the record at human_needed."
     },
     {
       "id": "untested-is-not-consent",
       "statement": "Untested browser behavior must not be presented as observed acceptance or consent.",
       "status": "flagged-unverified",
-      "disposition": "This record is the mitigation and simultaneously the thing at risk: all sixteen checks are pending and the disposition cannot compute to passed while they are. It stays flagged because compliance is a property of how the record is read and reported over time, not a state a single test run can certify."
+      "disposition": "Ratified by the user at the Phase 4 blocking checkpoint (04-UAT.md test 20): this record continues to state that language-icon-copy and structure-copy are unobserved, keeps its disposition at human_needed, and does not present the user's progression waiver as evidence. The user separately accepted those two as non-blocking for progression, recorded as attributed acknowledged risk AR-04-UAT-01 in 04-UAT.md, not as observation. USER RATIFICATION RECORDED, GUARD NOT RELAXED: the user ratified this judgment at the Phase 4 blocking checkpoint (see 04-UAT.md '## Resolved by this session'). The status field is deliberately left flagged-unverified because test/extension/phase-04-live-acceptance.test.js asserts the repository record carries all three as flagged-unverified \u2014 a guard against an executor self-ratifying them. Promoting these to reviewed-resolved requires changing that guard, which is a user decision and not a side effect of running UAT. The disposition is unaffected either way: two pending checks already hold the record at human_needed."
     }
   ],
   "limitations": {
     "unresolved_observed_defects": [],
-    "unavailable_scenarios": []
+    "unavailable_scenarios": [
+      {
+        "id": "language-icon-copy",
+        "reason": "No non-English tenant context available to the user; deferred at the Phase 4 checkpoint rather than manufactured. Recorded verbatim in 04-UAT.md test 6."
+      },
+      {
+        "id": "structure-copy",
+        "reason": "No safely prepared, user-approved uninterpretable-table context available; an operational view was deliberately not edited to manufacture the state. Recorded in 04-UAT.md test 7."
+      }
+    ]
   }
 }
 ```
