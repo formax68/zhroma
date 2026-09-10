@@ -9,7 +9,26 @@ import { validateWorkloadReport } from '../../scripts/run-tint-workload.js';
 const ASSETS = ['manifest.json', 'content.js', 'zhroma.css'];
 const REQUIRED_IDS = ['in-app-entry', 'delayed-entry', 'sort', 'refresh', 'view-switch', 'pagination-next', 'pagination-previous', 'scroll', 'grouped-sticky', 'native-states', 'failure-cleanup', 'ticket-isolation', 'dashboard-isolation', 'admin-isolation', 'tab-return', 'document-restoration', 'live-responsiveness', 'live-pass-budget', 'live-forced-layout', 'live-thirty-switch-memory'];
 const SCOPE = { language: 'English', html_lang: 'en', shell: 'current Agent Workspace', interface: 'light' };
-const asset = (name) => readFileSync(new URL(`../../extension/${name}`, import.meta.url), 'utf8');
+// Phase 3's observations were made against these bytes, not against whatever
+// extension/ contains today. Read the pinned revision and never fall back to
+// the working tree: a later phase must not be able to move this evidence by
+// editing source. Resolution and digests are recorded in 04-BASELINE.md.
+const HISTORICAL_REVISION = '382cc881334aa7edf2103150bd8fe663236b6357';
+const HISTORICAL_HASHES = {
+  'manifest.json': '0c959d71e71b34f5f5d4bc75ffc84f7838f09cc7f0db95d24ad605d45ca57ee6',
+  'content.js': 'aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2',
+  'zhroma.css': 'f5af38707480b2379d00343d36ec3a54b27ae79e95a09ad00a4538230c586b61',
+};
+const asset = (name) => {
+  try {
+    return execFileSync('git', ['show', `${HISTORICAL_REVISION}:extension/${name}`], {
+      cwd: fileURLToPath(new URL('../../', import.meta.url)),
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 20 * 1024 * 1024,
+    });
+  } catch {
+    throw new Error(`Restore historical commit ${HISTORICAL_REVISION} locally to validate Phase 3 evidence`);
+  }
+};
 const hashes = Object.fromEntries(ASSETS.map((name) => [name, createHash('sha256').update(asset(name)).digest('hex')]));
 const source = asset('content.js');
 const delayMatch = source.match(/setTimeout\(reconcileCurrentTable, (\d+)\)/);
@@ -204,6 +223,33 @@ test('repository record reports its actual final-source acceptance status', () =
   const status = validatePhase03Acceptance(r);
   process.stdout.write(`PHASE 03 LIVE ACCEPTANCE STATUS: ${status}\n`);
   expect(status).toBe(r.status);
+});
+
+test('the record stays bound to its own historical runtime bytes and outcomes, not to current source', () => {
+  // Independently pinned in 04-BASELINE.md so a future edit to extension/ can
+  // neither invalidate nor silently re-validate a human observation.
+  expect(hashes).toEqual(HISTORICAL_HASHES);
+  const current = Object.fromEntries(ASSETS.map((name) => [name,
+    createHash('sha256').update(readFileSync(new URL(`../../extension/${name}`, import.meta.url))).digest('hex')]));
+  const record = parsePhase03Acceptance(readFileSync(new URL('03-LIVE-ACCEPTANCE.md', phase), 'utf8'));
+  expect(record.runtime_sha256).toEqual(HISTORICAL_HASHES);
+  // The evidence must keep validating even once Phase 4 has changed the bytes.
+  if (JSON.stringify(current) !== JSON.stringify(HISTORICAL_HASHES)) {
+    expect(validatePhase03Acceptance(record)).toBe('human_needed');
+  }
+  expect(record.status).toBe('human_needed');
+  expect(record.checks.filter((row) => row.status === 'pass')).toHaveLength(11);
+  expect(record.checks.filter((row) => row.status === 'pending')).toHaveLength(9);
+  expect(record.checks.filter((row) => row.status === 'fail')).toHaveLength(0);
+});
+
+test('a missing historical revision fails loudly instead of falling back to current bytes', () => {
+  const source = readFileSync(new URL(import.meta.url), 'utf8');
+  expect(source).toMatch(/Restore historical commit \$\{HISTORICAL_REVISION\} locally/);
+  expect(source).not.toMatch(/catch\s*\{\s*return readFileSync/);
+  expect(() => execFileSync('git', ['show', `${'0'.repeat(40)}:extension/content.js`], {
+    cwd: fileURLToPath(new URL('../../', import.meta.url)), stdio: ['ignore', 'pipe', 'pipe'],
+  })).toThrow();
 });
 
 test('pre-repair live observations and performance samples remain byte-exact historical evidence', () => {
