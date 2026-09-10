@@ -7,12 +7,20 @@
   // only report what it was able to read.
 
   const MAX_REQUEST_ID = 1000000;
-  const STATUSES = ['working', 'neutral', 'unavailable'];
-  const REASONS = ['blank', null];
+  const STATUSES = ['working', 'missing', 'cannot-read', 'neutral', 'unavailable'];
+  const REASONS = ['blank', 'unsupported-language', 'structure', null];
 
+  // The whole {status, reason} pair is the key. The add-a-column line exists
+  // for exactly one state and can never be reached by a locale failure or a
+  // structural one (FAIL-03, D-04); an unreadable view is told it is
+  // unreadable, and an unsupported shell is told that, and neither is blamed
+  // on the other.
   const COPY = {
     'working': 'Priority tinting is working',
     'working:blank': 'Priority column found. These tickets have no priority values set',
+    'missing': 'Add a Priority column to this view to use tinting',
+    'cannot-read:unsupported-language': 'This interface language is not supported',
+    'cannot-read:structure': "Zhroma cannot read this view's ticket table",
     'neutral': 'Checking this view',
     'unavailable': 'No readable view is connected',
   };
@@ -26,7 +34,9 @@
 
   function render(status, reason) {
     const key = reason === null ? status : `${status}:${reason}`;
-    output.textContent = COPY[key] ?? COPY[status] ?? COPY.unavailable;
+    // An unpaired combination is not a state the extension can be in, so it
+    // reports the connection fact rather than inventing a diagnosis.
+    output.textContent = Object.hasOwn(COPY, key) ? COPY[key] : COPY.unavailable;
   }
 
   async function refresh() {

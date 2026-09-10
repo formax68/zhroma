@@ -6,6 +6,13 @@
   const PREFERENCE_KEY = 'enabled';
   const PREFERENCE_AREA = 'local';
   const MAX_REQUEST_ID = 1000000;
+  // The quiet period a Priority-less candidate must survive before the
+  // extension will say the column is missing (D-01, third condition). It is a
+  // deliberate operational threshold, not a claim that Zendesk has finished
+  // rendering: 100 ms is an order of magnitude above the measured reconcile
+  // pass and far below the delay at which an agent would read the toolbar, so
+  // it costs a brief neutral state and buys never accusing a mid-mount view.
+  const SETTLE_MS = 100;
   const TABLE = 'table[data-garden-id="tables.table"][data-test-id="generic-table"]';
   const HEAD = 'thead[data-garden-id="tables.head"][data-test-id="generic-table-head"]';
   const BODY = 'tbody[data-garden-id="tables.body"][data-test-id="generic-table-body"]';
@@ -39,9 +46,27 @@
   let statusReason = null;
   let statusAnnounced = false;
 
+  // Missing-column certainty. `changeRevision` counts interpretation-affecting
+  // mutations; a confirmation is only ever published when the revision that
+  // armed the timer is still current at its callback, so a change inside the
+  // window can never be settled through.
+  let changeRevision = 0;
+  let confirmTimer = null;
+  let confirmRevision = -1;
+  let missingConfirmed = false;
+
   function inspectCandidateTable(document) {
     const result = (state, table = null, entries = []) => ({ state, table, entries });
-    if (document.documentElement.lang !== 'en' || window.top !== window) return result('unsafe');
+    // A subframe is unreadable, never a language claim: its shell is not the
+    // agent's interface language and naming one would be an invention.
+    if (window.top !== window) return result('unsafe');
+    const shellLanguage = document.documentElement.lang;
+    if (shellLanguage !== 'en') {
+      // Only a shell that actually declares another language may be reported
+      // as an unsupported language (D-04). The declared value itself is never
+      // read out, transmitted or interpolated — the reason is a fixed token.
+      return result(shellLanguage.trim() === '' ? 'unsafe' : 'unsupported');
+    }
     const tables = [...document.querySelectorAll(TABLE)];
     if (tables.length === 0) return result('waiting');
     if (tables.length !== 1) return result('unsafe');
@@ -67,10 +92,16 @@
     if (headers.length === 0) return result('waiting', table);
     const indexes = headers.flatMap((cell, index) => cell.textContent.trim() === 'Priority' ? [index] : []);
     if (indexes.length > 1) return result('unsafe', table);
-    if (indexes.length === 0) return result('waiting', table);
+    // D-01 requires the WHOLE table to be validated before the Priority index
+    // is branched on: an absent header is only evidence of a missing column
+    // once the body has also proved the table is genuinely rendered. The old
+    // early return here is what made `waiting` cover seven unrelated
+    // situations, only one of which was a missing column.
+    const priorityIndex = indexes.length === 1 ? indexes[0] : -1;
 
     const entries = [];
     let incomplete = false;
+    let witnessed = false;
     for (const row of bodies[0].children) {
       if (row.matches(GROUP)) {
         // Group paint is host-owned, but exclusion must not hide foreign topology.
@@ -84,11 +115,18 @@
       const cells = [...row.children];
       if (cells.some((cell) => malformedCell(cell, CELL)) || cells.length > headers.length) return result('unsafe', table);
       if (cells.length < headers.length) { incomplete = true; continue; }
-      const priority = cells[indexes[0]].textContent.trim();
+      // A direct ticket row exactly as wide as the header is the rendered-table
+      // witness D-01's second condition asks for.
+      witnessed = true;
+      if (priorityIndex === -1) continue;
+      const priority = cells[priorityIndex].textContent.trim();
       if (priority !== '' && !PRIORITY_LABELS.has(priority)) return result('unsafe', table);
       entries.push({ row, priority: priority || null });
     }
-    if (incomplete || entries.length === 0) return result('waiting', table);
+    // A partial mount, an empty body and a group-only body are all indistinguishable
+    // from a table that has not finished arriving. They stay conservative.
+    if (incomplete || !witnessed) return result('waiting', table);
+    if (priorityIndex === -1) return result('missing', table);
     return result(entries.some((entry) => entry.priority !== null) ? 'safe' : 'blank', table, entries);
   }
 
@@ -168,6 +206,62 @@
     announceStatus();
   }
 
+  // Three product diagnoses and one operational value. An unconfirmed missing
+  // candidate deliberately maps to neutral: only the settle callback, having
+  // re-established every D-01 condition from the current DOM, may publish a
+  // missing-column claim.
+  function statusForState(state) {
+    if (state === 'safe') return ['working', null];
+    // A Priority column that is present and unambiguous but carries no values
+    // is working, distinguished only by the blank reason (D-02).
+    if (state === 'blank') return ['working', 'blank'];
+    if (state === 'unsupported') return ['cannot-read', 'unsupported-language'];
+    if (state === 'unsafe') return ['cannot-read', 'structure'];
+    return ['neutral', null];
+  }
+
+  function cancelConfirmation() {
+    if (confirmTimer !== null) { clearTimeout(confirmTimer); confirmTimer = null; }
+    missingConfirmed = false;
+  }
+
+  function invalidateConfirmation() {
+    // Synchronous withdrawal: the claim goes away in the same turn its
+    // evidence is disturbed, before the browser may paint or a timer may run.
+    changeRevision += 1;
+    if (missingConfirmed) {
+      missingConfirmed = false;
+      publishStatus('neutral', null);
+    }
+  }
+
+  function armConfirmation() {
+    // At most one pending confirmation, ever. A candidate that is already
+    // confirmed needs no timer, and a second timer would be a queue.
+    if (missingConfirmed || confirmTimer !== null) return;
+    confirmRevision = changeRevision;
+    confirmTimer = setTimeout(confirmMissingColumn, SETTLE_MS);
+  }
+
+  function confirmMissingColumn() {
+    confirmTimer = null;
+    if (!active) return;
+    try {
+      // Inspect the CURRENT document. No snapshot, row or index survives the
+      // timer boundary; eligibility is re-established from scratch.
+      const fresh = inspectCandidateTable(document);
+      candidate = fresh.table;
+      if (fresh.state !== 'missing') return; // eligibility lost; the reconcile pass owns the new state
+      if (changeRevision !== confirmRevision) { armConfirmation(); return; }
+      missingConfirmed = true;
+      publishStatus('missing', null);
+    } catch {
+      cancelConfirmation();
+      clearOwnedMarkers();
+      publishStatus('neutral', null);
+    }
+  }
+
   function reconcileCurrentTable() {
     reconcileTimer = null;
     if (!active) return;
@@ -175,15 +269,24 @@
       const snapshot = inspectCandidateTable(document);
       candidate = snapshot.table;
       if (snapshot.state === 'safe' || snapshot.state === 'blank') {
-        // A Priority column that is present and unambiguous but carries no
-        // values is working, distinguished only by the blank reason (D-02).
-        if (commitSnapshot(snapshot)) publishStatus('working', snapshot.state === 'blank' ? 'blank' : null);
+        cancelConfirmation();
+        const [diagnosis, reason] = statusForState(snapshot.state);
+        // A rolled back write never reports as working: the agent is told the
+        // page reached the intended state only when it actually did.
+        if (commitSnapshot(snapshot)) publishStatus(diagnosis, reason);
         else publishStatus('neutral', null);
-      } else {
-        clearOwnedMarkers();
-        publishStatus('neutral', null);
+        return;
       }
+      clearOwnedMarkers();
+      if (snapshot.state === 'missing') {
+        if (!missingConfirmed) { publishStatus('neutral', null); armConfirmation(); }
+        return;
+      }
+      cancelConfirmation();
+      const [diagnosis, reason] = statusForState(snapshot.state);
+      publishStatus(diagnosis, reason);
     } catch {
+      cancelConfirmation();
       clearOwnedMarkers();
       publishStatus('neutral', null);
     }
@@ -237,6 +340,9 @@
     observer?.disconnect();
     clearTimeout(reconcileTimer);
     reconcileTimer = null;
+    // A paused controller cannot see the page, so it cannot keep a claim about
+    // it alive or settle one that was in flight.
+    cancelConfirmation();
     adoptCopiedMarkers(document);
     clearOwnedMarkers();
     candidate = null;
@@ -358,7 +464,11 @@
             if (record.type === 'attributes' && record.attributeName === PRIORITY_ATTRIBUTE
               && record.target.hasAttribute(PRIORITY_ATTRIBUTE)) ownedRows.add(record.target);
           }
-          if (!mutationsAffectInterpretation(records) && !copiedMarkers) return;
+          const relevant = mutationsAffectInterpretation(records);
+          if (!relevant && !copiedMarkers) return;
+          // A self-written marker or an unrelated record must not extend the
+          // quiet window; only an interpretation-affecting change does.
+          if (relevant) invalidateConfirmation();
           const snapshot = inspectCandidateTable(document);
           candidate = snapshot.table;
           const readable = snapshot.state === 'safe' || snapshot.state === 'blank';
@@ -368,8 +478,11 @@
           clearOwnedMarkers(keep);
           // Withdraw a working claim in the same turn the evidence for it went
           // away; only the deferred fresh pass may restore it.
-          if (!readable) publishStatus('neutral', null);
-        } catch { clearOwnedMarkers(); publishStatus('neutral', null); }
+          if (!readable) {
+            const [diagnosis, reason] = statusForState(snapshot.state);
+            publishStatus(diagnosis, reason);
+          }
+        } catch { cancelConfirmation(); clearOwnedMarkers(); publishStatus('neutral', null); }
         scheduleReconcile();
       });
       window.addEventListener('pagehide', onPageHide);

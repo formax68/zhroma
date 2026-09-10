@@ -129,7 +129,12 @@ test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every decla
     document.body.innerHTML = '<main><button>Native action</button></main>';
     const native = document.body.innerHTML;
     window.dispatchEvent(new window.Event('pageshow'));
-    vi.runOnlyPendingTimers();
+    // Drain by elapsed time rather than by "whatever happens to be pending":
+    // a Priority-less view legitimately schedules a reconcile pass and then a
+    // 100 ms missing-column settle timer, and both must terminate. Asserting
+    // zero timers after a full drain is strictly stronger than asserting zero
+    // after one generation of pending callbacks.
+    vi.advanceTimersByTime(15000);
     expect(document.body.innerHTML).toBe(native);
     const button = document.querySelector('button'); const clicked = vi.fn();
     button.addEventListener('click', clicked); button.focus(); button.click();
@@ -138,7 +143,7 @@ test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every decla
     document.body.innerHTML = before;
     window.dispatchEvent(new window.Event('pageshow'));
     harness.flush();
-    vi.runOnlyPendingTimers();
+    vi.advanceTimersByTime(15000);
     expect(vi.getTimerCount()).toBe(0);
   }
   expect(forbiddenCalls).toEqual([]);

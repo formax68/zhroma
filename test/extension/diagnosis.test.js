@@ -61,7 +61,7 @@ const missingColumnView = () => view({ body: ticketRow(['One', 'Someone', 'Open'
 
 // --- runtime loader ----------------------------------------------------------
 
-function load({ html = missingColumnView(), lang = 'en', preference } = {}) {
+function load({ html = missingColumnView(), lang = 'en', preference, confirmPreference = true } = {}) {
   if (!vi.isFakeTimers()) vi.useFakeTimers();
   const window = new Window({ settings: {
     enableJavaScriptEvaluation: false, disableJavaScriptFileLoading: true,
@@ -82,7 +82,8 @@ function load({ html = missingColumnView(), lang = 'en', preference } = {}) {
   const context = createContext({ document, window, chrome: harness.chrome,
     MutationObserver: Observer, setTimeout, clearTimeout });
   new Script(asset('content.js'), { filename: 'content.js' }).runInContext(context);
-  harness.flush();
+  // Chrome resolves the startup read only after the script finished evaluating.
+  if (confirmPreference) harness.flush();
   const runtime = {
     document, window, harness, observers,
     /** Deliver an interpretation-affecting observer record, as Chrome would. */
@@ -90,6 +91,12 @@ function load({ html = missingColumnView(), lang = 'en', preference } = {}) {
       for (const observer of observers) {
         if (observer.active) observer.callback([{ type: 'childList', target, addedNodes: [], removedNodes: [], ...extra }]);
       }
+    },
+    /** Swap the whole view and report it exactly as a real subtree replacement. */
+    replaceView(next) {
+      const removedNodes = [...document.body.children];
+      document.body.innerHTML = next;
+      runtime.deliver(document.body, { removedNodes, addedNodes: [...document.body.children] });
     },
     advance(ms) { harness.flush(); vi.advanceTimersByTime(ms); },
     status() { return runtime.harness.requestStatus(); },
@@ -131,8 +138,8 @@ test('a missing Priority column is neutral at 99 ms and claimed only once 100 ms
 test('a relevant change inside the window restarts the quiet period rather than confirming early', () => {
   const runtime = load();
   runtime.advance(SETTLE_MS - 1);
-  runtime.document.querySelector('tbody').append(runtime.document.createElement('span'));
-  runtime.deliver();
+  // A perfectly ordinary relevant change: a second ticket row arrives.
+  runtime.replaceView(view({ body: ticketRow(['One', 'Someone', 'Open']) + ticketRow(['Two', 'Someone', 'Open']) }));
   expect(diagnosis(runtime)).toEqual(NEUTRAL);
   // The original timer expires here. It must not confirm: a change landed
   // inside its window, so the window it measured is no longer quiet.
@@ -160,8 +167,7 @@ test('a Priority column that arrives during the quiet window is working, never a
   const seen = [];
   runtime.advance(50);
   seen.push(diagnosis(runtime));
-  runtime.document.body.innerHTML = view({ headers: PRIORITY_HEADERS, body: ticketRow(['One', 'Urgent', 'Open']) });
-  runtime.deliver(runtime.document.body);
+  runtime.replaceView(view({ headers: PRIORITY_HEADERS, body: ticketRow(['One', 'Urgent', 'Open']) }));
   runtime.advance(15000);
   seen.push(diagnosis(runtime));
   expect(seen).toEqual([NEUTRAL, WORKING]);
@@ -173,8 +179,7 @@ test('the candidate table being replaced wholesale cannot carry a stale claim ac
   const runtime = load();
   runtime.advance(SETTLE_MS);
   expect(diagnosis(runtime)).toEqual(MISSING);
-  runtime.document.body.innerHTML = '<main><p>Loading</p></main>';
-  runtime.deliver(runtime.document.body);
+  runtime.replaceView('<main><p>Loading</p></main>');
   expect(diagnosis(runtime)).toEqual(NEUTRAL);
   runtime.advance(15000);
   expect(diagnosis(runtime)).toEqual(NEUTRAL);
@@ -236,9 +241,8 @@ test('a malformed row arriving after a witness is structural cannot-read, never 
   const runtime = load();
   runtime.advance(SETTLE_MS);
   expect(diagnosis(runtime)).toEqual(MISSING);
-  runtime.document.querySelector('tbody').insertAdjacentHTML('beforeend',
-    `<tr data-garden-id="tables.row" data-test-id="generic-table-row">${td('One', ' rowspan="2"')}${td('Two')}${td('Three')}</tr>`);
-  runtime.deliver();
+  runtime.replaceView(view({ body: ticketRow(['One', 'Someone', 'Open'])
+    + `<tr data-garden-id="tables.row" data-test-id="generic-table-row">${td('Two', ' rowspan="2"')}${td('Someone')}${td('Open')}</tr>` }));
   expect(diagnosis(runtime)).toEqual(STRUCTURE);
   runtime.advance(15000);
   expect(diagnosis(runtime)).toEqual(STRUCTURE);
@@ -338,7 +342,7 @@ test.each([
 });
 
 test('an unconfirmed preference reports neutral and arms no confirmation timer at all', () => {
-  const runtime = load({ preference: { readMode: 'deferred' } });
+  const runtime = load({ confirmPreference: false });
   // The startup read is still in flight, so the controller is dormant. A view
   // it has never been allowed to inspect can never be accused of anything.
   vi.advanceTimersByTime(15000);

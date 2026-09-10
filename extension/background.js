@@ -7,22 +7,34 @@
 
   const POPUP_PATH = 'popup.html';
   const MAX_REQUEST_ID = 1000000;
-  const DIAGNOSES = ['working', 'neutral'];
-  const REASONS = ['blank', null];
+  // Exactly three product diagnoses (FAIL-01). `neutral` and the worker-only
+  // `unavailable` describe what the extension is doing, not what the view is,
+  // and are never a fourth diagnosis.
+  const DIAGNOSES = ['working', 'missing', 'cannot-read', 'neutral'];
+  const REASONS = ['blank', 'unsupported-language', 'structure', null];
 
   const ICONS = {
-    working: 'icons/working.png',
-    neutral: 'icons/neutral.png',
-    unavailable: 'icons/neutral.png',
+    'working': 'icons/working.png',
+    'missing': 'icons/neutral.png',
+    'cannot-read': 'icons/neutral.png',
+    'neutral': 'icons/neutral.png',
+    'unavailable': 'icons/neutral.png',
   };
 
   // Explanatory titles, never shape or colour alone. Fixed copy, no page input.
+  // The key is the whole {diagnosis, reason} pair, so an unpaired combination
+  // is not renderable rather than silently falling back to a weaker message.
   const TITLES = {
     'working': 'Priority tinting is working',
     'working:blank': 'Priority column found. These tickets have no priority values set',
+    'missing': 'Add a Priority column to this view to use tinting',
+    'cannot-read:unsupported-language': 'This interface language is not supported',
+    'cannot-read:structure': "Zhroma cannot read this view's ticket table",
     'neutral': 'Checking this view',
     'unavailable': 'No readable view is connected',
   };
+
+  const statusKey = (status, reason) => (reason === null ? status : `${status}:${reason}`);
 
   const tabs = new Map();
   let requestCounter = 0;
@@ -75,7 +87,11 @@
     if (generationOf(tabId) !== generation) return null;
     if (!isExact(reply, ['type', 'requestId', 'diagnosis', 'reason'])
       || reply.type !== 'status' || reply.requestId !== requestId
-      || !DIAGNOSES.includes(reply.diagnosis) || !REASONS.includes(reply.reason)) {
+      || !DIAGNOSES.includes(reply.diagnosis) || !REASONS.includes(reply.reason)
+      // An unpaired diagnosis and reason is not a state this extension can be
+      // in; treat it as a broken connection rather than guessing which half to
+      // believe.
+      || !Object.hasOwn(TITLES, statusKey(reply.diagnosis, reply.reason))) {
       return { status: 'unavailable', reason: null };
     }
     return { status: reply.diagnosis, reason: reply.reason };
@@ -84,11 +100,11 @@
   async function applyAction(tabId, result, generation) {
     // Always tab-scoped. A global diagnostic would leak one tab's state onto
     // every other tab, including tabs this extension never ran in.
-    const key = result.reason === null ? result.status : `${result.status}:${result.reason}`;
+    const key = statusKey(result.status, result.reason);
     try {
       await chrome.action.setIcon({ tabId, path: ICONS[result.status] });
       if (generationOf(tabId) !== generation) return;
-      await chrome.action.setTitle({ tabId, title: TITLES[key] ?? TITLES[result.status] });
+      await chrome.action.setTitle({ tabId, title: TITLES[key] });
     } catch { /* the tab closed or the action is unavailable */ }
   }
 
