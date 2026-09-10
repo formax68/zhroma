@@ -1,5 +1,26 @@
 (() => {
   'use strict';
+  // Parameters are read and validated FIRST, above every capture below, so a
+  // mis-invoked run throws before any DOM or prototype work happens. This page
+  // used to derive its mode from `params.get('mode') === 'enabled'`, which made
+  // every other value — a typo, an omitted parameter — silently mean *disabled*:
+  // no seam, no runtime, nothing measured, and still a `passed` report. The
+  // page must refuse a bad parameter itself; the CLI is only one of the ways it
+  // is reached.
+  const MODES = ['enabled', 'disabled', 'dormant'];
+  const params = new URLSearchParams(location.search);
+  const mode = params.get('mode');
+  if (!MODES.includes(mode)) throw new Error(`Unsupported workload mode ${JSON.stringify(mode)}; expected ${MODES.join(', ')}`);
+  const rawSize = params.get('size');
+  const size = Number(rawSize);
+  // The page's rule is only "a positive integer". The CLI's 30/200/1000 set is
+  // a separate, deliberate protocol constraint and is not duplicated here.
+  if (!Number.isInteger(size) || size <= 0) throw new Error(`Unsupported workload size ${JSON.stringify(rawSize)}; expected a positive integer`);
+  // `enabled` gates tinting expectations; `runtimeLoaded` gates whether the
+  // shipped controller is present at all. They differ for exactly one mode:
+  // `dormant` loads the runtime and expects it to decline to act.
+  const enabled = mode === 'enabled';
+  const runtimeLoaded = mode === 'enabled' || mode === 'dormant';
   const nativeTimer = window.setTimeout.bind(window);
   const nativeClear = window.clearTimeout.bind(window);
   const NativeObserver = window.MutationObserver;
@@ -8,9 +29,6 @@
   const nativeAdd = EventTarget.prototype.addEventListener;
   const pending = new Set();
   const observers = new Set();
-  const params = new URLSearchParams(location.search);
-  const size = Number(params.get('size'));
-  const enabled = params.get('mode') === 'enabled';
   const profiled = params.get('profile') === 'true';
   const labels = ['Urgent', 'High', 'Normal', 'Low'];
   let segments = []; let writes = 0; let depth = 0; let sequence = 0;
@@ -177,7 +195,7 @@
         const cell = view.querySelector('tbody tr').children[priorityIndex];
         if (getComputedStyle(cell).backgroundColor === 'rgba(0, 0, 0, 0)') throw new Error('Declared CSS did not paint');
       }
-      return { size, mode: enabled ? 'enabled' : 'disabled', warmups: smoke || profile ? 0 : 10, measured: smoke || profile ? 1 : 100,
+      return { size, mode, runtime: runtimeLoaded ? 'loaded' : 'absent', warmups: smoke || profile ? 0 : 10, measured: smoke || profile ? 1 : 100,
         operations, resources: { observers: observers.size, pendingTimers: pending.size }, cellsPerRow: 16 };
     },
     async switches() { await ready; for (let i = 0; i < 30; i++) await measureBatch('table'); segments = []; return { switches: 30, observers: observers.size, pendingTimers: pending.size }; },

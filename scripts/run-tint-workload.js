@@ -26,7 +26,7 @@ export function parseArguments(args) {
     } else throw new Error(`Unsupported flag ${key}`);
   }
   requireValue([30, 200, 1000].includes(result.size), 'Size must be 30, 200 or 1000');
-  requireValue(['enabled', 'disabled'].includes(result.mode), 'Mode must be enabled or disabled');
+  requireValue(['enabled', 'disabled', 'dormant'].includes(result.mode), 'Mode must be enabled, disabled or dormant');
   requireValue(!(result.smoke && result.profile), 'Smoke and profile must be separate runs');
   return result;
 }
