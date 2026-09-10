@@ -258,8 +258,10 @@ test('four CSS rules map exact labels to alpha backgrounds and only direct ticke
     target.setAttribute('data-zhroma-priority', label);
   }
   expect(labels.sort()).toEqual(['High', 'Low', 'Normal', 'Urgent']);
-  document.documentElement.lang = 'fr';
-  for (const rule of rules) expect(document.querySelectorAll(rule.selectorText)).toHaveLength(0);
+  for (const lang of ['fr', 'fr-CA', 'eng', 'ende', '', ' ']) {
+    document.documentElement.lang = lang;
+    for (const rule of rules) expect(document.querySelectorAll(rule.selectorText), lang).toHaveLength(0);
+  }
   expect(asset('zhroma.css')).not.toMatch(/@|url\(|box-shadow|font|\bopacity\s*:/);
 });
 
@@ -291,6 +293,54 @@ test('an en-GB shell tints end to end and every tint declaration is flagged impo
     expect(rule.style.getPropertyPriority('background-color')).toBe('important');
   }
   harness.assertClean();
+});
+
+// The two encodings of the supported language family — the JavaScript
+// predicate in `content.js` and the `[lang|="en" i]` selector head in
+// `zhroma.css` — cannot share a constant, because this project ships no build
+// step and CSS cannot import from JavaScript. The contract below is therefore
+// the single place the accepted set is written down, and both encodings are
+// checked against it. Any future edit to either that changes the accepted set
+// fails here rather than shipping a state where the popup says `working` and
+// nothing paints.
+function cssAcceptsShell(lang) {
+  const window = createDocument();
+  const { document } = window;
+  document.documentElement.lang = lang;
+  const rules = loadRules(window);
+  [...document.querySelectorAll('tbody > tr')]
+    .forEach((row, index) => row.setAttribute('data-zhroma-priority', ['Urgent', 'High', 'Normal', 'Low'][index]));
+  return rules.some((rule) => document.querySelectorAll(rule.selectorText).length > 0);
+}
+
+function scriptAcceptsShell(lang) {
+  const window = createDocument();
+  const { document } = window;
+  document.documentElement.lang = lang;
+  const harness = createChromeHarness();
+  const context = createContext({ document, window, chrome: harness.chrome,
+    MutationObserver: window.MutationObserver, setTimeout, clearTimeout });
+  new Script(asset('content.js'), { filename: 'content.js' }).runInContext(context);
+  harness.flush();
+  vi.advanceTimersByTime(15000);
+  const markers = [...document.querySelectorAll('tbody > tr')].map((row) => row.getAttribute('data-zhroma-priority'));
+  return markers.join('|') === 'Urgent|High|Normal|Low';
+}
+
+test('the JS language predicate and the CSS language predicate accept exactly the same shells', () => {
+  vi.useFakeTimers();
+  const accepted = ['en', 'EN', 'en-US', 'en-GB', 'EN-gb', 'en-Latn-GB'];
+  const refused = ['fr', 'fr-CA', 'eng', 'ende', '', ' ', ' en'];
+  for (const lang of accepted) {
+    expect([lang, cssAcceptsShell(lang), scriptAcceptsShell(lang)]).toEqual([lang, true, true]);
+  }
+  for (const lang of refused) {
+    expect([lang, cssAcceptsShell(lang), scriptAcceptsShell(lang)]).toEqual([lang, false, false]);
+  }
+  // Harness fidelity divergence, recorded rather than dropped: happy-dom's `|=`
+  // matches a right-padded attribute value where Chrome does not, so `'en '` is
+  // excluded from the agreement assertion and covered on the JavaScript side alone.
+  expect(scriptAcceptsShell('en ')).toBe(false);
 });
 
 test('CSS rule reordering preserves hue mapping; CSS-only shade edits leave detector bytes unchanged', () => {
