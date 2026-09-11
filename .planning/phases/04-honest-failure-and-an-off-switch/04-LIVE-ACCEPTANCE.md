@@ -2,13 +2,13 @@
 phase: 04-honest-failure-and-an-off-switch
 status: human_needed
 source_confirmation: confirmed
-uat_execution: final-reviewed-source-9-of-17-observed
+uat_execution: final-reviewed-source-12-of-17-observed
 prior_phase_status: human_needed
 ---
 
 # Phase 04 Current-Source Live Acceptance
 
-**Seventeen checks: nine passed, eight pending.** On 2026-09-11 the user confirmed the repaired build and passed the working-icon check. Environment numbers were confirmed unchanged from the prior run: Chrome 152, macOS 27 beta 6, 30 mounted rows; English/light interface. The user also acknowledged that the earlier fourteen observations apply only to the old build.
+**Seventeen checks: Twelve passed, five pending.** On 2026-09-11 the user confirmed the repaired build and passed the working-icon check. Environment numbers were confirmed unchanged from the prior run: Chrome 152, macOS 27 beta 6, 30 mounted rows; English/light interface. The user also acknowledged that the earlier fourteen observations apply only to the old build.
 
 **Fourteen observations were attested by the user on 2026-09-10, and they are not
 carried forward.** They were taken against the pre-repair bytes and are preserved
@@ -401,26 +401,26 @@ derived from the working tree, not transcribed.
     },
     {
       "id": "frozen-resume",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to frozen-resume: with a Zendesk tab actually frozen or discarded while tinting was ON, OFF was selected in another tab; returning to the suspended tab resumes untinted without restoring stale tint.",
       "language_context": null
     },
     {
       "id": "nonreceiver-status",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to nonreceiver-status: with tinting on, a new tab or non-Zendesk page popup showed \"No readable view is connected\" with no invented page diagnosis.",
       "language_context": null
     },
     {
       "id": "navigation-status",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to navigation-status: with the popup closed, moving tinted view -> non-view surface -> tinted view kept icon and popup state aligned to the current document, with no stale working state carried onto the non-view page.",
       "language_context": null
     },
     {
@@ -445,13 +445,13 @@ derived from the working tree, not transcribed.
       "id": "no-agent-blame",
       "statement": "The diagnosis must not blame an agent or imply they caused an unsupported or malformed view.",
       "status": "flagged-unverified",
-      "disposition": "Ratified by the user at the Phase 4 blocking checkpoint (04-UAT.md test 18) after observing the diagnosis copy live in the browser: the add-a-Priority-column line and the other diagnosis copy read as help, not as accusation. This is an explicit human disposition, which is the only thing that can close this judgment. RATIFICATION SURVIVES THE 2026-09-10 RE-ESTABLISHMENT: the copy strings this judgment is about are byte-identical before and after the repair, so the ratification is about the same words the user read. GUARD NOT RELAXED: the status field is deliberately left flagged-unverified because test/extension/phase-04-live-acceptance.test.js asserts the repository record carries all three that way \u2014 a guard against an executor self-ratifying them. Promoting these to reviewed-resolved requires changing that guard, which is a user decision. The disposition is unaffected either way: seventeen pending checks and an unconfirmed source already hold the record at human_needed."
+      "disposition": "Ratified by the user at the Phase 4 blocking checkpoint (04-UAT.md test 18) after observing the diagnosis copy live in the browser: the add-a-Priority-column line and the other diagnosis copy read as help, not as accusation. This is an explicit human disposition, which is the only thing that can close this judgment. RATIFICATION SURVIVES THE 2026-09-10 RE-ESTABLISHMENT: the copy strings this judgment is about are byte-identical before and after the repair, so the ratification is about the same words the user read. GUARD NOT RELAXED: the status field is deliberately left flagged-unverified because test/extension/phase-04-live-acceptance.test.js asserts the repository record carries all three that way — a guard against an executor self-ratifying them. Promoting these to reviewed-resolved requires changing that guard, which is a user decision. The disposition is unaffected either way: seventeen pending checks and an unconfirmed source already hold the record at human_needed."
     },
     {
       "id": "re-enable-not-pressured",
       "statement": "The off switch must not pressure the agent to re-enable tinting or imply that off is an error.",
       "status": "flagged-unverified",
-      "disposition": "Ratified by the user at the Phase 4 blocking checkpoint (04-UAT.md test 19) after observing the off state live: off reads as a legitimate choice rather than a broken or discouraged one, with no nag or prompt to re-enable. RATIFICATION QUALIFIED BY THE 2026-09-10 RE-ESTABLISHMENT: popup.js changed in the WR-04 and WR-07 repairs, so the popup the user judged is not byte-identical to the one that ships. The repair added no copy and no prompt \u2014 it changed the revert target after a failed save, kept the control operable and restored focus \u2014 but whether the repaired failure path still reads as unpressured is a judgment nobody has made against the new bytes. GUARD NOT RELAXED: the status field stays flagged-unverified for the same guard reason as the other two, and this qualification is an additional reason not to promote it."
+      "disposition": "Ratified by the user at the Phase 4 blocking checkpoint (04-UAT.md test 19) after observing the off state live: off reads as a legitimate choice rather than a broken or discouraged one, with no nag or prompt to re-enable. RATIFICATION QUALIFIED BY THE 2026-09-10 RE-ESTABLISHMENT: popup.js changed in the WR-04 and WR-07 repairs, so the popup the user judged is not byte-identical to the one that ships. The repair added no copy and no prompt — it changed the revert target after a failed save, kept the control operable and restored focus — but whether the repaired failure path still reads as unpressured is a judgment nobody has made against the new bytes. GUARD NOT RELAXED: the status field stays flagged-unverified for the same guard reason as the other two, and this qualification is an additional reason not to promote it."
     },
     {
       "id": "untested-is-not-consent",
@@ -465,11 +465,11 @@ derived from the working tree, not transcribed.
     "unavailable_scenarios": [
       {
         "id": "language-icon-copy",
-        "reason": "No non-English tenant context available to the user; deferred at the Phase 4 checkpoint rather than manufactured. Recorded verbatim in 04-UAT.md test 6. Waived by the user on 2026-09-10 as accepted residual risk AR-04-01 (04-RISK-ACCEPTANCE.md): the user accepted that FAIL-03 carries no live evidence. The check remains pending because a waiver is not an observation \u2014 it permits progression, it does not create evidence, and it cannot promote this record. RE-ESTABLISHED 2026-09-10 against the repaired bytes under promotion rule 3: the CR-01 repair narrowed which shells reach the unsupported-language branch, so this check's own scenario and expected result are unchanged \u2014 a non-English shell still takes the branch. AR-04-01 continues to apply unchanged, and this check was pending before the repair and is pending after it."
+        "reason": "No non-English tenant context available to the user; deferred at the Phase 4 checkpoint rather than manufactured. Recorded verbatim in 04-UAT.md test 6. Waived by the user on 2026-09-10 as accepted residual risk AR-04-01 (04-RISK-ACCEPTANCE.md): the user accepted that FAIL-03 carries no live evidence. The check remains pending because a waiver is not an observation — it permits progression, it does not create evidence, and it cannot promote this record. RE-ESTABLISHED 2026-09-10 against the repaired bytes under promotion rule 3: the CR-01 repair narrowed which shells reach the unsupported-language branch, so this check's own scenario and expected result are unchanged — a non-English shell still takes the branch. AR-04-01 continues to apply unchanged, and this check was pending before the repair and is pending after it."
       },
       {
         "id": "structure-copy",
-        "reason": "No safely prepared, user-approved uninterpretable-table context available; an operational view was deliberately not edited to manufacture the state. Recorded in 04-UAT.md test 7. Waived by the user on 2026-09-10 as accepted residual risk AR-04-01 (04-RISK-ACCEPTANCE.md): the user accepted that FAIL-03 carries no live evidence. The check remains pending because a waiver is not an observation \u2014 it permits progression, it does not create evidence, and it cannot promote this record. RE-ESTABLISHED 2026-09-10 against the repaired bytes under promotion rule 3: the repair does not touch the structure branch at all, so this check is unaffected by it. AR-04-01 continues to apply unchanged, and this check was pending before the repair and is pending after it."
+        "reason": "No safely prepared, user-approved uninterpretable-table context available; an operational view was deliberately not edited to manufacture the state. Recorded in 04-UAT.md test 7. Waived by the user on 2026-09-10 as accepted residual risk AR-04-01 (04-RISK-ACCEPTANCE.md): the user accepted that FAIL-03 carries no live evidence. The check remains pending because a waiver is not an observation — it permits progression, it does not create evidence, and it cannot promote this record. RE-ESTABLISHED 2026-09-10 against the repaired bytes under promotion rule 3: the repair does not touch the structure branch at all, so this check is unaffected by it. AR-04-01 continues to apply unchanged, and this check was pending before the repair and is pending after it."
       }
     ]
   }

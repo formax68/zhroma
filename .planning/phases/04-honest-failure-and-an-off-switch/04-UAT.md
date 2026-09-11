@@ -533,3 +533,17 @@ User response to preparation checkpoint: "numbers are the same as before, let's 
 ### Cross-tab preference — pass
 
 2026-09-11: User replied "pass" to cross-tab-preference: both tabs follow OFF and ON while each retains the diagnosis of its own view. Next: frozen-resume.
+
+### Frozen/discarded tab resumes — pass
+
+2026-09-11: User replied "pass" to frozen-resume, explicitly framed around an actually frozen/discarded tab: after OFF elsewhere, the tab resumes untinted without restoring stale ON state. Next: nonreceiver-status.
+
+### 2026-09-11 current-build observation: nonreceiver-status
+
+- Result: pass.
+- Evidence: User replied "pass" after turning tinting on, opening a new tab or non-Zendesk page, and checking that the popup showed "No readable view is connected" without an invented diagnosis about that page.
+
+### 2026-09-11 current-build observation: navigation-status
+
+- Result: pass.
+- Evidence: User replied "pass" after moving from a tinted Zendesk view to a non-view surface and back with the popup closed; icon and popup state tracked the current document, and the prior working state did not carry onto the non-view page.
