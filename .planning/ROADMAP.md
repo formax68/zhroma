@@ -168,7 +168,8 @@ Plans:
 
 ### Phase 4: Honest Failure and an Off Switch
 
-**Goal**: The agent can tell from the toolbar which of three states the extension is in, is told to add a Priority column only when that is certainly the problem, and can turn tinting off and back on without uninstalling.
+**Goal**: **As a** support agent using Zendesk views, **I want to** see whether priority tinting is working, understand when it cannot work, and switch it off or on, **so that** I can trust its status and control its effect without uninstalling it.
+**Outcome contract**: The toolbar distinguishes the three diagnoses; the popup asks for a Priority column only when that diagnosis is certain; switching tinting off and on requires no uninstall. The four success criteria below remain the acceptance contract.
 **Mode:** mvp
 **Depends on**: Phase 3
 **Requirements**: FAIL-01, FAIL-02, FAIL-03, FAIL-05, CTRL-02, CTRL-03, CTRL-04
@@ -179,7 +180,7 @@ Plans:
   3. The popup carries an on/off switch that is already on; turning it off clears every tint from the view currently on screen without a refresh, and turning it back on restores them.
   4. Quitting Chrome and reopening it preserves whichever way the switch was left.
 
-**Plans**: 14/14 plans executed (all 6 original + 4 of 8 gap-closure from 04-REVIEW.md)
+**Plans**: 14/20 plans executed (6 original + 8 first-round gap plans); 6 second-round gap plans prepared across waves 13–17. Phase verification remains `gaps_found`.
 **UI hint**: yes
 
 Plans:
@@ -232,6 +233,31 @@ Plans:
 **Wave 12** *(blocked on Wave 11 completion)*
 
 - [x] 04-14-PLAN.md — Cover single-writer serialization and closed-tab cleanup (WR-06) (wave 12, gap closure)
+
+**Wave 13** *(depends on completed 04-14)*
+
+- [ ] 04-15-PLAN.md — Reproduce contradictory setting outcomes and obtain the explicit uncertainty decision.
+- [ ] 04-17-PLAN.md — Align malformed-locale diagnosis with strict tint eligibility and verify real Chrome rendering.
+
+**Wave 14** *(depends on 04-15)*
+
+- [ ] 04-16-PLAN.md — Bound the full preference/status lifecycle and prove late-result, restart and cleanup behavior.
+
+**Wave 15** *(depends on 04-16 and 04-17)*
+
+- [ ] 04-18-PLAN.md — Make the mutation gate reject invalid tests and require the intended behavioral failure.
+
+**Wave 16** *(depends on 04-18)*
+
+- [ ] 04-19-PLAN.md — Independently review and repair the complete change before freezing shipped source.
+
+**Wave 17** *(depends on 04-19)*
+
+- [ ] 04-20-PLAN.md — Bind final evidence, review validation changes, collect genuine UAT and reconcile canonical status.
+
+**Cross-cutting constraints:** Preserve the approved product decisions, strict language eligibility, existing permissions and dependency set. Keep technical evidence, independent review, human observations and AR-04-01's two waived scenarios distinct. No old observation or summary can promote current-source acceptance; Phase 3 remains `human_needed`.
+
+Planning evidence: [failure analysis](phases/04-honest-failure-and-an-off-switch/04-FAILURE-ANALYSIS.md), [closure coverage](phases/04-honest-failure-and-an-off-switch/04-GAP-CLOSURE-COVERAGE.md), and [independent plan check](phases/04-honest-failure-and-an-off-switch/04-GAP-PLAN-CHECK.md).
 
 ### Phase 5: Published
 

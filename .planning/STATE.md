@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
-status: executing
-stopped_at: Completed 04-14-PLAN.md
-last_updated: "2026-09-10T18:08:15.134Z"
-last_activity: 2026-09-10
-last_activity_desc: Phase 04 execution started
-state_head: b43664f6fe8e71be40ba480645c13b4c5e51a15c
+status: ready_to_execute
+stopped_at: Gap plans 04-15 through 04-20 independently verified; next 04-15
+last_updated: "2026-09-11T06:16:11.783Z"
+last_activity: 2026-09-11
+last_activity_desc: Phase 04 comprehensive gap planning verified; implementation gaps remain
+state_head: 0cc45c38f8fc1c38cfa2a522890385d21a66de64
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 36
+  total_plans: 42
   completed_plans: 36
   percent: 40
 ---
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 ## Current Position
 
-Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 9 of 14
-Status: Ready to execute
-Last activity: 2026-09-10 — Phase 04 execution started
+Phase: 04 (Honest Failure and an Off Switch) — READY TO EXECUTE
+Plan: 15 of 20 (next; 14 executed)
+Status: Ready to execute gap plans; phase verification remains gaps_found
+Last activity: 2026-09-11 — Six gap plans independently verified; no implementation or acceptance promoted
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 
@@ -172,9 +172,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T18:07:44.902Z
-Stopped at: Completed 04-14-PLAN.md
-Resume file: None
+Last session: 2026-09-11
+Stopped at: Comprehensive gap planning complete; execute 04-15 and 04-17 in wave 13
+Resume file: .planning/phases/04-honest-failure-and-an-off-switch/04-GAP-CLOSURE-COVERAGE.md
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
 
@@ -220,3 +220,20 @@ This supersedes all earlier next-check instructions, including the requested ena
 Independent 03-VERIFICATION.md: human_needed, 28/34 distinct truths verified, no new implementation blockers. All eight requirement IDs accounted; six satisfied within admitted evidence scope, LIVE-05/FAIL-04 need human evidence. Fresh full suite: 403 passed. Current live acceptance: eleven passes, nine untested; UAT explicitly skipped. Three judgment prohibitions remain flagged; no accepted-risk inference.
 
 03-HANDOFF.md records the verified baseline, remaining evidence and concrete Phase 04 planning inputs. Next preparatory work is Phase 04 design/context and planning; current phase remains 03 and no phase.complete was invoked. Do not restart UAT or profiling. MVP goal wording was normalized into required user-story syntax with original scope and all success criteria preserved; centralized validation passed.
+
+## Phase 04 comprehensive gap planning — 2026-09-11
+
+User requested investigation of why repeated gap rounds were failing and a complete
+closure plan. 04-FAILURE-ANALYSIS.md records actual-source counterexamples despite
+38 passing targeted tests and a mutation-runner false kill. Six append-only plans
+04-15 through 04-20 cover all seven requirements, eleven decisions, current and
+historical review findings, with independent plan verification passed.
+
+Next: `$gsd-execute-phase 4 --gaps-only`. Wave 13 contains 04-15 and 04-17. The new
+unknown-setting presentation requires its actual 04-15 decision after concrete
+preparation. All integrated runtime repairs and independent code/security reviews
+precede final source binding, validation-tool review and 04-20's human checkpoint.
+The existing ACK-04-01 remains outstanding; AR-04-01 still waives only two live
+scenarios without making them observed passes. Phase 04 remains `gaps_found` and
+Phase 03 remains `human_needed`; requirements and historical observations were
+not promoted. No runtime, test, package or acceptance-record changes were made.
