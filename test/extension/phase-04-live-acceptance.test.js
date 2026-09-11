@@ -44,6 +44,7 @@ const REQUIRED_IDS = [
   'nonreceiver-status', 'navigation-status', 'worker-restart', 'popup-keyboard',
 ];
 const SCOPE = { language: 'English', html_lang: 'en', shell: 'current Agent Workspace', interface: 'light' };
+const LANG_VARIANTS = ['en', 'en-*', 'non-English'];
 // Three bespoke product prohibitions survived recall with no fabricated
 // descriptor (04-SOURCE-AUDIT.md "Prohibition recall and precision"). They are
 // carried, not closed.
@@ -158,7 +159,11 @@ export function validatePhase04Acceptance(record, performance = loadPerformance(
     'loaded_from_repository', 'source_confirmed_on', 'environment', 'prior_source', 'checks',
     'flagged_unverified', 'limitations']), 'record-fields');
   requireEvidence(record.schema_version === 1 && ['human_needed', 'gaps_found', 'passed'].includes(record.status), 'schema-status');
-  requireEvidence(sameKeys(record.scope, Object.keys(SCOPE)) && Object.entries(SCOPE).every(([key, value]) => record.scope[key] === value), 'scope');
+  requireEvidence(sameKeys(record.scope, [...Object.keys(SCOPE), 'html_lang_variants'])
+    && Object.entries(SCOPE).every(([key, value]) => record.scope[key] === value)
+    && Array.isArray(record.scope.html_lang_variants)
+    && record.scope.html_lang_variants.length === LANG_VARIANTS.length
+    && LANG_VARIANTS.every((value, index) => record.scope.html_lang_variants[index] === value), 'scope');
 
   // Complete recursive asset binding: exact inventory, exact bytes.
   requireEvidence(sameKeys(record.source, ['inventory_count', 'assets']), 'source-fields');
@@ -204,11 +209,11 @@ export function validatePhase04Acceptance(record, performance = loadPerformance(
     // `english-regional-locale`, needs a tag that is English but is not the
     // bare `en` (a bare `en` is `working-icon`'s scope, not this check's).
     if (check.id === 'language-icon-copy') {
-      requireEvidence(typeof check.language_context === 'string' && /^[a-z]{2}(-[A-Za-z0-9]{2,8})*$/.test(check.language_context)
-        && check.language_context !== 'en', 'language-context');
+      requireEvidence(typeof check.language_context === 'string' && /^[a-z]{2}(-[a-z0-9]{2,8})*$/i.test(check.language_context)
+        && !/^en(?:-|$)/i.test(check.language_context), 'language-context');
     } else if (check.id === 'english-regional-locale') {
-      requireEvidence(typeof check.language_context === 'string' && /^[a-z]{2}(-[A-Za-z0-9]{2,8})*$/.test(check.language_context)
-        && check.language_context !== 'en' && check.language_context.split('-')[0] === 'en', 'language-context');
+      requireEvidence(typeof check.language_context === 'string'
+        && /^en-[a-z0-9]{2,8}(?:-[a-z0-9]{2,8})*$/i.test(check.language_context), 'language-context');
     } else requireEvidence(check.language_context === null, 'language-context-scope');
   }
 
@@ -267,7 +272,7 @@ function example(complete = false) {
   return {
     schema_version: 1,
     status: complete ? 'passed' : 'human_needed',
-    scope: { ...SCOPE },
+    scope: { ...SCOPE, html_lang_variants: [...LANG_VARIANTS] },
     source: { inventory_count: SHIPPED_NAMES.length, assets: { ...SHIPPED } },
     settings: { ...settings },
     loaded_from_repository: complete,
