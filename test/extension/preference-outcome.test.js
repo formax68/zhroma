@@ -147,6 +147,49 @@ test('healthy arrival burst stores each explicit value in order without overlap'
   expect(Math.max(...world.writeObservations), '[outcome:physical-write-overlap]').toBe(1);
 });
 
+test('content callback after worker timeout cannot revive a superseded preference', async () => {
+  const { world, popup, content } = await timedBoot(false);
+  world.hold('content-read');
+  change(popup, true);
+  await vi.advanceTimersByTimeAsync(2100);
+  expect(answered(world)[0].payload).toMatchObject({ saved: true, applied: false, status: 'unavailable' });
+  expect(world.pending('content-read')).toBe(1);
+  world.unhold('content-read');
+  change(popup, false);
+  await vi.advanceTimersByTimeAsync(100);
+  world.release('content-read');
+  await vi.advanceTimersByTimeAsync(100);
+  expect(markers(content.document), '[outcome:late-content-generation]').toEqual([]);
+  expect(world.snapshot()).toEqual({ enabled: false });
+  expect(statusText(popup.document)).toBe(COPY.off);
+  const late = world.traffic.filter(({ direction, payload }) => direction === 'response' && payload.type === 'applied').at(-1);
+  expect(late.payload.applied).toBe(false);
+  await vi.advanceTimersByTimeAsync(22000);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+test('epoch boundary deliberately cannot serialize a preserved old native write against a new worker', async () => {
+  const { world } = await timedBoot(true);
+  world.setWriteMode('deferred');
+  world.popupChrome.runtime.sendMessage({ type: 'set-enabled', requestId: 777, enabled: false }).catch(() => {});
+  await vi.advanceTimersByTimeAsync(30);
+  world.terminateWorker();
+  loadWorker(world);
+  world.setWriteMode('immediate');
+  const fresh = world.popupChrome.runtime.sendMessage({ type: 'set-enabled', requestId: 778, enabled: true });
+  await vi.advanceTimersByTimeAsync(100);
+  expect(await fresh).toMatchObject({ saved: true, enabled: true });
+  world.commitWrites(); world.releaseWriteCallbacks();
+  await vi.advanceTimersByTimeAsync(100);
+  expect(world.snapshot(), '[outcome:cross-epoch-ordering-limit]').toEqual({ enabled: false });
+  const recovered = loadPopup(world);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(control(recovered.document).checked).toBe(false);
+  expect(world.forbidden).toEqual([]);
+  await vi.advanceTimersByTimeAsync(22000);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
 for (const initial of [true, false]) for (const write of ['immediate', 'rejected', 'throws', 'deferred']) {
   for (const read of ['immediate', 'rejected', 'rejected-with-values', 'malformed', 'deferred']) {
     for (const apply of ['success', 'negative', 'invalid', 'silent']) {

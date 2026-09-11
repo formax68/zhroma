@@ -1,5 +1,103 @@
 # Preference outcome contract
 
+## Implemented contract — 04-16, 2026-09-11
+
+The inventory and proposal below retain their 04-15 preparation provenance.
+This section describes the implementation that replaces their OPEN/PROPOSED
+runtime rows; independent review and current-build human acceptance still belong
+to 04-19/04-20.
+
+- A valid worker popup request receives one absolute 4000 ms budget from
+  arrival. Queue residence, storage observation, active-tab query, document
+  handshake and toolbar observation spend that same budget. An individual
+  document hop also has a 2000 ms maximum. Popup transport fallback is 5000 ms.
+- At most 32 preference requests are admitted, including the active request.
+  Overflow answers immediately with saved=false, enabled=null, applied=false,
+  status=unavailable, reason=null. Expired queued requests answer with the same
+  finite not-started outcome and are removed; they never write during later drain.
+- Issued writes have saved=null until their actual callback settles. A timeout
+  neither rejects nor cancels storage. Raw write exclusion lasts through physical
+  callback settlement, and serialization also covers response construction.
+  Reads, queries and document waits cannot retain the preference queue beyond
+  the deadline after its issued write settles.
+- A pending write forces enabled=null in status responses, including fresh
+  popup openings/focus reads even after the native value physically committed.
+  A returned readable boolean wins; otherwise saved=true confirms the requested
+  value. Confirmed application remains a separate exact request-id-bound fact.
+- Transport failure, invalid reply and the exact explicit saved=null outcome
+  display **Zhroma could not confirm that setting**, with the existing checkbox
+  indeterminate and disabled. Only saved=null, enabled=null, applied=false,
+  status=unavailable, reason=null is a valid unknown write tuple. All previous
+  exact keys, sender/id checks, field types and status/reason pairs remain guarded.
+- saved=false is definite failure or non-admission, so it uses the existing
+  not-saved line. A null read-back on this path also leaves the checkbox mixed:
+  the exact same tuple can describe refused admission behind another popup's
+  pending native write, making an older checked position unsafe to confirm.
+  A returned boolean remains operable and preserves keyboard focus/retry.
+- Opening/focus refresh and explicit change share one ownership guard. An
+  opening refresh excludes a change; late captured replies cannot overwrite a
+  subsequent recovery or user action. No polling, new control or persistent
+  key is introduced. Focus/open recovery confirms only fresh observations.
+
+### Toolbar and lifetime ownership
+
+Each event projection gets its own 4000 ms budget from scheduling. One active
+observation and one latest pending projection are retained per tab. Abandonable
+read/status waits release observation ownership at the deadline, allowing a
+later healthy invalidation to converge. Content invalidation hints are
+acknowledged on scheduling; the acknowledgement is not a completed paint.
+
+Native action operations are physically serialized per tab with one coalesced
+latest candidate. Caller expiry does not release the action owner. After an
+icon settles the worker rechecks tab identity, generation and budget before
+issuing a title. Late settled work causes a fresh reconciliation when necessary.
+Projection failure is best-effort artwork failure, separate from acknowledged
+content application. A query timeout cannot discard a pending native owner.
+
+Only tab identity from the existing tabs.query API is used to validate candidate
+projections. Closure removes mapped ownership and queued candidates; old
+continuations cannot reinsert that object. Spurious dead-id events are checked
+and discarded without action dispatch or retained entries after the bounded
+check. No durable tombstone collection is added. Tests measure live worker Map
+entries, attempted action calls and committed paints separately, including
+repeated closure and reused-id incarnations.
+
+### Measured limits and historical dispositions
+
+The approved native-stall and cross-epoch limits remain limits. A never-settling
+write can prevent further setting changes; a never-settling action can retain
+that tab's artwork owner. Other tabs and caller replies remain responsive.
+An already-issued icon/title may briefly show stale artwork until physical
+settlement and reconciliation; timers cannot recall it.
+
+Worker termination destroys in-memory exclusion. The epoch-aware tracer keeps
+already-issued native storage/action effects, suppresses old callbacks/timers/
+promise continuations and records zero subsequent dead-epoch API dispatches.
+A deliberate old-write-after-new-worker-write schedule demonstrates the lack of
+cross-worker transaction isolation with one boolean. A fresh read recovers the
+current value; it does not prove cross-epoch ordering. These are synthetic VM
+observations, not real Chrome suspension/restart acceptance.
+
+Content's existing preferenceGeneration guard is separately exercised by a
+read callback released after the worker's response deadline and a newer stored
+preference. The callback cannot revive older intent. Content reads themselves
+are not cancelled by a worker timeout; no Phase 3 lifecycle scope changed.
+
+04-14 truth 4 / WINDOWS22 now have behavioral retained-entry and absent committed
+paint checks; the former source-shape cleanup assertions and expected dead-tab
+paint are replaced. Historical artifacts remain unchanged for 04-19 assessment.
+WINDOWS20/21 still require mechanism-level treatment: redundant guards are not
+individually promised mutant kills. The old serializePreference rejection branch
+was removed with that obsolete queue implementation. Popup render fallback is
+also redundant behind exact pair validation; 04-18 must classify its mutation
+honestly, rather than count a stale literal or unrelated assertion as a kill.
+
+Every retained historical target has a unique [mutant:ID] diagnostic attached to
+its intended assertion. These labels are test attribution, not mutation results.
+04-18 owns registry repair/measurement, 04-19 independent review, and 04-20 final
+source/performance binding and authentic human observations. No live acceptance
+hash, requirement status, old judgment or Phase 3 result is promoted here.
+
 Prepared 2026-09-11 by 04-15 Task 1. **Approved in 04-15 Task 2:** the user replied `approved` on 2026-09-11
 to the exact proposal below. DECISIONS.json records its provenance and limits.
 Approval authorizes implementation; it is not implementation or live evidence. Existing decisions remain verbatim in

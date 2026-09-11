@@ -1,0 +1,88 @@
+{
+  "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension/toggle.test.js test/extension/popup-recovery.test.js test/extension/failure-seam.test.js test/extension/worker-integrity.test.js test/extension/toolbar-popup.test.js test/extension/preference-outcome.test.js",
+  "exitCode": 0,
+  "testFiles": 6,
+  "passed": 364,
+  "failed": 0,
+  "durationSeconds": 16.29,
+  "rawOutput": "\n RUN  v4.1.11 /Users/mike/code/zhroma\n\n\n Test Files  6 passed (6)\n      Tests  364 passed (364)\n   Start at  10:26:21\n   Duration  16.29s (transform 193ms, setup 0ms, import 721ms, tests 49.62s, environment 0ms)\n\n",
+  "historicAssertionMarkers": {
+    "worker-apply-unbounded": [
+      "test/extension/failure-seam.test.js:101"
+    ],
+    "worker-apply-frameid": [
+      "test/extension/failure-seam.test.js:112"
+    ],
+    "worker-status-unbounded": [
+      "test/extension/failure-seam.test.js:147"
+    ],
+    "worker-status-frameid": [
+      "test/extension/failure-seam.test.js:154"
+    ],
+    "content-lasterror": [
+      "test/extension/failure-seam.test.js:224"
+    ],
+    "worker-lasterror": [
+      "test/extension/failure-seam.test.js:247"
+    ],
+    "popup-no-revert": [
+      "test/extension/popup-recovery.test.js:159"
+    ],
+    "popup-stays-disabled": [
+      "test/extension/popup-recovery.test.js:160"
+    ],
+    "popup-focus-guard": [
+      "test/extension/popup-recovery.test.js:222"
+    ],
+    "popup-ask-unbounded": [
+      "test/extension/popup-recovery.test.js:291"
+    ],
+    "status-reply-gate": [
+      "test/extension/worker-integrity.test.js:106"
+    ],
+    "request-id-echo": [
+      "test/extension/worker-integrity.test.js:147",
+      "test/extension/worker-integrity.test.js:163"
+    ],
+    "popup-copy-fallback": [
+      "test/extension/worker-integrity.test.js:202"
+    ],
+    "popup-valid-gate": [
+      "test/extension/worker-integrity.test.js:223"
+    ],
+    "diagnosis-pairing": [
+      "test/extension/worker-integrity.test.js:427"
+    ],
+    "tabs-onremoved-listener": [
+      "test/extension/toolbar-popup.test.js:97"
+    ],
+    "tabs-onremoved-delete": [
+      "test/extension/toolbar-popup.test.js:116"
+    ],
+    "status-catch-reports-unavailable": [
+      "test/extension/toolbar-popup.test.js:427"
+    ],
+    "generation-counter": [
+      "test/extension/toolbar-popup.test.js:528"
+    ],
+    "project-queue": [
+      "test/extension/toolbar-popup.test.js:532"
+    ],
+    "project-guard-after-status": [
+      "test/extension/toolbar-popup.test.js:577"
+    ],
+    "project-guard-after-preference": [
+      "test/extension/toolbar-popup.test.js:606"
+    ],
+    "apply-action-guard": [
+      "test/extension/toolbar-popup.test.js:631"
+    ],
+    "popup-status-guard": [
+      "test/extension/toolbar-popup.test.js:653"
+    ],
+    "preference-serialization": [
+      "test/extension/toolbar-popup.test.js:1072"
+    ]
+  },
+  "scope": "Actual-source synthetic VM integration. No mutation kill, independent review, full-suite or live acceptance claim."
+}

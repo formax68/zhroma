@@ -125,6 +125,42 @@ test('repeated create-close cycles and reused ids cannot retain or resurrect a d
   expect(world.action(30)).toEqual({ icon: ICON.working, title: COPY.working });
 });
 
+test('a live-tab query failure cannot release an outstanding native action owner', async () => {
+  const { world } = await timedTabs();
+  world.hold('icon', TAB_ID);
+  world.activateTab(TAB_ID);
+  await vi.advanceTimersByTimeAsync(4100);
+  world.hold('query');
+  world.activateTab(TAB_ID);
+  await vi.advanceTimersByTimeAsync(4100);
+  world.unhold('query'); world.release('query');
+  world.activateTab(TAB_ID);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(world.pending('icon', TAB_ID), '[outcome:query-timeout-keeps-native-owner]').toBe(1);
+  world.unhold('icon', TAB_ID); world.release('icon', TAB_ID);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
+});
+
+test('a closed incarnation cannot land its pending native paint on a reused tab id', async () => {
+  const { world } = await timedTabs();
+  world.hold('icon', TAB_ID);
+  world.activateTab(TAB_ID);
+  await vi.advanceTimersByTimeAsync(30);
+  world.closeTab(TAB_ID);
+  world.openTab(TAB_ID);
+  world.unhold('icon', TAB_ID);
+  world.setStored('enabled', false);
+  loadContent(world);
+  world.activateTab(TAB_ID);
+  await vi.advanceTimersByTimeAsync(100);
+  const mark = world.actionLog.length;
+  world.release('icon', TAB_ID);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(world.actionLog.slice(mark), '[outcome:closed-incarnation-no-native-commit]').toEqual([]);
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.off, title: COPY.off });
+});
+
 for (const native of ['write', 'icon', 'title']) {
   test(`terminated worker preserves native ${native} but never executes dead JavaScript`, async () => {
     const { world, worker, content } = await timedTabs();
@@ -388,7 +424,7 @@ test('no receiver reads as unavailable and never as a diagnosis about the view',
   const second = loadPopup(world);
   await settle();
   expect(statusText(second.document)).toBe(COPY.unavailable);
-  expect(world.action()).toEqual({ icon: 'icons/neutral.png', title: COPY.unavailable });
+  expect(world.action(), '[mutant:status-catch-reports-unavailable]').toEqual({ icon: 'icons/neutral.png', title: COPY.unavailable });
   expect(statusText(popup.document)).toBe(COPY.working);
 });
 
@@ -489,11 +525,11 @@ test('a slow earlier reply cannot repaint over a newer projection', async () => 
   expect(world.action()).toEqual({ icon: ICON.neutral, title: COPY.checking });
   // Fails if either `project` recheck is removed: the superseded working reply
   // would reach `applyAction` and paint an artwork the view no longer earns.
-  expect(world.actionLog.filter((entry) => entry.icon === ICON.working || entry.title === COPY.working)).toEqual([]);
+  expect(world.actionLog.filter((entry) => entry.icon === ICON.working || entry.title === COPY.working), '[mutant:generation-counter]').toEqual([]);
   // Fails if the per-tab queue is collapsed: two concurrent projections let the
   // held stale reply land last.
   const icons = world.actionLog.filter((entry) => entry.icon).map((entry) => entry.icon);
-  expect(icons.at(-1)).toBe(ICON.neutral);
+  expect(icons.at(-1), '[mutant:project-queue]').toBe(ICON.neutral);
   expect(world.forbidden).toEqual([]);
 }, 15000);
 
@@ -538,7 +574,7 @@ test('a superseded status reply is discarded before the preference is ever read'
   await settle();
   // The superseded projection stopped at the status recheck: it never reached
   // `readPreference`, so exactly one read — the current projection's — is held.
-  expect(world.pendingReadCount()).toBe(1);
+  expect(world.pendingReadCount(), '[mutant:project-guard-after-status]').toBe(1);
   world.flushReads();
   await settle();
   // One flush is enough precisely because only one projection got that far.
@@ -567,7 +603,7 @@ test('a preference read that lands after a newer invalidation never paints the s
   await wait(500);
   await settle();
   const after = world.actionLog.slice(mark);
-  expect(after.filter((entry) => entry.icon === ICON.working || entry.title === COPY.working)).toEqual([]);
+  expect(after.filter((entry) => entry.icon === ICON.working || entry.title === COPY.working), '[mutant:project-guard-after-preference]').toEqual([]);
   expect(world.action()).toEqual({ icon: ICON.neutral, title: COPY.checking });
   expect(world.forbidden).toEqual([]);
 }, 15000);
@@ -592,7 +628,7 @@ test('a generation bump between the icon and the title write stops the supersede
   const after = world.actionLog.slice(mark);
   // The icon write was already issued and lands; the title is the write that
   // must be refused, because a title is the sentence the agent reads.
-  expect(after.filter((entry) => entry.title === COPY.working)).toEqual([]);
+  expect(after.filter((entry) => entry.title === COPY.working), '[mutant:apply-action-guard]').toEqual([]);
   expect(world.action().title).toBe(COPY.checking);
   expect(world.forbidden).toEqual([]);
 }, 15000);
@@ -614,7 +650,7 @@ test('a superseded popup projection reports the connection line and still shows 
   expect(statusText(popup.document)).toBe(COPY.unavailable);
   // The connection is what went missing, not the preference: the switch still
   // shows the value storage confirmed, and stays operable.
-  expect(control(popup.document).checked).toBe(true);
+  expect(control(popup.document).checked, '[mutant:popup-status-guard]').toBe(true);
   expect(control(popup.document).disabled).toBe(false);
   expect(world.forbidden).toEqual([]);
 }, 15000);
@@ -1033,7 +1069,7 @@ test('two popups asking for opposite values are serialized, and neither inverts 
   const inFlight = [];
   const observe = () => {
     const pending = world.pendingWriteCount();
-    expect(pending, `${pending} preference writes in flight at once`).toBeLessThan(2);
+    expect(pending, `[mutant:preference-serialization] ${pending} preference writes in flight at once`).toBeLessThan(2);
     inFlight.push(pending);
   };
 
@@ -1077,46 +1113,20 @@ test('two popups asking for opposite values are serialized, and neither inverts 
 });
 
 test("a closed tab's per-tab state is released without disturbing its neighbour", async () => {
-  // HALF OF THIS IS A SHAPE GUARD, AND IT SAYS SO RATHER THAN PRETENDING
-  // OTHERWISE. The `tabs` map has no external observable: `stateFor` mints a
-  // fresh entry for an unknown id, so a leaked entry and a released one are
-  // indistinguishable from outside the worker — a reused id gets a generation
-  // no held reply matches either way. Exposing a count would change a shipped
-  // byte and re-invalidate the acceptance binding 04-11 re-established, so the
-  // release is guarded by reading the shipped source, the same idiom this file
-  // already uses for the storage-method allowlist and the icon inventory. It
-  // kills the mutant; it does not prove the map is bounded at runtime.
-  const removals = [...asset('background.js')
-    .matchAll(/chrome\.tabs\.onRemoved\.addListener\(\((\w+)\) => \{([\s\S]*?)\n {2}\}\);/g)];
-  // Two halves, asserted separately on purpose: deleting the registration and
-  // gutting its body are different mutants and must fail distinguishably.
-  expect(removals).toHaveLength(1);
-  const [, parameter, listenerBody] = removals[0];
-  expect(listenerBody).toContain(`tabs.delete(${parameter});`);
-
   const { world } = await twoTabWorld();
   const neighbour = { ...world.action(OTHER_TAB_ID) };
   const beforeClose = world.actionLog.length;
   world.closeTab(TAB_ID);
+  expect(world.retainedWorkerEntries(), '[outcome:closed-state-released]').toBe(1);
   await settle();
-  // Releasing one tab's state leaves the other tab's toolbar exactly as it was.
   expect(world.action(OTHER_TAB_ID)).toEqual(neighbour);
   expect(world.actionLog.length).toBe(beforeClose);
-
-  // A projection for the tab that is gone resolves rather than throwing. What
-  // it writes is the operational connection fact, on the dead tab alone: never
-  // a diagnosis about a view, and never a write against a living neighbour.
-  // (The double does not model Chrome refusing an action write for a closed
-  // tab, so the write is observed here rather than absent.)
-  const beforeProjection = world.actionLog.length;
+  const beforeAttempt = world.actionAttempts.length;
   world.activateTab(TAB_ID);
   await settle();
-  await wait(CONFIRMED);
-  await settle();
-  const projected = world.actionLog.slice(beforeProjection);
-  expect(projected.map((entry) => entry.tabId)).toEqual(projected.map(() => TAB_ID));
-  expect(projected.filter((entry) => entry.icon)).toEqual([{ tabId: TAB_ID, icon: ICON.neutral }]);
-  expect(projected.filter((entry) => entry.title)).toEqual([{ tabId: TAB_ID, title: COPY.unavailable }]);
+  expect(world.retainedWorkerEntries(), '[outcome:dead-event-no-retention]').toBe(1);
+  expect(world.actionAttempts.slice(beforeAttempt), '[outcome:dead-event-no-action-attempt]').toEqual([]);
+  expect(world.actionLog.length).toBe(beforeClose);
   expect(world.action(OTHER_TAB_ID)).toEqual(neighbour);
   expect(world.forbidden).toEqual([]);
 });

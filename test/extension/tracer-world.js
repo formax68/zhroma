@@ -398,7 +398,8 @@ export function createWorld({
     action: {
       setIcon({ tabId, path }) {
         actionAttempts.push({ tabId, icon: path });
-        if (!tabs.some((tab) => tab.id === tabId)) return Promise.reject(new Error('No tab with id'));
+        const targetTab = tabs.find((tab) => tab.id === tabId);
+        if (!targetTab) return Promise.reject(new Error('No tab with id'));
         if (!actionAvailable) return Promise.reject(new Error('Action unavailable'));
         // Chrome refuses artwork the package does not contain, and the refusal
         // is what makes the review's stated impact reachable: the worker's
@@ -406,7 +407,7 @@ export function createWorld({
         // its previous claim about the view.
         if (!PACKAGED_ICONS.has(path)) return Promise.reject(new Error('Icon path is not packaged'));
         const land = () => {
-          if (!tabs.some((tab) => tab.id === tabId)) return false;
+          if (!tabs.includes(targetTab)) return false;
           actions.set(tabId, { ...actions.get(tabId), icon: path });
           actionLog.push({ tabId, icon: path });
           return true;
@@ -424,10 +425,11 @@ export function createWorld({
       },
       setTitle({ tabId, title }) {
         actionAttempts.push({ tabId, title });
-        if (!tabs.some((tab) => tab.id === tabId)) return Promise.reject(new Error('No tab with id'));
+        const targetTab = tabs.find((tab) => tab.id === tabId);
+        if (!targetTab) return Promise.reject(new Error('No tab with id'));
         if (!actionAvailable) return Promise.reject(new Error('Action unavailable'));
         return new Promise((resolve, reject) => schedule('title', () => {
-          if (!tabs.some((tab) => tab.id === tabId)) { reject(new Error('No tab with id')); return; }
+          if (!tabs.includes(targetTab)) { reject(new Error('No tab with id')); return; }
           actions.set(tabId, { ...actions.get(tabId), title });
           actionLog.push({ tabId, title });
           resolve();

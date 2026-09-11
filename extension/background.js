@@ -60,6 +60,7 @@
 
   const tabs = new Map();
   let requestCounter = 0;
+  let projectionCounter = 0;
   // One writer, one queue. Two popups asking for opposite values are applied in
   // arrival order, and the last request is the one that survives.
   const preferenceQueue = [];
@@ -91,13 +92,13 @@
   function stateFor(tabId) {
     let state = tabs.get(tabId);
     if (state === undefined) {
-      state = { generation: 0, queue: Promise.resolve() };
+      state = { generation: 0, pending: null, observing: false, actionPending: null, actionRunning: false, reconcile: false };
       tabs.set(tabId, state);
     }
     return state;
   }
 
-  const invalidate = (tabId) => { const state = stateFor(tabId); state.generation += 1; return state.generation; };
+  const invalidate = (tabId) => { const state = stateFor(tabId); state.generation = ++projectionCounter; return state.generation; };
   const generationOf = (tabId) => (tabs.has(tabId) ? tabs.get(tabId).generation : -1);
 
   // --- the one persisted boolean --------------------------------------------
@@ -250,44 +251,101 @@
     return { applied: reply.applied, status: reply.diagnosis, reason: reply.reason };
   }
 
-  async function applyAction(tabId, result, generation) {
-    // Always tab-scoped. A global diagnostic would leak one tab's state onto
-    // every other tab, including tabs this extension never ran in.
-    const key = statusKey(result.status, result.reason);
+  const owns = (tabId, state, generation) => tabs.get(tabId) === state && state.generation === generation;
+
+  function reconcileIfNeeded(tabId, state) {
+    if (tabs.get(tabId) === state && state.reconcile && !state.observing
+      && !state.actionRunning && state.actionPending === null && state.pending === null) project(tabId);
+  }
+
+  async function liveTab(tabId, expires) {
     try {
-      await chrome.action.setIcon({ tabId, path: ICONS[result.status] });
-      if (generationOf(tabId) !== generation) return;
-      await chrome.action.setTitle({ tabId, title: TITLES[key] });
-    } catch { /* the tab closed or the action is unavailable */ }
+      // Only identity is consumed. No URL, title, or tabs permission is needed.
+      const found = await bounded(() => chrome.tabs.query({}), expires);
+      return Array.isArray(found) && found.some((tab) => tab.id === tabId);
+    } catch { return false; }
+  }
+
+  function applyAction(tabId, result, generation, expires) {
+    const state = tabs.get(tabId);
+    if (state === undefined || !owns(tabId, state, generation) || Date.now() >= expires) return Promise.resolve();
+    return new Promise((resolve) => {
+      // One native operation and one latest candidate per tab. Superseded
+      // callers stop observing; they never release the native operation.
+      if (state.actionPending !== null) state.actionPending.resolve();
+      state.actionPending = { result, generation, expires, resolve };
+      drainActions(tabId, state);
+    });
+  }
+
+  async function drainActions(tabId, state) {
+    if (state.actionRunning || tabs.get(tabId) !== state) return;
+    const work = state.actionPending;
+    if (work === null) return;
+    state.actionPending = null;
+    state.actionRunning = true;
+    try {
+      if (!owns(tabId, state, work.generation) || Date.now() >= work.expires) return;
+      await chrome.action.setIcon({ tabId, path: ICONS[work.result.status] });
+      if (!owns(tabId, state, work.generation) || Date.now() >= work.expires) return;
+      await chrome.action.setTitle({ tabId, title: TITLES[statusKey(work.result.status, work.result.reason)] });
+    } catch { /* a closed tab or unavailable native action is not a diagnosis */ }
+    finally {
+      state.actionRunning = false;
+      work.resolve();
+      if (tabs.get(tabId) === state) {
+        if (!owns(tabId, state, work.generation) || Date.now() >= work.expires) state.reconcile = true;
+        if (state.actionPending !== null) drainActions(tabId, state);
+        reconcileIfNeeded(tabId, state);
+      }
+    }
   }
 
   function project(tabId) {
-    const expires = Date.now() + WORKER_REQUEST_TIMEOUT_MS;
-    const generation = invalidate(tabId);
     const state = stateFor(tabId);
-    // Serialized per tab so a slow earlier reply cannot repaint over a later
-    // one, with the generation rechecked after every await.
-    state.queue = state.queue.then(async () => {
-      const result = await requestStatus(tabId, generation, expires);
-      if (result === null || generationOf(tabId) !== generation) return;
-      // The preference is re-read rather than remembered: the worker holds no
-      // state that survives its own termination.
-      const enabled = await bounded(readPreference, expires);
-      if (generationOf(tabId) !== generation) return;
-      await applyAction(tabId, operational(result, enabled), generation);
-    }).catch(() => {});
-    return state.queue;
+    const generation = invalidate(tabId);
+    state.reconcile = false;
+    // Coalescing retains only the latest scheduling deadline. Reads and status
+    // replies may be abandoned; a native action keeps its separate ownership.
+    state.pending = { generation, expires: Date.now() + WORKER_REQUEST_TIMEOUT_MS };
+    drainProjections(tabId, state);
+  }
+
+  async function drainProjections(tabId, state) {
+    if (state.observing) return;
+    state.observing = true;
+    try {
+      while (tabs.get(tabId) === state && state.pending !== null) {
+        const { generation, expires } = state.pending;
+        state.pending = null;
+        if (!await liveTab(tabId, expires)) {
+          // Losing an observation cannot discard a physical action owner.
+          if (owns(tabId, state, generation) && !state.actionRunning) tabs.delete(tabId);
+          continue;
+        }
+        if (!owns(tabId, state, generation)) continue;
+        const result = await requestStatus(tabId, generation, expires);
+        if (result === null || !owns(tabId, state, generation)) continue;
+        const enabled = await bounded(readPreference, expires);
+        if (!owns(tabId, state, generation) || Date.now() >= expires) continue;
+        await bounded(() => applyAction(tabId, operational(result, enabled), generation, expires), expires);
+      }
+    } finally {
+      state.observing = false;
+      reconcileIfNeeded(tabId, state);
+    }
   }
 
   async function popupStatus(requestId, expires) {
     const tab = await activeTab(expires);
     if (tab === null) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));
+    if (!await liveTab(tab.id, expires)) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));
     const generation = invalidate(tab.id);
     const result = await requestStatus(tab.id, generation, expires);
     const enabled = pendingWrite !== null ? null : await bounded(readPreference, expires);
     if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);
     const projected = operational(result, enabled);
-    await bounded(() => applyAction(tab.id, projected, generation), expires);
+    await bounded(() => applyAction(tab.id, projected, generation, expires), expires);
     return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,
       enabled: pendingWrite !== null ? null : enabled };
   }
@@ -329,9 +387,9 @@
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (isExact(message, ['type']) && message.type === 'status-invalidated' && fromContent(sender)) {
-      const done = () => sendResponse({ type: 'status-invalidated', accepted: true });
-      project(sender.tab.id).then(done, done);
-      return true;
+      project(sender.tab.id);
+      sendResponse({ type: 'status-invalidated', accepted: true });
+      return undefined;
     }
     if (isExact(message, ['type', 'requestId']) && message.type === 'popup-status'
       && isRequestId(message.requestId) && fromPopup(sender)) {
@@ -363,6 +421,12 @@
   });
 
   chrome.tabs.onRemoved.addListener((tabId) => {
+    const state = tabs.get(tabId);
+    if (state !== undefined) {
+      state.pending = null;
+      if (state.actionPending !== null) state.actionPending.resolve();
+      state.actionPending = null;
+    }
     tabs.delete(tabId);
   });
 })();
