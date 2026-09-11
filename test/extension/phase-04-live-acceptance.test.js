@@ -19,6 +19,7 @@
 // Everything here validates PREPARATION. A passing run of this file is not,
 // and can never become, the human observation it is preparing for.
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
@@ -135,9 +136,19 @@ function priorSourceFacts() {
   const records = [...markdown.matchAll(/^```json\r?\n([\s\S]*?)\r?\n```\s*$/gm)];
   requireEvidence(records.length === 1, 'prior-single-record');
   const prior = JSON.parse(records[0][1]);
+  const path = '.planning/phases/03-the-tint-survives-everything/03-LIVE-ACCEPTANCE.md';
+  const git = (...args) => execFileSync('git', args, { cwd: fileURLToPath(root), encoding: 'utf8' }).trim();
+  const observationRevision = git('log', '-1', '--format=%H', '--', path);
+  requireEvidence(git('show', `${observationRevision}:${path}`) === markdown.trim(), 'prior-uncommitted-observations');
+  const runtimeRevision = git('log', '-1', '--format=%H', observationRevision, '--', 'extension');
+  for (const [name, hash] of Object.entries(prior.runtime_sha256)) {
+    const bytes = execFileSync('git', ['show', `${runtimeRevision}:extension/${name}`], { cwd: fileURLToPath(root) });
+    requireEvidence(createHash('sha256').update(bytes).digest('hex') === hash, 'prior-runtime-hashes');
+  }
   return {
     phase: '03-the-tint-survives-everything',
-    revision: '382cc881334aa7edf2103150bd8fe663236b6357',
+    revision: runtimeRevision,
+    observation_revision: observationRevision,
     status: prior.status,
     checks_passed: prior.checks.filter((row) => row.status === 'pass').length,
     checks_pending: prior.checks.filter((row) => row.status === 'pending').length,
@@ -147,6 +158,10 @@ function priorSourceFacts() {
   };
 }
 const PRIOR = priorSourceFacts();
+
+// RED seam: canonical documents historically had no promotion gate. Replaced
+// after the false-completion counterexamples are measured below.
+export function validateCanonicalPromotion() { return true; }
 
 export function validatePhase04Acceptance(record, performance = loadPerformance(), { now = new Date(), timeZone = 'Asia/Nicosia' } = {}) {
   requireEvidence(now instanceof Date && Number.isFinite(now.getTime()), 'clock');
@@ -340,6 +355,19 @@ test('English regional evidence cannot satisfy the non-English scenario', () => 
   const record = example(true);
   record.checks.find((row) => row.id === 'language-icon-copy').language_context = 'en-GB';
   expect(() => validatePhase04Acceptance(record, acceptedPerformance(), CLOCK)).toThrow(/language-context/);
+});
+
+const canonicalRequirements = () => readFileSync(new URL('.planning/REQUIREMENTS.md', root), 'utf8');
+test.each(['checkbox', 'Complete'])('canonical promotion rejects a false %s without live evidence', (claim) => {
+  const markdown = canonicalRequirements();
+  const forged = claim === 'checkbox'
+    ? markdown.replace('- [ ] **FAIL-01**:', '- [x] **FAIL-01**:')
+    : markdown.replace(/(\| FAIL-01 \| Phase 4 \| )[^|]+/, '$1Complete ');
+  expect(forged).not.toBe(markdown);
+  expect(() => validateCanonicalPromotion(forged, example(), {
+    codeReviewReady: true, securityReviewReady: true, technicalTestsPassed: true,
+    historicResetAcknowledged: true,
+  }, acceptedPerformance(), CLOCK)).toThrow(/canonical-promotion/);
 });
 
 test.each([
