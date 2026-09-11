@@ -278,8 +278,8 @@ Planning evidence: [failure analysis](phases/04-honest-failure-and-an-off-switch
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Exact source-to-ZIP-to-extracted-source tracer and rejection controls.
-- [ ] 05-02-PLAN.md — Listing, reviewer instructions, privacy policy and disclosure dossier.
+- [x] 05-01-PLAN.md — Exact source-to-ZIP-to-extracted-source tracer and rejection controls.
+- [x] 05-02-PLAN.md — Listing, reviewer instructions, privacy policy and disclosure dossier.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -316,7 +316,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. First Tint on a Real View | 3/3 | Complete    | 2026-09-09 |
 | 3. The Tint Survives Everything | 3/4 | human_needed; remaining UAT skipped by user |  |
 | 4. Honest Failure and an Off Switch | 20/20 | human_needed; technical execution complete |  |
-| 5. Published | 0/7 | Planned    |  |
+| 5. Published | 2/7 | In Progress|  |
 
 ## Requirement Coverage
 

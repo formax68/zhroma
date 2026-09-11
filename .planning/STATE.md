@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Published
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-09-11T12:43:11.832Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-09-11T12:58:51.875Z"
 last_activity: 2026-09-11
 last_activity_desc: Phase 05 execution started
-state_head: d5de874b3fe2cd8061396d2ae6cce45273754444
+state_head: 33c7e75b5290e23e6bb5ed8abeade64c834de7ea
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 49
-  completed_plans: 42
+  completed_plans: 44
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 05 (Published) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-09-11 — Phase 05 execution started
 
@@ -83,6 +83,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains human_needed wit
 | Phase 04 P13 | 21 min | 3 tasks | 3 files |
 | Phase 04 P14 | 19 min | 2 tasks | 3 files |
 | Phase 05 P01 | 25 min | 2 tasks | 3 files |
+| Phase 05 P02 | 8 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -142,6 +143,9 @@ Recent decisions affecting current work:
 - [Phase 05]: Archive entries are preflighted by parsing the ZIP central directory with Node built-ins before any extractor writes to disk — Parsing a listing printed by the extractor would mean trusting the very tool the preflight exists to check
 - [Phase 05]: Generated release artifacts are refused inside the repository or extension tree, and an occupied output location is re-validated or refused, never overwritten — D-13 keeps packaged bytes equal to repository source; D-14 forbids silently reusing stale source-bound evidence
 - [Phase 05]: The release label comes from the extension manifest version, never the development package version — The store treats the manifest version as the release identity; the root package version is unrelated dev metadata
+- [Phase 05]: Zhroma DOES handle user data under Chrome FAQ Q2/Q4 (reading rendered website content is using it), so a privacy policy is required and no document claims the extension accesses nothing — FAQ Q3 states local-only processing is not a disclosure exemption; this is the evidence that justifies D-11 retaining STORE-04
+- [Phase 05]: The Limited Use affirmative statement is adapted rather than copied verbatim — The policy example names information received from Google APIs, which Zhroma never receives; pasting it would publish a false claim
+- [Phase 05]: Store item name and short description are authored in release/listing.md and installed into the manifest by plan 05-03 Task 2 — Editing extension/manifest.json here would change shipped bytes and invalidate the 05-01 release candidate for no gain
 
 ### Pending Todos
 
@@ -159,6 +163,7 @@ CR-01/CR-02 repairs and independent reverification are complete; 403 tests and f
 - Store submission has latency and the direct predecessor was delisted at this step. Register the developer account early; budget one rejection-and-resubmit cycle in Phase 5.
 - Phase 2 product evidence now passes: user clarified both G-02-1 reports meant opening Zendesk then clicking a view, including from a fresh tab. Direct-document controls passed; no runtime repair. UAT 11 live passes and 12 explicit decisions. Independent code review clean; security reassessment 10/10 closed. Independent goal verification passed 25/25. Combined tests 301 passed and post-reconciliation evidence validator 56 passed.
 - ACK-04-01 is acknowledged as of 2026-09-11. The fourteen observations attested on 2026-09-10 remain history and do not count toward repaired-byte acceptance. The current-source walkthrough has 14 passes and 3 pending checks: language-icon-copy and structure-copy under AR-04-01, plus english-regional-locale explicitly deferred by the user as non-blocking.
+- Phase 05 submission gate: release/policy-applicability.md is UNRESOLVED on in-product prominent disclosure and affirmative consent applicability. Blocks 05-07 submission until the real Chrome install prompt and the live Privacy practices tab are observed.
 
 ### Roadmap Evolution
 
@@ -176,8 +181,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-11T12:43:05.036Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-09-11T12:58:51.773Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
