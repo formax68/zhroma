@@ -1,12 +1,12 @@
 // @vitest-environment node
 // Joint outcomes through shipped worker/content/popup contexts. Synthetic only.
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import {
   COPY, TAB_ID, TICKET_TOKENS, closeWindows, control, createWorld, flip,
   loadContent, loadPopup, loadWorker, markers, settle, statusText,
 } from './tracer-world.js';
 
-afterEach(closeWindows);
+afterEach(async () => { vi.useRealTimers(); await closeWindows(); });
 const tinted = ['Urgent', 'High', 'Normal', 'Low'];
 
 async function boot(initial) {
@@ -18,6 +18,92 @@ async function boot(initial) {
   await settle();
   control(popup.document).focus();
   return { world, content, popup };
+}
+
+// Fake time controls native hops independently; the port fallback is deliberately
+// later than both shipped deadlines. Assertions inspect the actual worker answer.
+async function timedBoot(initial) {
+  vi.useFakeTimers();
+  const world = createWorld({ stored: { enabled: initial }, portCloseMs: 20000 });
+  loadWorker(world);
+  const content = loadContent(world);
+  await vi.advanceTimersByTimeAsync(250);
+  const popup = loadPopup(world);
+  await vi.advanceTimersByTimeAsync(50);
+  return { world, content, popup };
+}
+function change(popup, value) {
+  control(popup.document).checked = value;
+  control(popup.document).dispatchEvent(new popup.window.Event('change'));
+}
+const answered = (world, type = 'set-enabled') => world.traffic.filter((entry) =>
+  entry.direction === 'response' && entry.payload.type === type);
+
+for (const initial of [true, false]) {
+  for (const stage of ['worker-read', 'query', 'icon', 'title']) {
+    test(`absolute admission deadline from ${initial} with independently parked ${stage}`, async () => {
+      const { world, popup } = await timedBoot(initial);
+      world.hold(stage);
+      const start = Date.now();
+      if (stage === 'icon' || stage === 'title') popup.window.dispatchEvent(new popup.window.Event('focus'));
+      else change(popup, !initial);
+      await vi.advanceTimersByTimeAsync(4010);
+      const responses = answered(world, stage === 'icon' || stage === 'title' ? 'popup-status' : 'set-enabled')
+        .filter((entry) => entry.at >= start);
+      expect(responses.length, `[outcome:deadline-${stage}-${initial}]`).toBeGreaterThan(0);
+      expect(responses[0].at - start, '[outcome:operation-wide-deadline]').toBeLessThanOrEqual(4001);
+      if (stage === 'worker-read' || stage === 'query') {
+        expect(responses[0].payload.saved).toBe(true);
+        expect(control(popup.document).checked, '[outcome:confirmed-write-checkbox]').toBe(!initial);
+        expect(control(popup.document).disabled).toBe(false);
+      }
+      world.unhold(stage); world.release(stage);
+      await vi.advanceTimersByTimeAsync(22000);
+      expect(world.forbidden).toEqual([]);
+      expect(vi.getTimerCount(), '[outcome:timer-drain]').toBe(0);
+    });
+  }
+  for (const mode of ['deferred', 'callback-held']) {
+    test(`native ${mode} from ${initial} remains unknown through expiry and fresh recovery`, async () => {
+      const { world, popup } = await timedBoot(initial);
+      world.setWriteMode(mode);
+      const start = Date.now();
+      change(popup, !initial);
+      await vi.advanceTimersByTimeAsync(10);
+      const queued = world.popupChrome.runtime.sendMessage({ type: 'set-enabled', requestId: 999, enabled: initial });
+      await vi.advanceTimersByTimeAsync(4010);
+      expect(answered(world)[0]?.payload.saved, '[outcome:false-timeout-failure]').toBe(null);
+      expect(answered(world)[0].at - start).toBeLessThanOrEqual(4001);
+      expect(await queued).toMatchObject({ saved: false, enabled: null });
+      expect(world.writeLog, '[outcome:expired-request-dispatch]').toHaveLength(1);
+      expect(Math.max(...world.writeObservations), '[outcome:physical-write-overlap]').toBe(1);
+      expect(statusText(popup.document)).toBe(COPY.unknown);
+      expect(control(popup.document).indeterminate).toBe(true);
+      expect(control(popup.document).disabled).toBe(true);
+      expect(world.snapshot()).toEqual({ enabled: mode === 'deferred' ? initial : !initial });
+      const reopened = loadPopup(world);
+      await vi.advanceTimersByTimeAsync(50);
+      expect(control(reopened.document).indeterminate, '[outcome:pending-reopen-mixed]').toBe(true);
+      world.commitWrites();
+      await vi.advanceTimersByTimeAsync(50);
+      reopened.window.dispatchEvent(new reopened.window.Event('focus'));
+      await vi.advanceTimersByTimeAsync(50);
+      expect(control(reopened.document).indeterminate, '[outcome:commit-is-not-callback]').toBe(true);
+      world.releaseWriteCallbacks(); world.setWriteMode('immediate');
+      await vi.advanceTimersByTimeAsync(50);
+      reopened.window.dispatchEvent(new reopened.window.Event('focus'));
+      await vi.advanceTimersByTimeAsync(50);
+      expect(control(reopened.document).checked).toBe(!initial);
+      expect(control(reopened.document).disabled).toBe(false);
+      change(reopened, initial);
+      await vi.advanceTimersByTimeAsync(100);
+      expect(world.snapshot()).toEqual({ enabled: initial });
+      expect(world.writeLog).toEqual([{ enabled: !initial }, { enabled: initial }]);
+      await vi.advanceTimersByTimeAsync(22000);
+      expect(world.forbidden).toEqual([]);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+  }
 }
 
 function observe({ world, content, popup }) {

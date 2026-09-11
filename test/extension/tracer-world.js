@@ -49,6 +49,7 @@ export const COPY = {
   off: 'Tinting is off',
   notSaved: 'Zhroma could not save that setting',
   notApplied: 'Setting saved, but this view did not update',
+  unknown: 'Zhroma could not confirm that setting',
 };
 
 // Five decided shape treatments. Three product diagnoses map to three distinct
@@ -135,6 +136,25 @@ export function createWorld({
   const storage = new Map(stored === null ? [] : Object.entries(stored));
   const pendingReads = [];
   const pendingWrites = [];
+  const pendingCallbacks = [];
+  const holds = new Set();
+  const held = new Map();
+  const ownerReadModes = new Map();
+  const physicalWrites = new Set();
+  const writeObservations = [];
+  const stageNames = ['worker-read', 'content-read', 'query', 'icon', 'title', 'popup-response', 'content-response'];
+  function schedule(stage, work) {
+    if (!holds.has(stage)) { work(); return; }
+    if (!held.has(stage)) held.set(stage, []);
+    held.get(stage).push(work);
+  }
+  function checkMode(mode, allowed) {
+    if (!allowed.includes(mode)) throw new Error(`Unknown harness mode: ${mode}`);
+    return mode;
+  }
+  const readModes = ['immediate', 'deferred', 'rejected', 'rejected-with-values', 'throws', 'malformed'];
+  const writeModes = ['immediate', 'deferred', 'callback-held', 'rejected', 'throws'];
+  checkMode(readMode, readModes); checkMode(writeMode, writeModes);
   const writeLog = [];
   const tabs = [{ id: TAB_ID, active: true, currentWindow: true }];
   const replyQueue = [...replyDelays];
@@ -167,7 +187,7 @@ export function createWorld({
 
   const deny = (name) => function () { forbidden.push(name); throw new Error('Forbidden runtime channel'); };
   const denyStore = (name) => new Proxy({}, { get() { forbidden.push(name); throw new Error('Forbidden store access'); } });
-  const record = (direction, payload) => { traffic.push({ direction, payload: structuredClone(payload) }); return payload; };
+  const record = (direction, payload) => { traffic.push({ direction, at: Date.now(), payload: structuredClone(payload) }); return payload; };
 
   // Deliver exactly like Chrome: asynchronously, resolving only when a listener
   // answers, rejecting when nothing is listening or the channel closes unused.
@@ -187,8 +207,11 @@ export function createWorld({
           settled = true;
           record('response', value);
           const captured = structuredClone(value);
-          if (responseDelay > 0) setTimeout(() => { resolve(captured); }, responseDelay);
-          else resolve(captured);
+          const stage = sender.url === POPUP_URL ? 'popup-response' : 'content-response';
+          schedule(stage, () => {
+            if (responseDelay > 0) setTimeout(() => { resolve(captured); }, responseDelay);
+            else resolve(captured);
+          });
         };
         for (const listener of listeners) {
           const result = listener(structuredClone(message), structuredClone(sender), sendResponse);
@@ -236,10 +259,11 @@ export function createWorld({
     const addListener = (listener) => { storageListeners.push({ owner, listener }); };
     const local = {
       get(defaults, callback) {
+        const mode = ownerReadModes.get(owner === 'worker' ? 'worker' : 'content') ?? currentReadMode;
+        const values = {};
+        for (const key of Object.keys(defaults)) values[key] = storage.has(key) ? storage.get(key) : defaults[key];
         const resolveRead = () => {
-          const values = {};
-          for (const key of Object.keys(defaults)) values[key] = storage.has(key) ? storage.get(key) : defaults[key];
-          if (currentReadMode === 'rejected') {
+          if (mode === 'rejected') {
             chromeObject.runtime.lastError = { message: 'Storage read failed' };
             callback(undefined);
             chromeObject.runtime.lastError = undefined;
@@ -250,17 +274,17 @@ export function createWorld({
           // shape in which the shipped `lastError` check is load-bearing: with
           // `undefined` the falsy-values path produces the same dormancy, so
           // deleting the check changes nothing (04-REVIEW WR-03).
-          if (currentReadMode === 'rejected-with-values') {
+          if (mode === 'rejected-with-values') {
             chromeObject.runtime.lastError = { message: 'Storage read failed' };
             callback(values);
             chromeObject.runtime.lastError = undefined;
             return;
           }
-          callback(values);
+          callback(mode === 'malformed' ? { enabled: 'invalid' } : values);
         };
-        if (currentReadMode === 'deferred') pendingReads.push(resolveRead);
-        else if (currentReadMode === 'throws') throw new Error('Storage unavailable');
-        else setTimeout(resolveRead, 0);
+        if (mode === 'deferred') pendingReads.push(resolveRead);
+        else if (mode === 'throws') throw new Error('Storage unavailable');
+        else setTimeout(() => schedule(owner === 'worker' ? 'worker-read' : 'content-read', resolveRead), 0);
       },
     };
     if (!writable) {
@@ -272,13 +296,20 @@ export function createWorld({
     }
     local.set = function set(items, callback) {
       writeLog.push(structuredClone(items));
+      const mode = currentWriteMode;
+      if (mode === 'throws') throw new Error('Storage unavailable');
+      const operation = {};
+      physicalWrites.add(operation);
+      writeObservations.push(physicalWrites.size);
+      const finish = () => {
+        physicalWrites.delete(operation);
+        writeObservations.push(physicalWrites.size);
+        if (mode === 'rejected') chromeObject.runtime.lastError = { message: 'Storage write failed' };
+        if (typeof callback === 'function') callback();
+        chromeObject.runtime.lastError = undefined;
+      };
       const commit = () => {
-        if (currentWriteMode === 'rejected') {
-          chromeObject.runtime.lastError = { message: 'Storage write failed' };
-          if (typeof callback === 'function') callback();
-          chromeObject.runtime.lastError = undefined;
-          return;
-        }
+        if (mode === 'rejected') { finish(); return; }
         const changes = {};
         for (const [key, value] of Object.entries(items)) {
           const had = storage.has(key);
@@ -287,11 +318,11 @@ export function createWorld({
           storage.set(key, value);
           changes[key] = had ? { oldValue, newValue: value } : { newValue: value };
         }
-        if (typeof callback === 'function') callback();
+        if (mode === 'callback-held' || mode === 'deferred') pendingCallbacks.push(finish);
+        else finish();
         if (Object.keys(changes).length > 0) announceChange(changes);
       };
-      if (currentWriteMode === 'deferred') pendingWrites.push(commit);
-      else if (currentWriteMode === 'throws') throw new Error('Storage unavailable');
+      if (mode === 'deferred') pendingWrites.push(commit);
       else setTimeout(commit, 0);
     };
     return { onChanged: { addListener }, local };
@@ -336,7 +367,8 @@ export function createWorld({
       onRemoved: { addListener: (listener) => { tabsEvents.removed.push(listener); } },
       query() {
         if (!queryAvailable) return Promise.reject(new Error('Tabs unavailable'));
-        return Promise.resolve(tabs.filter((tab) => tab.active && tab.currentWindow).map((tab) => ({ ...tab })));
+        const captured = tabs.filter((tab) => tab.active && tab.currentWindow).map((tab) => ({ ...tab }));
+        return new Promise((resolve) => schedule('query', () => resolve(captured)));
       },
       sendMessage(tabId, message, options) {
         record('to-content', message);
@@ -377,14 +409,15 @@ export function createWorld({
           const delay = currentActionDelay;
           return new Promise((resolve) => { setTimeout(() => { land(); resolve(); }, delay); });
         }
-        land();
-        return Promise.resolve();
+        return new Promise((resolve) => schedule('icon', () => { land(); resolve(); }));
       },
       setTitle({ tabId, title }) {
         if (!actionAvailable) return Promise.reject(new Error('Action unavailable'));
-        actions.set(tabId, { ...actions.get(tabId), title });
-        actionLog.push({ tabId, title });
-        return Promise.resolve();
+        return new Promise((resolve) => schedule('title', () => {
+          actions.set(tabId, { ...actions.get(tabId), title });
+          actionLog.push({ tabId, title });
+          resolve();
+        }));
       },
     },
   };
@@ -397,7 +430,15 @@ export function createWorld({
     action: (tabId = TAB_ID) => actions.get(tabId),
     flushReads() { for (const read of pendingReads.splice(0)) read(); },
     pendingReadCount: () => pendingReads.length,
-    flushWrites() { for (const write of pendingWrites.splice(0)) write(); },
+    flushWrites() { for (const write of pendingWrites.splice(0)) write(); for (const callback of pendingCallbacks.splice(0)) callback(); },
+    commitWrites() { for (const write of pendingWrites.splice(0)) write(); },
+    releaseWriteCallbacks() { for (const callback of pendingCallbacks.splice(0)) callback(); },
+    physicalWriteCount: () => physicalWrites.size,
+    writeObservations,
+    hold(stage) { checkMode(stage, stageNames); holds.add(stage); },
+    unhold(stage) { checkMode(stage, stageNames); holds.delete(stage); },
+    release(stage) { checkMode(stage, stageNames); for (const work of (held.get(stage) ?? []).splice(0)) work(); },
+    pending(stage) { checkMode(stage, stageNames); return (held.get(stage) ?? []).length; },
     pendingWriteCount: () => pendingWrites.length,
     writeLog,
     setStored(key, value) { storage.set(key, value); },
@@ -405,8 +446,8 @@ export function createWorld({
     /** Everything persisted, as a plain object — the browser's on-disk state. */
     snapshot: () => Object.fromEntries(storage),
     storageKeys: () => [...storage.keys()].sort(),
-    setReadMode(mode) { currentReadMode = mode; },
-    setWriteMode(mode) { currentWriteMode = mode; },
+    setReadMode(mode, owner) { checkMode(mode, readModes); if (owner) ownerReadModes.set(checkMode(owner, ['worker', 'content']), mode); else currentReadMode = mode; },
+    setWriteMode(mode) { currentWriteMode = checkMode(mode, writeModes); },
     /** Hold an accepted-but-unanswered channel open for `ms` before closing it. */
     setPortCloseMs(ms) { currentPortCloseMs = ms; },
     disconnectContent(tabId = TAB_ID) { disconnected.add(tabId); listenersFor(tabId).splice(0); },
@@ -487,7 +528,7 @@ export function loadWorker(world) {
     console: { log: world.deny('console.log'), warn: world.deny('console.warn'), error: world.deny('console.error'), info: world.deny('console.info') },
   };
   const context = createContext({ ...sentinels, chrome: world.workerChrome,
-    setTimeout, clearTimeout, Promise, Object, JSON, Map, Number, Array,
+    setTimeout, clearTimeout, Promise, Object, JSON, Map, Number, Array, Date,
   }, { codeGeneration: { strings: false, wasm: false } });
   const before = Object.keys(context);
   new Script(asset('background.js'), { filename: 'background.js' }).runInContext(context);
