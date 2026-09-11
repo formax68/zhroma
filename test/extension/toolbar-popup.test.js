@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { createContext, Script } from 'node:vm';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { PREFERENCE_CONTRACT, createChromeHarness } from './chrome-harness.js';
 import {
   CONFIRMED, COPY, DOCUMENT_ID, EXTENSION_ID, ICON, MAX_REQUEST_ID, OTHER_TAB_ID, POPUP_PATH, POPUP_URL,
@@ -24,7 +24,139 @@ import {
 
 const manifest = JSON.parse(asset('manifest.json'));
 
-afterEach(closeWindows);
+afterEach(async () => { vi.useRealTimers(); await closeWindows(); });
+
+async function timedTabs() {
+  vi.useFakeTimers();
+  const world = createWorld({ stored: { enabled: true }, portCloseMs: 20000 });
+  const worker = loadWorker(world);
+  world.openTab(OTHER_TAB_ID);
+  const content = loadContent(world);
+  loadContent(world, { tabId: OTHER_TAB_ID });
+  await vi.advanceTimersByTimeAsync(250);
+  return { world, worker, content };
+}
+
+for (const stage of ['icon', 'title']) {
+  test(`late native ${stage} preserves exclusion and reconciles newest projection`, async () => {
+    const { world, content } = await timedTabs();
+    world.hold(stage, TAB_ID);
+    const start = world.actionAttempts.length;
+    world.activateTab(TAB_ID);
+    await vi.advanceTimersByTimeAsync(30);
+    expect(world.pending(stage, TAB_ID)).toBe(1);
+    content.document.querySelector('table').remove();
+    await vi.advanceTimersByTimeAsync(4200);
+    const waitingPopup = loadPopup(world);
+    await vi.advanceTimersByTimeAsync(4010);
+    expect(control(waitingPopup.document).disabled, '[outcome:action-does-not-wedge-popup]').toBe(true);
+    for (let i = 0; i < 40; i++) world.activateTab(TAB_ID);
+    await vi.advanceTimersByTimeAsync(4200);
+    expect(world.pending(stage, TAB_ID), `[outcome:native-${stage}-exclusion]`).toBe(1);
+    expect(world.actionAttempts.slice(start).filter((entry) => stage in entry)).toHaveLength(1);
+    world.activateTab(OTHER_TAB_ID);
+    const popup = loadPopup(world);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(statusText(popup.document)).toBe(COPY.working);
+    expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
+    world.unhold(stage, TAB_ID); world.release(stage, TAB_ID);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(world.action(TAB_ID), `[outcome:late-${stage}-reconciled]`).toEqual({ icon: ICON.neutral, title: COPY.checking });
+    await vi.advanceTimersByTimeAsync(22000);
+    expect(vi.getTimerCount()).toBe(0);
+    expect(world.forbidden).toEqual([]);
+  });
+}
+
+for (const stage of ['worker-read', 'content-response']) {
+  test(`event projection recovers from parked ${stage} without popup or restart`, async () => {
+    const { world, content } = await timedTabs();
+    world.hold(stage);
+    world.activateTab(TAB_ID);
+    await vi.advanceTimersByTimeAsync(30);
+    expect(world.pending(stage)).toBeGreaterThan(0);
+    world.unhold(stage);
+    content.document.querySelector('table').remove();
+    await vi.advanceTimersByTimeAsync(4200);
+    expect(world.action(TAB_ID), `[outcome:event-budget-${stage}]`).toEqual({ icon: ICON.neutral, title: COPY.checking });
+    world.release(stage);
+    await vi.advanceTimersByTimeAsync(22000);
+    expect(world.action(TAB_ID)).toEqual({ icon: ICON.neutral, title: COPY.checking });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+}
+
+for (const stage of ['query', 'worker-read', 'content-response', 'icon', 'title']) {
+  test(`closure during held ${stage} releases entries and forbids stale follow-on paint`, async () => {
+    const { world } = await timedTabs();
+    world.hold(stage);
+    world.activateTab(TAB_ID);
+    await vi.advanceTimersByTimeAsync(30);
+    const before = world.actionLog.length;
+    world.closeTab(TAB_ID);
+    expect(world.retainedWorkerEntries(), '[mutant:tabs-onremoved-listener]').toBe(1);
+    world.unhold(stage); world.release(stage);
+    await vi.advanceTimersByTimeAsync(4200);
+    world.activateTab(TAB_ID);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(world.retainedWorkerEntries(), '[outcome:closed-tab-retention]').toBe(1);
+    expect(world.actionLog.slice(before), '[outcome:closed-tab-committed-paint]').toEqual([]);
+    expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
+    expect(world.forbidden).toEqual([]);
+  });
+}
+
+test('repeated create-close cycles and reused ids cannot retain or resurrect a dead tab', async () => {
+  const { world } = await timedTabs();
+  for (let i = 0; i < 30; i++) {
+    world.openTab(30);
+    world.activateTab(30);
+    await vi.advanceTimersByTimeAsync(20);
+    world.closeTab(30);
+    expect(world.retainedWorkerEntries(), '[mutant:tabs-onremoved-delete]').toBe(2);
+    world.activateTab(30);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(world.retainedWorkerEntries(), '[outcome:repeated-close-retention]').toBe(2);
+  }
+  world.openTab(30);
+  loadContent(world, { tabId: 30 });
+  world.activateTab(30);
+  await vi.advanceTimersByTimeAsync(250);
+  expect(world.action(30)).toEqual({ icon: ICON.working, title: COPY.working });
+});
+
+for (const native of ['write', 'icon', 'title']) {
+  test(`terminated worker preserves native ${native} but never executes dead JavaScript`, async () => {
+    const { world, worker, content } = await timedTabs();
+    if (native === 'write') {
+      world.setWriteMode('deferred');
+      world.popupChrome.runtime.sendMessage({ type: 'set-enabled', requestId: 777, enabled: false }).catch(() => {});
+    } else {
+      world.hold(native, TAB_ID);
+      world.activateTab(TAB_ID);
+    }
+    await vi.advanceTimersByTimeAsync(30);
+    const calls = world.apiLog.filter((entry) => entry.epoch === worker.epochId).length;
+    world.terminateWorker();
+    loadWorker(world);
+    if (native === 'write') { world.commitWrites(); world.releaseWriteCallbacks(); }
+    else {
+      content.document.querySelector('table').remove();
+      world.unhold(native, TAB_ID); world.release(native, TAB_ID);
+    }
+    await vi.advanceTimersByTimeAsync(100);
+    expect(world.apiLog.filter((entry) => entry.epoch === worker.epochId), '[outcome:dead-epoch-api-dispatch]').toHaveLength(calls);
+    if (native === 'write') expect(world.snapshot(), '[outcome:old-native-commit-visible]').toEqual({ enabled: false });
+    else expect(world.actionLog.some((entry) => native in entry)).toBe(true);
+    world.activateTab(TAB_ID);
+    const popup = loadPopup(world);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(statusText(popup.document)).toBe(native === 'write' ? COPY.off : COPY.checking);
+    expect(world.forbidden).toEqual([]);
+    await vi.advanceTimersByTimeAsync(22000);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+}
 
 // --- packaging --------------------------------------------------------------
 

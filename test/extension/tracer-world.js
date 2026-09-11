@@ -118,6 +118,9 @@ export function createWorld({
   const forbidden = [];
   const traffic = [];
   const actionLog = [];
+  const actionAttempts = [];
+  const apiLog = [];
+  const epochs = [];
   const actions = new Map();
   let workerListeners = [];
   // One listener list per tab: a browser has more than one tab, and a per-tab
@@ -143,10 +146,11 @@ export function createWorld({
   const physicalWrites = new Set();
   const writeObservations = [];
   const stageNames = ['worker-read', 'content-read', 'query', 'icon', 'title', 'popup-response', 'content-response'];
-  function schedule(stage, work) {
-    if (!holds.has(stage)) { work(); return; }
-    if (!held.has(stage)) held.set(stage, []);
-    held.get(stage).push(work);
+  function schedule(stage, work, tabId) {
+    const key = holds.has(`${stage}:${tabId}`) ? `${stage}:${tabId}` : stage;
+    if (!holds.has(key)) { work(); return; }
+    if (!held.has(key)) held.set(key, []);
+    held.get(key).push(work);
   }
   function checkMode(mode, allowed) {
     if (!allowed.includes(mode)) throw new Error(`Unknown harness mode: ${mode}`);
@@ -365,9 +369,10 @@ export function createWorld({
       onActivated: { addListener: (listener) => { tabsEvents.activated.push(listener); } },
       onUpdated: { addListener: (listener) => { tabsEvents.updated.push(listener); } },
       onRemoved: { addListener: (listener) => { tabsEvents.removed.push(listener); } },
-      query() {
+      query(options = {}) {
         if (!queryAvailable) return Promise.reject(new Error('Tabs unavailable'));
-        const captured = tabs.filter((tab) => tab.active && tab.currentWindow).map((tab) => ({ ...tab }));
+        const captured = tabs.filter((tab) => (!options.active || tab.active)
+          && (!options.currentWindow || tab.currentWindow)).map((tab) => ({ ...tab }));
         return new Promise((resolve) => schedule('query', () => resolve(captured)));
       },
       sendMessage(tabId, message, options) {
@@ -392,6 +397,8 @@ export function createWorld({
     },
     action: {
       setIcon({ tabId, path }) {
+        actionAttempts.push({ tabId, icon: path });
+        if (!tabs.some((tab) => tab.id === tabId)) return Promise.reject(new Error('No tab with id'));
         if (!actionAvailable) return Promise.reject(new Error('Action unavailable'));
         // Chrome refuses artwork the package does not contain, and the refusal
         // is what makes the review's stated impact reachable: the worker's
@@ -399,25 +406,32 @@ export function createWorld({
         // its previous claim about the view.
         if (!PACKAGED_ICONS.has(path)) return Promise.reject(new Error('Icon path is not packaged'));
         const land = () => {
+          if (!tabs.some((tab) => tab.id === tabId)) return false;
           actions.set(tabId, { ...actions.get(tabId), icon: path });
           actionLog.push({ tabId, icon: path });
+          return true;
         };
         // The write still happens — a native call already issued cannot be
         // recalled — it just lands late, which is what opens the window
         // between the icon and the title that `applyAction` guards.
         if (currentActionDelay > 0) {
           const delay = currentActionDelay;
-          return new Promise((resolve) => { setTimeout(() => { land(); resolve(); }, delay); });
+          return new Promise((resolve, reject) => { setTimeout(() => { if (land()) resolve(); else reject(new Error('No tab with id')); }, delay); });
         }
-        return new Promise((resolve) => schedule('icon', () => { land(); resolve(); }));
+        return new Promise((resolve, reject) => schedule('icon', () => {
+          if (land()) resolve(); else reject(new Error('No tab with id'));
+        }, tabId));
       },
       setTitle({ tabId, title }) {
+        actionAttempts.push({ tabId, title });
+        if (!tabs.some((tab) => tab.id === tabId)) return Promise.reject(new Error('No tab with id'));
         if (!actionAvailable) return Promise.reject(new Error('Action unavailable'));
-        return new Promise((resolve) => schedule('title', () => {
+        return new Promise((resolve, reject) => schedule('title', () => {
+          if (!tabs.some((tab) => tab.id === tabId)) { reject(new Error('No tab with id')); return; }
           actions.set(tabId, { ...actions.get(tabId), title });
           actionLog.push({ tabId, title });
           resolve();
-        }));
+        }, tabId));
       },
     },
   };
@@ -425,7 +439,41 @@ export function createWorld({
   workerChrome.storage = storageFor(workerChrome, { writable: true, owner: 'worker' });
 
   return {
-    contentChrome, contentChromeFor, workerChrome, popupChrome, forbidden, traffic, actions, actionLog, tabsEvents,
+    contentChrome, contentChromeFor, workerChrome, popupChrome, forbidden, traffic, actions, actionLog, actionAttempts, apiLog, tabsEvents,
+    beginWorkerEpoch() {
+      const epoch = { id: epochs.length + 1, alive: true, timers: new Set(), maps: [] };
+      epochs.push(epoch);
+      const proxy = (object, path = 'chrome') => new Proxy(object, {
+        get(target, key) {
+          const value = target[key];
+          if (typeof value === 'function') return (...args) => {
+            apiLog.push({ epoch: epoch.id, alive: epoch.alive, method: `${path}.${String(key)}`, at: Date.now() });
+            if (!epoch.alive) { forbidden.push('dead worker API dispatch'); return new Promise(() => {}); }
+            const result = value.apply(target, args.map((arg) => typeof arg === 'function'
+              ? (...values) => { if (epoch.alive) return arg(...values); return undefined; } : arg));
+            if (result && typeof result.then === 'function') return new Promise((resolve, reject) => {
+              result.then((answer) => { if (epoch.alive) resolve(answer); }, (error) => { if (epoch.alive) reject(error); });
+            });
+            return result;
+          };
+          return value !== null && typeof value === 'object' ? proxy(value, `${path}.${String(key)}`) : value;
+        },
+      });
+      class WorkerMap extends Map {
+        constructor(...args) { super(...args); epoch.maps.push(this); }
+      }
+      return {
+        id: epoch.id, chrome: proxy(workerChrome), Map: WorkerMap,
+        setTimeout(callback, ms) {
+          if (!epoch.alive) return undefined;
+          const timer = setTimeout(() => { epoch.timers.delete(timer); if (epoch.alive) callback(); }, ms);
+          epoch.timers.add(timer); return timer;
+        },
+        clearTimeout(timer) { epoch.timers.delete(timer); clearTimeout(timer); },
+      };
+    },
+    retainedWorkerEntries: () => epochs.filter((epoch) => epoch.alive).reduce((n, epoch) =>
+      n + epoch.maps.reduce((count, map) => count + map.size, 0), 0),
     deny, denyStore,
     action: (tabId = TAB_ID) => actions.get(tabId),
     flushReads() { for (const read of pendingReads.splice(0)) read(); },
@@ -435,10 +483,10 @@ export function createWorld({
     releaseWriteCallbacks() { for (const callback of pendingCallbacks.splice(0)) callback(); },
     physicalWriteCount: () => physicalWrites.size,
     writeObservations,
-    hold(stage) { checkMode(stage, stageNames); holds.add(stage); },
-    unhold(stage) { checkMode(stage, stageNames); holds.delete(stage); },
-    release(stage) { checkMode(stage, stageNames); for (const work of (held.get(stage) ?? []).splice(0)) work(); },
-    pending(stage) { checkMode(stage, stageNames); return (held.get(stage) ?? []).length; },
+    hold(stage, tabId) { checkMode(stage, stageNames); holds.add(tabId === undefined ? stage : `${stage}:${tabId}`); },
+    unhold(stage, tabId) { checkMode(stage, stageNames); holds.delete(tabId === undefined ? stage : `${stage}:${tabId}`); },
+    release(stage, tabId) { checkMode(stage, stageNames); for (const work of (held.get(tabId === undefined ? stage : `${stage}:${tabId}`) ?? []).splice(0)) work(); },
+    pending(stage, tabId) { checkMode(stage, stageNames); return (held.get(tabId === undefined ? stage : `${stage}:${tabId}`) ?? []).length; },
     pendingWriteCount: () => pendingWrites.length,
     writeLog,
     setStored(key, value) { storage.set(key, value); },
@@ -468,7 +516,7 @@ export function createWorld({
     setResponseDelay(ms) { currentResponseDelay = ms; },
     /** Make `chrome.action.setIcon` resolve after `ms`, landing its write then. */
     setActionDelay(ms) { currentActionDelay = ms; },
-    openTab(tabId) { tabs.push({ id: tabId, active: false, currentWindow: true }); },
+    openTab(tabId) { disconnected.delete(tabId); tabs.push({ id: tabId, active: false, currentWindow: true }); },
     activateTab(tabId) {
       for (const tab of tabs) tab.active = tab.id === tabId;
       for (const listener of tabsEvents.activated.slice()) listener({ tabId, windowId: 1 });
@@ -484,6 +532,11 @@ export function createWorld({
     },
     /** Terminate the worker: every global it held is gone, as Chrome does. */
     terminateWorker() {
+      for (const epoch of epochs) {
+        epoch.alive = false;
+        for (const timer of epoch.timers) clearTimeout(timer);
+        epoch.timers.clear();
+      }
       workerListeners = [];
       tabsEvents.activated.splice(0); tabsEvents.updated.splice(0); tabsEvents.removed.splice(0);
     },
@@ -521,18 +574,19 @@ export function loadContent(world, { html = fixture(), tabId = TAB_ID } = {}) {
 }
 
 export function loadWorker(world) {
+  const epoch = world.beginWorkerEpoch();
   const sentinels = {
     fetch: world.deny('fetch'), XMLHttpRequest: world.deny('XHR'), WebSocket: world.deny('WebSocket'),
     importScripts: world.deny('importScripts'), localStorage: world.denyStore('localStorage'),
     indexedDB: world.denyStore('indexedDB'), caches: world.denyStore('caches'),
     console: { log: world.deny('console.log'), warn: world.deny('console.warn'), error: world.deny('console.error'), info: world.deny('console.info') },
   };
-  const context = createContext({ ...sentinels, chrome: world.workerChrome,
-    setTimeout, clearTimeout, Promise, Object, JSON, Map, Number, Array, Date,
+  const context = createContext({ ...sentinels, chrome: epoch.chrome,
+    setTimeout: epoch.setTimeout, clearTimeout: epoch.clearTimeout, Promise, Object, JSON, Map: epoch.Map, Number, Array, Date,
   }, { codeGeneration: { strings: false, wasm: false } });
   const before = Object.keys(context);
   new Script(asset('background.js'), { filename: 'background.js' }).runInContext(context);
-  return { context, before };
+  return { context, before, epochId: epoch.id };
 }
 
 export function loadPopup(world) {
