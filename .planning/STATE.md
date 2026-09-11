@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 04
-current_phase_name: Honest Failure and an Off Switch
-status: human_needed
-stopped_at: 04-20 complete; Phase 4 human_needed with 14 current-source live passes and 3 pending non-blocking checks
-last_updated: "2026-09-11T06:29:12.871054Z"
+current_phase: 05
+current_phase_name: Published
+status: executing
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-09-11T12:43:11.832Z"
 last_activity: 2026-09-11
-last_activity_desc: 04-15 approved and complete; remaining gap execution resumed
-state_head: 8382d826d7d54934d75d8dd5858317866e6f487f
+last_activity_desc: Phase 05 execution started
+state_head: d5de874b3fe2cd8061396d2ae6cce45273754444
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 42
-  completed_plans: 40
+  total_plans: 49
+  completed_plans: 42
   percent: 40
 ---
 
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-09)
 
 **Core value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.
-**Current focus:** Phase 04 — Honest Failure and an Off Switch
+**Current focus:** Phase 05 — Published
 
 ## Current Position
 
-Phase: 04 (Honest Failure and an Off Switch) — HUMAN VERIFICATION NEEDED
-Plan: 20 of 20 (wave 17 final reconciliation; 20 plans complete)
-Status: Gap closure technically complete; human acceptance remains human_needed
-Last activity: 2026-09-11 — 04-20 complete with 14 current-source live passes, 3 pending checks and no canonical requirement promotion
+Phase: 05 (Published) — EXECUTING
+Plan: 2 of 7
+Status: Ready to execute
+Last activity: 2026-09-11 — Phase 05 execution started
 
-Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
+Milestone progress: 2/5 phases complete (40%). Phase 03 remains human_needed with eleven passes and nine skipped checks. Phase 04 remains human_needed with fourteen of seventeen live checks passed; waivers and deferral do not promote pending requirements.
 
 ## Performance Metrics
 
@@ -82,6 +82,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 | Phase 04 P12 | 30 min | 3 tasks | 4 files |
 | Phase 04 P13 | 21 min | 3 tasks | 3 files |
 | Phase 04 P14 | 19 min | 2 tasks | 3 files |
+| Phase 05 P01 | 25 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Single-writer serialization is observed as an invariant under deferred writes — pendingWriteCount() is never 2 — rather than inferred from a final stored value — With immediate writes the two tasks commit in arrival order with or without the queue, so the old assertion held without the mechanism it was named for (WR-06). A reverse flush would have needed a new control on tracer-world.js, owned by 04-13 in the same wave; the pending-write count discriminates the mutant with the controls that already exist.
 - [Phase 04]: The closed-tab map deletion is guarded by a source-shape assertion in two separately-failing halves, and the test body states plainly that this is a shape guard, not proof the map is bounded at runtime — The tabs map has no external observable — stateFor mints a fresh entry for an unknown id — and exposing one would move a shipped byte and re-invalidate the acceptance binding 04-11 re-established. Two mutants (tabs-onremoved-listener, tabs-onremoved-delete) make each half load-bearing, and both notes repeat the limit.
 - [Phase 04]: The plan truth that a projection for a closed tab neither throws nor paints was MEASURED false for the paint half and recorded as WINDOWS entry 22 rather than asserted — After the removal listener releases the entry, project() mints a fresh generation, sendMessage rejects, and requestStatus's catch reports the connection fact — so applyAction writes icons/neutral.png and 'No readable view is connected' against the dead tab id. The honest assertions were substituted: the projection resolves without throwing, every write is scoped to the closed tab, it is the operational state and never a diagnosis, and the living neighbour is untouched.
+- [Phase 05]: Archive entries are preflighted by parsing the ZIP central directory with Node built-ins before any extractor writes to disk — Parsing a listing printed by the extractor would mean trusting the very tool the preflight exists to check
+- [Phase 05]: Generated release artifacts are refused inside the repository or extension tree, and an occupied output location is re-validated or refused, never overwritten — D-13 keeps packaged bytes equal to repository source; D-14 forbids silently reusing stale source-bound evidence
+- [Phase 05]: The release label comes from the extension manifest version, never the development package version — The store treats the manifest version as the release identity; the root package version is unrelated dev metadata
 
 ### Pending Todos
 
@@ -172,9 +176,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-11
-Stopped at: Comprehensive gap planning complete; execute 04-15 and 04-17 in wave 13
-Resume file: .planning/phases/04-honest-failure-and-an-off-switch/04-GAP-CLOSURE-COVERAGE.md
+Last session: 2026-09-11T12:43:05.036Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
 

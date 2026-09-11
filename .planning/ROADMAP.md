@@ -180,7 +180,7 @@ Plans:
   3. The popup carries an on/off switch that is already on; turning it off clears every tint from the view currently on screen without a refresh, and turning it back on restores them.
   4. Quitting Chrome and reopening it preserves whichever way the switch was left.
 
-**Plans**: 19/20 plans executed (6 original + 8 first-round gap plans); 5 second-round gap plans complete; 04-20 technical preparation is complete and awaits its source-confirmed human checkpoint. Phase verification remains `gaps_found`.
+**Plans**: 20/20 plans executed (6 original + 8 first-round gap plans + 6 second-round gap plans). Final reconciliation completed on 2026-09-11: 14/17 current-source live checks passed; three checks remain pending under explicit waiver or non-blocking deferral. Phase verification remains `human_needed`; no canonical requirement is promoted from a waiver or deferral.
 **UI hint**: yes
 
 Plans:
@@ -253,7 +253,7 @@ Plans:
 
 **Wave 17** *(depends on 04-19)*
 
-- [ ] 04-20-PLAN.md — Bind final evidence, review validation changes, collect genuine UAT and reconcile canonical status.
+- [x] 04-20-PLAN.md — Bind final evidence, review validation changes, collect genuine UAT and reconcile canonical status.
 
 **Cross-cutting constraints:** Preserve the approved product decisions, strict language eligibility, existing permissions and dependency set. Keep technical evidence, independent review, human observations and AR-04-01's two waived scenarios distinct. No old observation or summary can promote current-source acceptance; Phase 3 remains `human_needed`.
 
@@ -261,7 +261,8 @@ Planning evidence: [failure analysis](phases/04-honest-failure-and-an-off-switch
 
 ### Phase 5: Published
 
-**Goal**: Zhroma is live as a public Chrome Web Store listing that survives review, makes its value legible to a reviewer who has never used Zendesk, and answers an IT admin's questions before they ask.
+**Goal**: As a support agent using supported English Zendesk views, I want to find and install Zhroma from a public Chrome Web Store listing that clearly explains its requirements and privacy practices, so that I can see ticket priorities at a glance and assess whether it is suitable for my workplace.
+**Outcome contract (original goal retained)**: Zhroma is live as a public Chrome Web Store listing that survives review, makes its value legible to a reviewer who has never used Zendesk, and answers an IT admin's questions before they ask.
 **Mode:** mvp
 **Depends on**: Phase 4
 **Requirements**: STORE-01, STORE-04, STORE-06
@@ -272,7 +273,37 @@ Planning evidence: [failure analysis](phases/04-honest-failure-and-an-off-switch
   3. A privacy policy is live at a stable URL, linked from the listing, and states that no data is collected; the store's privacy disclosures agree with it and with what the manifest actually requests.
   4. A pre-submission smoke checklist lives in the repo, and the run that preceded the shipped submission is recorded.
 
-**Plans**: TBD
+**Plans**: 0/7 executed; seven plans independently verified with zero blockers or warnings on 2026-09-11.
+
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Exact source-to-ZIP-to-extracted-source tracer and rejection controls.
+- [ ] 05-02-PLAN.md — Listing, reviewer instructions, privacy policy and disclosure dossier.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-03-PLAN.md — Brand/manifest assets and immutable predecessor evidence continuity.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-04-PLAN.md — Exact release candidate, repeatable checklist and genuine source-bound smoke.
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 05-05-PLAN.md — Genuine sanitised off/on comparison and popup screenshots.
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 05-06-PLAN.md — Guided account setup and reviewed minimal GitHub Pages policy publication.
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 05-07-PLAN.md — Resolve submission gates, obtain exact approval, submit and verify public Store installation.
+
+Planning evidence: [research](phases/05-published/05-RESEARCH.md), [pattern map](phases/05-published/05-PATTERNS.md), [source coverage](phases/05-published/05-SOURCE-AUDIT.md), and [independent plan check](phases/05-published/05-PLAN-CHECK.md). All three requirements and fifteen decisions are covered. Disclosure/consent applicability, account actions, fresh release observations and final public authorization remain execution gates.
+
+Preparation authorized on 2026-09-11 while preserving Phase 3 and Phase 4 acceptance limitations. See [Phase 5 preparation handoff](phases/05-published/05-HANDOFF.md). This does not mark either predecessor complete or authorize public submission.
 
 ## Progress
 
@@ -283,9 +314,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. DOM Recon Spike | 15/15 | Complete    | 2026-09-08 |
 | 2. First Tint on a Real View | 3/3 | Complete    | 2026-09-09 |
-| 3. The Tint Survives Everything | 3/4 | In Progress|  |
-| 4. Honest Failure and an Off Switch | 14/14 | In Progress|  |
-| 5. Published | 0/TBD | Not started | - |
+| 3. The Tint Survives Everything | 3/4 | human_needed; remaining UAT skipped by user |  |
+| 4. Honest Failure and an Off Switch | 20/20 | human_needed; technical execution complete |  |
+| 5. Published | 0/7 | Planned    |  |
 
 ## Requirement Coverage
 
