@@ -82,7 +82,9 @@
   }
 
   function failedPreference(enabled) {
-    showPreference(typeof enabled === 'boolean' ? enabled : lastConfirmed);
+    // A null read may accompany an admission refusal behind another native
+    // writer. The old checkbox is no longer authoritative in that case.
+    showPreference(enabled);
   }
 
   function focusDefault() {

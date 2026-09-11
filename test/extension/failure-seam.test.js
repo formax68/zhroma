@@ -98,7 +98,7 @@ test('a top frame that never answers apply-preference costs one bounded wait, no
     { type: 'set-enabled', requestId: 1, enabled: false }, POPUP_SENDER), CEILING);
 
   // The switch answered at all: this is the whole of WR-04.
-  expect(reply).not.toBe(TIMED_OUT);
+  expect(reply, '[mutant:worker-apply-unbounded]').not.toBe(TIMED_OUT);
   // Three facts, still reported as three facts. The write landed, storage says
   // so, and the document confirmed nothing — none is dressed up as another.
   expect(reply.saved).toBe(true);
@@ -109,7 +109,7 @@ test('a top frame that never answers apply-preference costs one bounded wait, no
   // Bounded by the SHIPPED constant, not by the double's port-close fallback.
   expect(elapsed).toBeLessThan(bound() * 2);
   expect(elapsed).toBeGreaterThanOrEqual(bound() - 200);
-  expect(world.forbidden).toEqual([]);
+  expect(world.forbidden, '[mutant:worker-apply-frameid]').toEqual([]);
 }, SLOW);
 
 test('a second set-enabled resolves too, so the switch stays operable rather than queueing behind a wedge', async () => {
@@ -144,14 +144,14 @@ test('a top frame that never answers get-status is unavailable for that tab alon
   world.activateTab(TAB_ID);
   const elapsed = await until(() => world.action(TAB_ID)?.title === COPY.unavailable);
 
-  expect(elapsed).not.toBeNull();
+  expect(elapsed, '[mutant:worker-status-unbounded]').not.toBeNull();
   expect(elapsed).toBeLessThan(bound() * 2);
   // Operational, never a claim about the view: the neutral shape and the
   // no-readable-view line.
   expect(world.action(TAB_ID)).toEqual({ icon: ICON.neutral, title: COPY.unavailable });
   // A silent frame in one tab says nothing about any other tab.
   expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
-  expect(world.forbidden).toEqual([]);
+  expect(world.forbidden, '[mutant:worker-status-frameid]').toEqual([]);
 }, SLOW);
 
 test('the popup reports the honest ratified line when the frame never answered, and the switch is usable again', async () => {
@@ -169,7 +169,8 @@ test('the popup reports the honest ratified line when the frame never answered, 
   box.dispatchEvent(new popup.window.Event('change', { bubbles: true }));
   // Completion is observable on the control: the round trip re-enables it and
   // moves it to the value storage actually reported.
-  expect(await until(() => box.disabled === false && box.checked === false)).not.toBeNull();
+  expect(await until(() => box.disabled === false && box.checked === false), '[outcome:actual-popup-worker-document-roundtrip]').not.toBeNull();
+  expect(world.traffic.some(({ direction, payload }) => direction === 'response' && payload.type === 'set-enabled' && payload.saved === true), '[outcome:actual-worker-reply]').toBe(true);
 
   // Nothing was applied and nothing pretends otherwise. This is already-ratified
   // copy: no new string is minted for the timeout path.
@@ -220,7 +221,7 @@ test('a read that fails while still delivering values leaves the content script 
   working.harness.assertClean();
 
   const runtime = loadContentWithHarness({ readMode: 'rejected-with-values' });
-  expect(markers(runtime.document)).toEqual([]);
+  expect(markers(runtime.document), '[mutant:content-lasterror]').toEqual([]);
   // Dormant, not merely untinted: nothing is left watching for a chance to act
   // on a value nothing confirmed.
   expect(runtime.activeObservers()).toHaveLength(0);
@@ -243,7 +244,7 @@ test('a read that fails while still delivering values leaves the worker preferen
 
   // `null` is unconfirmed. Reporting `true` here would be a storage error
   // tinting a view the agent may well have switched off.
-  expect(reply.enabled).toBe(null);
+  expect(reply.enabled, '[mutant:worker-lasterror]').toBe(null);
   // The same failed-but-populated read in the other process, for the same
   // reason: zero markers, from the last-error branch and not the falsy one.
   expect(markers(content.document)).toEqual([]);

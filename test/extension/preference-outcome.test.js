@@ -111,6 +111,42 @@ test('a captured old change response cannot replace a newer popup result', async
   expect(control(popup.document).checked).toBe(true);
 });
 
+test('sequential waits spend one arrival budget rather than renewing every hop', async () => {
+  const { world, popup } = await timedBoot(true);
+  world.hold('worker-read'); world.hold('query');
+  const start = Date.now();
+  change(popup, false);
+  await vi.advanceTimersByTimeAsync(1800);
+  world.unhold('worker-read'); world.release('worker-read');
+  await vi.advanceTimersByTimeAsync(1800);
+  world.unhold('query'); world.release('query');
+  world.hold('content-response');
+  await vi.advanceTimersByTimeAsync(410);
+  const response = answered(world)[0];
+  expect(response.at - start, '[outcome:sequential-budget]').toBeLessThanOrEqual(4001);
+  expect(response.payload).toMatchObject({ saved: true, enabled: false, applied: false });
+  expect(control(popup.document).checked).toBe(false);
+  expect(control(popup.document).disabled).toBe(false);
+  world.unhold('content-response'); world.release('content-response');
+  await vi.advanceTimersByTimeAsync(22000);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+test('healthy arrival burst stores each explicit value in order without overlap', async () => {
+  const { world } = await timedBoot(true);
+  const values = [false, true, false, false, true, false];
+  const requests = values.map((enabled, i) => world.popupChrome.runtime.sendMessage({
+    type: 'set-enabled', requestId: 100 + i, enabled,
+  }));
+  await vi.advanceTimersByTimeAsync(500);
+  const replies = await Promise.all(requests);
+  expect(replies.map((reply) => reply.requestId)).toEqual(values.map((_, i) => 100 + i));
+  expect(replies.every((reply) => reply.saved)).toBe(true);
+  expect(world.writeLog, '[outcome:arrival-order]').toEqual(values.map((enabled) => ({ enabled })));
+  expect(world.snapshot()).toEqual({ enabled: false });
+  expect(Math.max(...world.writeObservations), '[outcome:physical-write-overlap]').toBe(1);
+});
+
 for (const initial of [true, false]) for (const write of ['immediate', 'rejected', 'throws', 'deferred']) {
   for (const read of ['immediate', 'rejected', 'rejected-with-values', 'malformed', 'deferred']) {
     for (const apply of ['success', 'negative', 'invalid', 'silent']) {

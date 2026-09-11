@@ -235,7 +235,7 @@ test.each([true, false])('a confirmed write survives rejected read-back from ini
   world.setReadMode('rejected');
   await flip(popup, !initial);
   expect(world.snapshot()).toEqual({ enabled: !initial });
-  expect(control(popup.document).checked).toBe(!initial);
+  expect(control(popup.document).checked, '[outcome:toggle-confirmed-read-failure]').toBe(!initial);
   expect(control(popup.document).disabled).toBe(false);
   expect(statusText(popup.document)).toBe(COPY.notApplied);
 });

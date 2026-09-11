@@ -11,9 +11,8 @@
 //
 // Every assertion below is about bytes that ship: the real `popup.js` runs in
 // its own VM context against the strict fake Chrome from `tracer-world.js`.
-// Nothing here reimplements popup behaviour, and no new copy is expected on
-// any path — `COPY.notSaved` is the string the user ratified at the Phase 4
-// checkpoint (WINDOWS entry 11).
+// Definite rejection uses ratified NOT_SAVED; transport/invalid replies use
+// the explicitly approved unknown copy and a mixed disabled control.
 import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import { afterEach, expect, test } from 'vitest';
@@ -133,7 +132,7 @@ const sentEnables = (world) => world.traffic
 
 // --- WR-07: the failed save leaves a truthful, usable switch ----------------
 
-test('an illegible reply returns the switch to the last confirmed value and leaves it operable', async () => {
+test('an illegible reply makes the switch mixed until a fresh confirmation', async () => {
   const world = createWorld();
   fakeWorker(world, { enabled: true, setEnabled: illegible });
   const popup = loadPopup(world);
@@ -144,12 +143,9 @@ test('an illegible reply returns the switch to the last confirmed value and leav
 
   await flip(popup, false);
 
-  // The agent moved the switch and nothing confirmed the move, so what is
-  // shown is the last value storage actually reported — not the position the
-  // click left behind, which would contradict the copy beside it.
-  expect(box.checked).toBe(true);
-  expect(statusText(popup.document)).toBe(COPY.notSaved);
-  expect(box.disabled).toBe(false);
+  expect(box.indeterminate).toBe(true);
+  expect(statusText(popup.document)).toBe(COPY.unknown);
+  expect(box.disabled).toBe(true);
   expect(world.forbidden).toEqual([]);
 });
 
@@ -160,8 +156,8 @@ test('a reply reporting the save failed returns the switch to the value storage 
 
   await flip(popup, false);
 
-  expect(box.checked).toBe(true);
-  expect(box.disabled).toBe(false);
+  expect(box.checked, '[mutant:popup-no-revert]').toBe(true);
+  expect(box.disabled, '[mutant:popup-stays-disabled]').toBe(false);
   expect(statusText(popup.document)).toBe(COPY.notSaved);
   expect(world.getStored('enabled')).toBe(true);
 });
@@ -186,7 +182,7 @@ test('a second change after a failed save issues a new request, so the switch is
     enabled: true,
     setEnabled: (message) => {
       attempts += 1;
-      if (attempts === 1) return illegible(message);
+      if (attempts === 1) return { type: 'set-enabled', requestId: message.requestId, saved: false, enabled: true, applied: false, status: 'working', reason: null };
       return {
         type: 'set-enabled', requestId: message.requestId, saved: true, enabled: message.enabled,
         applied: true, status: message.enabled ? 'working' : 'off', reason: null,
@@ -212,7 +208,7 @@ test('a second change after a failed save issues a new request, so the switch is
 
 test('a keyboard agent gets the switch back after a failed save', async () => {
   const world = createWorld();
-  fakeWorker(world, { enabled: true, setEnabled: illegible });
+  fakeWorker(world, { enabled: true, setEnabled: (message) => ({ type: 'set-enabled', requestId: message.requestId, saved: false, enabled: true, applied: false, status: 'working', reason: null }) });
   const popup = loadPopup(world);
   const box = modelPlatformFocus(popup);
   await settle();
@@ -223,7 +219,7 @@ test('a keyboard agent gets the switch back after a failed save', async () => {
 
   // The round trip disabled the switch, which took focus away. It is handed
   // back rather than left in `body` with no way to retry from the keyboard.
-  expect(popup.document.activeElement).toBe(box);
+  expect(popup.document.activeElement, '[mutant:popup-focus-guard]').toBe(box);
   expect(box.disabled).toBe(false);
   expect(statusText(popup.document)).toBe(COPY.notSaved);
 });
@@ -234,7 +230,7 @@ test('with nothing ever confirmed a failed save shows no position and keeps the 
   const popup = loadPopup(world);
   await settle();
   const box = control(popup.document);
-  expect(statusText(popup.document)).toBe(COPY.unavailable);
+  expect(statusText(popup.document)).toBe(COPY.unknown);
   expect(box.disabled).toBe(true);
 
   await flip(popup, true);
@@ -244,7 +240,7 @@ test('with nothing ever confirmed a failed save shows no position and keeps the 
   // to turn tinting ON — the same defect in the other direction.
   expect(box.checked).toBe(true);
   expect(box.disabled).toBe(true);
-  expect(statusText(popup.document)).toBe(COPY.notSaved);
+  expect(statusText(popup.document)).toBe(COPY.unknown);
 });
 
 test('a successful save is unchanged, including the click that arrives while one is in flight', async () => {
@@ -272,15 +268,9 @@ test('a successful save is unchanged, including the click that arrives while one
 
 // --- WR-04, the popup hop: a silent worker costs one bounded wait ----------
 
-test('the popup waits longer than the worker is allowed to, so it cannot cut off a real answer', () => {
-  // Answering the popup can cost the worker a full bounded wait of its own: a
-  // silent top frame makes `get-status` and `apply-preference` each run to the
-  // worker's deadline. A popup deadline at or below the worker's would discard
-  // the honest reply — and the confirmed preference it carries — just before
-  // it arrived, leaving the switch disabled exactly where 04-08 made it
-  // usable. Two processes, two copies of the constant, one ordering; this is
-  // where that ordering is enforced.
-  expect(bound()).toBeGreaterThan(workerBound());
+test('source documentation preserves the 5000 transport and 4000 worker budgets', () => {
+  expect(bound()).toBe(5000);
+  expect(workerSource).toContain('const WORKER_REQUEST_TIMEOUT_MS = 4000;');
 });
 
 test('a worker that never answers set-enabled costs one bounded wait and the ratified line', async () => {
@@ -295,16 +285,16 @@ test('a worker that never answers set-enabled costs one bounded wait and the rat
 
   box.checked = false;
   box.dispatchEvent(new popup.window.Event('change', { bubbles: true }));
-  const elapsed = await until(() => statusText(popup.document) === COPY.notSaved);
+  const elapsed = await until(() => statusText(popup.document) === COPY.unknown);
 
   // The switch answered at all: this is the whole of WR-04's popup half.
-  expect(elapsed).not.toBeNull();
+  expect(elapsed, '[mutant:popup-ask-unbounded]').not.toBeNull();
   // Bounded by the SHIPPED constant, not by the double's port-close fallback.
   expect(elapsed).toBeGreaterThanOrEqual(bound() - 200);
   expect(elapsed).toBeLessThan(bound() * 2);
-  // The timeout reaches the corrected failure path: no new copy, no new state.
-  expect(box.checked).toBe(true);
-  expect(box.disabled).toBe(false);
+  // Timeout establishes uncertainty, never definite failed saving.
+  expect(box.indeterminate).toBe(true);
+  expect(box.disabled).toBe(true);
   expect(world.forbidden).toEqual([]);
 }, SLOW);
 
@@ -314,7 +304,7 @@ test('a worker that never answers the opening refresh leaves the control out of 
   world.workerChrome.runtime.onMessage.addListener(() => true);
   const popup = loadPopup(world);
 
-  const elapsed = await until(() => statusText(popup.document) === COPY.unavailable);
+  const elapsed = await until(() => statusText(popup.document) === COPY.unknown);
 
   expect(elapsed).not.toBeNull();
   expect(elapsed).toBeLessThan(bound() * 2);

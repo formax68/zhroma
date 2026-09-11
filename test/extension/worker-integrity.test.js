@@ -103,7 +103,7 @@ test.each(STATUS_REFUSALS)(
     await settle();
     // Neutral artwork and the no-readable-view title: an operational fact about
     // the connection, never a claim about the view (D-04).
-    expect(world.action()).toEqual({ icon: ICON.neutral, title: COPY.unavailable });
+    expect(world.action(), '[mutant:status-reply-gate]').toEqual({ icon: ICON.neutral, title: COPY.unavailable });
     const popup = loadPopup(world);
     await settle();
     await settle();
@@ -144,7 +144,7 @@ test.each(APPLY_REFUSALS)(
     // The worker refused the reply, so it has no outcome to report and says
     // `unavailable` — the ratified connection line. It does NOT report the
     // not-applied line, which would claim the document answered and declined.
-    expect(statusText(popup.document)).toBe(COPY.unavailable);
+    expect(statusText(popup.document), '[mutant:request-id-echo]').toBe(COPY.unavailable);
     expect(world.forbidden).toEqual([]);
   },
 );
@@ -160,7 +160,7 @@ test('a refused apply reply still persists the preference, because saving is a s
   // Persistence and application are two facts, reported as two facts: the write
   // happened even though no document confirmed it applied.
   expect(world.getStored('enabled')).toBe(false);
-  expect(statusText(popup.document)).toBe(COPY.unavailable);
+  expect(statusText(popup.document), '[mutant:request-id-echo]').toBe(COPY.unavailable);
   expect(world.forbidden).toEqual([]);
 });
 
@@ -172,7 +172,7 @@ test('a worker reply carrying an out-of-set status makes the popup report the co
   const popup = loadPopup(world);
   await settle();
   await settle();
-  expect(statusText(popup.document)).toBe(COPY.unavailable);
+  expect(statusText(popup.document)).toBe(COPY.unknown);
   // Nothing legible came back, so nothing has been confirmed and the switch has
   // no position to offer.
   expect(control(popup.document).disabled).toBe(true);
@@ -185,7 +185,7 @@ test('a worker reply whose preference is neither a boolean nor null is refused b
   const popup = loadPopup(world);
   await settle();
   await settle();
-  expect(statusText(popup.document)).toBe(COPY.unavailable);
+  expect(statusText(popup.document)).toBe(COPY.unknown);
   expect(control(popup.document).disabled).toBe(true);
   expect(world.forbidden).toEqual([]);
 });
@@ -199,9 +199,9 @@ test('a legible reply whose status and reason are individually valid but unpaire
   const popup = loadPopup(world);
   await settle();
   await settle();
-  expect(statusText(popup.document)).toBe(COPY.unavailable);
-  // The preference was legible, so the switch stays in service.
-  expect(control(popup.document).disabled).toBe(false);
+  expect(statusText(popup.document), '[mutant:popup-copy-fallback]').toBe(COPY.unknown);
+  // An unpaired reply is invalid as a whole; it cannot confirm a setting.
+  expect(control(popup.document).disabled).toBe(true);
   expect(world.forbidden).toEqual([]);
 });
 
@@ -220,10 +220,10 @@ test('a set-enabled reply carrying an out-of-set status is refused, and the popu
 
   await flip(popup, false);
   // Nothing legible came back, so nothing may be claimed in either direction.
-  expect(statusText(popup.document)).toBe(COPY.notSaved);
-  // Reverted to the last value storage actually confirmed, and left operable.
-  expect(control(popup.document).checked).toBe(true);
-  expect(control(popup.document).disabled).toBe(false);
+  expect(statusText(popup.document), '[mutant:popup-valid-gate]').toBe(COPY.unknown);
+  // Mixed and disabled until a fresh bounded confirmation.
+  expect(control(popup.document).indeterminate).toBe(true);
+  expect(control(popup.document).disabled).toBe(true);
   expect(world.forbidden).toEqual([]);
 });
 
@@ -241,12 +241,37 @@ test('a set-enabled reply whose preference is not a boolean is refused, and the 
   expect(statusText(popup.document)).toBe(COPY.working);
 
   await flip(popup, false);
-  expect(statusText(popup.document)).toBe(COPY.notSaved);
-  expect(control(popup.document).checked).toBe(true);
+  expect(statusText(popup.document)).toBe(COPY.unknown);
+  expect(control(popup.document).indeterminate).toBe(true);
   expect(world.forbidden).toEqual([]);
 });
 
 // --- harness fidelity: the double refuses artwork Chrome would refuse -------
+
+test.each([
+  ['exact unknown', {}, true],
+  ['unknown with confirmed value', { enabled: true }, false],
+  ['unknown with application claim', { applied: true }, false],
+  ['unknown with working claim', { status: 'working' }, false],
+  ['unknown with extra field', { extra: 1 }, false],
+  ['wrong request id', { requestId: 999 }, false],
+  ['wrong type', { type: 'popup-status' }, false],
+  ['nonprimitive saved', { saved: {} }, false],
+])('nullable saved boundary: %s', async (_name, fields, valid) => {
+  const world = createWorld();
+  fakeWorker(world, { onSetEnabled: (message) => ({ type: 'set-enabled', requestId: message.requestId,
+    saved: null, enabled: null, applied: false, status: 'unavailable', reason: null, ...fields }) });
+  const popup = loadPopup(world);
+  await settle();
+  await flip(popup, false);
+  expect(statusText(popup.document), `[outcome:nullable-boundary-${_name}]`).toBe(COPY.unknown);
+  expect(control(popup.document).indeterminate).toBe(true);
+  expect(control(popup.document).disabled).toBe(true);
+  // Invalid replies share the honest transport-uncertainty presentation; no
+  // invalid field becomes a confirmed control value or successful application.
+  expect(world.writeLog).toEqual([]);
+  expect(world.forbidden).toEqual([]);
+});
 
 test('the action double refuses an icon path outside the packaged inventory, as Chrome does', async () => {
   const world = createWorld();
@@ -367,6 +392,7 @@ test('the tracer copy map is exactly the set of strings the product ships', () =
     ...mapOf(popupSource(), 'COPY', 8).values(),
     scalarOf(popupSource(), 'NOT_SAVED'),
     scalarOf(popupSource(), 'NOT_APPLIED'),
+    scalarOf(popupSource(), 'UNKNOWN'),
   ]);
   const doubled = new Set(Object.values(COPY));
   // Neither direction may drift: a string the product ships and the double
@@ -398,7 +424,7 @@ test('an unpaired combination leaves a clean fallback, never a half-written tool
   await settle();
   await settle();
 
-  expect(world.action()).toEqual({ icon: ICON.neutral, title: COPY.unavailable });
+  expect(world.action(), '[mutant:diagnosis-pairing]').toEqual({ icon: ICON.neutral, title: COPY.unavailable });
   expect(world.actionLog.length).toBeGreaterThan(before);
   // BOTH halves are needed, and the reason is the asymmetry in the two maps:
   // with the pairing clause deleted, ICONS still has an entry for `missing`
