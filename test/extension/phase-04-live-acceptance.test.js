@@ -325,6 +325,18 @@ test('all seventeen new live checks stay pending absent an actual observation', 
   expect(validatePhase04Acceptance(pending, null, CLOCK)).toBe('human_needed');
 });
 
+test('primary English scope admits the exact ordered supplemental descriptors without claiming observations', () => {
+  const record = example();
+  record.scope.html_lang_variants = ['en', 'en-*', 'non-English'];
+  expect(validatePhase04Acceptance(record, acceptedPerformance(), CLOCK)).toBe('human_needed');
+});
+
+test('English regional evidence cannot satisfy the non-English scenario', () => {
+  const record = example(true);
+  record.checks.find((row) => row.id === 'language-icon-copy').language_context = 'en-GB';
+  expect(() => validatePhase04Acceptance(record, acceptedPerformance(), CLOCK)).toThrow(/language-context/);
+});
+
 test.each([
   ['forged pass with a still-pending check', (r) => { r.checks[3] = example().checks[3]; }],
   ['forged pass with an unresolved prohibition', (r) => { r.flagged_unverified[0].status = 'flagged-unverified'; }],
