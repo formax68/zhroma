@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zhroma — Privacy Policy</title>
+<!--
+  Static single-page policy for GitHub Pages. No scripts, no remote fonts, no
+  remote stylesheets, no images, no analytics, no third-party embeds.
+  Before deploying (plan 05-06), set the effective date below to the actual
+  publication date.
+-->
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font: 1rem/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+  h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 0.25rem; }
+  h2 { font-size: 1.1rem; margin: 2rem 0 0.5rem; }
+  p, li { margin: 0 0 0.75rem; }
+  ul { padding-left: 1.25rem; }
+  .meta { margin: 0 0 2rem; font-size: 0.9rem; opacity: 0.8; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+  footer { margin-top: 2.5rem; font-size: 0.9rem; opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<h1>Zhroma — Privacy Policy</h1>
+<p class="meta">Effective date: <time datetime="2026-09-11">11 September 2026</time></p>
+
+<p>Zhroma is a Chrome extension that colours ticket rows in Zendesk agent views according to the priority already shown in the view. It is published by <strong>Michalis Efstratiadis</strong> (“the publisher”, “we”).</p>
+
+<p>This policy describes everything Zhroma does with data. It is short because Zhroma does very little.</p>
+
+<h2>What Zhroma reads</h2>
+
+<p>Zhroma runs only on pages matching <code>https://*.zendesk.com/agent/*</code>. On any other page it is never injected and does nothing.</p>
+
+<p>On those pages, Zhroma reads content that Zendesk has already rendered in your browser, in order to decide which rows to colour:</p>
+
+<ul>
+  <li>the structure of the ticket table — which elements are the table, its head, its body, its rows and its cells;</li>
+  <li>the text of the column headings, to find the column named <em>Priority</em>;</li>
+  <li>the text of the <em>Priority</em> cell in each ticket row, which is matched against the four values <em>Urgent</em>, <em>High</em>, <em>Normal</em> and <em>Low</em>;</li>
+  <li>the language the page declares for itself, so that Zhroma can stay inactive on interfaces it does not read.</li>
+</ul>
+
+<p>This reading is how the extension works, and we state it plainly rather than claiming that Zhroma never accesses anything. The reading happens entirely inside your browser, while the page is open. The values read are used to set a colour on a row and are not copied, saved, logged, exported or sent anywhere. Zhroma does not read ticket subjects, requester names, email addresses, comments, attachments, form data, cookies, authentication tokens, browsing history, or any page outside the Zendesk agent interface.</p>
+
+<h2>What Zhroma stores</h2>
+
+<p>Zhroma stores exactly one thing: whether tinting is switched on or off. It is a single true/false value, held in your browser's local extension storage under one key. No ticket, customer, view, account or usage information is stored.</p>
+
+<p>That value stays on your device. It is kept until you change the switch, clear your browser's extension data, or uninstall Zhroma, at which point it is gone. There is nothing else to delete, because there is nothing else kept.</p>
+
+<h2>What Zhroma sends — nothing</h2>
+
+<p>Zhroma makes no network requests of any kind. It has no server, no backend and no API. It contains no analytics, no telemetry, no crash reporting, no advertising and no tracking code of any kind, and it loads no remote code, fonts, styles or images.</p>
+
+<p>As a result, the publisher receives no data from the extension at all. Nothing about you, your tickets, your Zendesk account or your browsing is collected, transmitted, sold, rented, shared with third parties, or used for advertising, profiling or credit decisions. No human has access to your ticket data through Zhroma, because Zhroma never takes it anywhere.</p>
+
+<h2>Permissions</h2>
+
+<p>Zhroma requests one Chrome permission, <code>storage</code>, and uses it only to remember the on/off switch described above. It declares no host permissions beyond the content-script match <code>https://*.zendesk.com/agent/*</code> that gives it access to the Zendesk agent interface and nowhere else.</p>
+
+<h2>Limited Use</h2>
+
+<p>Zhroma's use of user data complies with the Chrome Web Store User Data Policy, including the Limited Use requirements. The only data Zhroma uses is the rendered page content described above, it is used solely for Zhroma's single purpose of colouring ticket rows by priority, and it is never transferred to anyone.</p>
+
+<h2>About this page</h2>
+
+<p>This policy page is a static document hosted on GitHub Pages. When you view it, GitHub — not Zhroma and not the publisher — records visitors' IP addresses for the security of its own hosting service, as described in GitHub's documentation. That is a consequence of visiting this website, and it is entirely separate from the Chrome extension, which makes no network requests and cannot cause any request to this page or anywhere else.</p>
+
+<h2>Children</h2>
+
+<p>Zhroma is a workplace tool for Zendesk support agents. It is not directed at children and collects no information from anyone.</p>
+
+<h2>Changes to this policy</h2>
+
+<p>If Zhroma's data practices ever change, this page will be updated before the change ships and the effective date above will be changed with it.</p>
+
+<h2>Contact</h2>
+
+<p>Questions about this policy or about Zhroma: <a href="mailto:zhroma@efstratiadis.me">zhroma@efstratiadis.me</a></p>
+
+<footer>
+<p>Zhroma is an independent extension and is not made by, affiliated with, endorsed by or supported by Zendesk. “Zendesk” is used only to identify where Zhroma works.</p>
+</footer>
+
+</body>
+</html>
