@@ -2,7 +2,7 @@
 // Unit evidence only. The separate CLI invocation supplies real Chrome evidence.
 import { spawnSync } from 'node:child_process';
 import { expect, test } from 'vitest';
-import { parseArguments, validateLocaleReport, runLocaleRendering } from '../../scripts/verify-locale-rendering.js';
+import { parseArguments, validateLocaleReport, runLocaleRendering, connectCdp, waitForChrome } from '../../scripts/verify-locale-rendering.js';
 
 const accepted = ['en', 'EN', 'en-GB', 'en-US', 'EN-gb', 'en-Latn-GB'];
 const languages = ['fr', 'fr-CA', 'de'];
@@ -11,6 +11,7 @@ const report = () => ({ scope: 'real-Chrome synthetic rendering', browser: 'Chro
   cases: [...accepted, ...languages, ...malformed].map((lang) => {
     const works = accepted.includes(lang);
     return { lang, selectorMatches: works ? [16, 16, 16, 16] : [0, 0, 0, 0],
+      cssPaintedCells: works ? 64 : 0,
       paintedCells: works ? 64 : 0, markers: works ? 4 : 0,
       paletteMatches: works ? [16, 16, 16, 16] : [0, 0, 0, 0],
       diagnosis: works ? 'working' : 'cannot-read', reason: works ? null : languages.includes(lang) ? 'unsupported-language' : 'structure' };
@@ -30,6 +31,8 @@ test.each([
   ['no CSS selector extraction', (r) => { r.cases[0].selectorMatches = []; }],
   ['wrong computed palette', (r) => { r.cases[0].paletteMatches[0] = 0; }],
   ['nonfinite counts', (r) => { r.cases[0].paintedCells = NaN; }],
+  ['nonfinite reason', (r) => { r.cases[0].reason = NaN; }],
+  ['CSS paints a refused shell', (r) => { r.cases[12].cssPaintedCells = 64; }],
   ['missing version', (r) => { delete r.browser; }],
   ['live scope claim', (r) => { r.scope = 'live Zendesk acceptance'; }],
   ['unexpected payload', (r) => { r.cases[0].pageText = 'must not be retained'; }],
@@ -40,6 +43,26 @@ test.each([
 test('smoke uses the same matrix without output persistence', () => {
   expect(parseArguments(['--smoke'])).toEqual({ smoke: true });
   expect(parseArguments([])).toEqual({ smoke: false });
+  expect(parseArguments(['--output', '/tmp/locale.json'])).toEqual({ smoke: false, output: '/tmp/locale.json' });
+});
+
+test('Chrome startup timeout propagates as failure', async () => {
+  const missing = async () => { throw Object.assign(new Error('missing'), { code: 'ENOENT' }); };
+  await expect(waitForChrome('/unused', { exitCode: null, signalCode: null }, { timeoutMs: 5, read: missing })).rejects.toThrow(/startup timeout/);
+});
+test('Chrome exit or malformed endpoint cannot become browser evidence', async () => {
+  await expect(waitForChrome('/unused', { exitCode: 1, signalCode: null })).rejects.toThrow(/exited/);
+  await expect(waitForChrome('/unused', { exitCode: null, signalCode: null }, { read: async () => '1234\nhttps://external.example' })).rejects.toThrow(/Malformed/);
+});
+test('CDP connection timeout closes the owned socket and propagates failure', async () => {
+  let closed = false;
+  class SilentSocket extends EventTarget { close() { closed = true; } }
+  await expect(connectCdp('ws://127.0.0.1:1234/devtools/browser/synthetic', { timeoutMs: 5, Socket: SilentSocket })).rejects.toThrow(/connection timeout/);
+  expect(closed).toBe(true);
+});
+test('CDP refuses a nonlocal endpoint before creating a socket', async () => {
+  class UnexpectedSocket { constructor() { throw new Error('Socket must not be constructed'); } }
+  await expect(connectCdp('wss://remote.example/devtools/browser/id', { Socket: UnexpectedSocket })).rejects.toThrow(/isolated loopback/);
 });
 test.each([['--skip'], ['--smoke', '--smoke'], ['--output'], ['--smoke', '--output', 'report.json'], ['--url', 'https://example.com']])('invalid CLI arguments fail closed: %j', (...args) => {
   expect(() => parseArguments(args)).toThrow();
