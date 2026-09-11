@@ -3,7 +3,7 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: 04-15 decision approved; executing 04-17 then 04-16
+stopped_at: 04-17 complete; executing 04-16 approved transaction contract
 last_updated: "2026-09-11T06:29:12.871054Z"
 last_activity: 2026-09-11
 last_activity_desc: 04-15 approved and complete; remaining gap execution resumed
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 17 of 20 (wave 13; 15 plans complete)
+Plan: 16 of 20 (wave 14; 16 plans complete)
 Status: Approved uncertainty decision; gap execution resumed; verification remains gaps_found
 Last activity: 2026-09-11 — Confirmed-save repair committed; 153 focused tests pass
 
@@ -257,3 +257,11 @@ status: halted and requirements-completed: []. Existing ACK-04-01 is separate.
 User replied approved to 04-15 Task 2. Exact unknown-setting presentation and
 native/epoch limits recorded in DECISIONS.json; 04-15 complete in 0d3d784.
 04-17 executes before wave14 04-16. No phase requirements or acceptance promoted.
+
+## Wave 13 complete — 2026-09-11
+
+04-17 complete in a6111f3: malformed-English reason repaired without expanding
+paint acceptance; 81 focused tests pass and Chrome153 passed all16 synthetic
+cases. No live tenant acceptance inferred. Wave gates: schema no drift, codebase
+drift skipped (no STRUCTURE), UI no block. Executing04-16 on local
+codex/phase04-gap-closure after explicit04-15 approval.

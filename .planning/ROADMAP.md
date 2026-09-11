@@ -180,7 +180,7 @@ Plans:
   3. The popup carries an on/off switch that is already on; turning it off clears every tint from the view currently on screen without a refresh, and turning it back on restores them.
   4. Quitting Chrome and reopening it preserves whichever way the switch was left.
 
-**Plans**: 15/20 plans executed (6 original + 8 first-round gap plans); 1 second-round gap plan complete; 5 remaining across waves 13–17. Phase verification remains `gaps_found`.
+**Plans**: 16/20 plans executed (6 original + 8 first-round gap plans); 2 second-round gap plans complete; 4 remaining across waves 13–17. Phase verification remains `gaps_found`.
 **UI hint**: yes
 
 Plans:
@@ -237,7 +237,7 @@ Plans:
 **Wave 13** *(depends on completed 04-14)*
 
 - [x] 04-15-PLAN.md — Confirmed-setting repair verified; explicit uncertainty decision approved on 2026-09-11.
-- [ ] 04-17-PLAN.md — Align malformed-locale diagnosis with strict tint eligibility and verify real Chrome rendering.
+- [x] 04-17-PLAN.md — Align malformed-locale diagnosis with strict tint eligibility and verify real Chrome rendering.
 
 **Wave 14** *(depends on 04-15)*
 
