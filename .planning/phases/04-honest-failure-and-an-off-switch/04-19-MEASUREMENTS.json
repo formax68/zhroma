@@ -1,0 +1,320 @@
+{
+  "reviewed_revision": "255ba31e2b25f7b8c5bde8a3900fb93151594f50",
+  "inventory": {
+    "runtime": {
+      "count": 11,
+      "digest": "46090012ab1a8ebd265273c327b214afbed0321a2fa149ab801ce8c205891065",
+      "files": [
+        {
+          "path": "extension/background.js",
+          "sha256": "0f48bb105cdb1edd2aa6b68a6732dba1217502de015670097adbb3eb120d6428"
+        },
+        {
+          "path": "extension/content.js",
+          "sha256": "c9e83c837e4933827853a03bc9d7b63f308f403d679a8dc5c34701a6792b3126"
+        },
+        {
+          "path": "extension/icons/missing.png",
+          "sha256": "68a032b0500b1ae062a455e3b1bdbf20db8dd71c8d16dee1461e6f3dbf5e8fa0"
+        },
+        {
+          "path": "extension/icons/neutral.png",
+          "sha256": "a13c2447cb31526e666a4e050451228480a6221efcee673a6fd30ac2d943f9d4"
+        },
+        {
+          "path": "extension/icons/off.png",
+          "sha256": "c1289da1a9235cba4ddb0f8bcd85ca90e355ce89ddf3c24340c6409205198638"
+        },
+        {
+          "path": "extension/icons/unreadable.png",
+          "sha256": "1131af46ac5cc421e7e951a4de067566c9a31bbfa032787f5346fb6db8e30c3a"
+        },
+        {
+          "path": "extension/icons/working.png",
+          "sha256": "28fc0380a220982d523d39564123933db92e8d492100cd690c0dd333200845bb"
+        },
+        {
+          "path": "extension/manifest.json",
+          "sha256": "dafa656a55a1b69b42d4aa6490101e593bc9eea36afe35feacf34f7090b768e5"
+        },
+        {
+          "path": "extension/popup.html",
+          "sha256": "4c621c9d92fd21130dc2cafbf5bcaf705a98993c53eb755a53011a381729ad7c"
+        },
+        {
+          "path": "extension/popup.js",
+          "sha256": "3e7cac0ebed5141f617af5fb919a6a0c41df6efad2ccbb27076fc7af012ea938"
+        },
+        {
+          "path": "extension/zhroma.css",
+          "sha256": "8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0"
+        }
+      ]
+    },
+    "tests": {
+      "count": 42,
+      "digest": "a48ee5a0fdfd6d7792879d22c557fceb34b8a221d23833d1c7f2e90bbd49fb66",
+      "files": [
+        {
+          "path": "test/extension/chrome-harness.js",
+          "sha256": "5a6e15b49757eb581481ad40215a912ccb78747a8f5f48f0cd0dc5db46b24b32"
+        },
+        {
+          "path": "test/extension/diagnosis.test.js",
+          "sha256": "cc97a5ef22fd89835799ba02cf8977dbeed04277ebdb69730e0155274ea04b04"
+        },
+        {
+          "path": "test/extension/failure-seam.test.js",
+          "sha256": "af491275d2cce64aa7fcc1f88e15ed64162151251e81cdaa3ed554ed4c604676"
+        },
+        {
+          "path": "test/extension/harness-reliability.test.js",
+          "sha256": "17fb3e6d5fa967a304773da03919374c28ccba6fdbc4a022dc5d13ed204437ae"
+        },
+        {
+          "path": "test/extension/initial-tint.test.js",
+          "sha256": "630b51016cccab5c706fe2e5286a901bd7518134fc598f8991db881eb8fda77c"
+        },
+        {
+          "path": "test/extension/live-acceptance.test.js",
+          "sha256": "b3c98da426db35277dbfa28e9de3e7f7fd6989ae852a9af9bc2dcee0e3125264"
+        },
+        {
+          "path": "test/extension/locale-rendering.test.js",
+          "sha256": "480d4a3c145b3018be2e58f1a146f7eff90e5f0c4bd8f7f2284d69b0ed47a1ec"
+        },
+        {
+          "path": "test/extension/mutation-gate.test.js",
+          "sha256": "c1b7ccea5fbb3f9e3d9278e6cb94c5b30fc738506c6c1be3ec14c06294b9bac5"
+        },
+        {
+          "path": "test/extension/mutation-registry.test.js",
+          "sha256": "9657b4dace4444c6dc71baecd2787741201af053783124fd9118cae7e4c17aad"
+        },
+        {
+          "path": "test/extension/performance-harness.test.js",
+          "sha256": "73508edc36a8dab12aeec6cca243cbed555a34e730961e300080d8828adf1b01"
+        },
+        {
+          "path": "test/extension/persistent-tint.test.js",
+          "sha256": "3127a5b98f09b254bd832cf4ea792ab2cf2d20299cc22e2cb51ec20e4c3853d7"
+        },
+        {
+          "path": "test/extension/phase-03-live-acceptance.test.js",
+          "sha256": "b45537ce8bfc588f3c32cc176a9def1ee1bac302e19e8be4564eb6a1b004071b"
+        },
+        {
+          "path": "test/extension/phase-04-live-acceptance.test.js",
+          "sha256": "3e40300ea3d9f984c401666dcb3e382ef29df8244125039095cea46c4754179a"
+        },
+        {
+          "path": "test/extension/popup-recovery.test.js",
+          "sha256": "9975300d5da8b23183f36b3bedd8cd897752878bc56ecc70bbb03a4bf2a142af"
+        },
+        {
+          "path": "test/extension/preference-outcome.test.js",
+          "sha256": "5a21a04c629a31eccce02674b465ee392f6497c07e4e15f46e26f432c8a70d68"
+        },
+        {
+          "path": "test/extension/runtime-contract.test.js",
+          "sha256": "68520e8a51636bfdf5bf26968ce9e29cc7d87a559adaecc79c365c954e76c57f"
+        },
+        {
+          "path": "test/extension/toggle.test.js",
+          "sha256": "50ee7f41572c66c81da20911037424360669033a8c42d6e941c9bc1bfeb5ea86"
+        },
+        {
+          "path": "test/extension/toolbar-popup.test.js",
+          "sha256": "e46b254637ee140aa57320f71f2c477674b6419ae9d5c0996c88944731005772"
+        },
+        {
+          "path": "test/extension/tracer-world.js",
+          "sha256": "cded53d3ebdf604074814429bee8c63c9d7f0d3dab51280cd8b20afd7bc690f6"
+        },
+        {
+          "path": "test/extension/worker-integrity.test.js",
+          "sha256": "d53636cdca136fd515084e4af02693f473d7bef51707e517f47042ddf571fd25"
+        },
+        {
+          "path": "test/fixtures/manifest.json",
+          "sha256": "48e78544bdcc0f24dabb20eab0804fa1b610aec1953e454762597a65489e22eb"
+        },
+        {
+          "path": "test/fixtures/zendesk-view-grouped-long.html",
+          "sha256": "78d403b7f530fad4fbdcbe1f1b3969c9cb0b316513e1454eaa39fac6b8758b6e"
+        },
+        {
+          "path": "test/fixtures/zendesk-view-priority-absent.html",
+          "sha256": "70ed2ad8c6d53485a1eb3addbbee8f52c24a047520591e93359ca5b3c86db930"
+        },
+        {
+          "path": "test/fixtures/zendesk-view-priority-present.html",
+          "sha256": "c0a5b18f96707c8497f22faece606c53eacce170e30781861a1f17a03a346a91"
+        },
+        {
+          "path": "test/mutants/failure-seam.mutants.json",
+          "sha256": "b974b7007f1a53e6e6c5703e62cf887559d01fc2b352bbf554bcfce64da5d04f"
+        },
+        {
+          "path": "test/mutants/harness-reliability.mutants.json",
+          "sha256": "217989548a134c2ae8c84f8f0dcfd38b909739a8a4f7f014e5f06f368ee3ebef"
+        },
+        {
+          "path": "test/mutants/locale-honesty.mutants.json",
+          "sha256": "ec3db5e3a4ffceb260bdf9abdd1094c3f5435036bf9c778070ada13bd219b5ae"
+        },
+        {
+          "path": "test/mutants/popup-recovery.mutants.json",
+          "sha256": "8c99ad01e3a9a319e18fb5e45a87dd8f3c9ef9da6625b02bd9811102465775d7"
+        },
+        {
+          "path": "test/mutants/preference-outcome.mutants.json",
+          "sha256": "7cc74dc5acbafcd619309c8e0a3e2aa939391f7a8e45bcc215f45cd98a2ceef3"
+        },
+        {
+          "path": "test/mutants/worker-boundary.mutants.json",
+          "sha256": "08e4cc47bc947454b7050a37471cbb6533910350783a5c3a85b603ed0c02040a"
+        },
+        {
+          "path": "test/mutants/worker-lifecycle.mutants.json",
+          "sha256": "270ee0b3cadb7e26bde9ba0f2af476d1756bed0b2142f66bb38439c2e4e80651"
+        },
+        {
+          "path": "test/mutants/worker-staleness.mutants.json",
+          "sha256": "39fe4c0e248a898002757c8e20a9791b81b4aa602d68a46c56db3fec32b6d700"
+        },
+        {
+          "path": "test/performance/tint-workload.html",
+          "sha256": "9dcdee64e0cf8f01d1ce97ce516e352bd157fbc76a26f807be5242cc1c2ec47c"
+        },
+        {
+          "path": "test/performance/tint-workload.js",
+          "sha256": "a83a40fc6979fea93eee228f0c04dcf75548282f7723a474ad8e074577516f30"
+        },
+        {
+          "path": "test/recon/corpus-provenance.test.js",
+          "sha256": "b2cacaf08a31c223451d4b6ad748e01adc25d8788c22993c0df4a1b65ed319b6"
+        },
+        {
+          "path": "test/recon/dependency-approvals.smoke.js",
+          "sha256": "15f8bb3373c70a384279ef0f602c4329691019ec40ef4c5caa86e1187765a046"
+        },
+        {
+          "path": "test/recon/fixture-contract.test.js",
+          "sha256": "95a55153c8ec6aee4c96b7aeff7144545b9ff400a90eb6b4a0ef2ff88b24dae5"
+        },
+        {
+          "path": "test/recon/interaction-evidence.smoke.js",
+          "sha256": "ad5ff3e361432fe98f82992cadfff942ea0a1766f33b123596efb8abdb889fce"
+        },
+        {
+          "path": "test/recon/recon-gate.smoke.js",
+          "sha256": "4ad7f378566e7824c9c64094aea1eb03399f7429c25a6d070aa1a9e3719f3636"
+        },
+        {
+          "path": "test/recon/sanitize-fixture.test.js",
+          "sha256": "8de572f5156cb3386793ab61c48e7825e1aeb25d5654a5767312528844f99047"
+        },
+        {
+          "path": "test/recon/sanitized-output-contract.test.js",
+          "sha256": "09b5f1e41e577b071c251944cf40617ccf8ff0eb81cef254a957aa1f68f5ae50"
+        },
+        {
+          "path": "test/recon/sensitive-patterns.smoke.js",
+          "sha256": "e01c33c9739fb04c290a26e586f9679980523972a136676e80770dfa887db145"
+        }
+      ]
+    },
+    "tools": {
+      "count": 12,
+      "digest": "f7459b816951733542019ffb01d7e249ea8d97dfed0a60621e06cc70e91f3323",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "424c9711251f2b4f092f346975c08dcf0a26f4f277a221feae3c2ea9b33d50f7"
+        },
+        {
+          "path": "package.json",
+          "sha256": "41d6e6695bb5ae2e3ec54f76aaadd96f01a445721e750ce4b0fbb0124b4e807c"
+        },
+        {
+          "path": "scripts/fixture-contract.js",
+          "sha256": "a7c5521deeb9a0726bb890e949eda7cee96fcf1009345733c9d7b81afa2d80d2"
+        },
+        {
+          "path": "scripts/interaction-evidence.js",
+          "sha256": "a1dbf2e9d352382e4b074ee379b42a01c78f0f88285b357a62911c60f1d591e6"
+        },
+        {
+          "path": "scripts/run-tint-workload.js",
+          "sha256": "0c9f019f32b8b4fdc4cac8045b28eac31de0fe6db3597cd58eddf5f9d2da9de7"
+        },
+        {
+          "path": "scripts/sanitize-fixture.js",
+          "sha256": "7791b051d24b96a83b25060f2c634b398567101309efdad787f2d8d4bbf68a5b"
+        },
+        {
+          "path": "scripts/sanitized-output-contract.js",
+          "sha256": "19493681990386a2239bf63f846f48d50f8d8a9a30a32320ae8f83e20d78f259"
+        },
+        {
+          "path": "scripts/sensitive-patterns.js",
+          "sha256": "59d7465534d4efbfb9d02af5f98172e1fe38ed50c7545711c9339e1a028e1778"
+        },
+        {
+          "path": "scripts/verify-locale-rendering.js",
+          "sha256": "8125bfeab4b97e64924183fba9db57b676059bb196cb33e5afe6e151bf0ac768"
+        },
+        {
+          "path": "scripts/verify-mutation-kills.js",
+          "sha256": "b01aced5d9278cec734dc3bd50861bafaf9b2dc1b93d43702e57a616353a66d5"
+        },
+        {
+          "path": "scripts/verify-recon-gate.js",
+          "sha256": "ff31d5b806f65be004fc10c2f22cfd121c088693177c1e81155237d6837a2aff"
+        },
+        {
+          "path": "vitest.config.js",
+          "sha256": "12c74b7b191a313eb1f4b3c49a5071a48da0d91471ba07d2e2acc3ac616da571"
+        }
+      ]
+    }
+  },
+  "commands": [
+    {
+      "command": "npm run test:mutants",
+      "exitCode": 0,
+      "mutants": 39,
+      "killed": 39,
+      "output": "\n> zhroma@0.0.0 test:mutants\n> node scripts/verify-mutation-kills.js\n\n{\"id\":\"worker-lasterror\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a read that fails while still delivering values leaves the worker preference unconfirmed\",\"assertion\":\"[mutant:worker-lasterror]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-lasterror]: expected true to be null // Object.is equality\"}}\n{\"id\":\"content-lasterror\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a read that fails while still delivering values leaves the content script dormant\",\"assertion\":\"[mutant:content-lasterror]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:content-lasterror]: expected [ 'Urgent', 'High', 'Normal', 'Low' ] to deeply equal []\"}}\n{\"id\":\"worker-status-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers get-status is unavailable for that tab alone\",\"assertion\":\"[mutant:worker-status-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-status-unbounded]: expected null not to be null\"}}\n{\"id\":\"worker-apply-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers apply-preference costs one bounded wait, not the off switch\",\"assertion\":\"[mutant:worker-apply-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-apply-unbounded]: expected 4002 to be less than 4000\"}}\n{\"id\":\"worker-status-frameid\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers get-status is unavailable for that tab alone\",\"assertion\":\"[mutant:worker-status-frameid]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-status-frameid]: expected [ …(3) ] to deeply equal []\"}}\n{\"id\":\"worker-apply-frameid\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers apply-preference costs one bounded wait, not the off switch\",\"assertion\":\"[mutant:worker-apply-frameid]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-apply-frameid]: expected [ Array(1) ] to deeply equal []\"}}\n{\"id\":\"harness-drain-bound\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/harness-reliability.test.js\",\"test\":\"bounded Chrome harness drain reports reentrant deliveries\",\"assertion\":\"[harness:bounded-drain]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [harness:bounded-drain]: expected null to be +0 // Object.is equality\"}}\n{\"id\":\"malformed-english-blame\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/diagnosis.test.js\",\"test\":\"malformed English shell: underscore English reports structure across content, worker and popup\",\"assertion\":\"[locale:malformed-english-reason]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [locale:malformed-english-reason] underscore English: expected 'This interface language is not suppor…' to be 'Zhroma cannot read this view\\\\'s ticke…' // Object.is equality\"}}\n{\"id\":\"selector-family-regression\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/runtime-contract.test.js\",\"test\":\"happy-dom secondary model: four CSS rules map exact labels to alpha backgrounds and only direct ticket cells\",\"assertion\":\"[locale:actual-selector-family]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [locale:actual-selector-family]: expected [] to deeply equal [ Array(16) ]\"}}\n{\"id\":\"popup-ask-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a worker that never answers set-enabled costs one bounded wait and the ratified line\",\"assertion\":\"[mutant:popup-ask-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-ask-unbounded]: expected null not to be null\"}}\n{\"id\":\"popup-no-revert\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a reply reporting the save failed returns the switch to the value storage still holds\",\"assertion\":\"[mutant:popup-no-revert]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-no-revert]: expected false to be true // Object.is equality\"}}\n{\"id\":\"popup-stays-disabled\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a reply reporting the save failed returns the switch to the value storage still holds\",\"assertion\":\"[mutant:popup-stays-disabled]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-stays-disabled]: expected true to be false // Object.is equality\"}}\n{\"id\":\"popup-focus-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a keyboard agent gets the switch back after a failed save\",\"assertion\":\"[mutant:popup-focus-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-focus-guard]: expected HTMLBodyElement{ …(49) } to be HTMLInputElement{ …(2), …(58) } // Object.is equality\"}}\n{\"id\":\"apply-fresh-diagnosis\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"same-document replacement after captured apply from false with responsive fresh status\",\"assertion\":\"[review:apply-current-diagnosis]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:apply-current-diagnosis]: expected 'working' to be 'neutral' // Object.is equality\"}}\n{\"id\":\"popup-write-epoch\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"popup true held at icon refuses completed opposite write in neutral view\",\"assertion\":\"[review:post-wait-preference-certainty]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:post-wait-preference-certainty]: expected true to be null // Object.is equality\"}}\n{\"id\":\"apply-document-lifetime\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"captured apply from false after navigation preserves only current application\",\"assertion\":\"[review:apply-document-lifetime]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:apply-document-lifetime]: expected true to be false // Object.is equality\"}}\n{\"id\":\"popup-post-action-status\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"popup status after held icon with invalidation true is current\",\"assertion\":\"[review:popup-post-action-current]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:popup-post-action-current]: expected 'working' to be 'unavailable' // Object.is equality\"}}\n{\"id\":\"resume-read-readiness\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"restored true reads false with immediate stays unconfirmed until fresh read\",\"assertion\":\"[review:resume-unconfirmed-no-markers]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:resume-unconfirmed-no-markers]: expected [ 'Urgent', 'High', 'Normal', 'Low' ] to deeply equal []\"}}\n{\"id\":\"confirmed-write-revert\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"joint table true write=immediate read=rejected apply=success\",\"assertion\":\"[outcome:confirmed-write-checkbox]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:confirmed-write-checkbox]: expected true to be false // Object.is equality\"}}\n{\"id\":\"write-timeout-as-failure\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"native deferred from true remains unknown through expiry and fresh recovery\",\"assertion\":\"[outcome:false-timeout-failure]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:false-timeout-failure]: expected false to be null // Object.is equality\"}}\n{\"id\":\"timeout-releases-writer\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"a fresh request after observation expiry cannot overlap the still-issued native write\",\"assertion\":\"[outcome:post-timeout-write-exclusion]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:post-timeout-write-exclusion]: expected 2 to be 1 // Object.is equality\"}}\n{\"id\":\"expired-request-dispatch\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"admission overflow in an opposite popup never confirms an obsolete position\",\"assertion\":\"[outcome:expired-request-dispatch]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:expired-request-dispatch]: expected [ { enabled: false }, …(31) ] to deeply equal [ { enabled: false } ]\"}}\n{\"id\":\"popup-stale-refresh\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"opening refresh excludes changes and captured late reply cannot overwrite fresh recovery\",\"assertion\":\"[outcome:opening-refresh-excludes-change]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:opening-refresh-excludes-change]: expected [ { enabled: false } ] to deeply equal []\"}}\n{\"id\":\"whole-request-deadline\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"sequential waits spend one arrival budget rather than renewing every hop\",\"assertion\":\"[outcome:sequential-budget]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:sequential-budget]: expected undefined to be defined\"}}\n{\"id\":\"pending-reopen-certainty\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"native callback-held from true remains unknown through expiry and fresh recovery\",\"assertion\":\"[outcome:pending-reopen-mixed]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:pending-reopen-mixed]: expected false to be true // Object.is equality\"}}\n{\"id\":\"late-action-reconciliation\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"late native icon preserves exclusion and reconciles newest projection\",\"assertion\":\"[outcome:late-native-reconciled]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:late-native-reconciled] icon: expected { icon: 'icons/working.png', …(1) } to deeply equal { icon: 'icons/neutral.png', …(1) }\"}}\n{\"id\":\"request-id-echo\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so\",\"assertion\":\"[mutant:request-id-echo]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:request-id-echo]: expected 'Tinting is off' to be 'No readable view is connected' // Object.is equality\"}}\n{\"id\":\"status-reply-gate\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"a status reply carrying an extra member beyond the four the gate names is refused, and the tab reports the connection fact\",\"assertion\":\"[mutant:status-reply-gate]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:status-reply-gate]: expected { icon: 'icons/working.png', …(1) } to deeply equal { icon: 'icons/neutral.png', …(1) }\"}}\n{\"id\":\"diagnosis-pairing\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"an unpaired combination leaves a clean fallback, never a half-written toolbar\",\"assertion\":\"[mutant:diagnosis-pairing]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:diagnosis-pairing]: expected { icon: 'icons/missing.png', …(1) } to deeply equal { icon: 'icons/neutral.png', …(1) }\"}}\n{\"id\":\"popup-valid-gate\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"a set-enabled reply carrying an out-of-set status is refused, and the popup claims nothing\",\"assertion\":\"[mutant:popup-valid-gate]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-valid-gate]: expected 'No readable view is connected' to be 'Zhroma could not confirm that setting' // Object.is equality\"}}\n{\"id\":\"preference-serialization\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"two popups asking for opposite values are serialized, and neither inverts the other\",\"assertion\":\"[mutant:preference-serialization]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:preference-serialization] 2 preference writes in flight at once: expected 2 to be less than 2\"}}\n{\"id\":\"tabs-onremoved-listener\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"closure during held icon releases entries and forbids stale follow-on paint\",\"assertion\":\"[mutant:tabs-onremoved-listener]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:tabs-onremoved-listener]: expected 2 to be 1 // Object.is equality\"}}\n{\"id\":\"tabs-onremoved-delete\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"repeated create-close cycles and reused ids cannot retain or resurrect a dead tab\",\"assertion\":\"[mutant:tabs-onremoved-delete]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:tabs-onremoved-delete]: expected 3 to be 2 // Object.is equality\"}}\n{\"id\":\"project-guard-after-status\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a superseded status reply is discarded before the preference is ever read\",\"assertion\":\"[mutant:project-guard-after-status]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:project-guard-after-status]: expected 1 to be +0 // Object.is equality\"}}\n{\"id\":\"apply-action-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a generation bump between the icon and the title write stops the superseded title\",\"assertion\":\"[mutant:apply-action-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:apply-action-guard]: expected [ { tabId: 7, …(1) } ] to deeply equal []\"}}\n{\"id\":\"popup-status-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a superseded popup projection reports the connection line and still shows the confirmed preference\",\"assertion\":\"[mutant:popup-status-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-status-guard]: expected 'Zhroma could not confirm that setting' to be 'No readable view is connected' // Object.is equality\"}}\n{\"id\":\"project-queue\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a slow earlier reply cannot repaint over a newer projection\",\"assertion\":\"[mutant:project-queue]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:generation-counter] [mutant:project-queue]: expected [ { tabId: 7, …(1) }, …(1) ] to deeply equal []\"}}\n{\"id\":\"generation-counter\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a slow earlier reply cannot repaint over a newer projection\",\"assertion\":\"[mutant:generation-counter]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:generation-counter] [mutant:project-queue]: expected [ { tabId: 7, …(1) }, …(1) ] to deeply equal []\"}}\n{\"id\":\"status-catch-reports-unavailable\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"no receiver reads as unavailable and never as a diagnosis about the view\",\"assertion\":\"[mutant:status-catch-reports-unavailable]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:status-catch-reports-unavailable]: expected { icon: 'icons/working.png', …(1) } to deeply equal { icon: 'icons/neutral.png', …(1) }\"}}\nMUTATION KILLS: 39/39 killed\n"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 1,
+      "nodeSmoke": {
+        "tests": 65,
+        "pass": 65,
+        "fail": 0
+      },
+      "vitest": {
+        "tests": 942,
+        "pass": 941,
+        "fail": 1
+      },
+      "expectedInterimFailure": "test/extension/phase-04-live-acceptance.test.js > the repository record binds to every current shipped byte and reports its actual status",
+      "output": "\n> zhroma@0.0.0 test\n> npm run test:recon\n\n\n> zhroma@0.0.0 test:recon\n> node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js\n\n✔ approval record covers exactly every devDependency with no duplicate rows (0.52825ms)\n✔ happy-dom approval agrees with package.json and the resolved lockfile version (0.08225ms)\n✔ vitest approval agrees with package.json and the resolved lockfile version (0.031ms)\n✔ every approval row has a closed attestation state and a basis and date (0.088ms)\n✔ independence is recorded separately as unconfirmed with the verbatim answer (0.078625ms)\n✔ keeps a zero-row observation as an explicit interaction block (1.291875ms)\n✔ admits the repository interaction evidence after the human gate (2.32075ms)\n✔ admits positive, scenario-bound normal, hover, and selected paint evidence (0.617ms)\n✔ rejects verified evidence without positive counts or distinct paint observations (0.272625ms)\n✔ rejects incomplete or wrongly attributed verified evidence (0.505625ms)\n✔ fails closed on raw or unexpected evidence without echoing sensitive values (0.216083ms)\n✔ does not accept host.shadowRoot === null as Shadow DOM proof (0.072ms)\n✔ parses only the named interaction ledger section (0.056ms)\n✔ canonicalizes whitespace and case before paint distinctness (0.171ms)\n✔ paint functions reject arbitrary words inside otherwise recognized syntax (0.107708ms)\n✔ bounds computed paint serialization and numeric channels (0.1785ms)\n✔ CLI emits stable codes without echoing an unknown status or duplicate id (217.34775ms)\n✔ CLI rejects an unknown mode with a value-free argument code (109.39625ms)\n✔ in-process failures are ReconGateError instances with a fixed message and code (0.296292ms)\n✔ accepts a complete synthetic entry in evidence mode only (0.767959ms)\n✔ evidence mode accepts a complete terminal entry without a final verdict (0.062041ms)\n✔ rejects missing required fields, unknown statuses, and absent scenarios (0.1425ms)\n✔ rejects duplicate entry ids and entries whose heading disagrees with id (0.101375ms)\n✔ final mode requires one explicit recognized verdict (0.085542ms)\n✔ an unresolved English-path item fails evidence and final modes (0.09975ms)\n✔ outside-scope status is reserved for explicitly non-English work (0.084583ms)\n✔ rejects an unsupported validator mode (0.031375ms)\n✔ repository ledger admits terminal evidence for every English-path question (1.098667ms)\n✔ final mode binds the complete repository ledger to admitted scenarios (2.736375ms)\n✔ final proceed fails closed when interaction paint evidence is not positive (0.606208ms)\n✔ CLI rejects omitted and extra arguments for evidence and final modes (306.778959ms)\n✔ final CLI rejects active hash-matching fixtures through the shared validator (104.8405ms)\n✔ final CLI rejects an in-corpus symlink to an external fixture (105.420125ms)\n✔ assumptions contract preserves seven rows with six gating proofs and one flagged exception (0.35875ms)\n✔ required evidence rejects inadmissible statuses and scenario sets (6.656ms)\n✔ required contracts exactly match recorded evidence including disproved findings (0.535417ms)\n✔ empty ledgers and blank required fields reject with stable codes (0.110083ms)\n✔ blocker ordering does not depend on ledger section order (1.106958ms)\n▶ final gate audit regressions\n  ✔ CLI never echoes a supplied private ledger path unless debug is exactly 1 (617.624042ms)\n  ✔ final gate rejects arbitrary private paint (0.87225ms)\n  ✔ final gate rejects paint differing only by whitespace and case (0.574625ms)\n  ✔ required evidence cannot be relabeled as localization-only (5.203167ms)\n  ✔ CR-08: disproved identifiers with intact prose cannot authorize fallback (0.470167ms)\n  ✔ CR-10: declared-input-unresolved blocks a gating row (0.465083ms)\n✔ final gate audit regressions (625.392167ms)\n✔ proven fallback requires an existing proof path (0.480125ms)\n✔ verdict authorization enums and fallback states are closed (2.039667ms)\n✔ null-shadowRoot alone does not rule out a closed root (0.682417ms)\n✔ resolved gating rows need bound proof references (1.473542ms)\n✔ the non-gating assumption must be surfaced by exact name (0.567625ms)\n✔ assumption section and table shape are required (0.6215ms)\n✔ audit: private words inside CSS functions cannot satisfy paint evidence (0.815917ms)\n✔ audit: existing unrelated test files cannot prove a fallback rung (0.9425ms)\n✔ audit: new verdict metadata uses closed identifiers and proof tokens (1.087958ms)\n✔ final interaction owner vocabulary matches row and direct-cell support (0.795792ms)\n✔ audit: equivalent transparent paint cannot masquerade as distinct states (0.791ms)\n✔ rejects NFD content against NFC denylist with value-free findings (1.168792ms)\n✔ rejects NFC content against NFD denylist with value-free findings (0.310291ms)\n✔ rejects case folding after normalization with value-free findings (0.06625ms)\n✔ admits structurally useful deterministic sanitized markup (0.078333ms)\n✔ rejects missing or empty capture-specific denylists (0.096166ms)\n✔ rejects every generic forbidden class with stable structured findings (4.247375ms)\n✔ rejects inline handlers, frames, style resources, and JSON state (0.090417ms)\n✔ rejects every capture-specific denylist token without echoing values (0.129542ms)\n✔ deduplicates overlapping matches and returns findings in stable order (0.136375ms)\n✔ rejects non-string content without inspecting or logging it (0.077625ms)\nℹ tests 65\nℹ suites 1\nℹ pass 65\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1611.499833\n\n RUN  v4.1.11 /Users/mike/code/zhroma\n\nPHASE 03 LIVE ACCEPTANCE STATUS: human_needed\n ❯ test/extension/phase-04-live-acceptance.test.js (42 tests | 1 failed) 220ms\n   × the repository record binds to every current shipped byte and reports its actual status 6ms\nLIVE ACCEPTANCE STATUS: passed\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  test/extension/phase-04-live-acceptance.test.js > the repository record binds to every current shipped byte and reports its actual status\nAssertionError: expected { …(11) } to deeply equal { …(11) }\n\n- Expected\n+ Received\n\n  {\n-   \"background.js\": \"0f48bb105cdb1edd2aa6b68a6732dba1217502de015670097adbb3eb120d6428\",\n-   \"content.js\": \"c9e83c837e4933827853a03bc9d7b63f308f403d679a8dc5c34701a6792b3126\",\n+   \"background.js\": \"141b192fecc263a2add910bed0bc29f3f18ec9abbcfd1c03510925235a840e6e\",\n+   \"content.js\": \"2dd1ac4c892aaadf5c4bc14b47c61e5a7aee4f9bdca42b26351b9ecd999c6c42\",\n    \"icons/missing.png\": \"68a032b0500b1ae062a455e3b1bdbf20db8dd71c8d16dee1461e6f3dbf5e8fa0\",\n    \"icons/neutral.png\": \"a13c2447cb31526e666a4e050451228480a6221efcee673a6fd30ac2d943f9d4\",\n    \"icons/off.png\": \"c1289da1a9235cba4ddb0f8bcd85ca90e355ce89ddf3c24340c6409205198638\",\n    \"icons/unreadable.png\": \"1131af46ac5cc421e7e951a4de067566c9a31bbfa032787f5346fb6db8e30c3a\",\n    \"icons/working.png\": \"28fc0380a220982d523d39564123933db92e8d492100cd690c0dd333200845bb\",\n    \"manifest.json\": \"dafa656a55a1b69b42d4aa6490101e593bc9eea36afe35feacf34f7090b768e5\",\n    \"popup.html\": \"4c621c9d92fd21130dc2cafbf5bcaf705a98993c53eb755a53011a381729ad7c\",\n-   \"popup.js\": \"3e7cac0ebed5141f617af5fb919a6a0c41df6efad2ccbb27076fc7af012ea938\",\n+   \"popup.js\": \"6a6f07c3e1dc891faf6b8f341e074d941115965f1907b8bc5a1b5b70293fa79f\",\n    \"zhroma.css\": \"8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0\",\n  }\n\n ❯ test/extension/phase-04-live-acceptance.test.js:401:32\n    399|   const record = parsePhase04Acceptance(markdown);\n    400|   expect(Object.keys(record.source.assets).sort()).toEqual(SHIPPED_NAM…\n    401|   expect(record.source.assets).toEqual(SHIPPED);\n       |                                ^\n    402|   expect(record.source.inventory_count).toBe(11);\n    403|   const status = validatePhase04Acceptance(record);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 21 passed (22)\n      Tests  1 failed | 941 passed (942)\n   Start at  12:06:30\n   Duration  16.52s (transform 884ms, setup 0ms, import 3.56s, tests 59.38s, environment 667ms)\n\n"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension/preference-outcome.test.js test/extension/toolbar-popup.test.js test/extension/worker-integrity.test.js test/extension/runtime-contract.test.js test/extension/mutation-registry.test.js test/extension/mutation-gate.test.js",
+      "exitCode": 0,
+      "tests": 423,
+      "pass": 423,
+      "output": "\n RUN  v4.1.11 /Users/mike/code/zhroma\n\n\n Test Files  6 passed (6)\n      Tests  423 passed (423)\n   Start at  12:06:52\n   Duration  16.28s (transform 156ms, setup 0ms, import 515ms, tests 27.03s, environment 154ms)\n\n"
+    }
+  ],
+  "notes": [
+    "Two historical excluded survivors remain superseded, not kills: popup-copy-fallback and project-guard-after-preference.",
+    "The old halted SUMMARY trailing blank line is pending removal in required final summary rewrite; no runtime/test/tool whitespace defect.",
+    "Full source-binding regeneration and authentic live observations belong to 04-20."
+  ]
+}
