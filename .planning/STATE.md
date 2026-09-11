@@ -3,7 +3,7 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: 04-19 resumed with explicit user authorization for targeted repairs
+stopped_at: 04-19 complete; executing 04-20 final evidence preparation
 last_updated: "2026-09-11T06:29:12.871054Z"
 last_activity: 2026-09-11
 last_activity_desc: 04-15 approved and complete; remaining gap execution resumed
@@ -12,7 +12,7 @@ progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 42
-  completed_plans: 38
+  completed_plans: 39
   percent: 40
 ---
 
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 19 of 20 (wave 16 resumed; 18 plans complete)
-Status: New targeted repair attempt authorized; verification remains gaps_found
+Plan: 20 of 20 (wave 17; 19 plans complete)
+Status: Technical review converged; final evidence preparation underway; human acceptance pending
 Last activity: 2026-09-11 — Review recheck at 028265e retains CR-19-02 and CR-19-03; 04-20 blocked
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
@@ -281,3 +281,7 @@ Independent review found three runtime blockers and one harness warning. CR-19-0
 ## 2026-09-11 — Explicitly authorized targeted repair attempt
 
 After the previous non-decreasing review halt, the user was offered a revised repair plan for CR-19-02, CR-19-03 and WR-19-01 followed by independent recheck. Their direct response was "proceed". A new bounded attempt is authorized; the previous halt and counterexamples remain historical facts. 04-19 resumes with durable regression capture and narrow repairs. 04-20 remains dependent on technical review convergence, and human acceptance is unchanged.
+
+## 2026-09-11 — Wave 16 complete after authorized repair attempt
+
+04-19 completed at 70ad1e5. Both independent reviewers cleared all four findings against the same65-file identity at 255ba31. Complete mutation gate39/39; prescribedfocused423/423; default65smoke and941/942Vitest, only expectedstale04sourcebinding failure. Four evidence/human security obligations and two inheritedvalidatorwarnings are assigned04-20, now executingTask1. Priorhalt remains recorded above. No requirementorhumanacceptance is promoted.
