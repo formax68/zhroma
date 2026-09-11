@@ -152,6 +152,36 @@ test('admission overflow in an opposite popup never confirms an obsolete positio
   expect(Math.max(...world.writeObservations), '[outcome:physical-write-overlap]').toBe(1);
 });
 
+for (const initial of [true, false]) {
+  for (const freshStatus of ['responsive', 'held']) {
+    test(`same-document replacement after captured apply from ${initial} with ${freshStatus} fresh status`, async () => {
+      const { world, content, popup } = await timedBoot(initial);
+      world.hold('content-response');
+      const admitted = Date.now();
+      change(popup, !initial);
+      await vi.advanceTimersByTimeAsync(100);
+      expect(world.snapshot()).toEqual({ enabled: !initial });
+      content.document.body.replaceChildren();
+      await vi.advanceTimersByTimeAsync(100);
+      if (freshStatus === 'responsive') world.unhold('content-response');
+      world.release('content-response');
+      await vi.advanceTimersByTimeAsync(freshStatus === 'responsive' ? 100 : 4010);
+      const response = answered(world).at(-1);
+      expect(response?.payload.status, '[review:apply-current-diagnosis]').toBe(freshStatus === 'held'
+        ? 'unavailable' : initial ? 'off' : 'neutral');
+      expect(response.payload).toMatchObject({ saved: true, enabled: !initial });
+      expect(response.at - admitted, '[review:post-apply-original-budget]').toBeLessThanOrEqual(4000);
+      expect(statusText(popup.document)).toBe(freshStatus === 'held'
+        ? COPY.unavailable : initial ? COPY.off : COPY.checking);
+      expect(control(popup.document).checked).toBe(!initial);
+      expect(markers(content.document)).toEqual([]);
+      world.unhold('content-response'); world.release('content-response');
+      await vi.advanceTimersByTimeAsync(100);
+      expect(world.forbidden).toEqual([]);
+    });
+  }
+}
+
 test('a fresh request after observation expiry cannot overlap the still-issued native write', async () => {
   const { world, popup } = await timedBoot(true);
   world.setWriteMode('deferred');

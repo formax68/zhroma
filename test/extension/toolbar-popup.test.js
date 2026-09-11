@@ -26,9 +26,9 @@ const manifest = JSON.parse(asset('manifest.json'));
 
 afterEach(async () => { vi.useRealTimers(); await closeWindows(); });
 
-async function timedTabs() {
+async function timedTabs(initial = true) {
   vi.useFakeTimers();
-  const world = createWorld({ stored: { enabled: true }, portCloseMs: 20000 });
+  const world = createWorld({ stored: { enabled: initial }, portCloseMs: 20000 });
   const worker = loadWorker(world);
   world.openTab(OTHER_TAB_ID);
   const content = loadContent(world);
@@ -38,6 +38,37 @@ async function timedTabs() {
 }
 
 for (const stage of ['icon', 'title']) {
+  for (const initial of [true, false]) {
+    for (const view of ['readable', 'neutral']) {
+      test(`popup ${initial} held at ${stage} refuses completed opposite write in ${view} view`, async () => {
+        const { world, content } = await timedTabs(initial);
+        if (view === 'neutral') { content.document.body.replaceChildren(); await vi.advanceTimersByTimeAsync(100); }
+        world.hold(stage, TAB_ID);
+        const popup = loadPopup(world);
+        await vi.advanceTimersByTimeAsync(50);
+        expect(world.pending(stage, TAB_ID)).toBe(1);
+        const other = world.popupChrome.runtime.sendMessage({ type: 'set-enabled', requestId: 888, enabled: !initial });
+        await vi.advanceTimersByTimeAsync(200);
+        expect(await other).toMatchObject({ saved: true, enabled: !initial });
+        expect(world.snapshot()).toEqual({ enabled: !initial });
+        expect(world.physicalWriteCount()).toBe(0);
+        world.unhold(stage, TAB_ID); world.release(stage, TAB_ID);
+        await vi.advanceTimersByTimeAsync(100);
+        const response = world.traffic.filter((entry) => entry.direction === 'response'
+          && entry.payload.type === 'popup-status').at(-1)?.payload;
+        expect(response?.enabled, '[review:post-wait-preference-certainty]').toBe(null);
+        expect(control(popup.document).indeterminate).toBe(true);
+        expect(control(popup.document).disabled).toBe(true);
+        expect(statusText(popup.document)).toBe(COPY.unknown);
+        popup.window.dispatchEvent(new popup.window.Event('focus'));
+        await vi.advanceTimersByTimeAsync(100);
+        expect(control(popup.document).checked).toBe(!initial);
+        expect(control(popup.document).indeterminate).toBe(false);
+        expect(control(popup.document).disabled).toBe(false);
+        expect(world.forbidden).toEqual([]);
+      });
+    }
+  }
   for (const invalidated of [false, true]) {
     test(`popup status after held ${stage} with invalidation ${invalidated} is current`, async () => {
       const { world, content } = await timedTabs();
