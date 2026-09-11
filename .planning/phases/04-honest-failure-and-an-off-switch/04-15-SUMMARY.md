@@ -3,16 +3,16 @@ phase: 04-honest-failure-and-an-off-switch
 plan: "15"
 subsystem: ui
 tags: [preference, actual-source, tdd, blocking-human]
-status: halted
-checkpoint: blocking-human
-completed_tasks: 1
-pending_task: 2
+status: complete
+checkpoint: resolved
+completed_tasks: 2
+pending_task: null
 verification_status: gaps_found
 requirements-completed: []
 requirements-addressed: [CTRL-02, CTRL-03, CTRL-04]
 plan_head_before: 8382d826d7d54934d75d8dd5858317866e6f487f
 actuals:
-  tasks: 1
+  tasks: 2
   commits: 3
 key-files:
   created:
@@ -140,3 +140,12 @@ completed plan. Keep requirements-completed empty until acceptance is supported.
 Required repair, tests and contract exist and are committed. Focused verification
 passed against repaired bytes. Task 2 authenticity check intentionally cannot pass
 without the user's response. No completion/acceptance promotion was performed.
+
+## Task 2 resolved — 2026-09-11
+
+The user replied **approved** to the concrete proposal linked after Task 1.
+Recorded verbatim with copy, recovery, native-stall and worker-epoch limits in
+04-DECISIONS.json. Approval matches 04-16 without a plan revision. The historical
+checkpoint narrative above describes the pause before this answer. Both tasks
+are now complete; requirements-completed remains empty because no phase-wide
+acceptance is established. No live observation or ACK-04-01 is inferred.

@@ -1,8 +1,8 @@
 # Preference outcome contract
 
-Prepared 2026-09-11 by 04-15 Task 1. **Unknown-outcome proposal awaits the user's
-04-15 Task 2 decision.** No new copy, uncertainty state, deadline, or residual-risk
-acceptance is authorized by this document. Existing decisions remain verbatim in
+Prepared 2026-09-11 by 04-15 Task 1. **Approved in 04-15 Task 2:** the user replied `approved` on 2026-09-11
+to the exact proposal below. DECISIONS.json records its provenance and limits.
+Approval authorizes implementation; it is not implementation or live evidence. Existing decisions remain verbatim in
 04-DECISIONS.json; the two operational failure strings are ratified in UAT 21.
 
 ## Confirmed behavior repaired and measured
@@ -110,7 +110,7 @@ do not bound the whole request or an unlimited queue.
 | content readPreference | callback storage.local.get; invoked at startup/pageshow/apply | None | Generation-aware bounded read; late callback cannot resurrect obsolete work |
 | content apply request | sendResponse waits for readPreference(done) | None (worker abandons at its message bound) | Bound own observation; preserve late callback ownership |
 
-## Exact decision packet — pending
+## Exact decision packet — approved
 
 Proposed copy: **“Zhroma could not confirm that setting”**.
 
@@ -148,8 +148,8 @@ consent from old defaults language, AR-04-01, tests, or elapsed time.
 
 ## Evidence boundary and resume
 
-Task 2 has no response yet; unknown_preference remains absent from DECISIONS.json.
-04-16 stays blocked. Independent integrated code/security review belongs to
+Task 2 response: `approved`. The attributed unknown_preference entry in
+DECISIONS.json authorizes 04-16 exactly as proposed. Independent integrated code/security review belongs to
 04-19. Final source/timing binding and human acceptance belong to 04-20. Changing
 popup.js makes the old current-source binding stale; retain that expected failure
 until 04-20, never suppress it or count it as a mutation kill. Historical

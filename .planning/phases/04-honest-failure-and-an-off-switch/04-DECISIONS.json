@@ -4,26 +4,48 @@
   "note": "Explicit user selections for the three product choices left unresolved in 04-CONTEXT.md <deferred>. Responses are recorded verbatim as supplied by the user. Recommendations were never treated as consent.",
   "toolbar": {
     "choice": "distinct-icons",
-    "response": "Distinct icons (proposed) — Five static shape treatments in 32x32 PNG: check = working (incl. blank column), column-plus = confirmed missing Priority column, question mark = cannot read view, hollow circle = checking/unavailable, power symbol = off. Three diagnoses stay exactly three; off/neutral describe operation, not a fourth diagnosis. Explanatory action titles, never colour alone. Store artwork stays Phase 5.",
+    "response": "Distinct icons (proposed) \u2014 Five static shape treatments in 32x32 PNG: check = working (incl. blank column), column-plus = confirmed missing Priority column, question mark = cannot read view, hollow circle = checking/unavailable, power symbol = off. Three diagnoses stay exactly three; off/neutral describe operation, not a fourth diagnosis. Explanatory action titles, never colour alone. Store artwork stays Phase 5.",
     "confirmed": true,
     "requires_replan": false,
-    "requirements": ["FAIL-01", "FAIL-05"],
+    "requirements": [
+      "FAIL-01",
+      "FAIL-05"
+    ],
     "recorded_by": "04-01 Task 1"
   },
   "preference": {
     "choice": "global-local",
-    "response": "Global, storage.local (proposed) — Persist only {enabled: boolean} in chrome.storage.local; a missing key means true. The current tab must acknowledge cleanup/reconciliation; other runnable tabs converge via storage.onChanged; frozen tabs re-read on resume. Survives browser restart in both states. Delivery is asynchronous — no promise of atomic application across frozen tabs.",
+    "response": "Global, storage.local (proposed) \u2014 Persist only {enabled: boolean} in chrome.storage.local; a missing key means true. The current tab must acknowledge cleanup/reconciliation; other runnable tabs converge via storage.onChanged; frozen tabs re-read on resume. Survives browser restart in both states. Delivery is asynchronous \u2014 no promise of atomic application across frozen tabs.",
     "confirmed": true,
     "requires_replan": false,
-    "requirements": ["CTRL-02", "CTRL-03", "CTRL-04"],
+    "requirements": [
+      "CTRL-02",
+      "CTRL-03",
+      "CTRL-04"
+    ],
     "recorded_by": "04-01 Task 2"
   },
   "popup": {
     "choice": "concise-no-link",
-    "response": "Concise, no link (proposed) — Fixed messages: 'Priority tinting is working'; 'Priority column found. These tickets have no priority values set'; 'Add a Priority column to this view to use tinting'; 'This interface language is not supported'; 'Zhroma cannot read this view's ticket table'. Operational: 'Tinting is off'; 'Checking this view'; 'No readable view is connected'. Switch labelled 'Enable priority tinting'. No outbound help link; never claims the tab is definitively outside Zendesk.",
+    "response": "Concise, no link (proposed) \u2014 Fixed messages: 'Priority tinting is working'; 'Priority column found. These tickets have no priority values set'; 'Add a Priority column to this view to use tinting'; 'This interface language is not supported'; 'Zhroma cannot read this view's ticket table'. Operational: 'Tinting is off'; 'Checking this view'; 'No readable view is connected'. Switch labelled 'Enable priority tinting'. No outbound help link; never claims the tab is definitively outside Zendesk.",
     "confirmed": true,
     "requires_replan": false,
-    "requirements": ["FAIL-02", "FAIL-03", "CTRL-02"],
+    "requirements": [
+      "FAIL-02",
+      "FAIL-03",
+      "CTRL-02"
+    ],
     "recorded_by": "04-01 Task 3"
+  },
+  "unknown_preference": {
+    "choice": "confirm-unknown",
+    "response": "approved",
+    "confirmed": true,
+    "copy": "Zhroma could not confirm that setting",
+    "recovery": "Existing labelled checkbox indeterminate and temporarily disabled; worker replies within 4000 ms of admission, popup fallback 5000 ms; bounded admission and queued expiry without dispatch; fresh bounded reopen/focus read after physical settlement. Status requests still answer while a write remains pending.",
+    "native_stall_limit": "Raw-write exclusion persists until its callback settles. A write that never settles can leave mutation unavailable until Chrome resolves it; caller timeout cannot cancel it. A delayed native action write may leave transient stale artwork until settlement and current reconciliation.",
+    "worker_epoch_limit": "Worker termination loses in-memory exclusion; with one persisted boolean, ordering across worker epochs cannot be guaranteed.",
+    "recorded_by": "04-15 Task 2, direct user reply in this task on 2026-09-11",
+    "provenance": "User replied approved to the exact proposed message, mixed disabled checkbox, four-second response, fresh-read recovery and native/epoch limits after the completed decision packet was linked."
   }
 }
