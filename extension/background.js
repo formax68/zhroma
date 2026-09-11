@@ -17,6 +17,8 @@
   // would leave the switch inoperative in EVERY tab until Chrome terminated
   // the worker.
   const REQUEST_TIMEOUT_MS = 2000;
+  const WORKER_REQUEST_TIMEOUT_MS = 4000;
+  const MAX_PENDING_PREFERENCES = 32;
   const PREFERENCE_KEY = 'enabled';
   // Exactly three product diagnoses (FAIL-01). `neutral`, `off` and the
   // worker-only `unavailable` describe what the extension is doing, not what
@@ -60,7 +62,9 @@
   let requestCounter = 0;
   // One writer, one queue. Two popups asking for opposite values are applied in
   // arrival order, and the last request is the one that survives.
-  let preferenceQueue = Promise.resolve();
+  const preferenceQueue = [];
+  let activePreference = null;
+  let pendingWrite = null;
 
   const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
   const isExact = (value, keys) => isObject(value)
@@ -74,14 +78,14 @@
   // `isExact` already refuses it and both call sites convert it into the
   // outcome they already have for an unusable reply. No new branch, no new
   // reported state, no new copy.
-  function bounded(promise) {
-    let timer = null;
-    const deadline = new Promise((resolve) => { timer = setTimeout(() => resolve(null), REQUEST_TIMEOUT_MS); });
-    const settled = () => { if (timer !== null) { clearTimeout(timer); timer = null; } };
-    return Promise.race([promise, deadline]).then(
-      (value) => { settled(); return value; },
-      (error) => { settled(); throw error; },
-    );
+  function bounded(start, expires, cap = WORKER_REQUEST_TIMEOUT_MS) {
+    const remaining = Math.min(cap, expires - Date.now());
+    if (remaining <= 0) return Promise.resolve(null);
+    let timer;
+    const timeout = new Promise((resolve) => { timer = setTimeout(() => resolve(null), remaining); });
+    let native;
+    try { native = start(); } catch (error) { clearTimeout(timer); return Promise.reject(error); }
+    return Promise.race([native, timeout]).finally(() => clearTimeout(timer));
   }
 
   function stateFor(tabId) {
@@ -124,10 +128,53 @@
     });
   }
 
-  function serializePreference(task) {
-    const run = preferenceQueue.then(task, task);
-    preferenceQueue = run.then(() => {}, () => {});
-    return run;
+  function preferenceReply(job) {
+    return {
+      type: 'set-enabled', requestId: job.requestId, saved: job.saved,
+      enabled: pendingWrite !== null ? null : job.enabled,
+      applied: job.applied, status: job.status, reason: job.reason,
+    };
+  }
+
+  function admitPreference(requestId, desired, sendResponse) {
+    const job = { requestId, desired, expires: Date.now() + WORKER_REQUEST_TIMEOUT_MS,
+      saved: false, enabled: null, applied: false, status: 'unavailable', reason: null,
+      expired: false, answered: false, raw: null };
+    if (preferenceQueue.length + (activePreference === null ? 0 : 1) >= MAX_PENDING_PREFERENCES) {
+      sendResponse(preferenceReply(job));
+      return;
+    }
+    job.answer = () => {
+      if (job.answered) return;
+      job.answered = true;
+      clearTimeout(job.timer);
+      sendResponse(preferenceReply(job));
+    };
+    job.timer = setTimeout(() => {
+      job.expired = true;
+      const index = preferenceQueue.indexOf(job);
+      if (index >= 0) preferenceQueue.splice(index, 1);
+      job.answer();
+    }, WORKER_REQUEST_TIMEOUT_MS);
+    preferenceQueue.push(job);
+    drainPreferences();
+  }
+
+  async function drainPreferences() {
+    if (activePreference !== null) return;
+    const job = preferenceQueue.shift();
+    if (job === undefined) return;
+    activePreference = job;
+    try {
+      if (!job.expired && Date.now() < job.expires) await setEnabled(job);
+    } finally {
+      job.answer();
+      // Observation expiry is not cancellation. This raw callback exclusively
+      // owns the writer even after its requester has already received null.
+      if (job.raw !== null) await job.raw;
+      activePreference = null;
+      drainPreferences();
+    }
   }
 
   // Off is an operational state, never a fourth diagnosis: while it is on, the
@@ -140,9 +187,9 @@
     return result;
   }
 
-  async function activeTab() {
+  async function activeTab(expires) {
     try {
-      const found = await chrome.tabs.query({ active: true, currentWindow: true });
+      const found = await bounded(() => chrome.tabs.query({ active: true, currentWindow: true }), expires);
       const tab = Array.isArray(found) ? found[0] : undefined;
       return isObject(tab) && Number.isInteger(tab.id) ? tab : null;
     } catch { return null; }
@@ -161,13 +208,13 @@
       && Object.hasOwn(TITLES, statusKey(reply.diagnosis, reply.reason));
   }
 
-  async function requestStatus(tabId, generation) {
+  async function requestStatus(tabId, generation, expires) {
     // A content push is only a hint. Every projection is preceded by a fresh
     // top-frame reply, and a documentId never proves the document is current.
     const requestId = nextRequestId();
     let reply;
     try {
-      reply = await bounded(chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 }));
+      reply = await bounded(() => chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 }), expires, REQUEST_TIMEOUT_MS);
     } catch {
       // No receiver, a navigating tab or a reloaded extension. Unavailable is
       // an operational fact about the connection, never a claim about the view.
@@ -191,11 +238,11 @@
   // is holding — so reusing it here would throw away a true answer about work
   // that had just been done. The echoed requestId is this reply's own
   // staleness guard, and painting stays generation-guarded in `project`.
-  async function requestApply(tabId) {
+  async function requestApply(tabId, expires) {
     const requestId = nextRequestId();
     let reply;
     try {
-      reply = await bounded(chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 }));
+      reply = await bounded(() => chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 }), expires, REQUEST_TIMEOUT_MS);
     } catch { return null; }
     if (!isExact(reply, ['type', 'requestId', 'applied', 'diagnosis', 'reason'])
       || typeof reply.applied !== 'boolean'
@@ -215,61 +262,58 @@
   }
 
   function project(tabId) {
+    const expires = Date.now() + WORKER_REQUEST_TIMEOUT_MS;
     const generation = invalidate(tabId);
     const state = stateFor(tabId);
     // Serialized per tab so a slow earlier reply cannot repaint over a later
     // one, with the generation rechecked after every await.
     state.queue = state.queue.then(async () => {
-      const result = await requestStatus(tabId, generation);
+      const result = await requestStatus(tabId, generation, expires);
       if (result === null || generationOf(tabId) !== generation) return;
       // The preference is re-read rather than remembered: the worker holds no
       // state that survives its own termination.
-      const enabled = await readPreference();
+      const enabled = await bounded(readPreference, expires);
       if (generationOf(tabId) !== generation) return;
       await applyAction(tabId, operational(result, enabled), generation);
     }).catch(() => {});
     return state.queue;
   }
 
-  async function popupStatus(requestId) {
-    const tab = await activeTab();
-    if (tab === null) return unavailable(requestId, await readPreference());
+  async function popupStatus(requestId, expires) {
+    const tab = await activeTab(expires);
+    if (tab === null) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));
     const generation = invalidate(tab.id);
-    const result = await requestStatus(tab.id, generation);
-    const enabled = await readPreference();
-    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, enabled);
+    const result = await requestStatus(tab.id, generation, expires);
+    const enabled = pendingWrite !== null ? null : await bounded(readPreference, expires);
+    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);
     const projected = operational(result, enabled);
-    await applyAction(tab.id, projected, generation);
-    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason, enabled };
+    await bounded(() => applyAction(tab.id, projected, generation), expires);
+    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,
+      enabled: pendingWrite !== null ? null : enabled };
   }
 
-  async function setEnabled(requestId, desired) {
-    // Persistence and application are two facts, reported as two facts. They
-    // cannot be one transaction across processes, so nothing here pretends
-    // they are: `saved` is the write, `enabled` is what storage reports back,
-    // and `applied` is what the current document confirmed it actually did.
-    const saved = await writePreference(desired);
-    const enabled = await readPreference();
-    const tab = await activeTab();
-    if (tab === null) {
-      return { type: 'set-enabled', requestId, saved, enabled, applied: false, status: 'unavailable', reason: null };
-    }
-    const outcome = await requestApply(tab.id);
-    const result = outcome === null
-      ? { status: 'unavailable', reason: null }
+  async function setEnabled(job) {
+    job.saved = null;
+    const raw = writePreference(job.desired);
+    pendingWrite = raw;
+    job.raw = raw.then((saved) => {
+      if (pendingWrite === raw) pendingWrite = null;
+      job.saved = saved;
+      return saved;
+    });
+    await bounded(() => job.raw, job.expires);
+    if (job.expired || Date.now() >= job.expires) return;
+    job.enabled = await bounded(readPreference, job.expires);
+    const tab = await activeTab(job.expires);
+    if (tab === null) return;
+    const outcome = await requestApply(tab.id, job.expires);
+    const result = outcome === null ? { status: 'unavailable', reason: null }
       : { status: outcome.status, reason: outcome.reason };
-    // Preserve the read-back fact in the reply, but use an acknowledged write
-    // when choosing operation copy if that read failed. A successful OFF must
-    // not become "checking" merely because its read-back was unavailable.
-    const projected = operational(result, enabled === null && saved ? desired : enabled);
-    // Repaint through the ordinary per-tab projection rather than writing the
-    // action here, so a preference change can never paint over a newer status.
+    const projected = operational(result, job.enabled === null && job.saved === true ? job.desired : job.enabled);
+    job.applied = outcome !== null && outcome.applied;
+    job.status = projected.status;
+    job.reason = projected.reason;
     project(tab.id);
-    return {
-      type: 'set-enabled', requestId, saved, enabled,
-      applied: outcome !== null && outcome.applied,
-      status: projected.status, reason: projected.reason,
-    };
   }
 
   const fromContent = (sender) => isObject(sender)
@@ -291,17 +335,16 @@
     }
     if (isExact(message, ['type', 'requestId']) && message.type === 'popup-status'
       && isRequestId(message.requestId) && fromPopup(sender)) {
-      popupStatus(message.requestId).then(sendResponse, () => sendResponse(unavailable(message.requestId)));
+      const expires = Date.now() + WORKER_REQUEST_TIMEOUT_MS;
+      bounded(() => popupStatus(message.requestId, expires), expires)
+        .then((reply) => sendResponse(reply ?? unavailable(message.requestId)), () => sendResponse(unavailable(message.requestId)));
       return true;
     }
     if (isExact(message, ['type', 'requestId', 'enabled']) && message.type === 'set-enabled'
       && isRequestId(message.requestId) && typeof message.enabled === 'boolean' && fromPopup(sender)) {
       const requestId = message.requestId;
       const desired = message.enabled;
-      serializePreference(() => setEnabled(requestId, desired)).then(sendResponse, () => sendResponse({
-        type: 'set-enabled', requestId, saved: false, enabled: null,
-        applied: false, status: 'unavailable', reason: null,
-      }));
+      admitPreference(requestId, desired, sendResponse);
       return true;
     }
     return undefined;

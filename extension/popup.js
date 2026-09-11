@@ -13,15 +13,7 @@
   // never answers would otherwise leave the switch disabled for the life of
   // the popup, with no reply to re-enable it.
   //
-  // STRICTLY GREATER than the worker's own deadline, and that ordering is the
-  // whole point of the value. Answering the popup can cost the worker a full
-  // bounded wait of its own — a silent top frame makes `get-status` and
-  // `apply-preference` each run to their deadline — so a popup deadline at or
-  // below the worker's would cut off the worker's honest answer just before it
-  // arrived, throw away the confirmed preference it carried, and cost the
-  // agent the very off switch that bound was added to protect. There is no
-  // shared module to hold one constant (D-06 forbids a build step), so the
-  // ordering is asserted from the shipped bytes in `popup-recovery.test.js`.
+  // The worker owns a 4000 ms admission budget; this is transport fallback.
   const REQUEST_TIMEOUT_MS = 5000;
   const STATUSES = ['working', 'missing', 'cannot-read', 'neutral', 'off', 'unavailable'];
   const REASONS = ['blank', 'unsupported-language', 'structure', null];
@@ -47,6 +39,7 @@
   // a claim about the ticket table, and neither is ever shown as a success.
   const NOT_SAVED = 'Zhroma could not save that setting';
   const NOT_APPLIED = 'Setting saved, but this view did not update';
+  const UNKNOWN = 'Zhroma could not confirm that setting';
 
   const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
   const isExact = (value, keys) => isObject(value)
@@ -56,6 +49,7 @@
   const control = document.getElementById('zhroma-enabled');
   let requestCounter = 0;
   let outstanding = false;
+  let owner = 0;
   // The last value confirmed by a read or a successful write acknowledgement,
   // never an unacknowledged desired value. `null` until confirmation, making
   // "there is nothing confirmed to show" distinguishable from "off".
@@ -76,27 +70,19 @@
 
   function showPreference(enabled) {
     if (typeof enabled === 'boolean') {
+      control.indeterminate = false;
       lastConfirmed = enabled;
       control.checked = enabled;
       control.disabled = outstanding;
       return;
     }
-    // Neither a read nor a successful write confirmed this value. The change moved the
-    // control to the desired value, so leaving it alone would display a
-    // position nothing confirmed next to copy saying the save failed. Return
-    // it to the last confirmed value, and leave it operable so a
-    // retry is possible without reopening the panel.
-    if (typeof lastConfirmed === 'boolean') {
-      control.checked = lastConfirmed;
-      control.disabled = false;
-      return;
-    }
-    // Nothing has ever been confirmed, so there is genuinely no position to
-    // show: leave the control where it is and take it out of service rather
-    // than moving it to a value nobody has confirmed. `defaultChecked` is not
-    // that value — the checkbox ships unchecked, so reverting to it after a
-    // failed attempt to turn tinting ON would display an unconfirmed OFF.
+    lastConfirmed = null;
+    control.indeterminate = true;
     control.disabled = true;
+  }
+
+  function failedPreference(enabled) {
+    showPreference(typeof enabled === 'boolean' ? enabled : lastConfirmed);
   }
 
   function focusDefault() {
@@ -141,57 +127,62 @@
     }
   }
 
-  const validStatus = (status, reason) => STATUSES.includes(status) && REASONS.includes(reason);
+  const validStatus = (status, reason) => STATUSES.includes(status) && REASONS.includes(reason)
+    && Object.hasOwn(COPY, reason === null ? status : `${status}:${reason}`);
   const validPreference = (value) => value === null || typeof value === 'boolean';
 
   async function refresh() {
+    if (outstanding) return;
+    const mine = ++owner;
+    const hadFocus = document.activeElement === control;
+    begin();
     requestCounter = requestCounter % MAX_REQUEST_ID + 1;
     const requestId = requestCounter;
     const reply = await ask({ type: 'popup-status', requestId });
+    if (mine !== owner) return;
+    outstanding = false;
     if (!isExact(reply, ['type', 'requestId', 'status', 'reason', 'enabled'])
       || reply.type !== 'popup-status' || reply.requestId !== requestId
       || !validStatus(reply.status, reply.reason) || !validPreference(reply.enabled)) {
-      render('unavailable', null);
       showPreference(null);
-      return;
+      say(UNKNOWN);
+    } else {
+      showPreference(reply.enabled);
+      if (reply.enabled === null) say(UNKNOWN);
+      else render(reply.status, reply.reason);
     }
-    showPreference(reply.enabled);
-    render(reply.status, reply.reason);
+    end(hadFocus);
     focusDefault();
   }
 
   async function requestEnabled(desired) {
+    const mine = ++owner;
     requestCounter = requestCounter % MAX_REQUEST_ID + 1;
     const requestId = requestCounter;
     const hadFocus = document.activeElement === control;
     begin();
-    // The desired value is sent outright. Never "invert whatever the control
-    // last showed": a stale reading would flip the agent's intent.
     const reply = await ask({ type: 'set-enabled', requestId, enabled: desired });
+    if (mine !== owner) return;
+    outstanding = false;
     if (!isExact(reply, ['type', 'requestId', 'saved', 'enabled', 'applied', 'status', 'reason'])
       || reply.type !== 'set-enabled' || reply.requestId !== requestId
-      || typeof reply.saved !== 'boolean' || typeof reply.applied !== 'boolean'
-      || !validPreference(reply.enabled) || !validStatus(reply.status, reply.reason)) {
-      // Nothing legible came back, so nothing may be claimed in either
-      // direction: the preference is unknown and the page state is unknown.
-      // The request is released BEFORE the revert, so the control the revert
-      // re-enables is not disabled again by `control.disabled = outstanding`.
-      outstanding = false;
+      || !validPreference(reply.saved) || typeof reply.applied !== 'boolean'
+      || !validPreference(reply.enabled) || !validStatus(reply.status, reply.reason)
+      || (reply.saved === null && (reply.enabled !== null || reply.applied !== false
+        || reply.status !== 'unavailable' || reply.reason !== null))) {
       showPreference(null);
-      say(NOT_SAVED);
-      end(hadFocus);
-      return;
+      say(UNKNOWN);
+    } else if (reply.saved === null) {
+      showPreference(null);
+      say(UNKNOWN);
+    } else {
+      if (reply.saved === false) failedPreference(reply.enabled);
+      else showPreference(reply.enabled === null ? desired : reply.enabled);
+      if (reply.saved === false) say(NOT_SAVED);
+      else if (reply.status === 'unavailable') render('unavailable', null);
+      else if (!reply.applied) say(NOT_APPLIED);
+      else render(reply.status, reply.reason);
     }
-    outstanding = false;
-    // A fresh readable boolean takes precedence. Otherwise a successful write
-    // confirms the requested value; a failed read does not undo that write.
-    showPreference(reply.enabled === null && reply.saved ? desired : reply.enabled);
-    // Three separate facts, reported separately. Persistence is not
-    // application, and a connection failure is neither.
-    if (!reply.saved) say(NOT_SAVED);
-    else if (reply.status === 'unavailable') render('unavailable', null);
-    else if (!reply.applied) say(NOT_APPLIED);
-    else render(reply.status, reply.reason);
     end(hadFocus);
   }
 
@@ -202,6 +193,7 @@
     requestEnabled(control.checked === true);
   });
 
+  window.addEventListener('focus', refresh);
   render('neutral', null);
   refresh();
 })();
