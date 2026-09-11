@@ -230,17 +230,14 @@ test('a rejected write is reported honestly and the control returns to the value
   expect(world.forbidden).toEqual([]);
 });
 
-test('a rejected read after a write refuses to claim a preference it could not confirm', async () => {
-  const { world, popup } = await withPopup();
+test.each([true, false])('a confirmed write survives rejected read-back from initial %s', async (initial) => {
+  const { world, popup } = await withPopup({ stored: { enabled: initial } });
   world.setReadMode('rejected');
-  await flip(popup, false);
-  expect(statusText(popup.document)).toBe(COPY.notSaved);
-  // Unconfirmed is not a position: the switch is returned to the last value
-  // storage actually read back, never left at the one the click moved it to.
-  // It stays operable, because taking it out of service for the life of the
-  // popup left the agent unable to retry (04-REVIEW WR-07).
-  expect(control(popup.document).checked).toBe(true);
+  await flip(popup, !initial);
+  expect(world.snapshot()).toEqual({ enabled: !initial });
+  expect(control(popup.document).checked).toBe(!initial);
   expect(control(popup.document).disabled).toBe(false);
+  expect(statusText(popup.document)).toBe(COPY.notApplied);
 });
 
 test('a permanent marker-removal fault reports application failure, never a cleared tint', async () => {

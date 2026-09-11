@@ -166,19 +166,17 @@ test('a reply reporting the save failed returns the switch to the value storage 
   expect(world.getStored('enabled')).toBe(true);
 });
 
-test('a reply reporting the preference unconfirmed returns the switch to the last confirmed value', async () => {
+test('a confirmed save remains displayed when its read-back is unconfirmed', async () => {
   const { world, popup } = await bootAll({ stored: { enabled: true } });
   const box = control(popup.document);
   world.setReadMode('rejected');
 
   await flip(popup, false);
 
-  // Storage answered nothing, so nothing may be displayed as confirmed: the
-  // switch returns to the last value a read actually delivered, and the copy
-  // says plainly that the setting was not saved.
-  expect(box.checked).toBe(true);
+  expect(world.snapshot()).toEqual({ enabled: false });
+  expect(box.checked).toBe(false);
   expect(box.disabled).toBe(false);
-  expect(statusText(popup.document)).toBe(COPY.notSaved);
+  expect(statusText(popup.document)).toBe(COPY.notApplied);
 });
 
 test('a second change after a failed save issues a new request, so the switch is not dead', async () => {
