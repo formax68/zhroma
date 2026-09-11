@@ -259,7 +259,7 @@ test('happy-dom secondary model: four CSS rules map exact labels to alpha backgr
     expect(numbers).toEqual(expectedPaint[label]);
     const matching = [...document.querySelectorAll(rule.selectorText)];
     const target = ticketRows[['Urgent', 'High', 'Normal', 'Low'].indexOf(label)];
-    expect(matching).toEqual([...target.children]);
+    expect(matching, '[locale:actual-selector-family]').toEqual([...target.children]);
     for (const excluded of [document.body.firstElementChild, document.querySelector('table'), document.querySelector('thead'), document.querySelector('th'), group, groupCell, nested]) {
       expect(excluded.matches(rule.selectorText)).toBe(false);
     }

@@ -68,6 +68,14 @@ export function validateRegistry(entries, repositoryRoot = REPOSITORY_ROOT) {
     requireValue(!/(?:mutation-(?:gate|registry)|phase-04-live-acceptance)\.test\.js$/.test(target.suite), 'forbidden-target-suite', entry.id);
     const testSource = readFileSync(safeFile(repositoryRoot, target.suite), 'utf8');
     requireValue(testSource.includes(target.assertion), 'assertion-marker-missing', entry.id);
+    // Conservative declaration check only. Parameter expansion and execution
+    // identity remain the real baseline reporter's responsibility.
+    const declared = [...testSource.matchAll(/\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g)].some((match) => {
+      const literal = match[2].replace(/\\(['"`\\])/g, '$1');
+      const pattern = literal.split(/\$\{[^}]+\}|%[sdifjo#]/).map(escapeRegex).join('.+');
+      return new RegExp(`^${pattern}$`).test(target.test);
+    });
+    requireValue(declared, 'test-declaration-missing', entry.id);
   }
   assertFindCounts(entries, repositoryRoot);
   return entries;
@@ -145,12 +153,19 @@ export function measure(entries, repositoryRoot = REPOSITORY_ROOT, options = {})
   return entries.map((entry) => {
     let dir;
     let result;
+    let run;
     try {
       dir = buildCopy(repositoryRoot);
       const path = safeFile(dir, entry.file);
       writeFileSync(path, readFileSync(path, 'utf8').split(entry.find).join(entry.replace));
-      result = adjudicate(execute(dir, entry.suites, [entry.expected_failure.test], options.spawn, options.timeout), [entry.expected_failure], dir);
-    } catch (error) { result = { verdict: 'GATE_ERROR', code: error.code ?? 'unexpected-error' }; }
+      run = execute(dir, entry.suites, [entry.expected_failure.test], options.spawn, options.timeout);
+      result = adjudicate(run, [entry.expected_failure], dir);
+    } catch (error) {
+      result = { verdict: 'GATE_ERROR', code: error.code ?? 'unexpected-error',
+        observed: run?.report?.testResults?.flatMap((suite) => suite.assertionResults ?? [])
+          .filter((test) => test.status === 'failed').slice(0, 3)
+          .map((test) => ({ test: test.fullName.slice(0, 300), message: test.failureMessages?.[0]?.split('\n')[0]?.slice(0, 500) })) ?? [] };
+    }
     finally { if (dir) rmSync(dir, { recursive: true, force: true }); }
     const measured = { id: entry.id, ...result };
     options.onResult?.(measured);

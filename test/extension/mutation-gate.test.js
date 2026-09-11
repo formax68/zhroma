@@ -90,9 +90,31 @@ test('a failing clean disposable baseline rejects before any mutation', () => {
   expect(result.stdout).not.toContain('KILLED');
 }, 40000);
 
+test('a failure specific to the disposable copy also rejects the baseline', () => {
+  const dir = fixture();
+  writeFileSync(join(dir, 'test/extension/control.test.js'), "test('copy control',()=>expect(process.cwd().includes('zhroma-mutant-'),'[control:copy-only]').toBe(false));", { flag: 'a' });
+  const original = spawnSync(process.execPath, ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.config.js'], { cwd: dir, encoding: 'utf8', timeout: 30000 });
+  expect(original.status, original.stderr).toBe(0);
+  const result = cli(dir, entry());
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('MUTATION_GATE_REJECTED');
+  expect(result.stdout).not.toContain('KILLED');
+}, 40000);
+
+test('a real unrelated assertion inside the target test cannot earn a kill', () => {
+  const dir = fixture();
+  writeFileSync(join(dir, 'test/extension/control.test.js'), "import {test,expect} from 'vitest'; import {value} from '../../extension/control.js'; test('intended control',()=>{expect(value,'[control:unrelated]').toBe(1);expect(value,'[control:intended]').toBe(1);});");
+  const result = cli(dir, entry());
+  expect(result.status).toBe(1);
+  expect(result.stdout).toContain('intended-assertion-not-proven');
+  expect(result.stdout).toContain('0/1 killed');
+}, 40000);
+
 test('a nonexistent exact test is rejected by its real baseline', () => {
+  const dir = fixture();
+  writeFileSync(join(dir, 'test/extension/control.test.js'), "if (false) test('nonexistent exact name',()=>{});", { flag: 'a' });
   const item = entry(); item.expected_failure.test = 'nonexistent exact name';
-  const result = cli(fixture(), item);
+  const result = cli(dir, item);
   expect(result.status).toBe(1);
   expect(result.stderr).toContain('target-missing-or-duplicated');
 }, 40000);

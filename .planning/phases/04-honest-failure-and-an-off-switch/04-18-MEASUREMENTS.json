@@ -1,0 +1,1850 @@
+{
+  "plan": "04-18",
+  "status": "retained-gate-passed-independent-review-pending",
+  "runtime_commit": "3ad8a58",
+  "command": "npm --prefix . run test:mutants",
+  "exit": 0,
+  "full_stdout": "\n> zhroma@0.0.0 test:mutants\n> node scripts/verify-mutation-kills.js\n\n{\"id\":\"worker-lasterror\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a read that fails while still delivering values leaves the worker preference unconfirmed\",\"assertion\":\"[mutant:worker-lasterror]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-lasterror]: expected true to be null // Object.is equality\"}}\n{\"id\":\"content-lasterror\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a read that fails while still delivering values leaves the content script dormant\",\"assertion\":\"[mutant:content-lasterror]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:content-lasterror]: expected [ 'Urgent', 'High', 'Normal', 'Low' ] to deeply equal []\"}}\n{\"id\":\"worker-status-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers get-status is unavailable for that tab alone\",\"assertion\":\"[mutant:worker-status-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-status-unbounded]: expected null not to be null\"}}\n{\"id\":\"worker-apply-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers apply-preference costs one bounded wait, not the off switch\",\"assertion\":\"[mutant:worker-apply-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-apply-unbounded]: expected 4003 to be less than 4000\"}}\n{\"id\":\"worker-status-frameid\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers get-status is unavailable for that tab alone\",\"assertion\":\"[mutant:worker-status-frameid]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-status-frameid]: expected [ \u2026(3) ] to deeply equal []\"}}\n{\"id\":\"worker-apply-frameid\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers apply-preference costs one bounded wait, not the off switch\",\"assertion\":\"[mutant:worker-apply-frameid]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-apply-frameid]: expected [ Array(1) ] to deeply equal []\"}}\n{\"id\":\"malformed-english-blame\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/diagnosis.test.js\",\"test\":\"malformed English shell: underscore English reports structure across content, worker and popup\",\"assertion\":\"[locale:malformed-english-reason]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [locale:malformed-english-reason] underscore English: expected 'This interface language is not suppor\u2026' to be 'Zhroma cannot read this view\\\\'s ticke\u2026' // Object.is equality\"}}\n{\"id\":\"selector-family-regression\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/runtime-contract.test.js\",\"test\":\"happy-dom secondary model: four CSS rules map exact labels to alpha backgrounds and only direct ticket cells\",\"assertion\":\"[locale:actual-selector-family]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [locale:actual-selector-family]: expected [] to deeply equal [ Array(16) ]\"}}\n{\"id\":\"popup-ask-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a worker that never answers set-enabled costs one bounded wait and the ratified line\",\"assertion\":\"[mutant:popup-ask-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-ask-unbounded]: expected null not to be null\"}}\n{\"id\":\"popup-no-revert\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a reply reporting the save failed returns the switch to the value storage still holds\",\"assertion\":\"[mutant:popup-no-revert]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-no-revert]: expected false to be true // Object.is equality\"}}\n{\"id\":\"popup-stays-disabled\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a reply reporting the save failed returns the switch to the value storage still holds\",\"assertion\":\"[mutant:popup-stays-disabled]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-stays-disabled]: expected true to be false // Object.is equality\"}}\n{\"id\":\"popup-focus-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a keyboard agent gets the switch back after a failed save\",\"assertion\":\"[mutant:popup-focus-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-focus-guard]: expected HTMLBodyElement{ \u2026(49) } to be HTMLInputElement{ \u2026(2), \u2026(58) } // Object.is equality\"}}\n{\"id\":\"confirmed-write-revert\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"joint table true write=immediate read=rejected apply=success\",\"assertion\":\"[outcome:confirmed-write-checkbox]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:confirmed-write-checkbox]: expected true to be false // Object.is equality\"}}\n{\"id\":\"write-timeout-as-failure\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"native deferred from true remains unknown through expiry and fresh recovery\",\"assertion\":\"[outcome:false-timeout-failure]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:false-timeout-failure]: expected false to be null // Object.is equality\"}}\n{\"id\":\"timeout-releases-writer\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"a fresh request after observation expiry cannot overlap the still-issued native write\",\"assertion\":\"[outcome:post-timeout-write-exclusion]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:post-timeout-write-exclusion]: expected 2 to be 1 // Object.is equality\"}}\n{\"id\":\"expired-request-dispatch\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"admission overflow in an opposite popup never confirms an obsolete position\",\"assertion\":\"[outcome:expired-request-dispatch]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:expired-request-dispatch]: expected [ { enabled: false }, \u2026(31) ] to deeply equal [ { enabled: false } ]\"}}\n{\"id\":\"popup-stale-refresh\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"opening refresh excludes changes and captured late reply cannot overwrite fresh recovery\",\"assertion\":\"[outcome:opening-refresh-excludes-change]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:opening-refresh-excludes-change]: expected [ { enabled: false } ] to deeply equal []\"}}\n{\"id\":\"whole-request-deadline\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"sequential waits spend one arrival budget rather than renewing every hop\",\"assertion\":\"[outcome:sequential-budget]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:sequential-budget]: expected undefined to be defined\"}}\n{\"id\":\"pending-reopen-certainty\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"native callback-held from true remains unknown through expiry and fresh recovery\",\"assertion\":\"[outcome:pending-reopen-mixed]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:pending-reopen-mixed]: expected false to be true // Object.is equality\"}}\n{\"id\":\"late-action-reconciliation\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"late native icon preserves exclusion and reconciles newest projection\",\"assertion\":\"[outcome:late-native-reconciled]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:late-native-reconciled] icon: expected { icon: 'icons/working.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }\"}}\n{\"id\":\"request-id-echo\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so\",\"assertion\":\"[mutant:request-id-echo]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:request-id-echo]: expected 'Tinting is off' to be 'No readable view is connected' // Object.is equality\"}}\n{\"id\":\"status-reply-gate\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"a status reply carrying an extra member beyond the four the gate names is refused, and the tab reports the connection fact\",\"assertion\":\"[mutant:status-reply-gate]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:status-reply-gate]: expected { icon: 'icons/working.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }\"}}\n{\"id\":\"diagnosis-pairing\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"an unpaired combination leaves a clean fallback, never a half-written toolbar\",\"assertion\":\"[mutant:diagnosis-pairing]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:diagnosis-pairing]: expected { icon: 'icons/missing.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }\"}}\n{\"id\":\"popup-valid-gate\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"a set-enabled reply carrying an out-of-set status is refused, and the popup claims nothing\",\"assertion\":\"[mutant:popup-valid-gate]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-valid-gate]: expected 'No readable view is connected' to be 'Zhroma could not confirm that setting' // Object.is equality\"}}\n{\"id\":\"preference-serialization\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"two popups asking for opposite values are serialized, and neither inverts the other\",\"assertion\":\"[mutant:preference-serialization]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:preference-serialization] 2 preference writes in flight at once: expected 2 to be less than 2\"}}\n{\"id\":\"tabs-onremoved-listener\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"closure during held icon releases entries and forbids stale follow-on paint\",\"assertion\":\"[mutant:tabs-onremoved-listener]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:tabs-onremoved-listener]: expected 2 to be 1 // Object.is equality\"}}\n{\"id\":\"tabs-onremoved-delete\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"repeated create-close cycles and reused ids cannot retain or resurrect a dead tab\",\"assertion\":\"[mutant:tabs-onremoved-delete]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:tabs-onremoved-delete]: expected 3 to be 2 // Object.is equality\"}}\n{\"id\":\"project-guard-after-status\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a superseded status reply is discarded before the preference is ever read\",\"assertion\":\"[mutant:project-guard-after-status]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:project-guard-after-status]: expected 1 to be +0 // Object.is equality\"}}\n{\"id\":\"apply-action-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a generation bump between the icon and the title write stops the superseded title\",\"assertion\":\"[mutant:apply-action-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:apply-action-guard]: expected [ { tabId: 7, \u2026(1) } ] to deeply equal []\"}}\n{\"id\":\"popup-status-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a superseded popup projection reports the connection line and still shows the confirmed preference\",\"assertion\":\"[mutant:popup-status-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-status-guard]: expected 'Zhroma could not confirm that setting' to be 'No readable view is connected' // Object.is equality\"}}\n{\"id\":\"project-queue\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a slow earlier reply cannot repaint over a newer projection\",\"assertion\":\"[mutant:project-queue]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:generation-counter] [mutant:project-queue]: expected [ { tabId: 7, \u2026(1) }, \u2026(1) ] to deeply equal []\"}}\n{\"id\":\"generation-counter\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a slow earlier reply cannot repaint over a newer projection\",\"assertion\":\"[mutant:generation-counter]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:generation-counter] [mutant:project-queue]: expected [ { tabId: 7, \u2026(1) }, \u2026(1) ] to deeply equal []\"}}\n{\"id\":\"status-catch-reports-unavailable\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"no receiver reads as unavailable and never as a diagnosis about the view\",\"assertion\":\"[mutant:status-catch-reports-unavailable]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:status-catch-reports-unavailable]: expected { icon: 'icons/working.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }\"}}\nMUTATION KILLS: 33/33 killed\n",
+  "final_registry": [
+    {
+      "id": "worker-lasterror",
+      "file": "extension/background.js",
+      "find": "if (chrome.runtime.lastError) { resolve(null); return; }",
+      "replace": "",
+      "suites": [
+        "test/extension/failure-seam.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the worker reads a failed storage read as an absent key (04-REVIEW WR-03; removal previously left 277/277 passing)",
+      "expected_failure": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a read that fails while still delivering values leaves the worker preference unconfirmed",
+        "assertion": "[mutant:worker-lasterror]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "content-lasterror",
+      "file": "extension/content.js",
+      "find": "if (chrome.runtime.lastError) { finish(null); return; }",
+      "replace": "",
+      "suites": [
+        "test/extension/failure-seam.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the content script reads a failed storage read as an absent key and tints a view the agent may have switched off (04-REVIEW WR-03)",
+      "expected_failure": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a read that fails while still delivering values leaves the content script dormant",
+        "assertion": "[mutant:content-lasterror]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "worker-status-unbounded",
+      "file": "extension/background.js",
+      "find": "bounded(() => chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 }), expires, REQUEST_TIMEOUT_MS)",
+      "replace": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 })",
+      "suites": [
+        "test/extension/failure-seam.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a silent top frame stalls the toolbar projection with no deadline (04-REVIEW WR-04, T-04G-04)",
+      "expected_failure": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a top frame that never answers get-status is unavailable for that tab alone",
+        "assertion": "[mutant:worker-status-unbounded]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "worker-apply-unbounded",
+      "file": "extension/background.js",
+      "find": "bounded(() => chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 }), expires, REQUEST_TIMEOUT_MS)",
+      "replace": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 })",
+      "suites": [
+        "test/extension/failure-seam.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a silent top frame wedges the single preference writer for every tab (04-REVIEW WR-04, T-04G-04)",
+      "expected_failure": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a top frame that never answers apply-preference costs one bounded wait, not the off switch",
+        "assertion": "[mutant:worker-apply-unbounded]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "worker-status-frameid",
+      "file": "extension/background.js",
+      "find": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 })",
+      "replace": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId })",
+      "suites": [
+        "test/extension/failure-seam.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the status request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)",
+      "expected_failure": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a top frame that never answers get-status is unavailable for that tab alone",
+        "assertion": "[mutant:worker-status-frameid]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "worker-apply-frameid",
+      "file": "extension/background.js",
+      "find": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 })",
+      "replace": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId })",
+      "suites": [
+        "test/extension/failure-seam.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the apply request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)",
+      "expected_failure": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a top frame that never answers apply-preference costs one bounded wait, not the off switch",
+        "assertion": "[mutant:worker-apply-frameid]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "malformed-english-blame",
+      "file": "extension/content.js",
+      "find": "reasonLanguage === '' || englishReason ? 'unsafe' : 'unsupported'",
+      "replace": "reasonLanguage === '' ? 'unsafe' : 'unsupported'",
+      "count": 1,
+      "suites": [
+        "test/extension/diagnosis.test.js"
+      ],
+      "note": "Malformed English metadata refuses paint as structural uncertainty, not unsupported language.",
+      "expected_failure": {
+        "suite": "test/extension/diagnosis.test.js",
+        "test": "malformed English shell: underscore English reports structure across content, worker and popup",
+        "assertion": "[locale:malformed-english-reason]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "selector-family-regression",
+      "file": "extension/zhroma.css",
+      "find": "html[lang|=\"en\" i]",
+      "replace": "html[lang|=\"fr\" i]",
+      "count": 4,
+      "suites": [
+        "test/extension/runtime-contract.test.js"
+      ],
+      "note": "Actual language-family change removes English direct-cell matches in the secondary happy-dom model. This is not real Chrome mutant execution or removal of redundant case i.",
+      "expected_failure": {
+        "suite": "test/extension/runtime-contract.test.js",
+        "test": "happy-dom secondary model: four CSS rules map exact labels to alpha backgrounds and only direct ticket cells",
+        "assertion": "[locale:actual-selector-family]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "popup-ask-unbounded",
+      "file": "extension/popup.js",
+      "find": "await Promise.race([chrome.runtime.sendMessage(message), deadline])",
+      "replace": "await chrome.runtime.sendMessage(message)",
+      "suites": [
+        "test/extension/popup-recovery.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a worker that receives the request and never answers leaves the switch disabled for the life of the popup (04-REVIEW WR-04, T-04G-14)",
+      "expected_failure": {
+        "suite": "test/extension/popup-recovery.test.js",
+        "test": "a worker that never answers set-enabled costs one bounded wait and the ratified line",
+        "assertion": "[mutant:popup-ask-unbounded]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "popup-no-revert",
+      "file": "extension/popup.js",
+      "find": "      control.checked = enabled;",
+      "replace": "      control.checked = control.checked;",
+      "suites": [
+        "test/extension/popup-recovery.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the failed-save path shows the unconfirmed position the click left instead of the last value storage confirmed (04-REVIEW WR-07, T-04G-13)",
+      "expected_failure": {
+        "suite": "test/extension/popup-recovery.test.js",
+        "test": "a reply reporting the save failed returns the switch to the value storage still holds",
+        "assertion": "[mutant:popup-no-revert]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "popup-stays-disabled",
+      "file": "extension/popup.js",
+      "find": "      control.disabled = outstanding;",
+      "replace": "      control.disabled = true;",
+      "suites": [
+        "test/extension/popup-recovery.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the switch is taken out of service after a failed save even though a confirmed value exists, so no retry is possible (04-REVIEW WR-07, T-04G-14)",
+      "expected_failure": {
+        "suite": "test/extension/popup-recovery.test.js",
+        "test": "a reply reporting the save failed returns the switch to the value storage still holds",
+        "assertion": "[mutant:popup-stays-disabled]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "popup-focus-guard",
+      "file": "extension/popup.js",
+      "find": "if (hadFocus) control.focus();",
+      "replace": "",
+      "suites": [
+        "test/extension/popup-recovery.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. focus is never handed back after the round trip, so a keyboard agent is left in body with no way to retry (04-REVIEW WR-07, T-04G-14)",
+      "expected_failure": {
+        "suite": "test/extension/popup-recovery.test.js",
+        "test": "a keyboard agent gets the switch back after a failed save",
+        "assertion": "[mutant:popup-focus-guard]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "confirmed-write-revert",
+      "file": "extension/popup.js",
+      "find": "else showPreference(reply.enabled === null ? desired : reply.enabled);",
+      "replace": "else showPreference(reply.enabled === null ? lastConfirmed : reply.enabled);",
+      "count": 1,
+      "suites": [
+        "test/extension/preference-outcome.test.js"
+      ],
+      "note": "Joint persisted value, markers and checkbox must agree after confirmed write and failed read.",
+      "expected_failure": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "joint table true write=immediate read=rejected apply=success",
+        "assertion": "[outcome:confirmed-write-checkbox]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "write-timeout-as-failure",
+      "file": "extension/background.js",
+      "find": "    job.saved = null;",
+      "replace": "    job.saved = false;",
+      "count": 1,
+      "suites": [
+        "test/extension/preference-outcome.test.js"
+      ],
+      "note": "An issued native write timeout is unknown, never definite failure.",
+      "expected_failure": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "native deferred from true remains unknown through expiry and fresh recovery",
+        "assertion": "[outcome:false-timeout-failure]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "timeout-releases-writer",
+      "file": "extension/background.js",
+      "find": "      if (job.raw !== null) await job.raw;",
+      "replace": "",
+      "count": 1,
+      "suites": [
+        "test/extension/preference-outcome.test.js"
+      ],
+      "note": "Physical write exclusion outlives response expiry.",
+      "expected_failure": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "a fresh request after observation expiry cannot overlap the still-issued native write",
+        "assertion": "[outcome:post-timeout-write-exclusion]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "expired-request-dispatch",
+      "file": "extension/background.js",
+      "find": "    job.timer = setTimeout(() => {\n      job.expired = true;\n      const index = preferenceQueue.indexOf(job);\n      if (index >= 0) preferenceQueue.splice(index, 1);\n      job.answer();\n    }, WORKER_REQUEST_TIMEOUT_MS);\n    preferenceQueue.push(job);\n    drainPreferences();\n  }\n\n  async function drainPreferences() {\n    if (activePreference !== null) return;\n    const job = preferenceQueue.shift();\n    if (job === undefined) return;\n    activePreference = job;\n    try {\n      if (!job.expired && Date.now() < job.expires) await setEnabled(job);\n    } finally {\n      job.answer();\n      // Observation expiry is not cancellation. This raw callback exclusively\n      // owns the writer even after its requester has already received null.\n      if (job.raw !== null) await job.raw;\n      activePreference = null;\n      drainPreferences();\n    }\n  }\n",
+      "replace": "    job.timer = setTimeout(() => {\n      job.expired = true;\n      const index = preferenceQueue.indexOf(job);\n\n      job.answer();\n    }, WORKER_REQUEST_TIMEOUT_MS);\n    preferenceQueue.push(job);\n    drainPreferences();\n  }\n\n  async function drainPreferences() {\n    if (activePreference !== null) return;\n    const job = preferenceQueue.shift();\n    if (job === undefined) return;\n    activePreference = job;\n    try {\n      await setEnabled(job);\n    } finally {\n      job.answer();\n      // Observation expiry is not cancellation. This raw callback exclusively\n      // owns the writer even after its requester has already received null.\n      if (job.raw !== null) await job.raw;\n      activePreference = null;\n      drainPreferences();\n    }\n  }\n",
+      "count": 1,
+      "suites": [
+        "test/extension/preference-outcome.test.js"
+      ],
+      "note": "Mechanism-level removal of both expiry dequeue and dispatch refusal; neither redundant clause is claimed individually killed.",
+      "expected_failure": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "admission overflow in an opposite popup never confirms an obsolete position",
+        "assertion": "[outcome:expired-request-dispatch]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "popup-stale-refresh",
+      "file": "extension/popup.js",
+      "find": "    if (outstanding) return;\n    requestEnabled(control.checked === true);",
+      "replace": "    requestEnabled(control.checked === true);",
+      "count": 1,
+      "suites": [
+        "test/extension/preference-outcome.test.js"
+      ],
+      "note": "Refresh/change admission exclusion prevents overlapping popup ownership; downstream stale-reply recovery is checked jointly.",
+      "expected_failure": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "opening refresh excludes changes and captured late reply cannot overwrite fresh recovery",
+        "assertion": "[outcome:opening-refresh-excludes-change]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "whole-request-deadline",
+      "file": "extension/background.js",
+      "find": "const WORKER_REQUEST_TIMEOUT_MS = 4000;",
+      "replace": "const WORKER_REQUEST_TIMEOUT_MS = 8000;",
+      "count": 1,
+      "suites": [
+        "test/extension/preference-outcome.test.js"
+      ],
+      "note": "All sequential waits share the approved 4000 ms arrival budget.",
+      "expected_failure": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "sequential waits spend one arrival budget rather than renewing every hop",
+        "assertion": "[outcome:sequential-budget]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "pending-reopen-certainty",
+      "file": "extension/background.js",
+      "find": "  async function popupStatus(requestId, expires) {\n    const tab = await activeTab(expires);\n    if (tab === null) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));\n    if (!await liveTab(tab.id, expires)) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));\n    const generation = invalidate(tab.id);\n    const result = await requestStatus(tab.id, generation, expires);\n    const enabled = pendingWrite !== null ? null : await bounded(readPreference, expires);\n    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);\n    const projected = operational(result, enabled);\n    await bounded(() => applyAction(tab.id, projected, generation, expires), expires);\n    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,\n      enabled: pendingWrite !== null ? null : enabled };\n  }\n\n",
+      "replace": "  async function popupStatus(requestId, expires) {\n    const tab = await activeTab(expires);\n    if (tab === null) return unavailable(requestId, await bounded(readPreference, expires));\n    if (!await liveTab(tab.id, expires)) return unavailable(requestId, await bounded(readPreference, expires));\n    const generation = invalidate(tab.id);\n    const result = await requestStatus(tab.id, generation, expires);\n    const enabled = await bounded(readPreference, expires);\n    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, enabled);\n    const projected = operational(result, enabled);\n    await bounded(() => applyAction(tab.id, projected, generation, expires), expires);\n    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,\n      enabled: enabled };\n  }\n\n",
+      "count": 1,
+      "suites": [
+        "test/extension/preference-outcome.test.js"
+      ],
+      "note": "Mechanism-level removal of pending-write uncertainty masking throughout popupStatus. Initial single read-mask removal survived behind independent response masking; no individual guard kill is claimed.",
+      "expected_failure": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "native callback-held from true remains unknown through expiry and fresh recovery",
+        "assertion": "[outcome:pending-reopen-mixed]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "late-action-reconciliation",
+      "file": "extension/background.js",
+      "find": "        if (!owns(tabId, state, work.generation) || Date.now() >= work.expires) state.reconcile = true;",
+      "replace": "",
+      "count": 1,
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "After late native settlement the current projection must be reconciled.",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "late native icon preserves exclusion and reconciles newest projection",
+        "assertion": "[outcome:late-native-reconciled]",
+        "kind": "behavioral"
+      }
+    },
+    {
+      "id": "request-id-echo",
+      "file": "extension/background.js",
+      "find": "reply.type === type && reply.requestId === requestId",
+      "replace": "reply.type === type",
+      "suites": [
+        "test/extension/worker-integrity.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the echoed request id stops being compared with the one that was minted, so a superseded or replayed reply is accepted on both hops. 04-VALIDATION names this clause as requestApply's ONLY staleness key \u2014 the apply reply is deliberately not generation-guarded \u2014 so its deletion is the whole staleness failure on that path (04-REVIEW WR-02, T-04G-27)",
+      "expected_failure": {
+        "suite": "test/extension/worker-integrity.test.js",
+        "test": "an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so",
+        "assertion": "[mutant:request-id-echo]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "status-reply-gate",
+      "file": "extension/background.js",
+      "find": "    if (!isExact(reply, ['type', 'requestId', 'diagnosis', 'reason'])\n      || !validDiagnosis(reply, requestId, 'status')) {",
+      "replace": "    if (false) {",
+      "suites": [
+        "test/extension/worker-integrity.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. requestStatus's combined shape-and-diagnosis gate never holds, so no status reply is ever refused and any object reaching the worker becomes a diagnosis about the agent's view. Fences the gate as a whole; the individual clauses inside validDiagnosis are fenced by request-id-echo and diagnosis-pairing (04-REVIEW WR-02, T-04G-28)",
+      "expected_failure": {
+        "suite": "test/extension/worker-integrity.test.js",
+        "test": "a status reply carrying an extra member beyond the four the gate names is refused, and the tab reports the connection fact",
+        "assertion": "[mutant:status-reply-gate]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "diagnosis-pairing",
+      "file": "extension/background.js",
+      "find": "      && Object.hasOwn(TITLES, statusKey(reply.diagnosis, reply.reason));",
+      "replace": "      ;",
+      "suites": [
+        "test/extension/worker-integrity.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. an unpaired {diagnosis, reason} becomes renderable. ICONS is keyed by status alone while TITLES is keyed by the whole pair, so the artwork write SUCCEEDS and the title write carries no value \u2014 one state's artwork under no sentence at all, which is the FAIL-05 failure mode.",
+      "expected_failure": {
+        "suite": "test/extension/worker-integrity.test.js",
+        "test": "an unpaired combination leaves a clean fallback, never a half-written toolbar",
+        "assertion": "[mutant:diagnosis-pairing]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "popup-valid-gate",
+      "file": "extension/popup.js",
+      "find": "      || !validPreference(reply.enabled) || !validStatus(reply.status, reply.reason)",
+      "replace": "",
+      "suites": [
+        "test/extension/worker-integrity.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. requestEnabled stops checking that the worker's reply carries an in-set status and a boolean-or-null preference, so a buggy worker's unrecognised value is rendered instead of reported as a failed save. Fences the popup's own second line of defence on the set-enabled path only; refresh's gate has the same two clauses in the opposite order and is a distinct literal (04-REVIEW WR-02, T-04G-30)",
+      "expected_failure": {
+        "suite": "test/extension/worker-integrity.test.js",
+        "test": "a set-enabled reply carrying an out-of-set status is refused, and the popup claims nothing",
+        "assertion": "[mutant:popup-valid-gate]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "preference-serialization",
+      "file": "extension/background.js",
+      "find": "    if (activePreference !== null) return;",
+      "replace": "",
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the single writer's queue is collapsed to a bare call, so two popups asking for opposite values run their writes concurrently and the persisted boolean can be inverted under the agent. This is the mutant 04-REVIEW measured SURVIVING: with immediate writes both tasks commit in arrival order regardless, so the old test's final-value assertions held without the mechanism.",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "two popups asking for opposite values are serialized, and neither inverts the other",
+        "assertion": "[mutant:preference-serialization]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "tabs-onremoved-listener",
+      "file": "extension/background.js",
+      "find": "  chrome.tabs.onRemoved.addListener((tabId) => {",
+      "replace": "  (() => {})((tabId) => {",
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the tab-removal listener is not registered at all, so the per-tab state map grows for the life of the worker across every tab the browser ever closes.",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "closure during held icon releases entries and forbids stale follow-on paint",
+        "assertion": "[mutant:tabs-onremoved-listener]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "tabs-onremoved-delete",
+      "file": "extension/background.js",
+      "find": "    tabs.delete(tabId);\n",
+      "replace": "",
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the listener stays registered but its body no longer deletes the removed id, leaving a listener that does nothing \u2014 the same unbounded map behind a registration that looks correct. This is why the two halves are asserted separately: a single combined check would let this hide behind the registration.",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "repeated create-close cycles and reused ids cannot retain or resurrect a dead tab",
+        "assertion": "[mutant:tabs-onremoved-delete]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "project-guard-after-status",
+      "file": "extension/background.js",
+      "find": "        if (result === null || !owns(tabId, state, generation)) continue;",
+      "replace": "",
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a superseded status result proceeds to the preference read instead of being dropped, so a discarded projection still does work on behalf of a view that has moved on (04-REVIEW WR-01, T-04G-23)",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a superseded status reply is discarded before the preference is ever read",
+        "assertion": "[mutant:project-guard-after-status]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "apply-action-guard",
+      "file": "extension/background.js",
+      "find": "      await chrome.action.setIcon({ tabId, path: ICONS[work.result.status] });\n      if (!owns(tabId, state, work.generation) || Date.now() >= work.expires) return;",
+      "replace": "      await chrome.action.setIcon({ tabId, path: ICONS[work.result.status] });",
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a generation bump between the icon and the title write no longer stops the title, so the agent reads a sentence about a view that is gone (04-REVIEW WR-01, T-04G-23)",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a generation bump between the icon and the title write stops the superseded title",
+        "assertion": "[mutant:apply-action-guard]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "popup-status-guard",
+      "file": "extension/background.js",
+      "find": "    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);",
+      "replace": "",
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a superseded popup projection loses the confirmed preference along with the diagnosis: the popup reports the connection line with enabled null and takes the switch out of service (04-REVIEW WR-01, T-04G-23)",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a superseded popup projection reports the connection line and still shows the confirmed preference",
+        "assertion": "[mutant:popup-status-guard]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "project-queue",
+      "file": "extension/background.js",
+      "find": "    if (state.observing) return;",
+      "replace": "",
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the per-tab serialization is collapsed so two projections for one tab run concurrently and a held earlier reply lands last (04-REVIEW WR-01, T-04G-23)",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a slow earlier reply cannot repaint over a newer projection",
+        "assertion": "[mutant:project-queue]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "generation-counter",
+      "file": "extension/background.js",
+      "find": "state.generation = ++projectionCounter;",
+      "replace": "state.generation = 0;",
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. invalidation stops advancing the counter, so every generation recheck in the worker becomes a no-op at once. Registered deliberately as the mechanism-level fence: requestStatus's own two rechecks are provably redundant with the rechecks its two callers perform immediately afterwards, so neither can be killed on its own \u2014 see 04-12-SUMMARY (04-REVIEW WR-01, T-04G-23)",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a slow earlier reply cannot repaint over a newer projection",
+        "assertion": "[mutant:generation-counter]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    },
+    {
+      "id": "status-catch-reports-unavailable",
+      "file": "extension/background.js",
+      "find": "      return generationOf(tabId) === generation ? { status: 'unavailable', reason: null } : null;",
+      "replace": "      return null;",
+      "suites": [
+        "test/extension/toolbar-popup.test.js"
+      ],
+      "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the catch branch stops reporting the connection fact for a CURRENT rejection, so no receiver silently paints nothing. This fences the REPORTING half of that line only; its staleness half (=== generation) is redundant with the callers' rechecks and is fenced by generation-counter instead (04-REVIEW WR-01, T-04G-23)",
+      "expected_failure": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "no receiver reads as unavailable and never as a diagnosis about the view",
+        "assertion": "[mutant:status-catch-reports-unavailable]",
+        "kind": "behavioral"
+      },
+      "count": 1
+    }
+  ],
+  "full_results": [
+    {
+      "id": "worker-lasterror",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a read that fails while still delivering values leaves the worker preference unconfirmed",
+        "assertion": "[mutant:worker-lasterror]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:worker-lasterror]: expected true to be null // Object.is equality"
+      }
+    },
+    {
+      "id": "content-lasterror",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a read that fails while still delivering values leaves the content script dormant",
+        "assertion": "[mutant:content-lasterror]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:content-lasterror]: expected [ 'Urgent', 'High', 'Normal', 'Low' ] to deeply equal []"
+      }
+    },
+    {
+      "id": "worker-status-unbounded",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a top frame that never answers get-status is unavailable for that tab alone",
+        "assertion": "[mutant:worker-status-unbounded]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:worker-status-unbounded]: expected null not to be null"
+      }
+    },
+    {
+      "id": "worker-apply-unbounded",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a top frame that never answers apply-preference costs one bounded wait, not the off switch",
+        "assertion": "[mutant:worker-apply-unbounded]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:worker-apply-unbounded]: expected 4003 to be less than 4000"
+      }
+    },
+    {
+      "id": "worker-status-frameid",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a top frame that never answers get-status is unavailable for that tab alone",
+        "assertion": "[mutant:worker-status-frameid]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:worker-status-frameid]: expected [ \u2026(3) ] to deeply equal []"
+      }
+    },
+    {
+      "id": "worker-apply-frameid",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/failure-seam.test.js",
+        "test": "a top frame that never answers apply-preference costs one bounded wait, not the off switch",
+        "assertion": "[mutant:worker-apply-frameid]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:worker-apply-frameid]: expected [ Array(1) ] to deeply equal []"
+      }
+    },
+    {
+      "id": "malformed-english-blame",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/diagnosis.test.js",
+        "test": "malformed English shell: underscore English reports structure across content, worker and popup",
+        "assertion": "[locale:malformed-english-reason]",
+        "kind": "behavioral",
+        "message": "AssertionError: [locale:malformed-english-reason] underscore English: expected 'This interface language is not suppor\u2026' to be 'Zhroma cannot read this view\\'s ticke\u2026' // Object.is equality"
+      }
+    },
+    {
+      "id": "selector-family-regression",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/runtime-contract.test.js",
+        "test": "happy-dom secondary model: four CSS rules map exact labels to alpha backgrounds and only direct ticket cells",
+        "assertion": "[locale:actual-selector-family]",
+        "kind": "behavioral",
+        "message": "AssertionError: [locale:actual-selector-family]: expected [] to deeply equal [ Array(16) ]"
+      }
+    },
+    {
+      "id": "popup-ask-unbounded",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/popup-recovery.test.js",
+        "test": "a worker that never answers set-enabled costs one bounded wait and the ratified line",
+        "assertion": "[mutant:popup-ask-unbounded]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:popup-ask-unbounded]: expected null not to be null"
+      }
+    },
+    {
+      "id": "popup-no-revert",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/popup-recovery.test.js",
+        "test": "a reply reporting the save failed returns the switch to the value storage still holds",
+        "assertion": "[mutant:popup-no-revert]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:popup-no-revert]: expected false to be true // Object.is equality"
+      }
+    },
+    {
+      "id": "popup-stays-disabled",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/popup-recovery.test.js",
+        "test": "a reply reporting the save failed returns the switch to the value storage still holds",
+        "assertion": "[mutant:popup-stays-disabled]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:popup-stays-disabled]: expected true to be false // Object.is equality"
+      }
+    },
+    {
+      "id": "popup-focus-guard",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/popup-recovery.test.js",
+        "test": "a keyboard agent gets the switch back after a failed save",
+        "assertion": "[mutant:popup-focus-guard]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:popup-focus-guard]: expected HTMLBodyElement{ \u2026(49) } to be HTMLInputElement{ \u2026(2), \u2026(58) } // Object.is equality"
+      }
+    },
+    {
+      "id": "confirmed-write-revert",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "joint table true write=immediate read=rejected apply=success",
+        "assertion": "[outcome:confirmed-write-checkbox]",
+        "kind": "behavioral",
+        "message": "AssertionError: [outcome:confirmed-write-checkbox]: expected true to be false // Object.is equality"
+      }
+    },
+    {
+      "id": "write-timeout-as-failure",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "native deferred from true remains unknown through expiry and fresh recovery",
+        "assertion": "[outcome:false-timeout-failure]",
+        "kind": "behavioral",
+        "message": "AssertionError: [outcome:false-timeout-failure]: expected false to be null // Object.is equality"
+      }
+    },
+    {
+      "id": "timeout-releases-writer",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "a fresh request after observation expiry cannot overlap the still-issued native write",
+        "assertion": "[outcome:post-timeout-write-exclusion]",
+        "kind": "behavioral",
+        "message": "AssertionError: [outcome:post-timeout-write-exclusion]: expected 2 to be 1 // Object.is equality"
+      }
+    },
+    {
+      "id": "expired-request-dispatch",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "admission overflow in an opposite popup never confirms an obsolete position",
+        "assertion": "[outcome:expired-request-dispatch]",
+        "kind": "behavioral",
+        "message": "AssertionError: [outcome:expired-request-dispatch]: expected [ { enabled: false }, \u2026(31) ] to deeply equal [ { enabled: false } ]"
+      }
+    },
+    {
+      "id": "popup-stale-refresh",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "opening refresh excludes changes and captured late reply cannot overwrite fresh recovery",
+        "assertion": "[outcome:opening-refresh-excludes-change]",
+        "kind": "behavioral",
+        "message": "AssertionError: [outcome:opening-refresh-excludes-change]: expected [ { enabled: false } ] to deeply equal []"
+      }
+    },
+    {
+      "id": "whole-request-deadline",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "sequential waits spend one arrival budget rather than renewing every hop",
+        "assertion": "[outcome:sequential-budget]",
+        "kind": "behavioral",
+        "message": "AssertionError: [outcome:sequential-budget]: expected undefined to be defined"
+      }
+    },
+    {
+      "id": "pending-reopen-certainty",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/preference-outcome.test.js",
+        "test": "native callback-held from true remains unknown through expiry and fresh recovery",
+        "assertion": "[outcome:pending-reopen-mixed]",
+        "kind": "behavioral",
+        "message": "AssertionError: [outcome:pending-reopen-mixed]: expected false to be true // Object.is equality"
+      }
+    },
+    {
+      "id": "late-action-reconciliation",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "late native icon preserves exclusion and reconciles newest projection",
+        "assertion": "[outcome:late-native-reconciled]",
+        "kind": "behavioral",
+        "message": "AssertionError: [outcome:late-native-reconciled] icon: expected { icon: 'icons/working.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }"
+      }
+    },
+    {
+      "id": "request-id-echo",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/worker-integrity.test.js",
+        "test": "an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so",
+        "assertion": "[mutant:request-id-echo]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:request-id-echo]: expected 'Tinting is off' to be 'No readable view is connected' // Object.is equality"
+      }
+    },
+    {
+      "id": "status-reply-gate",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/worker-integrity.test.js",
+        "test": "a status reply carrying an extra member beyond the four the gate names is refused, and the tab reports the connection fact",
+        "assertion": "[mutant:status-reply-gate]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:status-reply-gate]: expected { icon: 'icons/working.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }"
+      }
+    },
+    {
+      "id": "diagnosis-pairing",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/worker-integrity.test.js",
+        "test": "an unpaired combination leaves a clean fallback, never a half-written toolbar",
+        "assertion": "[mutant:diagnosis-pairing]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:diagnosis-pairing]: expected { icon: 'icons/missing.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }"
+      }
+    },
+    {
+      "id": "popup-valid-gate",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/worker-integrity.test.js",
+        "test": "a set-enabled reply carrying an out-of-set status is refused, and the popup claims nothing",
+        "assertion": "[mutant:popup-valid-gate]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:popup-valid-gate]: expected 'No readable view is connected' to be 'Zhroma could not confirm that setting' // Object.is equality"
+      }
+    },
+    {
+      "id": "preference-serialization",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "two popups asking for opposite values are serialized, and neither inverts the other",
+        "assertion": "[mutant:preference-serialization]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:preference-serialization] 2 preference writes in flight at once: expected 2 to be less than 2"
+      }
+    },
+    {
+      "id": "tabs-onremoved-listener",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "closure during held icon releases entries and forbids stale follow-on paint",
+        "assertion": "[mutant:tabs-onremoved-listener]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:tabs-onremoved-listener]: expected 2 to be 1 // Object.is equality"
+      }
+    },
+    {
+      "id": "tabs-onremoved-delete",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "repeated create-close cycles and reused ids cannot retain or resurrect a dead tab",
+        "assertion": "[mutant:tabs-onremoved-delete]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:tabs-onremoved-delete]: expected 3 to be 2 // Object.is equality"
+      }
+    },
+    {
+      "id": "project-guard-after-status",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a superseded status reply is discarded before the preference is ever read",
+        "assertion": "[mutant:project-guard-after-status]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:project-guard-after-status]: expected 1 to be +0 // Object.is equality"
+      }
+    },
+    {
+      "id": "apply-action-guard",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a generation bump between the icon and the title write stops the superseded title",
+        "assertion": "[mutant:apply-action-guard]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:apply-action-guard]: expected [ { tabId: 7, \u2026(1) } ] to deeply equal []"
+      }
+    },
+    {
+      "id": "popup-status-guard",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a superseded popup projection reports the connection line and still shows the confirmed preference",
+        "assertion": "[mutant:popup-status-guard]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:popup-status-guard]: expected 'Zhroma could not confirm that setting' to be 'No readable view is connected' // Object.is equality"
+      }
+    },
+    {
+      "id": "project-queue",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a slow earlier reply cannot repaint over a newer projection",
+        "assertion": "[mutant:project-queue]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:generation-counter] [mutant:project-queue]: expected [ { tabId: 7, \u2026(1) }, \u2026(1) ] to deeply equal []"
+      }
+    },
+    {
+      "id": "generation-counter",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "a slow earlier reply cannot repaint over a newer projection",
+        "assertion": "[mutant:generation-counter]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:generation-counter] [mutant:project-queue]: expected [ { tabId: 7, \u2026(1) }, \u2026(1) ] to deeply equal []"
+      }
+    },
+    {
+      "id": "status-catch-reports-unavailable",
+      "verdict": "KILLED",
+      "evidence": {
+        "suite": "test/extension/toolbar-popup.test.js",
+        "test": "no receiver reads as unavailable and never as a diagnosis about the view",
+        "assertion": "[mutant:status-catch-reports-unavailable]",
+        "kind": "behavioral",
+        "message": "AssertionError: [mutant:status-catch-reports-unavailable]: expected { icon: 'icons/working.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }"
+      }
+    }
+  ],
+  "initial_historical_only": [
+    {
+      "id": "worker-lasterror",
+      "exit": 0,
+      "seconds": 12.98,
+      "stdout": "{\"id\":\"worker-lasterror\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a read that fails while still delivering values leaves the worker preference unconfirmed\",\"assertion\":\"[mutant:worker-lasterror]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-lasterror]: expected true to be null // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "worker-lasterror",
+        "file": "extension/background.js",
+        "find": "if (chrome.runtime.lastError) { resolve(null); return; }",
+        "replace": "",
+        "suites": [
+          "test/extension/failure-seam.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the worker reads a failed storage read as an absent key (04-REVIEW WR-03; removal previously left 277/277 passing)",
+        "expected_failure": {
+          "suite": "test/extension/failure-seam.test.js",
+          "test": "a read that fails while still delivering values leaves the worker preference unconfirmed",
+          "assertion": "[mutant:worker-lasterror]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "content-lasterror",
+      "exit": 0,
+      "seconds": 12.96,
+      "stdout": "{\"id\":\"content-lasterror\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a read that fails while still delivering values leaves the content script dormant\",\"assertion\":\"[mutant:content-lasterror]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:content-lasterror]: expected [ 'Urgent', 'High', 'Normal', 'Low' ] to deeply equal []\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "content-lasterror",
+        "file": "extension/content.js",
+        "find": "if (chrome.runtime.lastError) { finish(null); return; }",
+        "replace": "",
+        "suites": [
+          "test/extension/failure-seam.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the content script reads a failed storage read as an absent key and tints a view the agent may have switched off (04-REVIEW WR-03)",
+        "expected_failure": {
+          "suite": "test/extension/failure-seam.test.js",
+          "test": "a read that fails while still delivering values leaves the content script dormant",
+          "assertion": "[mutant:content-lasterror]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "worker-status-unbounded",
+      "exit": 0,
+      "seconds": 18.01,
+      "stdout": "{\"id\":\"worker-status-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers get-status is unavailable for that tab alone\",\"assertion\":\"[mutant:worker-status-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-status-unbounded]: expected null not to be null\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "worker-status-unbounded",
+        "file": "extension/background.js",
+        "find": "bounded(() => chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 }), expires, REQUEST_TIMEOUT_MS)",
+        "replace": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 })",
+        "suites": [
+          "test/extension/failure-seam.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a silent top frame stalls the toolbar projection with no deadline (04-REVIEW WR-04, T-04G-04)",
+        "expected_failure": {
+          "suite": "test/extension/failure-seam.test.js",
+          "test": "a top frame that never answers get-status is unavailable for that tab alone",
+          "assertion": "[mutant:worker-status-unbounded]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "worker-apply-unbounded",
+      "exit": 1,
+      "seconds": 16.93,
+      "stdout": "{\"id\":\"worker-apply-unbounded\",\"verdict\":\"GATE_ERROR\",\"code\":\"intended-assertion-not-proven\"}\nMUTATION KILLS: 0/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "worker-apply-unbounded",
+        "file": "extension/background.js",
+        "find": "bounded(() => chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 }), expires, REQUEST_TIMEOUT_MS)",
+        "replace": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 })",
+        "suites": [
+          "test/extension/failure-seam.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a silent top frame wedges the single preference writer for every tab (04-REVIEW WR-04, T-04G-04)",
+        "expected_failure": {
+          "suite": "test/extension/failure-seam.test.js",
+          "test": "a top frame that never answers apply-preference costs one bounded wait, not the off switch",
+          "assertion": "[mutant:worker-apply-unbounded]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "worker-status-frameid",
+      "exit": 0,
+      "seconds": 14.99,
+      "stdout": "{\"id\":\"worker-status-frameid\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers get-status is unavailable for that tab alone\",\"assertion\":\"[mutant:worker-status-frameid]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-status-frameid]: expected [ \u2026(3) ] to deeply equal []\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "worker-status-frameid",
+        "file": "extension/background.js",
+        "find": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 })",
+        "replace": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId })",
+        "suites": [
+          "test/extension/failure-seam.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the status request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)",
+        "expected_failure": {
+          "suite": "test/extension/failure-seam.test.js",
+          "test": "a top frame that never answers get-status is unavailable for that tab alone",
+          "assertion": "[mutant:worker-status-frameid]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "worker-apply-frameid",
+      "exit": 0,
+      "seconds": 14.95,
+      "stdout": "{\"id\":\"worker-apply-frameid\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers apply-preference costs one bounded wait, not the off switch\",\"assertion\":\"[mutant:worker-apply-frameid]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-apply-frameid]: expected [ Array(1) ] to deeply equal []\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "worker-apply-frameid",
+        "file": "extension/background.js",
+        "find": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 })",
+        "replace": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId })",
+        "suites": [
+          "test/extension/failure-seam.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the apply request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)",
+        "expected_failure": {
+          "suite": "test/extension/failure-seam.test.js",
+          "test": "a top frame that never answers apply-preference costs one bounded wait, not the off switch",
+          "assertion": "[mutant:worker-apply-frameid]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "popup-ask-unbounded",
+      "exit": 0,
+      "seconds": 20.85,
+      "stdout": "{\"id\":\"popup-ask-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a worker that never answers set-enabled costs one bounded wait and the ratified line\",\"assertion\":\"[mutant:popup-ask-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-ask-unbounded]: expected null not to be null\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "popup-ask-unbounded",
+        "file": "extension/popup.js",
+        "find": "await Promise.race([chrome.runtime.sendMessage(message), deadline])",
+        "replace": "await chrome.runtime.sendMessage(message)",
+        "suites": [
+          "test/extension/popup-recovery.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a worker that receives the request and never answers leaves the switch disabled for the life of the popup (04-REVIEW WR-04, T-04G-14)",
+        "expected_failure": {
+          "suite": "test/extension/popup-recovery.test.js",
+          "test": "a worker that never answers set-enabled costs one bounded wait and the ratified line",
+          "assertion": "[mutant:popup-ask-unbounded]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "popup-no-revert",
+      "exit": 0,
+      "seconds": 12.07,
+      "stdout": "{\"id\":\"popup-no-revert\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a reply reporting the save failed returns the switch to the value storage still holds\",\"assertion\":\"[mutant:popup-no-revert]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-no-revert]: expected false to be true // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "popup-no-revert",
+        "file": "extension/popup.js",
+        "find": "      control.checked = enabled;",
+        "replace": "      control.checked = control.checked;",
+        "suites": [
+          "test/extension/popup-recovery.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the failed-save path shows the unconfirmed position the click left instead of the last value storage confirmed (04-REVIEW WR-07, T-04G-13)",
+        "expected_failure": {
+          "suite": "test/extension/popup-recovery.test.js",
+          "test": "a reply reporting the save failed returns the switch to the value storage still holds",
+          "assertion": "[mutant:popup-no-revert]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "popup-stays-disabled",
+      "exit": 0,
+      "seconds": 12.03,
+      "stdout": "{\"id\":\"popup-stays-disabled\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a reply reporting the save failed returns the switch to the value storage still holds\",\"assertion\":\"[mutant:popup-stays-disabled]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-stays-disabled]: expected true to be false // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "popup-stays-disabled",
+        "file": "extension/popup.js",
+        "find": "      control.disabled = outstanding;",
+        "replace": "      control.disabled = true;",
+        "suites": [
+          "test/extension/popup-recovery.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the switch is taken out of service after a failed save even though a confirmed value exists, so no retry is possible (04-REVIEW WR-07, T-04G-14)",
+        "expected_failure": {
+          "suite": "test/extension/popup-recovery.test.js",
+          "test": "a reply reporting the save failed returns the switch to the value storage still holds",
+          "assertion": "[mutant:popup-stays-disabled]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "popup-focus-guard",
+      "exit": 0,
+      "seconds": 11.99,
+      "stdout": "{\"id\":\"popup-focus-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a keyboard agent gets the switch back after a failed save\",\"assertion\":\"[mutant:popup-focus-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-focus-guard]: expected HTMLBodyElement{ \u2026(49) } to be HTMLInputElement{ \u2026(2), \u2026(58) } // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "popup-focus-guard",
+        "file": "extension/popup.js",
+        "find": "if (hadFocus) control.focus();",
+        "replace": "",
+        "suites": [
+          "test/extension/popup-recovery.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. focus is never handed back after the round trip, so a keyboard agent is left in body with no way to retry (04-REVIEW WR-07, T-04G-14)",
+        "expected_failure": {
+          "suite": "test/extension/popup-recovery.test.js",
+          "test": "a keyboard agent gets the switch back after a failed save",
+          "assertion": "[mutant:popup-focus-guard]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "request-id-echo",
+      "exit": 0,
+      "seconds": 3.93,
+      "stdout": "{\"id\":\"request-id-echo\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so\",\"assertion\":\"[mutant:request-id-echo]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:request-id-echo]: expected 'Tinting is off' to be 'No readable view is connected' // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "request-id-echo",
+        "file": "extension/background.js",
+        "find": "reply.type === type && reply.requestId === requestId",
+        "replace": "reply.type === type",
+        "suites": [
+          "test/extension/worker-integrity.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the echoed request id stops being compared with the one that was minted, so a superseded or replayed reply is accepted on both hops. 04-VALIDATION names this clause as requestApply's ONLY staleness key \u2014 the apply reply is deliberately not generation-guarded \u2014 so its deletion is the whole staleness failure on that path (04-REVIEW WR-02, T-04G-27)",
+        "expected_failure": {
+          "suite": "test/extension/worker-integrity.test.js",
+          "test": "an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so",
+          "assertion": "[mutant:request-id-echo]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "status-reply-gate",
+      "exit": 0,
+      "seconds": 3.88,
+      "stdout": "{\"id\":\"status-reply-gate\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"a status reply carrying an extra member beyond the four the gate names is refused, and the tab reports the connection fact\",\"assertion\":\"[mutant:status-reply-gate]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:status-reply-gate]: expected { icon: 'icons/working.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "status-reply-gate",
+        "file": "extension/background.js",
+        "find": "    if (!isExact(reply, ['type', 'requestId', 'diagnosis', 'reason'])\n      || !validDiagnosis(reply, requestId, 'status')) {",
+        "replace": "    if (false) {",
+        "suites": [
+          "test/extension/worker-integrity.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. requestStatus's combined shape-and-diagnosis gate never holds, so no status reply is ever refused and any object reaching the worker becomes a diagnosis about the agent's view. Fences the gate as a whole; the individual clauses inside validDiagnosis are fenced by request-id-echo and diagnosis-pairing (04-REVIEW WR-02, T-04G-28)",
+        "expected_failure": {
+          "suite": "test/extension/worker-integrity.test.js",
+          "test": "a status reply carrying an extra member beyond the four the gate names is refused, and the tab reports the connection fact",
+          "assertion": "[mutant:status-reply-gate]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "diagnosis-pairing",
+      "exit": 0,
+      "seconds": 3.94,
+      "stdout": "{\"id\":\"diagnosis-pairing\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"an unpaired combination leaves a clean fallback, never a half-written toolbar\",\"assertion\":\"[mutant:diagnosis-pairing]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:diagnosis-pairing]: expected { icon: 'icons/missing.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "diagnosis-pairing",
+        "file": "extension/background.js",
+        "find": "      && Object.hasOwn(TITLES, statusKey(reply.diagnosis, reply.reason));",
+        "replace": "      ;",
+        "suites": [
+          "test/extension/worker-integrity.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. an unpaired {diagnosis, reason} becomes renderable. ICONS is keyed by status alone while TITLES is keyed by the whole pair, so the artwork write SUCCEEDS and the title write carries no value \u2014 one state's artwork under no sentence at all, which is the FAIL-05 failure mode.",
+        "expected_failure": {
+          "suite": "test/extension/worker-integrity.test.js",
+          "test": "an unpaired combination leaves a clean fallback, never a half-written toolbar",
+          "assertion": "[mutant:diagnosis-pairing]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "popup-valid-gate",
+      "exit": 0,
+      "seconds": 3.92,
+      "stdout": "{\"id\":\"popup-valid-gate\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"a set-enabled reply carrying an out-of-set status is refused, and the popup claims nothing\",\"assertion\":\"[mutant:popup-valid-gate]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-valid-gate]: expected 'No readable view is connected' to be 'Zhroma could not confirm that setting' // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "popup-valid-gate",
+        "file": "extension/popup.js",
+        "find": "      || !validPreference(reply.enabled) || !validStatus(reply.status, reply.reason)",
+        "replace": "",
+        "suites": [
+          "test/extension/worker-integrity.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. requestEnabled stops checking that the worker's reply carries an in-set status and a boolean-or-null preference, so a buggy worker's unrecognised value is rendered instead of reported as a failed save. Fences the popup's own second line of defence on the set-enabled path only; refresh's gate has the same two clauses in the opposite order and is a distinct literal (04-REVIEW WR-02, T-04G-30)",
+        "expected_failure": {
+          "suite": "test/extension/worker-integrity.test.js",
+          "test": "a set-enabled reply carrying an out-of-set status is refused, and the popup claims nothing",
+          "assertion": "[mutant:popup-valid-gate]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "popup-copy-fallback",
+      "exit": 1,
+      "seconds": 3.87,
+      "stdout": "{\"id\":\"popup-copy-fallback\",\"verdict\":\"SURVIVED\"}\nMUTATION KILLS: 0/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "popup-copy-fallback",
+        "file": "extension/popup.js",
+        "find": "    say(Object.hasOwn(COPY, key) ? COPY[key] : COPY.unavailable);",
+        "replace": "    say(COPY[key]);",
+        "suites": [
+          "test/extension/worker-integrity.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. render indexes the copy map directly, so an unpaired-but-individually-valid pair writes no sentence into the status region instead of reporting the connection fact. This is the popup-side mirror of diagnosis-pairing and is what keeps a malformed state from being blamed on the agent's view (04-REVIEW WR-05, T-04G-30)",
+        "expected_failure": {
+          "suite": "test/extension/worker-integrity.test.js",
+          "test": "a legible reply whose status and reason are individually valid but unpaired renders the connection fact",
+          "assertion": "[mutant:popup-copy-fallback]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "preference-serialization",
+      "exit": 0,
+      "seconds": 17.46,
+      "stdout": "{\"id\":\"preference-serialization\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"two popups asking for opposite values are serialized, and neither inverts the other\",\"assertion\":\"[mutant:preference-serialization]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:preference-serialization] 2 preference writes in flight at once: expected 2 to be less than 2\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "preference-serialization",
+        "file": "extension/background.js",
+        "find": "    if (activePreference !== null) return;",
+        "replace": "",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the single writer's queue is collapsed to a bare call, so two popups asking for opposite values run their writes concurrently and the persisted boolean can be inverted under the agent. This is the mutant 04-REVIEW measured SURVIVING: with immediate writes both tasks commit in arrival order regardless, so the old test's final-value assertions held without the mechanism.",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "two popups asking for opposite values are serialized, and neither inverts the other",
+          "assertion": "[mutant:preference-serialization]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "tabs-onremoved-listener",
+      "exit": 0,
+      "seconds": 17.29,
+      "stdout": "{\"id\":\"tabs-onremoved-listener\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"closure during held icon releases entries and forbids stale follow-on paint\",\"assertion\":\"[mutant:tabs-onremoved-listener]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:tabs-onremoved-listener]: expected 2 to be 1 // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "tabs-onremoved-listener",
+        "file": "extension/background.js",
+        "find": "  chrome.tabs.onRemoved.addListener((tabId) => {",
+        "replace": "  (() => {})((tabId) => {",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the tab-removal listener is not registered at all, so the per-tab state map grows for the life of the worker across every tab the browser ever closes.",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "closure during held icon releases entries and forbids stale follow-on paint",
+          "assertion": "[mutant:tabs-onremoved-listener]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "tabs-onremoved-delete",
+      "exit": 0,
+      "seconds": 17.52,
+      "stdout": "{\"id\":\"tabs-onremoved-delete\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"repeated create-close cycles and reused ids cannot retain or resurrect a dead tab\",\"assertion\":\"[mutant:tabs-onremoved-delete]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:tabs-onremoved-delete]: expected 3 to be 2 // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "tabs-onremoved-delete",
+        "file": "extension/background.js",
+        "find": "    tabs.delete(tabId);\n",
+        "replace": "",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the listener stays registered but its body no longer deletes the removed id, leaving a listener that does nothing \u2014 the same unbounded map behind a registration that looks correct. This is why the two halves are asserted separately: a single combined check would let this hide behind the registration.",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "repeated create-close cycles and reused ids cannot retain or resurrect a dead tab",
+          "assertion": "[mutant:tabs-onremoved-delete]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "project-guard-after-status",
+      "exit": 1,
+      "seconds": 18.15,
+      "stdout": "{\"id\":\"project-guard-after-status\",\"verdict\":\"GATE_ERROR\",\"code\":\"intended-assertion-not-proven\"}\nMUTATION KILLS: 0/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "project-guard-after-status",
+        "file": "extension/background.js",
+        "find": "        if (result === null || !owns(tabId, state, generation)) continue;",
+        "replace": "",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a superseded status result proceeds to the preference read instead of being dropped, so a discarded projection still does work on behalf of a view that has moved on (04-REVIEW WR-01, T-04G-23)",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "a superseded status reply is discarded before the preference is ever read",
+          "assertion": "[mutant:project-guard-after-status]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "project-guard-after-preference",
+      "exit": 1,
+      "seconds": 18.37,
+      "stdout": "{\"id\":\"project-guard-after-preference\",\"verdict\":\"SURVIVED\"}\nMUTATION KILLS: 0/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "project-guard-after-preference",
+        "file": "extension/background.js",
+        "find": "        if (!owns(tabId, state, generation) || Date.now() >= expires) continue;",
+        "replace": "",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a preference read that lands after a newer invalidation paints the superseded status, so a positive working icon survives losing the table (04-REVIEW WR-01, T-04G-23)",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "a preference read that lands after a newer invalidation never paints the superseded status",
+          "assertion": "[mutant:project-guard-after-preference]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "apply-action-guard",
+      "exit": 0,
+      "seconds": 18.75,
+      "stdout": "{\"id\":\"apply-action-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a generation bump between the icon and the title write stops the superseded title\",\"assertion\":\"[mutant:apply-action-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:apply-action-guard]: expected [ { tabId: 7, \u2026(1) } ] to deeply equal []\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "apply-action-guard",
+        "file": "extension/background.js",
+        "find": "      await chrome.action.setIcon({ tabId, path: ICONS[work.result.status] });\n      if (!owns(tabId, state, work.generation) || Date.now() >= work.expires) return;",
+        "replace": "      await chrome.action.setIcon({ tabId, path: ICONS[work.result.status] });",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a generation bump between the icon and the title write no longer stops the title, so the agent reads a sentence about a view that is gone (04-REVIEW WR-01, T-04G-23)",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "a generation bump between the icon and the title write stops the superseded title",
+          "assertion": "[mutant:apply-action-guard]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "popup-status-guard",
+      "exit": 1,
+      "seconds": 18.27,
+      "stdout": "{\"id\":\"popup-status-guard\",\"verdict\":\"GATE_ERROR\",\"code\":\"intended-assertion-not-proven\"}\nMUTATION KILLS: 0/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "popup-status-guard",
+        "file": "extension/background.js",
+        "find": "    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);",
+        "replace": "",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a superseded popup projection loses the confirmed preference along with the diagnosis: the popup reports the connection line with enabled null and takes the switch out of service (04-REVIEW WR-01, T-04G-23)",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "a superseded popup projection reports the connection line and still shows the confirmed preference",
+          "assertion": "[mutant:popup-status-guard]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "project-queue",
+      "exit": 1,
+      "seconds": 18.21,
+      "stdout": "{\"id\":\"project-queue\",\"verdict\":\"GATE_ERROR\",\"code\":\"intended-assertion-not-proven\"}\nMUTATION KILLS: 0/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "project-queue",
+        "file": "extension/background.js",
+        "find": "    if (state.observing) return;",
+        "replace": "",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the per-tab serialization is collapsed so two projections for one tab run concurrently and a held earlier reply lands last (04-REVIEW WR-01, T-04G-23)",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "a slow earlier reply cannot repaint over a newer projection",
+          "assertion": "[mutant:project-queue]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "generation-counter",
+      "exit": 0,
+      "seconds": 18.38,
+      "stdout": "{\"id\":\"generation-counter\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a slow earlier reply cannot repaint over a newer projection\",\"assertion\":\"[mutant:generation-counter]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:generation-counter]: expected [ { tabId: 7, \u2026(1) }, \u2026(1) ] to deeply equal []\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "generation-counter",
+        "file": "extension/background.js",
+        "find": "state.generation = ++projectionCounter;",
+        "replace": "state.generation = 0;",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. invalidation stops advancing the counter, so every generation recheck in the worker becomes a no-op at once. Registered deliberately as the mechanism-level fence: requestStatus's own two rechecks are provably redundant with the rechecks its two callers perform immediately afterwards, so neither can be killed on its own \u2014 see 04-12-SUMMARY (04-REVIEW WR-01, T-04G-23)",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "a slow earlier reply cannot repaint over a newer projection",
+          "assertion": "[mutant:generation-counter]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    },
+    {
+      "id": "status-catch-reports-unavailable",
+      "exit": 0,
+      "seconds": 16.88,
+      "stdout": "{\"id\":\"status-catch-reports-unavailable\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"no receiver reads as unavailable and never as a diagnosis about the view\",\"assertion\":\"[mutant:status-catch-reports-unavailable]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:status-catch-reports-unavailable]: expected { icon: 'icons/working.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "status-catch-reports-unavailable",
+        "file": "extension/background.js",
+        "find": "      return generationOf(tabId) === generation ? { status: 'unavailable', reason: null } : null;",
+        "replace": "      return null;",
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the catch branch stops reporting the connection fact for a CURRENT rejection, so no receiver silently paints nothing. This fences the REPORTING half of that line only; its staleness half (=== generation) is redundant with the callers' rechecks and is fenced by generation-counter instead (04-REVIEW WR-01, T-04G-23)",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "no receiver reads as unavailable and never as a diagnosis about the view",
+          "assertion": "[mutant:status-catch-reports-unavailable]",
+          "kind": "behavioral"
+        },
+        "count": 1
+      }
+    }
+  ],
+  "initial_new_only": [
+    {
+      "id": "confirmed-write-revert",
+      "exit": 0,
+      "seconds": 4.68,
+      "stdout": "{\"id\":\"confirmed-write-revert\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"joint table true write=immediate read=rejected apply=success\",\"assertion\":\"[outcome:confirmed-write-checkbox]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:confirmed-write-checkbox]: expected true to be false // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "confirmed-write-revert",
+        "file": "extension/popup.js",
+        "find": "else showPreference(reply.enabled === null ? desired : reply.enabled);",
+        "replace": "else showPreference(reply.enabled === null ? lastConfirmed : reply.enabled);",
+        "count": 1,
+        "suites": [
+          "test/extension/preference-outcome.test.js"
+        ],
+        "note": "Joint persisted value, markers and checkbox must agree after confirmed write and failed read.",
+        "expected_failure": {
+          "suite": "test/extension/preference-outcome.test.js",
+          "test": "joint table true write=immediate read=rejected apply=success",
+          "assertion": "[outcome:confirmed-write-checkbox]",
+          "kind": "behavioral"
+        }
+      }
+    },
+    {
+      "id": "write-timeout-as-failure",
+      "exit": 0,
+      "seconds": 4.68,
+      "stdout": "{\"id\":\"write-timeout-as-failure\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"native deferred from true remains unknown through expiry and fresh recovery\",\"assertion\":\"[outcome:false-timeout-failure]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:false-timeout-failure]: expected false to be null // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "write-timeout-as-failure",
+        "file": "extension/background.js",
+        "find": "    job.saved = null;",
+        "replace": "    job.saved = false;",
+        "count": 1,
+        "suites": [
+          "test/extension/preference-outcome.test.js"
+        ],
+        "note": "An issued native write timeout is unknown, never definite failure.",
+        "expected_failure": {
+          "suite": "test/extension/preference-outcome.test.js",
+          "test": "native deferred from true remains unknown through expiry and fresh recovery",
+          "assertion": "[outcome:false-timeout-failure]",
+          "kind": "behavioral"
+        }
+      }
+    },
+    {
+      "id": "timeout-releases-writer",
+      "exit": 0,
+      "seconds": 4.91,
+      "stdout": "{\"id\":\"timeout-releases-writer\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"a fresh request after observation expiry cannot overlap the still-issued native write\",\"assertion\":\"[outcome:post-timeout-write-exclusion]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:post-timeout-write-exclusion]: expected 2 to be 1 // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "timeout-releases-writer",
+        "file": "extension/background.js",
+        "find": "      if (job.raw !== null) await job.raw;",
+        "replace": "",
+        "count": 1,
+        "suites": [
+          "test/extension/preference-outcome.test.js"
+        ],
+        "note": "Physical write exclusion outlives response expiry.",
+        "expected_failure": {
+          "suite": "test/extension/preference-outcome.test.js",
+          "test": "a fresh request after observation expiry cannot overlap the still-issued native write",
+          "assertion": "[outcome:post-timeout-write-exclusion]",
+          "kind": "behavioral"
+        }
+      }
+    },
+    {
+      "id": "expired-request-dispatch",
+      "exit": 0,
+      "seconds": 4.93,
+      "stdout": "{\"id\":\"expired-request-dispatch\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"admission overflow in an opposite popup never confirms an obsolete position\",\"assertion\":\"[outcome:expired-request-dispatch]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:expired-request-dispatch]: expected [ { enabled: false }, \u2026(31) ] to deeply equal [ { enabled: false } ]\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "expired-request-dispatch",
+        "file": "extension/background.js",
+        "find": "    job.timer = setTimeout(() => {\n      job.expired = true;\n      const index = preferenceQueue.indexOf(job);\n      if (index >= 0) preferenceQueue.splice(index, 1);\n      job.answer();\n    }, WORKER_REQUEST_TIMEOUT_MS);\n    preferenceQueue.push(job);\n    drainPreferences();\n  }\n\n  async function drainPreferences() {\n    if (activePreference !== null) return;\n    const job = preferenceQueue.shift();\n    if (job === undefined) return;\n    activePreference = job;\n    try {\n      if (!job.expired && Date.now() < job.expires) await setEnabled(job);\n    } finally {\n      job.answer();\n      // Observation expiry is not cancellation. This raw callback exclusively\n      // owns the writer even after its requester has already received null.\n      if (job.raw !== null) await job.raw;\n      activePreference = null;\n      drainPreferences();\n    }\n  }\n",
+        "replace": "    job.timer = setTimeout(() => {\n      job.expired = true;\n      const index = preferenceQueue.indexOf(job);\n\n      job.answer();\n    }, WORKER_REQUEST_TIMEOUT_MS);\n    preferenceQueue.push(job);\n    drainPreferences();\n  }\n\n  async function drainPreferences() {\n    if (activePreference !== null) return;\n    const job = preferenceQueue.shift();\n    if (job === undefined) return;\n    activePreference = job;\n    try {\n      await setEnabled(job);\n    } finally {\n      job.answer();\n      // Observation expiry is not cancellation. This raw callback exclusively\n      // owns the writer even after its requester has already received null.\n      if (job.raw !== null) await job.raw;\n      activePreference = null;\n      drainPreferences();\n    }\n  }\n",
+        "count": 1,
+        "suites": [
+          "test/extension/preference-outcome.test.js"
+        ],
+        "note": "Mechanism-level removal of both expiry dequeue and dispatch refusal; neither redundant clause is claimed individually killed.",
+        "expected_failure": {
+          "suite": "test/extension/preference-outcome.test.js",
+          "test": "admission overflow in an opposite popup never confirms an obsolete position",
+          "assertion": "[outcome:expired-request-dispatch]",
+          "kind": "behavioral"
+        }
+      }
+    },
+    {
+      "id": "popup-stale-refresh",
+      "exit": 0,
+      "seconds": 4.63,
+      "stdout": "{\"id\":\"popup-stale-refresh\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"opening refresh excludes changes and captured late reply cannot overwrite fresh recovery\",\"assertion\":\"[outcome:opening-refresh-excludes-change]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:opening-refresh-excludes-change]: expected [ { enabled: false } ] to deeply equal []\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "popup-stale-refresh",
+        "file": "extension/popup.js",
+        "find": "    if (outstanding) return;\n    requestEnabled(control.checked === true);",
+        "replace": "    requestEnabled(control.checked === true);",
+        "count": 1,
+        "suites": [
+          "test/extension/preference-outcome.test.js"
+        ],
+        "note": "Refresh/change admission exclusion prevents overlapping popup ownership; downstream stale-reply recovery is checked jointly.",
+        "expected_failure": {
+          "suite": "test/extension/preference-outcome.test.js",
+          "test": "opening refresh excludes changes and captured late reply cannot overwrite fresh recovery",
+          "assertion": "[outcome:opening-refresh-excludes-change]",
+          "kind": "behavioral"
+        }
+      }
+    },
+    {
+      "id": "whole-request-deadline",
+      "exit": 0,
+      "seconds": 4.61,
+      "stdout": "{\"id\":\"whole-request-deadline\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"sequential waits spend one arrival budget rather than renewing every hop\",\"assertion\":\"[outcome:sequential-budget]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:sequential-budget]: expected NaN to be less than or equal to 4001\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "whole-request-deadline",
+        "file": "extension/background.js",
+        "find": "const WORKER_REQUEST_TIMEOUT_MS = 4000;",
+        "replace": "const WORKER_REQUEST_TIMEOUT_MS = 8000;",
+        "count": 1,
+        "suites": [
+          "test/extension/preference-outcome.test.js"
+        ],
+        "note": "All sequential waits share the approved 4000 ms arrival budget.",
+        "expected_failure": {
+          "suite": "test/extension/preference-outcome.test.js",
+          "test": "sequential waits spend one arrival budget rather than renewing every hop",
+          "assertion": "[outcome:sequential-budget]",
+          "kind": "behavioral"
+        }
+      }
+    },
+    {
+      "id": "pending-reopen-certainty",
+      "exit": 1,
+      "seconds": 4.61,
+      "stdout": "{\"id\":\"pending-reopen-certainty\",\"verdict\":\"SURVIVED\"}\nMUTATION KILLS: 0/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "pending-reopen-certainty",
+        "file": "extension/background.js",
+        "find": "    const enabled = pendingWrite !== null ? null : await bounded(readPreference, expires);",
+        "replace": "    const enabled = await bounded(readPreference, expires);",
+        "count": 1,
+        "suites": [
+          "test/extension/preference-outcome.test.js"
+        ],
+        "note": "A fresh popup cannot confirm an issued write whose callback has not settled.",
+        "expected_failure": {
+          "suite": "test/extension/preference-outcome.test.js",
+          "test": "native callback-held from true remains unknown through expiry and fresh recovery",
+          "assertion": "[outcome:pending-reopen-mixed]",
+          "kind": "behavioral"
+        }
+      }
+    },
+    {
+      "id": "late-action-reconciliation",
+      "exit": 0,
+      "seconds": 16.8,
+      "stdout": "{\"id\":\"late-action-reconciliation\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"late native icon preserves exclusion and reconciles newest projection\",\"assertion\":\"[outcome:late-native-reconciled]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:late-native-reconciled] icon: expected { icon: 'icons/working.png', \u2026(1) } to deeply equal { icon: 'icons/neutral.png', \u2026(1) }\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "late-action-reconciliation",
+        "file": "extension/background.js",
+        "find": "        if (!owns(tabId, state, work.generation) || Date.now() >= work.expires) state.reconcile = true;",
+        "replace": "",
+        "count": 1,
+        "suites": [
+          "test/extension/toolbar-popup.test.js"
+        ],
+        "note": "After late native settlement the current projection must be reconciled.",
+        "expected_failure": {
+          "suite": "test/extension/toolbar-popup.test.js",
+          "test": "late native icon preserves exclusion and reconciles newest projection",
+          "assertion": "[outcome:late-native-reconciled]",
+          "kind": "behavioral"
+        }
+      }
+    },
+    {
+      "id": "malformed-english-blame",
+      "exit": 0,
+      "seconds": 1.27,
+      "stdout": "{\"id\":\"malformed-english-blame\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/diagnosis.test.js\",\"test\":\"malformed English shell: underscore English reports structure across content, worker and popup\",\"assertion\":\"[locale:malformed-english-reason]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [locale:malformed-english-reason] underscore English: expected 'This interface language is not suppor\u2026' to be 'Zhroma cannot read this view\\\\'s ticke\u2026' // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "malformed-english-blame",
+        "file": "extension/content.js",
+        "find": "reasonLanguage === '' || englishReason ? 'unsafe' : 'unsupported'",
+        "replace": "reasonLanguage === '' ? 'unsafe' : 'unsupported'",
+        "count": 1,
+        "suites": [
+          "test/extension/diagnosis.test.js"
+        ],
+        "note": "Malformed English metadata refuses paint as structural uncertainty, not unsupported language.",
+        "expected_failure": {
+          "suite": "test/extension/diagnosis.test.js",
+          "test": "malformed English shell: underscore English reports structure across content, worker and popup",
+          "assertion": "[locale:malformed-english-reason]",
+          "kind": "behavioral"
+        }
+      }
+    },
+    {
+      "id": "selector-family-regression",
+      "exit": 0,
+      "seconds": 1.14,
+      "stdout": "{\"id\":\"selector-family-regression\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/runtime-contract.test.js\",\"test\":\"happy-dom secondary model: four CSS rules map exact labels to alpha backgrounds and only direct ticket cells\",\"assertion\":\"[locale:actual-selector-family]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [locale:actual-selector-family]: expected [] to deeply equal [ Array(16) ]\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": "",
+      "entry": {
+        "id": "selector-family-regression",
+        "file": "extension/zhroma.css",
+        "find": "html[lang|=\"en\" i]",
+        "replace": "html[lang|=\"fr\" i]",
+        "count": 4,
+        "suites": [
+          "test/extension/runtime-contract.test.js"
+        ],
+        "note": "Actual language-family change removes English direct-cell matches in the secondary happy-dom model. This is not real Chrome mutant execution or removal of redundant case i.",
+        "expected_failure": {
+          "suite": "test/extension/runtime-contract.test.js",
+          "test": "happy-dom secondary model: four CSS rules map exact labels to alpha backgrounds and only direct ticket cells",
+          "assertion": "[locale:actual-selector-family]",
+          "kind": "behavioral"
+        }
+      }
+    }
+  ],
+  "remeasured_only": [
+    {
+      "id": "project-guard-after-status",
+      "exit": 0,
+      "stdout": "{\"id\":\"project-guard-after-status\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a superseded status reply is discarded before the preference is ever read\",\"assertion\":\"[mutant:project-guard-after-status]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:project-guard-after-status]: expected 1 to be +0 // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": ""
+    },
+    {
+      "id": "popup-status-guard",
+      "exit": 0,
+      "stdout": "{\"id\":\"popup-status-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a superseded popup projection reports the connection line and still shows the confirmed preference\",\"assertion\":\"[mutant:popup-status-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-status-guard]: expected 'Zhroma could not confirm that setting' to be 'No readable view is connected' // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": ""
+    },
+    {
+      "id": "project-queue",
+      "exit": 0,
+      "stdout": "{\"id\":\"project-queue\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a slow earlier reply cannot repaint over a newer projection\",\"assertion\":\"[mutant:project-queue]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:generation-counter] [mutant:project-queue]: expected [ { tabId: 7, \u2026(1) }, \u2026(1) ] to deeply equal []\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": ""
+    },
+    {
+      "id": "pending-reopen-certainty",
+      "exit": 0,
+      "stdout": "{\"id\":\"pending-reopen-certainty\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"native callback-held from true remains unknown through expiry and fresh recovery\",\"assertion\":\"[outcome:pending-reopen-mixed]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:pending-reopen-mixed]: expected false to be true // Object.is equality\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": ""
+    },
+    {
+      "id": "whole-request-deadline",
+      "exit": 0,
+      "stdout": "{\"id\":\"whole-request-deadline\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"sequential waits spend one arrival budget rather than renewing every hop\",\"assertion\":\"[outcome:sequential-budget]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:sequential-budget]: expected undefined to be defined\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": ""
+    },
+    {
+      "id": "worker-apply-unbounded",
+      "exit": 0,
+      "stdout": "{\"id\":\"worker-apply-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers apply-preference costs one bounded wait, not the off switch\",\"assertion\":\"[mutant:worker-apply-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-apply-unbounded]: expected 4004 to be less than 4000\"}}\nMUTATION KILLS: 1/1 killed\n",
+      "stderr": ""
+    }
+  ],
+  "diagnostics": "{\"id\":\"project-guard-after-status\",\"verdict\":\"GATE_ERROR\",\"code\":\"intended-assertion-not-proven\",\"observed\":[{\"test\":\"a superseded status reply is discarded before the preference is ever read\",\"message\":\"AssertionError: expected 1 to be +0 // Object.is equality\"}]}\n{\"id\":\"popup-status-guard\",\"verdict\":\"GATE_ERROR\",\"code\":\"intended-assertion-not-proven\",\"observed\":[{\"test\":\"a superseded popup projection reports the connection line and still shows the confirmed preference\",\"message\":\"AssertionError: expected 'Zhroma could not confirm that setting' to be 'No readable view is connected' // Object.is equality\"}]}\n{\"id\":\"project-queue\",\"verdict\":\"GATE_ERROR\",\"code\":\"intended-assertion-not-proven\",\"observed\":[{\"test\":\"a slow earlier reply cannot repaint over a newer projection\",\"message\":\"AssertionError: [mutant:generation-counter]: expected [ { tabId: 7, \u2026(1) }, \u2026(1) ] to deeply equal []\"}]}\n",
+  "default_test": {
+    "command": "npm test",
+    "exit": 1,
+    "smoke_passed": 65,
+    "vitest_passed": 902,
+    "vitest_failed": 1,
+    "expected_failure": "test/extension/phase-04-live-acceptance.test.js > the repository record binds to every current shipped byte and reports its actual status",
+    "output": "\n> zhroma@0.0.0 test\n> npm run test:recon\n\n\n> zhroma@0.0.0 test:recon\n> node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js\n\n\u2714 approval record covers exactly every devDependency with no duplicate rows (0.501208ms)\n\u2714 happy-dom approval agrees with package.json and the resolved lockfile version (0.081708ms)\n\u2714 vitest approval agrees with package.json and the resolved lockfile version (0.032ms)\n\u2714 every approval row has a closed attestation state and a basis and date (0.092792ms)\n\u2714 independence is recorded separately as unconfirmed with the verbatim answer (0.091375ms)\n\u2714 keeps a zero-row observation as an explicit interaction block (1.010083ms)\n\u2714 admits the repository interaction evidence after the human gate (2.207333ms)\n\u2714 admits positive, scenario-bound normal, hover, and selected paint evidence (0.636708ms)\n\u2714 rejects verified evidence without positive counts or distinct paint observations (0.266125ms)\n\u2714 rejects incomplete or wrongly attributed verified evidence (0.371416ms)\n\u2714 fails closed on raw or unexpected evidence without echoing sensitive values (0.18ms)\n\u2714 does not accept host.shadowRoot === null as Shadow DOM proof (0.063833ms)\n\u2714 parses only the named interaction ledger section (0.047958ms)\n\u2714 canonicalizes whitespace and case before paint distinctness (0.138458ms)\n\u2714 paint functions reject arbitrary words inside otherwise recognized syntax (0.095666ms)\n\u2714 bounds computed paint serialization and numeric channels (0.159792ms)\n\u2714 CLI emits stable codes without echoing an unknown status or duplicate id (219.484459ms)\n\u2714 CLI rejects an unknown mode with a value-free argument code (103.555666ms)\n\u2714 in-process failures are ReconGateError instances with a fixed message and code (0.247791ms)\n\u2714 accepts a complete synthetic entry in evidence mode only (0.684667ms)\n\u2714 evidence mode accepts a complete terminal entry without a final verdict (0.052291ms)\n\u2714 rejects missing required fields, unknown statuses, and absent scenarios (0.13675ms)\n\u2714 rejects duplicate entry ids and entries whose heading disagrees with id (0.07425ms)\n\u2714 final mode requires one explicit recognized verdict (0.079917ms)\n\u2714 an unresolved English-path item fails evidence and final modes (0.103ms)\n\u2714 outside-scope status is reserved for explicitly non-English work (0.081208ms)\n\u2714 rejects an unsupported validator mode (0.036209ms)\n\u2714 repository ledger admits terminal evidence for every English-path question (1.038458ms)\n\u2714 final mode binds the complete repository ledger to admitted scenarios (2.625125ms)\n\u2714 final proceed fails closed when interaction paint evidence is not positive (0.552292ms)\n\u2714 CLI rejects omitted and extra arguments for evidence and final modes (310.070417ms)\n\u2714 final CLI rejects active hash-matching fixtures through the shared validator (114.47875ms)\n\u2714 final CLI rejects an in-corpus symlink to an external fixture (111.090542ms)\n\u2714 assumptions contract preserves seven rows with six gating proofs and one flagged exception (0.378459ms)\n\u2714 required evidence rejects inadmissible statuses and scenario sets (7.791584ms)\n\u2714 required contracts exactly match recorded evidence including disproved findings (0.528792ms)\n\u2714 empty ledgers and blank required fields reject with stable codes (0.111292ms)\n\u2714 blocker ordering does not depend on ledger section order (1.056834ms)\n\u25b6 final gate audit regressions\n  \u2714 CLI never echoes a supplied private ledger path unless debug is exactly 1 (630.681375ms)\n  \u2714 final gate rejects arbitrary private paint (1.041167ms)\n  \u2714 final gate rejects paint differing only by whitespace and case (0.550417ms)\n  \u2714 required evidence cannot be relabeled as localization-only (5.430875ms)\n  \u2714 CR-08: disproved identifiers with intact prose cannot authorize fallback (0.538458ms)\n  \u2714 CR-10: declared-input-unresolved blocks a gating row (0.532416ms)\n\u2714 final gate audit regressions (638.993708ms)\n\u2714 proven fallback requires an existing proof path (0.511708ms)\n\u2714 verdict authorization enums and fallback states are closed (1.992333ms)\n\u2714 null-shadowRoot alone does not rule out a closed root (0.48ms)\n\u2714 resolved gating rows need bound proof references (1.414583ms)\n\u2714 the non-gating assumption must be surfaced by exact name (0.5395ms)\n\u2714 assumption section and table shape are required (0.59ms)\n\u2714 audit: private words inside CSS functions cannot satisfy paint evidence (0.773ms)\n\u2714 audit: existing unrelated test files cannot prove a fallback rung (0.918ms)\n\u2714 audit: new verdict metadata uses closed identifiers and proof tokens (1.29175ms)\n\u2714 final interaction owner vocabulary matches row and direct-cell support (0.736583ms)\n\u2714 audit: equivalent transparent paint cannot masquerade as distinct states (0.528083ms)\n\u2714 rejects NFD content against NFC denylist with value-free findings (1.1ms)\n\u2714 rejects NFC content against NFD denylist with value-free findings (0.296875ms)\n\u2714 rejects case folding after normalization with value-free findings (0.063167ms)\n\u2714 admits structurally useful deterministic sanitized markup (0.072792ms)\n\u2714 rejects missing or empty capture-specific denylists (0.094791ms)\n\u2714 rejects every generic forbidden class with stable structured findings (4.249375ms)\n\u2714 rejects inline handlers, frames, style resources, and JSON state (0.081958ms)\n\u2714 rejects every capture-specific denylist token without echoing values (0.123667ms)\n\u2714 deduplicates overlapping matches and returns findings in stable order (0.198958ms)\n\u2714 rejects non-string content without inspecting or logging it (0.0955ms)\n\u2139 tests 65\n\u2139 suites 1\n\u2139 pass 65\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 1641.149667\n\n RUN  v4.1.11 /Users/mike/code/zhroma\n\nLIVE ACCEPTANCE STATUS: passed\n \u276f test/extension/phase-04-live-acceptance.test.js (42 tests | 1 failed) 208ms\n   \u00d7 the repository record binds to every current shipped byte and reports its actual status 4ms\nPHASE 03 LIVE ACCEPTANCE STATUS: human_needed\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 1 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  test/extension/phase-04-live-acceptance.test.js > the repository record binds to every current shipped byte and reports its actual status\nAssertionError: expected { \u2026(11) } to deeply equal { \u2026(11) }\n\n- Expected\n+ Received\n\n  {\n-   \"background.js\": \"998cfc66360145a20c24f539f138e2e00d6793c1ddc096a9dc8ba7b8021fe3ae\",\n-   \"content.js\": \"18aace89e544d197ea8e42e51f3dc61a3771ff843f8f3566b2a495619a5c3f50\",\n+   \"background.js\": \"141b192fecc263a2add910bed0bc29f3f18ec9abbcfd1c03510925235a840e6e\",\n+   \"content.js\": \"2dd1ac4c892aaadf5c4bc14b47c61e5a7aee4f9bdca42b26351b9ecd999c6c42\",\n    \"icons/missing.png\": \"68a032b0500b1ae062a455e3b1bdbf20db8dd71c8d16dee1461e6f3dbf5e8fa0\",\n    \"icons/neutral.png\": \"a13c2447cb31526e666a4e050451228480a6221efcee673a6fd30ac2d943f9d4\",\n    \"icons/off.png\": \"c1289da1a9235cba4ddb0f8bcd85ca90e355ce89ddf3c24340c6409205198638\",\n    \"icons/unreadable.png\": \"1131af46ac5cc421e7e951a4de067566c9a31bbfa032787f5346fb6db8e30c3a\",\n    \"icons/working.png\": \"28fc0380a220982d523d39564123933db92e8d492100cd690c0dd333200845bb\",\n    \"manifest.json\": \"dafa656a55a1b69b42d4aa6490101e593bc9eea36afe35feacf34f7090b768e5\",\n    \"popup.html\": \"4c621c9d92fd21130dc2cafbf5bcaf705a98993c53eb755a53011a381729ad7c\",\n-   \"popup.js\": \"3e7cac0ebed5141f617af5fb919a6a0c41df6efad2ccbb27076fc7af012ea938\",\n+   \"popup.js\": \"6a6f07c3e1dc891faf6b8f341e074d941115965f1907b8bc5a1b5b70293fa79f\",\n    \"zhroma.css\": \"8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0\",\n  }\n\n \u276f test/extension/phase-04-live-acceptance.test.js:401:32\n    399|   const record = parsePhase04Acceptance(markdown);\n    400|   expect(Object.keys(record.source.assets).sort()).toEqual(SHIPPED_NAM\u2026\n    401|   expect(record.source.assets).toEqual(SHIPPED);\n       |                                ^\n    402|   expect(record.source.inventory_count).toBe(11);\n    403|   const status = validatePhase04Acceptance(record);\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/1]\u23af\n\n\n Test Files  1 failed | 20 passed (21)\n      Tests  1 failed | 902 passed (903)\n   Start at  10:48:28\n   Duration  16.32s (transform 837ms, setup 0ms, import 3.50s, tests 57.96s, environment 637ms)\n\n"
+  },
+  "superseded": [
+    {
+      "id": "popup-copy-fallback",
+      "initial_verdict": "SURVIVED",
+      "disposition": "redundant behind exact popup status/reason pair validation",
+      "replacement_coverage": "popup-valid-gate"
+    },
+    {
+      "id": "project-guard-after-preference",
+      "initial_verdict": "SURVIVED",
+      "disposition": "redundant behind applyAction and native owner/generation checks",
+      "replacement_coverage": "generation-counter and apply-action-guard"
+    }
+  ],
+  "source_sha256": {
+    "extension/background.js": "998cfc66360145a20c24f539f138e2e00d6793c1ddc096a9dc8ba7b8021fe3ae",
+    "extension/content.js": "18aace89e544d197ea8e42e51f3dc61a3771ff843f8f3566b2a495619a5c3f50",
+    "extension/manifest.json": "dafa656a55a1b69b42d4aa6490101e593bc9eea36afe35feacf34f7090b768e5",
+    "extension/popup.html": "4c621c9d92fd21130dc2cafbf5bcaf705a98993c53eb755a53011a381729ad7c",
+    "extension/popup.js": "3e7cac0ebed5141f617af5fb919a6a0c41df6efad2ccbb27076fc7af012ea938",
+    "extension/zhroma.css": "8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0"
+  }
+}

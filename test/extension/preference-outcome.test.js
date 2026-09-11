@@ -70,6 +70,23 @@ test('admission overflow in an opposite popup never confirms an obsolete positio
   expect(Math.max(...world.writeObservations), '[outcome:physical-write-overlap]').toBe(1);
 });
 
+test('a fresh request after observation expiry cannot overlap the still-issued native write', async () => {
+  const { world, popup } = await timedBoot(true);
+  world.setWriteMode('deferred');
+  change(popup, false);
+  await vi.advanceTimersByTimeAsync(4010);
+  const fresh = world.popupChrome.runtime.sendMessage({ type: 'set-enabled', requestId: 998, enabled: true });
+  await vi.advanceTimersByTimeAsync(20);
+  expect(Math.max(...world.writeObservations), '[outcome:post-timeout-write-exclusion]').toBe(1);
+  expect(world.writeLog).toEqual([{ enabled: false }]);
+  world.setWriteMode('immediate'); world.flushWrites();
+  await vi.advanceTimersByTimeAsync(100);
+  expect((await fresh).saved).toBe(true);
+  expect(world.snapshot()).toEqual({ enabled: true });
+  await vi.advanceTimersByTimeAsync(22000);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
 test('opening refresh excludes changes and captured late reply cannot overwrite fresh recovery', async () => {
   const { world } = await timedBoot(true);
   world.hold('popup-response');
@@ -123,7 +140,8 @@ test('sequential waits spend one arrival budget rather than renewing every hop',
   world.hold('content-response');
   await vi.advanceTimersByTimeAsync(410);
   const response = answered(world)[0];
-  expect(response.at - start, '[outcome:sequential-budget]').toBeLessThanOrEqual(4001);
+  expect(response, '[outcome:sequential-budget]').toBeDefined();
+  expect(response.at - start).toBeLessThanOrEqual(4001);
   expect(response.payload).toMatchObject({ saved: true, enabled: false, applied: false });
   expect(control(popup.document).checked).toBe(false);
   expect(control(popup.document).disabled).toBe(false);
