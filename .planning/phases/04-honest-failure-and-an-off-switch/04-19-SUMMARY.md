@@ -2,214 +2,186 @@
 phase: 04-honest-failure-and-an-off-switch
 plan: "19"
 subsystem: extension-runtime-review
-tags: [independent-review, security, preference, lifecycle, tdd, halted]
-status: halted
-completed: null
-halted: 2026-09-11
-duration: 16min
-duration_basis: First task commit 08:11:31Z through halt-report commit 08:27:47Z; initial review/context loading excluded
+tags: [independent-review, security, preference, lifecycle, tdd]
+status: complete
+completed: 2026-09-11
+duration: 69min
+duration_basis: First task commit 08:11:31Z through final reports 09:19:23Z; includes first halt and explicitly authorized second attempt
 requires:
   - phase: 04-18
     provides: Assertion-attributed mutation runner and measured historical inventory
 provides:
-  - Independent integrated counterexamples and 82-threat security register
-  - Independently closed restored-page preference freshness repair
-  - Partial worker lifetime and post-artwork response repairs with remaining blockers
+  - Independently closed resume, application diagnosis, preference certainty and harness defects
+  - Final technical handoff with shared 65-file reviewed identity
+  - Preserved human, accepted-risk and deferred validation boundaries
 affects: [04-20]
 tech-stack:
   added: []
-  patterns: [separate document lifetime and projection generation]
+  patterns: [fresh bounded application diagnosis, issued-write certainty epoch, finite FIFO harness drain]
 key-files:
   created:
-    - .planning/phases/04-honest-failure-and-an-off-switch/04-19-REPAIR1-RED.json
-    - .planning/phases/04-honest-failure-and-an-off-switch/04-19-REPAIR2-RED.json
     - .planning/phases/04-honest-failure-and-an-off-switch/04-SECURITY.md
+    - .planning/phases/04-honest-failure-and-an-off-switch/04-19-MEASUREMENTS.json
+    - test/extension/harness-reliability.test.js
+    - test/mutants/harness-reliability.mutants.json
   modified:
-    - extension/content.js
     - extension/background.js
+    - extension/content.js
+    - test/extension/chrome-harness.js
     - test/extension/preference-outcome.test.js
     - test/extension/toolbar-popup.test.js
     - test/mutants/preference-outcome.mutants.json
+    - test/mutants/worker-boundary.mutants.json
     - .planning/phases/04-honest-failure-and-an-off-switch/04-19-PLAN.md
     - .planning/phases/04-honest-failure-and-an-off-switch/04-REVIEW.md
     - .planning/phases/04-honest-failure-and-an-off-switch/04-GAP-CLOSURE-COVERAGE.md
 key-decisions:
-  - Apply the mandatory nondecreasing affected-finding stop at two open findings before and after packet 2
-  - Preserve all independent counterexamples despite green suites and selected mutation kills
+  - Enforced the first attempt's mandatory nondecreasing 2-to-2 halt
+  - Started a new bounded attempt only after the user explicitly replied proceed
+  - Superseded redundant individual-deletion promises with independently verified mechanisms, preserving measured survivors
 requirements-completed: []
 requirements-addressed: [FAIL-01, FAIL-02, FAIL-03, FAIL-05, CTRL-02, CTRL-03, CTRL-04]
-verification_status: blocked-independent-recheck
-reviewed_revision: 028265ed28b9fbb9c68d37a77af840bf69159421
-runtime_digest: f6a4e4bca9a5409e1164f0bc1622c349286a53e9a455fcc23bf08e0ca20573ad
-tests_digest: 998fe146818b4ab39352b43daba817364a649bf9d88a89ba332838ff2b29edb7
+verification_status: technical-clear-human-and-final-binding-pending
+reviewed_revision: 255ba31e2b25f7b8c5bde8a3900fb93151594f50
+runtime_digest: 46090012ab1a8ebd265273c327b214afbed0321a2fa149ab801ce8c205891065
+tests_digest: a48ee5a0fdfd6d7792879d22c557fceb34b8a221d23833d1c7f2e90bbd49fb66
 tools_digest: f7459b816951733542019ffb01d7e249ea8d97dfed0a60621e06cc70e91f3323
 plan_head_before: 832926ea274005d36444677717df41d9c570a21b
 actuals:
-  tokens: 67027
-  tasks: 1
-  commits: 6
-  basis: ceil(268107 realized diff characters / 4), including raw RED evidence; measured before this summary commit
+  tokens: 114338
+  tasks: 3
+  commits: 16
+  basis: Measured realized owned-file diff characters divided by four; commits from persisted base through reports, including two parent bookkeeping commits, before this summary commit
 ---
 
-# Phase 04 Plan 19: Independent Integrated Review — Halted Summary
+# Phase 04 Plan 19: Independent Integrated Review Summary
 
-Restored pages now wait for a fresh preference before tinting; independent review
-still finds stale current-view copy and stale switch certainty after asynchronous
-waits, so the mandatory nondecreasing-finding gate stops execution.
+Restored pages await fresh preference confirmation; application replies reobserve
+the current diagnosis, competing writes invalidate stale checkbox certainty, and
+the test harness now bounds reentrant delivery. Independent code and security
+review cleared every plan-19 actionable finding.
 
-**Plan incomplete: 1/3 tasks complete.** Task 1 completed; Task 2 contains two
-committed repair packets but is incomplete; Task 3 independent recheck halted.
-**04-20 is blocked. No final binding or live acceptance may proceed.**
+**3/3 tasks complete. 04-20 may prepare final source-bound evidence.** This is
+technical completion only. The default suite still reports its one expected stale
+Phase 4 binding failure; no requirement, live observation or human judgment is
+promoted.
 
 ## Task and repair commits
 
 | Work | Commit | Evidence |
 |---|---|---|
-| Task 1 independent findings/initial security register | 0407533 | Three runtime blockers and one harness warning; prescribed 234 tests passed and tracer gate independently repeated 234 passes |
-| Packet 1 RED | 4965287 | 209 tests, 5 intended failures, 204 passes; RED_EVIDENCE_OK |
-| Packet 1 GREEN | 199e642 | 228 focused passes; resume-read-readiness KILLED 1/1 |
-| Packet 2 RED | f826775 | 314 tests, 8 intended failures, 306 passes; RED_EVIDENCE_OK |
-| Packet 2 GREEN, partial outcome | 028265e | 356 focused passes; three exact selected mutants each KILLED 1/1 |
-| Mandatory halt reports | 790872e | Independent affected actionable count 2 -> 2, two high blockers plus warning retained |
+| Task 1 independent integrated findings and initial 82-threat register | 0407533 | Three runtime blockers plus harness warning; prescribed 234 passes and repeated tracer gate |
+| First attempt resume RED | 4965287 | 209 tests: 5 intended failures, 204 passes; RED_EVIDENCE_OK |
+| Resume GREEN | 199e642 | 228 focused passes, resume-read-readiness killed; both reviewers closed CR-19-01 |
+| First worker packet RED | f826775 | 314 tests: 8 intended failures, 306 passes; RED_EVIDENCE_OK |
+| First worker packet GREEN | 028265e | 356 focused passes; three selected intended kills; original variants fixed |
+| Mandatory halt reports and summary | 790872e, 08ab51a | Independent adjacent same-ID counterexamples left actionable count 2 -> 2; stopped |
+| Explicit user-authorized second attempt | 8f77223 | Recorded user proceed before revised source changes |
+| Revised exact-counterexample RED | 51bbaac | 326 tests: 11 intended failures, 315 passes; RED_EVIDENCE_OK |
+| Revised worker GREEN | 31ed071 | 368 focused passes; five selected intended kills; both reviewers closed runtime 2 -> 0 |
+| Harness RED | e2a3edc | Four tests: three intended failures, one pass; RED_EVIDENCE_OK |
+| Harness GREEN | 255ba31 | 34 focused passes, two selected intended kills; both reviewers closed warning 1 -> 0 |
+| Complete gate evidence | 783b5a1 | Complete mutation/default/focused output and 65-file inventory |
+| Task 3 final independent reports and coverage | 6b2d618 | Zero plan-19 actionable/runtime/security blockers; explicit deferred validation and human gates |
 
-The six measured commits are from the per-plan on-disk ledger. The summary commit
-is separate and necessarily increases a later HEAD-based count.
+Parent-only bookkeeping commits 4779b79 and da52ddf are included in the measured
+base-to-report count. The executor did not edit shared STATE/ROADMAP/REQUIREMENTS/
+WINDOWS. Parent resumes that bookkeeping from this summary.
 
-## Independent review and present blockers
+## Changes and independent convergence
 
-Independent specialized gsd-code-reviewer used resolved high effort; independent
-gsd-security-auditor used resolved xhigh effort. Both inherited the configured
-model because resolution deliberately returned an empty model. The executor did
-not self-certify the repairs. Code reviewer owns REVIEW; security auditor returned
-structured verdicts and the executor wrote SECURITY.
+CR-19-01 clears preference readiness before pageshow reconciliation. Held fresh
+reads, failed reads and newer change events cannot resurrect an old ON state.
 
-- **CR-19-01 / T-04-05 CLOSED.** A page restored from old ON no longer resumes
-  before its fresh read. Both reviewers independently reproduced held-read
-  controls across four initial/current booleans. Code recheck: 228 passed and
-  exact mutant independently killed. Security recheck: 237 passed including
-  registry, exact mutant independently killed, forbidden channels empty.
-- **CR-19-02 / T-04-13 OPEN high.** Separate document lifetime now rejects
-  navigation/closure/reused-tab acknowledgements. Same-document body/table
-  replacement while a successful application response is captured still returns
-  working after current markers become empty and toolbar becomes neutral.
-- **CR-19-03 / T-04G-23 OPEN high.** Post-icon/title generation check refuses
-  old diagnosis. A completed opposite write during the wait still leaves the
-  returned unavailable tuple carrying the old enabled boolean. The popup's
-  operable, nonmixed checkbox is opposite storage. Security reproduced both
-  directions.
-- **WR-19-01 OPEN warning.** The inherited chrome-harness.flush drain loops
-  indefinitely if a delivered callback continually requeues reads. Independent
-  bounded child probe returned ETIMEDOUT/SIGTERM after 1000 ms. Its repair packet
-  was not started after the halt.
+CR-19-02 separates document lifetime from projection generation, then obtains a
+fresh diagnosis after a valid successful application reply. At most two fresh
+attempts share the original admission deadline and recheck lifetime. This fixes
+both old-document and same-document replacement counterexamples while preserving
+successful application despite its own invalidation hint.
 
-These are known invalidations before newly constructing a response, outside the
-approved already-issued-native-artwork and post-response snapshot limitations.
-The next technical direction would require fresh bounded diagnosis and fresh
-preference evidence or uncertainty without renewing the 4000 ms budget. No such
-additional repair was performed after the stop.
+CR-19-03 rechecks projection generation after artwork and invalidates captured
+preference certainty when another native write was issued, even if it has already
+settled. Unknown/mixed/disabled is the approved conservative result; a fresh focus
+recovers the actual boolean. Both preference directions, icon/title waits and a
+neutral document whose diagnosis does not change are durable regressions.
 
-## Exact remaining counterexamples
+WR-19-01 validates a finite delivery cap, drains FIFO and preserves undispatched
+callbacks. A supervised actual-source child fails if the guard is removed and
+the queue hangs; timeout is never credited as a successful test or mutation kill.
 
-**CR-19-02:** boot actual worker/content/popup stored=false; hold content-response;
-request true and capture its actual successful application; remove all body
-children within the same content document; settle; unhold/release response.
-Observed stored=true, current markers=[], toolbar neutral/Checking, popup working,
-reply saved=true/enabled=true/applied=true/status=working, forbidden=[].
+Each packet amended at most five concrete files before edits, used measured RED
+evidence and exact selected mutants, and returned to separate gsd-code-reviewer
+and gsd-security-auditor roles. The first halt was enforced, then explicitly
+authorized attempt 2 decreased runtime 2 -> 0 and harness 1 -> 0. No contract,
+permission, stored schema, package or product-copy change was introduced.
 
-**CR-19-03:** boot stored=P; hold tab 7 icon; open a fresh popup and let its read
-capture P; another popup sends set-enabled request 888 for !P and completes; release
-icon. Observed storage=!P and the other acknowledged reply=!P, but the first
-popup-status is unavailable/enabled=P and its checkbox remains confirmed P.
-Independently reproduced P=true and P=false.
+## Final verification
 
-These final counterexamples were independent temporary actual-source probes,
-**not yet durable named regression tests**. Full recipes and outputs are in
-REVIEW/SECURITY. The existing named tests below pass and cover narrower repaired
-variants; they must not be represented as failing tests for the remaining bugs:
+- Full mutation gate: **39/39 intended behavioral kills**, exit 0.
+- Prescribed six suites: **423/423 passed**, exit 0.
+- Default command: **65/65 smoke tests**, **941/942 Vitest tests**, exit 1.
+- Sole default failure: `test/extension/phase-04-live-acceptance.test.js > the repository record binds to every current shipped byte and reports its actual status`.
+- Current-source binding/timing regeneration is assigned to 04-20; default is
+  explicitly not green until then.
+- Independent packet checks passed 368/368 and 34/34; additional actual-source
+  successful-write/failed-read traces in both directions retained acknowledged
+  checkbox certainty, truthful saved/not-applied copy, zero markers and zero
+  forbidden channels.
+- Final independent adjudicator probes rejected malformed/empty reports,
+  unrelated failures, absent/skipped execution, timeout, runner errors and
+  stack-only markers. Green survived; only intended assertions killed.
+- Both reports identify reviewed revision255ba31 and identical runtime11,
+  tests42 and tools12 digests; all65 per-file hashes were independently verified.
+  Complete output is durable in 04-19-MEASUREMENTS.json.
+- Historical and working-tree whitespace checks pass after this final summary
+  removes the old halted summary's trailing blank line. No tests were skipped.
 
-- captured apply from false after navigation preserves only current application
-- captured apply from true after navigation preserves only current application
-- corresponding closed/reused/same-document controls in preference-outcome
-- popup status after held icon with invalidation true is current
-- popup status after held title with invalidation true is current
+The code verdict is clear for 04-20 evidence work, with two existing validator
+warnings still explicit. Security remains OPEN_THREATS overall: **66 mitigated,
+12 documented accepted, four deferred high threats, zero technical threats**.
+T-04G3-21..24 belong to final binding, validator/promotion, live privacy and genuine
+ACK/judgment work. Deferred work is not a threat waiver.
 
-## Verification and TDD gate compliance
+## Historical mechanism dispositions and remaining boundaries
 
-Both RED records retain raw Vitest tap-flat output plus explicitly derived Node
-TAP summary counts and both passed the GSD RED_EVIDENCE_OK checker before GREEN.
-No unexpected parse/load error, missing test or unrelated assertion authorized
-implementation. Repairs were scoped in PLAN before editing, each at most five
-files including its RED record.
+Current independent remeasurement retained popup-copy-fallback and
+project-guard-after-preference as **SURVIVED**, excluded from39 kills. Exact pair
+validation and downstream state/generation/deadline admission/dispatch explain
+the redundant sites. The old ANY ONE syntax-deletion promise is explicitly
+superseded at mechanism level. Retention and no-committed-paint claims now use
+actual Map and action logs under closure/reuse/held boundaries. Already-issued
+native effects and cross-worker ordering remain exact approved limits.
 
-Initial independent successful-write/failed-read and opposite-readable probes
-were exercised through actual stored object, current markers, whole reply,
-popup checkbox/copy and forbidden channels in both directions. They validate
-pass 2 CR-01 repair without certifying later async freshness.
+The registry's ONLY-request-ID note is corrected; an inherited worker-integrity
+test comment retains obsolete explanatory wording, explicitly qualified in
+REVIEW. Pass2 IN-02 locale evidence validation and pass1 IN-08 predecessor
+provenance remain assigned04-20. IN-05 type tooling remains unimplemented; tsc
+was not run. No new package was installed.
 
-Packet 2 final focused run: preference-outcome, toolbar-popup, worker-integrity
-and mutation-registry, **356/356 passed**; both reviewers independently reran
-that focused run. Selected executor measurements:
-
-| Exact mutant | Result and intended assertion |
-|---|---|
-| resume-read-readiness | KILLED, review:resume-unconfirmed-no-markers |
-| apply-document-lifetime | KILLED, review:apply-document-lifetime |
-| popup-post-action-status | KILLED, review:popup-post-action-current |
-| pending-reopen-certainty | KILLED after refreshing whole-function literal, outcome:pending-reopen-mixed |
-
-Each selected invocation first ran its clean disposable baseline. The independent
-reviewers challenged green survivor, intended assertion kill and unrelated-failure
-controls; security additionally rejected empty/malformed report, absent/skipped
-target, unhandled errors, signal/timeout and marker-only-in-stack false evidence.
-
-Final diff whitespace checks pass and no tracked file was deleted. No production
-stub was introduced. The historical placeholder word in a toolbar-test comment
-describes the old state and is not an unwired runtime stub.
-
-## Deferred verification and authority
-
-The full **36-entry current registry was not executed after these repairs**.
-There is no new full-mutation, complete behavioral/default-suite, whole-inventory
-semantic-review or current-binding pass. Task 3 verification and remaining Task 2
-completion verification were not performed after the mandatory halt. Prior 04-18
-33/33 and 65 smoke + 902/903 Vitest results remain historical, source-qualified
-evidence; its sole stale phase-04-live-acceptance binding failure is still pending
-04-20 and was not suppressed or rebound.
-
-The obsolete request-id-echo registry note calls request ID the ONLY staleness
-key. Reports explicitly supersede it; correcting that source note remains deferred.
-04-12 ANY ONE guard promises have mechanism-level rather than fictitious
-individual-guard evidence. The two historical excluded survivors remain survivors.
-04-14 retention/attempted-call/committed-paint distinctions have behavioral
-evidence, but they cannot close the separate current-response defects.
-
-Security register: **82 total; 76 closed or documented accepted; 2 high technical
-blockers; 4 high threats deferred/open for 04-20.** All twelve existing accepted-risk
-log entries were independently checked without expanded consent. Four deferred
-threats cover final identity, validator/promotion, live privacy and authentic
-human judgment. They are distinct from implementation blockers.
-
-All seven Phase 4 requirements remain unchecked/unresolved. Seven edge
-classifications, prohibition judgments and ACK-04-01 remain pending. AR-04-01
-still covers only two original live scenarios. Phase 3 remains human_needed,
-eleven passes/nine pending. No tsc run or new package claimed. Shared STATE,
-ROADMAP, REQUIREMENTS and WINDOWS are owned by the parent; this executor did not
-write them. Parent will record the halt and preserve ledger defects/unrun verifies.
-No live tenant, remote publication, immutable historical record or baseline dirt
-was modified.
+All seven canonical requirement statuses and edge classifications remain
+unpromoted, as do prohibition judgments, ACK-04-01 and current-build observations.
+AR-04-01 still covers only language-icon-copy and structure-copy; synthetic
+tests are not live acceptance. Phase3 remains human_needed. The current summaries
+do not authorize automatic requirement completion.
 
 ## Deviations from Plan
 
-Two authorized bounded repair packets implemented concrete independent findings.
-No contract/schema/permission/product decision changed. Execution stopped under
-the plan's explicit Task 3 rule: “stop earlier if the actionable issue count does
-not decrease between cycles”. Packet 2 remained 2 -> 2; no automatic waiver or
-third attempt was used. The full plan and final-source review remain incomplete.
+- **Rule 1 — bugs:** Four concrete review findings required the bounded repair
+  packets above. No scope beyond the ratified contract was assumed.
+- **Mandatory stop and explicit restart:** First attempt halted on nondecreasing
+  count. User-approved revised attempt was documented before proceeding.
+- **Documentary correction:** Final summary removes a trailing blank line left by
+  the halted summary; no reviewed source bytes changed during report closeout.
+- Shared state and cross-phase ledgers are parent-owned by explicit orchestration;
+  this executor leaves their canonical statuses untouched.
+
+No authentication gate, new threat surface, implementation stub or skipped test
+was introduced. The historical word “placeholder” in a test comment describes
+superseded copy, not a runtime stub. Baseline unrelated dirt was preserved.
 
 ## Self-Check: PASSED
 
-The three created evidence/report files exist; all six listed task/report commits
-resolve; REVIEW and SECURITY name the same final runtime/test/tool aggregates and
-reviewed revision; no owned implementation or report changes are left uncommitted
-after closeout. This checks the accuracy of a halted handoff, not goal completion.
-
+All named created artifacts and listed commits exist. Both report identities
+match the durable measurement inventory. No owned source/test/tool edits remain
+uncommitted, and final documentation contains the explicit expected binding
+failure and deferred human obligations.
