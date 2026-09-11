@@ -24,6 +24,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 import { validateWorkloadReport } from '../../scripts/run-tint-workload.js';
+import { BASELINE_PATH, readBaseline, readPhase04Source } from '../../scripts/phase-04-source.js';
 
 const root = new URL('../../', import.meta.url);
 const phase = new URL('.planning/phases/04-honest-failure-and-an-off-switch/', root);
@@ -667,4 +668,99 @@ test('the repository record preserves Phase 3 unchanged rather than laundering i
   expect(PRIOR.checks_failed).toBe(0);
   expect(record.prior_source).toEqual(PRIOR);
   expect(record.prior_source.uat_execution).toBe('skipped-by-user');
+});
+
+// ---------------------------------------------------------------------------
+// Historical evidence continuity (05-03).
+//
+// Phase 5 deliberately changes shipped bytes — a store title, a short
+// description and a 128px brand icon. Phase 4's observations were made on the
+// bytes that existed when a human sat in front of Chrome, and they must keep
+// validating against exactly those bytes. The baseline below is the pinned
+// identity of that evidence; the adapter is the only way this file reaches it,
+// and it never falls back to the working tree.
+// ---------------------------------------------------------------------------
+const BASELINE = JSON.parse(readFileSync(new URL(BASELINE_PATH, root), 'utf8'));
+
+const currentTree = () => {
+  const names = walk(extensionDir).sort();
+  return Object.fromEntries(names.map((name) => [name,
+    createHash('sha256').update(readFileSync(`${extensionDir}/${name}`)).digest('hex')]));
+};
+
+test('the adapter serves the committed Phase 4 bytes, and the baseline is their pinned identity', () => {
+  const historical = readPhase04Source();
+  expect(historical.observation_revision).toBe(BASELINE.observation_revision);
+  expect(historical.runtime_revision).toBe(BASELINE.runtime_revision);
+  expect(historical.names).toEqual(Object.keys(BASELINE.assets).sort());
+  expect(historical.names).toHaveLength(11);
+  expect(historical.assets).toEqual(BASELINE.assets);
+  expect(historical.digest).toBe(BASELINE.digest);
+  // The digest the two independent Phase 4 technical reviews recorded.
+  expect(historical.digest).toBe('46090012ab1a8ebd265273c327b214afbed0321a2fa149ab801ce8c205891065');
+  expect(historical.timingHarnessHash).toBe(BASELINE.timing_harness_sha256);
+  expect(historical.manifest.version).toBe('0.1.0');
+  expect(historical.contentSource).toMatch(/const PREFERENCE_KEY = 'enabled';/);
+  // The validator that produced the original verdict is identified, not trusted
+  // to still be on disk unchanged.
+  expect(readBaseline().validator_sha256).toBe(BASELINE.validator_sha256);
+});
+
+test.each([
+  ['a rewritten asset hash', (b) => { b.assets['content.js'] = '0'.repeat(64); }],
+  ['a dropped asset', (b) => { delete b.assets['icons/off.png']; b.inventory_count = 10; }],
+  ['an invented asset', (b) => { b.assets['icons/brand.png'] = '0'.repeat(64); b.inventory_count = 12; }],
+  ['a restated inventory count', (b) => { b.inventory_count = 12; }],
+  ['a rewritten aggregate digest', (b) => { b.digest = '0'.repeat(64); }],
+  ['an unknown runtime revision', (b) => { b.runtime_revision = '0'.repeat(40); }],
+  ['an unknown observation revision', (b) => { b.observation_revision = '0'.repeat(40); }],
+  ['a rewritten observation hash', (b) => { b.evidence_hashes[b.observation_path] = '0'.repeat(64); }],
+  ['a rewritten predecessor evidence hash', (b) => {
+    b.evidence_hashes['.planning/phases/03-the-tint-survives-everything/03-LIVE-ACCEPTANCE.md'] = '0'.repeat(64);
+  }],
+  ['a rewritten timing harness hash', (b) => { b.timing_harness_sha256 = '0'.repeat(64); }],
+  ['a missing field', (b) => { delete b.digest; }],
+])('baseline tampering — %s — is refused rather than absorbed', (_name, change) => {
+  const baseline = JSON.parse(JSON.stringify(BASELINE));
+  change(baseline);
+  expect(() => readPhase04Source({ baseline })).toThrow(/PHASE04_SOURCE_REJECTED/);
+});
+
+test('a missing historical revision fails loudly instead of falling back to the working tree', () => {
+  const adapter = readFileSync(new URL('scripts/phase-04-source.js', root), 'utf8');
+  // The adapter may read the baseline and Git. It may not read extension/.
+  expect(adapter).not.toMatch(/extension\//);
+  expect(adapter).not.toMatch(/catch\s*\{\s*return readFileSync/);
+  const baseline = { ...JSON.parse(JSON.stringify(BASELINE)), runtime_revision: '0'.repeat(40) };
+  expect(() => readPhase04Source({ baseline })).toThrow(/PHASE04_SOURCE_REJECTED phase-04-missing-revision/);
+});
+
+test('the recorded Phase 4 verdict keeps its fourteen passes and its three named pending checks', () => {
+  const record = parsePhase04Acceptance(readFileSync(new URL('04-LIVE-ACCEPTANCE.md', phase), 'utf8'));
+  expect(record.status).toBe('human_needed');
+  expect(record.checks.filter((row) => row.status === 'pass')).toHaveLength(14);
+  expect(record.checks.filter((row) => row.status === 'fail')).toHaveLength(0);
+  expect(record.checks.filter((row) => row.status === 'pending').map((row) => row.id).sort())
+    .toEqual(['english-regional-locale', 'language-icon-copy', 'structure-copy']);
+  expect(BASELINE.observed).toEqual({
+    status: 'human_needed', checks_passed: 14, checks_pending: 3, checks_failed: 0,
+    pending_ids: ['language-icon-copy', 'structure-copy', 'english-regional-locale'],
+  });
+});
+
+test('a later change to the current runtime cannot receive Phase 4 approval', () => {
+  const historical = readPhase04Source();
+  const current = currentTree();
+  const record = parsePhase04Acceptance(readFileSync(new URL('04-LIVE-ACCEPTANCE.md', phase), 'utf8'));
+  // Whatever extension/ holds now, the record is bound to the observed bytes.
+  expect(record.source.assets).toEqual(historical.assets);
+  expect(validatePhase04Acceptance(record)).toBe('human_needed');
+  // A record that swapped in the current tree is refused by the same validator,
+  // whether the change is a new file or an edited one.
+  const forged = structuredClone(record);
+  forged.source = { inventory_count: Object.keys(current).length + 1, assets: { ...current, 'icons/brand.png': '0'.repeat(64) } };
+  expect(() => validatePhase04Acceptance(forged)).toThrow(/PHASE04_ACCEPTANCE_REJECTED/);
+  const edited = structuredClone(record);
+  edited.source.assets['manifest.json'] = createHash('sha256').update('a future manifest').digest('hex');
+  expect(() => validatePhase04Acceptance(edited)).toThrow(/PHASE04_ACCEPTANCE_REJECTED source-hashes/);
 });
