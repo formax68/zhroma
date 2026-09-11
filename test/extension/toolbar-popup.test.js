@@ -266,8 +266,11 @@ test('the manifest adds action, popup, worker and icons without widening the per
   expect(manifest.minimum_chrome_version).toBe('106');
   expect(manifest.action.default_popup).toBe(POPUP_PATH);
   expect(manifest.background).toEqual({ service_worker: 'background.js' });
+  // The toolbar keeps its neutral entry icon. `icons` additionally carries the
+  // store's required 128px brand asset (05-03) — a listing identity, not a
+  // toolbar state, which is why only `icons` grew and `default_icon` did not.
   expect(Object.values(manifest.action.default_icon)).toEqual(['icons/neutral.png']);
-  expect(Object.values(manifest.icons)).toEqual(['icons/neutral.png']);
+  expect(manifest.icons).toEqual({ 32: 'icons/neutral.png', 128: 'icons/brand.png' });
 });
 
 test('every packaged asset the manifest names exists locally and no remote resource is referenced', () => {
@@ -282,12 +285,15 @@ test('every packaged asset the manifest names exists locally and no remote resou
   }
   expect(readdirSync(root).sort()).toEqual(['background.js', 'content.js', 'icons', 'manifest.json', 'popup.html', 'popup.js', 'zhroma.css']);
   expect(readdirSync(new URL('icons/', root)).sort())
-    .toEqual(['missing.png', 'neutral.png', 'off.png', 'unreadable.png', 'working.png']);
+    .toEqual(['brand.png', 'missing.png', 'neutral.png', 'off.png', 'unreadable.png', 'working.png']);
   // Every icon the worker can project must be packaged: an icon set at runtime
   // is not declared in the manifest, so the inventory is the only thing that
-  // can prove it will exist in the store package.
+  // can prove it will exist in the store package. The brand icon is packaged
+  // too, but it is never projected — it carries no diagnostic meaning, and the
+  // five state treatments stay exactly five.
   const projected = [...asset('background.js').matchAll(/'(icons\/[a-z]+\.png)'/g)].map(([, path]) => path);
   expect(new Set(projected).size).toBe(5);
+  expect(projected).not.toContain('icons/brand.png');
   for (const path of new Set(projected)) expect(realpathSync(new URL(path, root))).toBe(fileURLToPath(new URL(path, root)));
   for (const name of ['content.js', 'background.js', 'popup.js', 'popup.html']) {
     expect(asset(name)).not.toMatch(/https?:\/\/|@import|url\(\s*['"]?https?:/);

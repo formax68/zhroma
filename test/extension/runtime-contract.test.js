@@ -2,6 +2,7 @@
 import { readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { createContext, Script } from 'node:vm';
+import { inflateSync } from 'node:zlib';
 import { Window } from 'happy-dom';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { validateFixtureManifest } from '../../scripts/fixture-contract.js';
@@ -49,19 +50,37 @@ function createDocument() {
 }
 
 // Phase 4 added an action, a popup and a service worker by decision
-// (04-DECISIONS.json). The inventory and the manifest are re-pinned to that
-// decided set — narrowed in scope, never weakened: this is still a whole-object
-// equality, so any undeclared key or unshipped file fails.
+// (04-DECISIONS.json). Phase 5 adds the publication identity by decision
+// (05-CONTEXT.md D-03, D-06): the approved store title, the short description
+// and the required 128px brand icon. The inventory and the manifest are
+// re-pinned to that decided set — widened by exactly three named fields and one
+// named file, never weakened: this is still a whole-object equality, so any
+// undeclared key or unshipped file fails.
+//
+// `name` and `description` are the store's item name and short description, and
+// their single source is release/listing.md. The version stays pinned at 0.1.0:
+// the store rejects a re-upload with an unchanged version, but no upload has
+// happened yet, so bumping it now would invent a release history.
 test('manifest has the exact minimal MV3 isolated top-frame static injection contract', () => {
   expect(manifest).toEqual({
-    manifest_version: 3, name: 'Zhroma', version: '0.1.0',
+    manifest_version: 3,
+    name: 'Zhroma — Priority Colours for Zendesk',
+    version: '0.1.0',
+    description: 'See ticket priorities at a glance in English Zendesk Agent Workspace views.',
     minimum_chrome_version: '106', permissions: ['storage'],
     action: { default_popup: 'popup.html', default_icon: { 32: 'icons/neutral.png' } },
-    icons: { 32: 'icons/neutral.png' },
+    icons: { 32: 'icons/neutral.png', 128: 'icons/brand.png' },
     background: { service_worker: 'background.js' },
     content_scripts: [{ matches: ['https://*.zendesk.com/agent/*'], js: ['content.js'], css: ['zhroma.css'],
       run_at: 'document_idle', world: 'ISOLATED', all_frames: false }],
   });
+  // The store's own limits, asserted rather than assumed.
+  expect(manifest.name.length).toBeLessThanOrEqual(75);
+  expect(manifest.description.length).toBeLessThanOrEqual(132);
+  // The listing document is upstream of the manifest, not a description of it.
+  const listing = readFileSync(new URL('../../release/listing.md', import.meta.url), 'utf8');
+  expect(listing).toContain(manifest.name);
+  expect(listing).toContain(manifest.description);
   // Stated again as explicit prohibitions, so a future widening reads as a
   // deleted assertion rather than as an edited literal.
   for (const key of ['host_permissions', 'optional_permissions', 'optional_host_permissions',
@@ -69,9 +88,9 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
     'declarative_net_request', 'commands', 'devtools_page', 'chrome_url_overrides', 'side_panel']) {
     expect(Object.hasOwn(manifest, key)).toBe(false);
   }
-  expect(shippedInventory()).toEqual(['background.js', 'content.js', 'icons/missing.png', 'icons/neutral.png',
-    'icons/off.png', 'icons/unreadable.png', 'icons/working.png', 'manifest.json', 'popup.html', 'popup.js',
-    'zhroma.css']);
+  expect(shippedInventory()).toEqual(['background.js', 'content.js', 'icons/brand.png', 'icons/missing.png',
+    'icons/neutral.png', 'icons/off.png', 'icons/unreadable.png', 'icons/working.png', 'manifest.json',
+    'popup.html', 'popup.js', 'zhroma.css']);
   const declared = [...manifest.content_scripts[0].js, ...manifest.content_scripts[0].css,
     manifest.action.default_popup, manifest.background.service_worker,
     ...Object.values(manifest.action.default_icon), ...Object.values(manifest.icons)];
@@ -82,24 +101,101 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
   }
 });
 
+/**
+ * The pixels of one of our own PNGs. Deliberately minimal: it accepts only the
+ * 8-bit RGBA, non-interlaced, unfiltered form this project writes, so a file
+ * that quietly became something else fails here rather than being decoded
+ * anyway. No image dependency is added for this.
+ */
+function decodeRgba(bytes) {
+  const width = bytes.readUInt32BE(16);
+  const height = bytes.readUInt32BE(20);
+  const parts = [];
+  for (let offset = 8; offset < bytes.length;) {
+    const length = bytes.readUInt32BE(offset);
+    if (bytes.subarray(offset + 4, offset + 8).toString('latin1') === 'IDAT') {
+      parts.push(bytes.subarray(offset + 8, offset + 8 + length));
+    }
+    offset += 12 + length;
+  }
+  const raw = inflateSync(Buffer.concat(parts));
+  const stride = width * 4 + 1;
+  expect(raw.length).toBe(height * stride);
+  const pixels = Buffer.alloc(width * height * 4);
+  for (let y = 0; y < height; y += 1) {
+    expect(raw[y * stride], `scanline ${y} filter`).toBe(0);
+    raw.copy(pixels, y * width * 4, y * stride + 1, y * stride + 1 + width * 4);
+  }
+  return pixels;
+}
+
+const pngHeader = (bytes) => {
+  expect([...bytes.subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  expect(bytes.subarray(12, 16).toString('latin1')).toBe('IHDR');
+  // 8-bit truecolour with alpha, non-interlaced. PNG only — the store rejects
+  // SVG and WebP, so the format itself is part of the contract.
+  expect([bytes[24], bytes[25], bytes[28]]).toEqual([8, 6, 0]);
+  return [bytes.readUInt32BE(16), bytes.readUInt32BE(20)];
+};
+
 // Runtime-projected icons are not named in the manifest, so nothing but the
 // package inventory can prove they will exist in the store zip. Pin the exact
 // set, the exact bytes' shape, and that the worker projects only those five.
-test('every packaged icon is a 32x32 8-bit RGBA PNG and the worker projects no other artwork', () => {
+//
+// 05-03 adds a sixth packaged PNG that is deliberately NOT one of them:
+// `brand.png` is the store/manifest identity, validated separately below at its
+// own size. The five diagnostic treatments keep their meanings, their bytes and
+// their worker mappings untouched — a brand icon must not quietly become a
+// status icon, and a status icon must not quietly become the brand.
+const STATUS_ICONS = ['missing.png', 'neutral.png', 'off.png', 'unreadable.png', 'working.png'];
+
+test('every projected status icon is a 32x32 8-bit RGBA PNG and the worker projects no other artwork', () => {
   const icons = readdirSync(new URL('icons/', root)).sort();
-  // 04-04 completes the decided set of five shape treatments: the off state is
-  // the fifth, and packaging it is a deliberate, visible change to this pin.
-  expect(icons).toEqual(['missing.png', 'neutral.png', 'off.png', 'unreadable.png', 'working.png']);
-  for (const name of icons) {
+  // 04-04 completed the decided set of five shape treatments: the off state is
+  // the fifth. 05-03 adds the brand icon alongside them, and each addition is a
+  // deliberate, visible change to this pin.
+  expect(icons).toEqual(['brand.png', ...STATUS_ICONS]);
+  for (const name of STATUS_ICONS) {
     const bytes = readFileSync(new URL(`icons/${name}`, root));
-    expect([...bytes.subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-    expect(bytes.subarray(12, 16).toString('latin1')).toBe('IHDR');
-    expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)]).toEqual([32, 32]);
-    expect([bytes[24], bytes[25], bytes[28]]).toEqual([8, 6, 0]);
+    expect(pngHeader(bytes), name).toEqual([32, 32]);
     expect(bytes.length).toBeLessThan(8192);
   }
   const projected = [...asset('background.js').matchAll(/'(icons\/[a-z]+\.png)'/g)].map(([, path]) => path);
-  expect([...new Set(projected)].sort()).toEqual(icons.map((name) => `icons/${name}`));
+  expect([...new Set(projected)].sort()).toEqual(STATUS_ICONS.map((name) => `icons/${name}`));
+  // Stated as its own prohibition: the worker never projects the brand icon, so
+  // no runtime state can be mistaken for "Zhroma is installed".
+  expect(projected).not.toContain('icons/brand.png');
+});
+
+// The store requires a 128x128 packaged icon whose artwork is roughly 96x96
+// inside a 16px transparent margin, legible on light and dark backgrounds.
+// The margin is the part an automated check can actually prove; legibility is
+// a human judgment recorded in the plan's verification, not asserted here.
+test('the brand icon is a 128x128 PNG with 96x96 of artwork inside a 16px transparent margin', () => {
+  const bytes = readFileSync(new URL('icons/brand.png', root));
+  expect(pngHeader(bytes)).toEqual([128, 128]);
+  expect(bytes.length).toBeLessThan(65536);
+  expect(manifest.icons[128]).toBe('icons/brand.png');
+  // The four priority hues the mark carries are the stylesheet's own, so the
+  // brand cannot drift from the tint the product paints.
+  const hues = [...asset('zhroma.css').matchAll(/background-color: rgb\((\d+) (\d+) (\d+) \//g)]
+    .map(([, r, g, b]) => [Number(r), Number(g), Number(b)]);
+  expect(hues).toHaveLength(4);
+  const pixels = decodeRgba(bytes);
+  for (let y = 0; y < 128; y += 1) {
+    for (let x = 0; x < 128; x += 1) {
+      const transparent = pixels[(y * 128 + x) * 4 + 3] === 0;
+      if (x < 16 || x >= 112 || y < 16 || y >= 112) expect([x, y, transparent]).toEqual([x, y, true]);
+    }
+  }
+  const present = new Set();
+  for (let index = 0; index < pixels.length; index += 4) {
+    if (pixels[index + 3] < 250) continue;
+    for (const [hueIndex, hue] of hues.entries()) {
+      if (hue.every((channel, offset) => Math.abs(pixels[index + offset] - channel) <= 6)) present.add(hueIndex);
+    }
+  }
+  expect([...present].sort()).toEqual([0, 1, 2, 3]);
 });
 
 test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every declared script executes without data channels on %s', (mode) => {

@@ -27,6 +27,11 @@ export class ReleaseSourceError extends Error {
 export const RELEASE_FILES = Object.freeze([
   'background.js',
   'content.js',
+  // 05-03: the store's required 128px brand icon. It is a packaged byte, so it
+  // belongs here in the same reviewed commit that added it — and it is
+  // deliberately NOT one of the five diagnostic status icons the worker
+  // projects, which keep their own meanings unchanged.
+  'icons/brand.png',
   'icons/missing.png',
   'icons/neutral.png',
   'icons/off.png',

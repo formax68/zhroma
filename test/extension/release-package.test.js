@@ -64,7 +64,7 @@ test('reads the complete eleven-file release source inventory with sizes, hashes
   const source = readReleaseSource(extensionDirectory);
 
   expect(source.assets.map((asset) => asset.name)).toEqual([...RELEASE_FILES].sort());
-  expect(source.assets).toHaveLength(11);
+  expect(source.assets).toHaveLength(12);
   for (const asset of source.assets) {
     expect(asset.size).toBe(statSync(join(extensionDirectory, asset.name)).size);
     expect(asset.sha256).toBe(sha256File(join(extensionDirectory, asset.name)));
@@ -100,7 +100,7 @@ test('records the archive hash separately from the source digest and re-derives 
 
   const validation = validateReleaseArchive(join(out, 'zhroma-0.1.0.zip'), readReleaseSource(extensionDirectory));
   expect(validation.sha256).toBe(candidate.zip.sha256);
-  expect(validation.entries).toHaveLength(11);
+  expect(validation.entries).toHaveLength(12);
 });
 
 // Two archives of identical source bytes can differ as archives. A matching
