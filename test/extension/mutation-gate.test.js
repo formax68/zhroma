@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
+import { adjudicate, validateRegistry, measure } from '../../scripts/verify-mutation-kills.js';
 
 const roots = [];
 const root = resolve('.');
@@ -47,3 +48,83 @@ test('equivalent mutation survives the real green baseline', () => {
   expect(result.status).toBe(1);
   expect(result.stdout).toContain('SURVIVED');
 }, 40000);
+
+test.each([
+  ['missing source', { file: 'extension/missing.js' }],
+  ['traversal', { file: '../outside.js' }],
+  ['absolute path', { file: '/tmp/outside.js' }],
+  ['stale find', { find: 'absent literal' }],
+  ['no-op replacement', { replace: 'value = 1' }],
+  ['invalid count', { count: 0 }],
+  ['empty find', { find: '' }],
+  ['invalid metadata', { expected_failure: {} }],
+])('%s is rejected before copy or mutation', (_name, change) => {
+  expect(() => validateRegistry([entry(change)], fixture())).toThrow();
+});
+
+test.each(['file', 'suite'])('outside symlink %s is rejected without a write', (kind) => {
+  const dir = fixture();
+  const other = fixture();
+  const path = kind === 'file' ? 'extension/link.js' : 'test/extension/link.test.js';
+  symlinkSync(join(other, kind === 'file' ? 'extension/control.js' : 'test/extension/control.test.js'), join(dir, path));
+  const change = kind === 'file' ? { file: path } : { suites: [path] };
+  expect(() => validateRegistry([entry(change)], dir)).toThrow('file-outside-repository');
+});
+
+test.each([
+  ['parse error', 'value = ;'],
+  ['import error', "value = missingName"],
+])('real %s cannot earn a kill', (_name, replace) => {
+  const result = cli(fixture(), entry({ replace }));
+  expect(result.status).toBe(1);
+  expect(result.stdout).toContain('GATE_ERROR');
+  expect(result.stdout).toContain('0/1 killed');
+}, 40000);
+
+test('a failing clean disposable baseline rejects before any mutation', () => {
+  const dir = fixture();
+  writeFileSync(join(dir, 'extension/control.js'), 'export const value = 0;');
+  const result = cli(dir, entry({ find: 'value = 0' }));
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('MUTATION_GATE_REJECTED');
+  expect(result.stdout).not.toContain('KILLED');
+}, 40000);
+
+test('a nonexistent exact test is rejected by its real baseline', () => {
+  const item = entry(); item.expected_failure.test = 'nonexistent exact name';
+  const result = cli(fixture(), item);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('target-missing-or-duplicated');
+}, 40000);
+
+function reportRun() {
+  return { processResult: { status: 1, signal: null }, health: { errors: 0, reason: 'failed' }, report: {
+    success: false, numTotalTests: 1, numFailedTests: 1, numPassedTests: 0,
+    testResults: [{ name: '/repo/test/extension/control.test.js', message: '', assertionResults: [
+      { fullName: 'intended control', status: 'failed', failureMessages: ['AssertionError: [control:intended]: expected 2 to be 1'] },
+    ] }],
+  } };
+}
+test.each([
+  ['spawn error', (r) => { r.processResult.error = { code: 'ENOENT' }; }],
+  ['signal', (r) => { r.processResult.signal = 'SIGTERM'; }],
+  ['timeout', (r) => { r.processResult.error = { code: 'ETIMEDOUT' }; r.processResult.status = null; }],
+  ['missing report', (r) => { r.report = undefined; }],
+  ['empty report', (r) => { r.report = {}; }],
+  ['malformed report', (r) => { r.report = 'not json'; }],
+  ['unhandled error', (r) => { r.health.errors = 1; }],
+  ['cancelled run', (r) => { r.health.reason = 'interrupted'; }],
+  ['suite load error', (r) => { r.report.testResults[0].message = 'SyntaxError'; }],
+  ['unrelated assertion', (r) => { r.report.testResults[0].assertionResults[0].fullName = 'other control'; }],
+  ['wrong assertion marker', (r) => { r.report.testResults[0].assertionResults[0].failureMessages = ['AssertionError: other assertion']; }],
+  ['marker only in stack', (r) => { r.report.testResults[0].assertionResults[0].failureMessages = ['TypeError: crash\n[control:intended]']; }],
+  ['target skipped', (r) => { r.report.testResults[0].assertionResults[0].status = 'pending'; }],
+  ['additional unrelated failure', (r) => { r.report.numTotalTests = 2; r.report.numFailedTests = 2; r.report.testResults[0].assertionResults.push({ fullName: 'other control', status: 'failed', failureMessages: ['AssertionError: unrelated'] }); }],
+])('%s is never intended assertion evidence', (_name, change) => {
+  const run = reportRun(); change(run);
+  expect(() => adjudicate(run, [entry().expected_failure], '/repo')).toThrow();
+});
+
+test('injected spawn failure cannot pass the disposable baseline', () => {
+  expect(() => measure([entry()], fixture(), { spawn: () => ({ status: null, error: { code: 'ENOENT' } }) })).toThrow('process-failed');
+});
