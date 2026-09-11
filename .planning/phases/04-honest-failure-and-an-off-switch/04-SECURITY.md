@@ -3,21 +3,76 @@ phase: 04-honest-failure-and-an-off-switch
 status: open_threats
 reviewer: Codex independent gsd-security-auditor
 review_pass: 1
-review_stage: task1-initial
+review_stage: halted
 asvs_level: 1
 block_on: high
-reviewed_revision: 832926ea274005d36444677717df41d9c570a21b
-runtime_digest: 4900709ee11e97dc5ed25845635d7d4313af56dea667acfbd4b9874fe25343d4
-tests_digest: 0f51d2878520604e6a3e229de0d858db9c70249b2ed3ff72ba14b28fc324efd1
+reviewed_revision: 028265ed28b9fbb9c68d37a77af840bf69159421
+runtime_digest: f6a4e4bca9a5409e1164f0bc1622c349286a53e9a455fcc23bf08e0ca20573ad
+tests_digest: 998fe146818b4ab39352b43daba817364a649bf9d88a89ba332838ff2b29edb7
 tools_digest: f7459b816951733542019ffb01d7e249ea8d97dfed0a60621e06cc70e91f3323
 threats_total: 82
-threats_open: 7
-technical_threats_open: 3
+threats_open: 6
+technical_threats_open: 2
 deferred_to_04_20: 4
-accepted_log_recheck_pending: 12
+accepted_log_recheck_pending: 0
 ---
 
 # Phase 04 independent security audit
+
+## Final recheck — HALTED at 028265e
+
+The independent auditor returned OPEN_THREATS after packet 2. Affected actionable
+count remained **2 -> 2**, triggering 04-19 Task 3's mandatory stop rule. No 04-20
+binding or human harvest may proceed. **76/82 closed or documented accepted;
+2 high technical threats OPEN; 4 high threats deferred/open in 04-20.**
+
+| Finding / threat | Verified repair | Remaining counterexample |
+|---|---|---|
+| CR-19-01 / T-04-05 | CLOSED at 199e642: readiness cleared before resume; independent four-direction held-read probe, 237 tests including registry and exact resume mutant 1/1 killed | None within packet scope |
+| CR-19-02 / T-04-13 | Navigation, closure and reused-tab lifetime now refuse old replies | Same-document table replacement during captured successful application still returns working after current view became neutral |
+| CR-19-03 / T-04G-23 | Post-icon/title invalidation now refuses old diagnosis | Opposite write completes while popup waits on icon; reply unavailable carries old enabled boolean and shows an operable, nonmixed switch opposite storage |
+
+CR-19-02 exact independent recipe: boot stored=false, hold content-response,
+request ON and capture successful application; replace document.body children,
+settle, unhold/release response. Storage=true, markers=[], toolbar neutral/Checking,
+but popup and set-enabled reply still working/applied=true. This known invalidation
+precedes response construction. It is not a post-response snapshot limit.
+
+CR-19-03 exact independent recipe: boot stored=P, hold icon for tab 7, open a fresh
+popup and let it read P; another popup sends request 888 with enabled=!P and its
+write completes; unhold/release icon. Storage=!P, other reply acknowledges !P,
+but first popup-status is unavailable with enabled=P; checkbox P is operable and
+not mixed. Independently reproduced P=true and P=false. A settled pendingWrite
+mask cannot detect a completed intervening write. Native artwork risk does not
+permit stale new JavaScript certainty.
+
+Required next behavior, not executed: bounded fresh diagnosis after application,
+and fresh preference evidence or conservative uncertainty after invalidation,
+using the original admission deadline. WR-19-01 unbounded harness drain remains
+an unrepaired code-review warning. The old request-id-echo registry note claiming
+the ID is the ONLY staleness key is obsolete and uncorrected under the halt.
+
+Independent packet-2 verification: four suites **356/356 passed**, diff check
+passed. The executor's selected apply-document-lifetime, popup-post-action-status
+and pending-reopen-certainty measurements each killed 1/1 intended target after
+green baseline; they do not cover these newly exposed adjacent cases.
+No final 36-mutant run, final full behavioral/default suite, final whole-inventory
+semantic review or source-binding green is claimed. These remain unrun because
+the explicit nondecreasing-findings gate stopped execution.
+
+The auditor independently checked all twelve accepted-risk log entries after
+0407533: documentation gaps CLOSED as documented accepted dispositions, not
+remediated risks. The two 04-15 native/epoch residuals remain attributed to the
+exact approved contract; AR-04-01 is not expanded.
+
+The final source/test/tool aggregates in frontmatter match the code review.
+04-REVIEW.md carries all 63 exact per-file hashes and the same reviewed revision.
+The rest of this report preserves the initial audit evidence and register;
+this final recheck overrides initial OPEN/accept-log states for T-04-05 and the
+twelve accepted dispositions only. T-04-13/T-04G-23 remain OPEN for the narrowed
+counterexamples above. No requirement or human judgment is promoted.
+
+## Initial independent audit — historical basis
 
 Initial independent structured verdict: **OPEN_THREATS**, 2026-09-11.
 The separate gsd-security-auditor read the integrated runtime/test/tool boundaries,
@@ -214,4 +269,3 @@ Sorted tracked extension paths (11), test paths (40), scripts plus package files
 and Vitest config (12); SHA256 each byte stream, then SHA256 of concatenated
 '<hash>  <path>\n' lines. Aggregates above independently agree with code reviewer.
 Final identities must be refreshed and both reviews rechecked after every repair.
-

@@ -1,5 +1,49 @@
 # Phase 04 gap-closure coverage and current contract
 
+## 04-19 halt and current authority — 2026-09-11
+
+**Execution halted at runtime revision 028265e. Plan 04-20 is blocked.**
+Independent packet-2 rechecks left affected actionable findings **2 -> 2**;
+Task 3 requires stopping on a nondecreasing count. No further packet or full
+review broadening was performed, and no final mutation/full-suite pass is claimed.
+
+| Finding | Evidence and present disposition |
+|---|---|
+| CR-19-01 / T-04-05 | Repaired 199e642 after RED4965287: 209 tests, 5 intended failures; GREEN228 passed. Both independent reviewers reproduced four-direction held-read controls and killed exact resume-read-readiness mutant. CLOSED within packet scope. |
+| CR-19-02 / T-04-13 | Original navigation/closure/reuse cases repaired 028265e after REDf826775. Same-document body/table replacement while actual apply response is held still returns working although markers=[] and toolbar neutral. OPEN high blocker. |
+| CR-19-03 / T-04G-23 | Original post-icon/title stale diagnosis repaired 028265e. Another popup's opposite write can complete during artwork wait, leaving response unavailable but enabled=old P and operable nonmixed checkbox P while storage=!P. Both directions independently reproduced. OPEN high blocker. |
+| WR-19-01 / pass1 IN-07 drain | Unbounded chrome-harness.flush reentrant delivery still hangs; independent bounded child probe timed out 1000 ms. Packet not started after mandatory halt. OPEN warning. |
+
+Packet 2 RED:314 tests/8 intended failures/306 passes. GREEN:356 tests across
+preference-outcome, toolbar-popup, worker-integrity and mutation-registry. Selected
+apply-document-lifetime, popup-post-action-status and refreshed pending-reopen-certainty
+each killed its intended assertion after a clean baseline. These narrower outcomes
+do not close the adjacent counterexamples. No durable regression was yet added
+for either final counterexample; exact independently executed recipes/output live
+in current REVIEW/SECURITY. The obsolete request-id-echo registry assurance remains
+explicitly superseded in reports and pending source-note correction.
+
+Current security:76/82 closed or documented accepted;2 high technical blockers;
+4 high evidence/human threats pending04-20. All12 existing accepted-risk log entries
+independently checked; no expanded waiver. Source/runtime SHA256
+f6a4e4bca9a5409e1164f0bc1622c349286a53e9a455fcc23bf08e0ca20573ad,
+tests998fe146818b4ab39352b43daba817364a649bf9d88a89ba332838ff2b29edb7,
+toolsf7459b816951733542019ffb01d7e249ea8d97dfed0a60621e06cc70e91f3323.
+Both reports identify028265ed28b9fbb9c68d37a77af840bf69159421.
+
+04-12 individual ANY ONE guard promises retain only an independently justified
+mechanism-level supersession; survivors are not kills. Full integrated freshness
+still fails above. 04-14 has measured retention/no-committed-paint controls but
+these do not establish fresh application acknowledgement. Final whole-inventory
+review and historical disposition convergence are incomplete; initial ledger
+rows below retain their planning/initial provenance rather than fresh certification.
+
+All seven requirement statuses, seven edge classifications, prohibition judgments,
+ACK-04-01 and current-build human observations remain unresolved. AR-04-01 still
+contains only its original two scenarios. Phase3 remains human_needed. IN-02 and
+predecessor evidence/schema corrections remain04-20 work; IN-05 type tooling remains
+unimplemented and tsc was not run. No immutable history or live evidence was edited.
+
 ## 04-19 initial independent review — 2026-09-11
 
 Independent code and security reviews of 832926e found CR-19-01 (stale ON on
