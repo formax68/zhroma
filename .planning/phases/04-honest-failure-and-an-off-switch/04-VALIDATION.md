@@ -14,7 +14,7 @@ overall: human_needed
 
 # Phase 04 Final Validation Inventory
 
-Technical preparation is separate from human acceptance. Three live checks passed and fourteen remain pending. Source loading and ACK-04-01 were confirmed on 2026-09-11. No canonical requirement was promoted.
+Technical preparation is separate from human acceptance. Six live checks passed and eleven remain pending. Source loading and ACK-04-01 were confirmed on 2026-09-11. No canonical requirement was promoted.
 
 ## Source and recoverable provenance
 
@@ -54,7 +54,7 @@ user. Its files and observations remain unchanged.
 | Independent security | technical clear; final evidence threats open |04-SECURITY.md:66 mitigated,12 documented accepted,four high deferred T-04G3-21..24; zero technical threats. |
 | Independent validator/evidence review | passed for Task2 |04-20-VALIDATOR-REVIEW.md,cycle3:4→2→0 findings;21 direct negative controls refused and2 legitimate completion controls accepted. |
 | Independent goal verification | pending Task3 |No old SUMMARY or technical result supplies this verdict. |
-| Human acceptance | human_needed |Three passed of 17; source confirmed 2026-09-11 with attributed environment. Fourteen remain pending. |
+| Human acceptance | human_needed |Six passed of 17; source confirmed 2026-09-11 with attributed environment. Eleven remain pending. |
 
 ## Promotion contract and counterexamples
 

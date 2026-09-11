@@ -509,3 +509,15 @@ User response to preparation checkpoint: "numbers are the same as before, let's 
 ### Missing Priority column — pass
 
 2026-09-11: User replied "pass" to missing-icon-hint: column-plus toolbar artwork, the add-a-Priority-column popup hint, and no hint/banner/badge inside Zendesk. No transition observation is inferred. Next: missing-settle-transition.
+
+### Missing-column loading transition — pass
+
+2026-09-11: User replied "pass" to missing-settle-transition: neutral hollow circle during loading, followed by column-plus after settling, with no premature missing-column indication. Next: off-clears. Existing language/structure waivers remain unchanged; regional-English testing remains pending.
+
+### Off switch — pass
+
+2026-09-11: User replied "pass" to off-clears: tint disappears immediately without refresh, popup says "Tinting is off", toolbar shows the power symbol, and OFF is not presented as an error or accompanied by pressure to re-enable. This is the user's current-source no-pressure observation for this path. Next: on-restores.
+
+### On switch restores tint — pass
+
+2026-09-11: User replied "pass" to on-restores: tint returns immediately without refresh and matches currently displayed priorities. Next: restart-off.

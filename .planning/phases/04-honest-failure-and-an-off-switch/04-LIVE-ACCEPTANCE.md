@@ -2,13 +2,13 @@
 phase: 04-honest-failure-and-an-off-switch
 status: human_needed
 source_confirmation: confirmed
-uat_execution: final-reviewed-source-3-of-17-observed
+uat_execution: final-reviewed-source-6-of-17-observed
 prior_phase_status: human_needed
 ---
 
 # Phase 04 Current-Source Live Acceptance
 
-**Seventeen checks: three passed, fourteen pending.** On 2026-09-11 the user confirmed the repaired build and passed the working-icon check. Environment numbers were confirmed unchanged from the prior run: Chrome 152, macOS 27 beta 6, 30 mounted rows; English/light interface. The user also acknowledged that the earlier fourteen observations apply only to the old build.
+**Seventeen checks: six passed, eleven pending.** On 2026-09-11 the user confirmed the repaired build and passed the working-icon check. Environment numbers were confirmed unchanged from the prior run: Chrome 152, macOS 27 beta 6, 30 mounted rows; English/light interface. The user also acknowledged that the earlier fourteen observations apply only to the old build.
 
 **Fourteen observations were attested by the user on 2026-09-10, and they are not
 carried forward.** They were taken against the pre-repair bytes and are preserved
@@ -329,10 +329,10 @@ derived from the working tree, not transcribed.
     },
     {
       "id": "missing-settle-transition",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to missing-settle-transition: on returning to the view without a Priority column, the toolbar shows the neutral hollow circle while loading, then column-plus after settling, without a premature missing-column indication.",
       "language_context": null
     },
     {
@@ -361,18 +361,18 @@ derived from the working tree, not transcribed.
     },
     {
       "id": "off-clears",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to off-clears: turning off Enable priority tinting removes all tint immediately without refresh, the popup says \"Tinting is off\", and the toolbar shows the power symbol; nothing treats OFF as an error or pressures re-enabling.",
       "language_context": null
     },
     {
       "id": "on-restores",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to on-restores: turning Enable priority tinting back on restores tint immediately without refreshing and matches the priorities currently displayed.",
       "language_context": null
     },
     {
