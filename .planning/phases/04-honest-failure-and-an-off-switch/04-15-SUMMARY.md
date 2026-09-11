@@ -42,13 +42,14 @@ coverage:
     description: Unknown-setting copy, mixed disabled switch and native/epoch limitations approved by user
     verification: []
     human_judgment: true
-    rationale: Task 2 decision is pending; proposals and tests are not consent
+    rationale: Direct user approval is recorded in DECISIONS.json; it is not live behavior evidence
 ---
 
-# Phase 04 Plan 15: Confirmed Preference Repair — Decision Checkpoint
+# Phase 04 Plan 15: Confirmed Preference Repair and Approved Contract
 
-Task 1 is complete; Task 2 has no user answer. This halted summary records partial
-execution, not plan completion or requirement acceptance. Resume Task 2, not Task 1.
+Both tasks are complete. Task 1 repairs confirmed-save reporting; Task 2 records
+the user's explicit `approved` response. This is plan completion, not phase-wide
+requirement acceptance.
 
 ## Task commits
 
@@ -107,7 +108,7 @@ and no mutant kill was claimed. A full-suite or phase-wide green is not claimed.
 3. Persisted RED evidence artifacts are additional plan-local outputs required by
    the invoked TDD workflow. No dependency/package changes.
 
-## Pending checkpoint — Task 2
+## Approved checkpoint — Task 2
 
 See 04-PREFERENCE-CONTRACT.md for the reviewable full outcome matrix and wait
 inventory. Proposed exact copy: **Zhroma could not confirm that setting**.
@@ -120,32 +121,29 @@ mutation unavailable; worker termination loses in-memory exclusion, so no orderi
 guarantee spans worker epochs. Delayed native artwork may remain transiently stale
 until settlement and current reconciliation.
 
-No unknown_preference decision was written. Neither earlier ratifications nor
-AR-04-01 authorize this proposal. No live UAT is requested at this checkpoint.
-04-16 is blocked until an actual answer is recorded and its plan matches it.
+The user replied `approved` after reviewing the concrete proposal. The exact
+unknown_preference decision and response provenance are recorded in DECISIONS.json.
+04-16 matches this approval and is unblocked. No live UAT is implied by it.
 04-17 has not run; 04-18–20 remain pending. Independent review/security and final
 binding remain later gates. Phase 4 remains gaps_found; Phase 3 remains human_needed;
 ACK-04-01 and historical observations remain untouched.
 
-## Resume
+## Next
 
-Verify the three Task 1 commits, read the contract, collect the actual Task 2
-answer once, and append attributed unknown_preference fields to DECISIONS.json.
-If the proposal is revised, adapt 04-16 before execution. Then finish this summary
-and resume remaining waves. Do not rerun Task 1 or treat this halted summary as a
-completed plan. Keep requirements-completed empty until acceptance is supported.
+Task 2 approval was committed in 0d3d784. Execute remaining gap plans; do not
+repeat Task 1 or ask for this decision again. Keep requirements-completed empty
+until phase-wide evidence supports acceptance.
 
-## Self-check: Task 1 passed; plan halted
+## Self-check: Both tasks complete; phase acceptance remains pending
 
 Required repair, tests and contract exist and are committed. Focused verification
-passed against repaired bytes. Task 2 authenticity check intentionally cannot pass
-without the user's response. No completion/acceptance promotion was performed.
+passed against repaired bytes. Task 2 record completeness check passed after the
+actual user response. No phase acceptance promotion was performed.
 
 ## Task 2 resolved — 2026-09-11
 
 The user replied **approved** to the concrete proposal linked after Task 1.
 Recorded verbatim with copy, recovery, native-stall and worker-epoch limits in
-04-DECISIONS.json. Approval matches 04-16 without a plan revision. The historical
-checkpoint narrative above describes the pause before this answer. Both tasks
+04-DECISIONS.json. Approval matches 04-16 without a plan revision. The original halted summary is preserved in commit a3a967b. Both tasks
 are now complete; requirements-completed remains empty because no phase-wide
 acceptance is established. No live observation or ACK-04-01 is inferred.
