@@ -8,15 +8,13 @@ security_asvs_level1: technical-clear-four-final-evidence-threats-open
 validation_tool_review: independently-passed-for-task-2
 goal_verification: pending-task-3
 human_acceptance: human_needed
-historic_reset_acknowledgement: outstanding
+historic_reset_acknowledgement: acknowledged
 overall: human_needed
 ---
 
 # Phase 04 Final Validation Inventory
 
-Technical preparation is separate from human acceptance. All seventeen live
-checks remain pending, source loading is unconfirmed, and ACK-04-01 still requires
-the user's own response. No canonical requirement was promoted.
+Technical preparation is separate from human acceptance. Three live checks passed and fourteen remain pending. Source loading and ACK-04-01 were confirmed on 2026-09-11. No canonical requirement was promoted.
 
 ## Source and recoverable provenance
 
@@ -56,7 +54,7 @@ user. Its files and observations remain unchanged.
 | Independent security | technical clear; final evidence threats open |04-SECURITY.md:66 mitigated,12 documented accepted,four high deferred T-04G3-21..24; zero technical threats. |
 | Independent validator/evidence review | passed for Task2 |04-20-VALIDATOR-REVIEW.md,cycle3:4→2→0 findings;21 direct negative controls refused and2 legitimate completion controls accepted. |
 | Independent goal verification | pending Task3 |No old SUMMARY or technical result supplies this verdict. |
-| Human acceptance | human_needed |Zero observed of17; loaded_from_repository:false,source_confirmed_on:null,and every environment member null. |
+| Human acceptance | human_needed |Three passed of 17; source confirmed 2026-09-11 with attributed environment. Fourteen remain pending. |
 
 ## Promotion contract and counterexamples
 
@@ -126,18 +124,9 @@ documents; the actual-file guard permits either honest state without forcing
 future observations or acknowledgements to stay pending. Final review cycle3 is
 required before Task2. No runtime/tool/harness change occurred in either repair.
 
-## ACK-04-01 — outstanding
+## ACK-04-01 — acknowledged
 
-Fourteen user attestations on2026-09-10 remain preserved and attributed at their
-original revision77b3a19. Runtime changes mean they do not establish acceptance
-of this build. The reset was required by source binding. **The user has not yet
-acknowledged that consequence.** Task2 asks for their actual words, separately
-from any new observation. No executor may answer it.
-
-Earlier approved concerned the exact unknown-preference contract, not ACK-04-01
-or live UAT. No response means pending. AR-04-01 is a separate authentic waiver
-of only language-icon-copy and structure-copy. Both stay pending; it supplies
-neither observation nor an exemption for other unavailable scenarios.
+On 2026-09-11 the assistant asked the user to confirm the repaired build was loaded and that the earlier fourteen observations apply only to the old build. The user's direct response was "pass", also answering the working-state check. This records their affirmative acknowledgement in context, without rewriting their words. The historical fourteen observations remain bound to their original source; none is transferred to this build. AR-04-01 retains only its two originally waived, still-pending scenarios.
 
 ## Prohibitions and seven edge classifications
 

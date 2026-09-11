@@ -493,3 +493,19 @@ blocked: 0
     - "Make the harness able to delay a RESPONSE so a genuinely stale reply is constructible"
     - "Add assertions that fail when a generation guard or the serialization queue is removed"
     - "Cover lastError branches, the {diagnosis, reason} pairing gate and onRemoved cleanup"
+
+## Current-build walkthrough — 2026-09-11
+
+User response to preparation checkpoint: "numbers are the same as before, let's do it". The referenced prior environment is Chrome 152, macOS 27 beta 6, 30 mounted rows. This confirms unchanged environment numbers and willingness to start; it does not yet provide an explicit loaded-source confirmation, ACK-04-01, or a current-build check outcome. Canonical live slots remain pending until those observations arrive.
+
+### Working state and source confirmation — pass
+
+2026-09-11: Asked the user to check priority colours, check artwork, matching "Priority tinting is working" title/popup, and to confirm loading the repaired build and acknowledge that fourteen earlier observations apply only to the old build. User response: "pass". Record working-icon as pass, source confirmed, and ACK-04-01 acknowledged; no other check is inferred. Next: blank-copy.
+
+### Blank priorities — pass
+
+2026-09-11: User replied "pass" to blank-copy: check artwork remains and the popup reads "Priority column found. These tickets have no priority values set". No other check is inferred. Next: missing-icon-hint.
+
+### Missing Priority column — pass
+
+2026-09-11: User replied "pass" to missing-icon-hint: column-plus toolbar artwork, the add-a-Priority-column popup hint, and no hint/banner/badge inside Zendesk. No transition observation is inferred. Next: missing-settle-transition.
