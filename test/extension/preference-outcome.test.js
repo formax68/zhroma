@@ -45,6 +45,18 @@ function replyFor(world) {
 }
 
 for (const initial of [true, false]) {
+  test(`confirmed write from ${initial} with unreadable worker read and successful application`, async () => {
+    const state = await boot(initial);
+    state.world.workerChrome.storage.local.get = (_defaults, callback) => callback({ enabled: 'invalid' });
+    await flip(state.popup, !initial);
+    expect(replyFor(state.world)).toMatchObject({ saved: true, enabled: null, applied: true });
+    expect(observe(state), '[preference:acknowledged-operation]').toEqual({
+      stored: { enabled: !initial }, checked: !initial, disabled: false,
+      indeterminate: false, text: initial ? COPY.off : COPY.working,
+      markers: initial ? [] : tinted, focused: true,
+    });
+  });
+
   for (const mode of ['rejected', 'rejected-with-values', 'throws', 'malformed']) {
     test(`confirmed write from ${initial} survives ${mode} read-back`, async () => {
       const state = await boot(initial);
