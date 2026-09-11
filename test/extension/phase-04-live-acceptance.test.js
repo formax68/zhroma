@@ -51,8 +51,11 @@ const LANG_VARIANTS = ['en', 'en-*', 'non-English'];
 // carried, not closed.
 const PROHIBITION_IDS = ['no-agent-blame', 're-enable-not-pressured', 'untested-is-not-consent'];
 const PROHIBITION_STATUSES = ['flagged-unverified', 'reviewed-resolved'];
-const TIMING_KEYS = [30, 200, 1000].flatMap((size) => ['enabled', 'disabled'].map((mode) => `${size}-${mode}`));
+const TIMING_KEYS = [...[30, 200, 1000].flatMap((size) => ['enabled', 'disabled'].map((mode) => `${size}-${mode}`)), '30-dormant'];
 const TIMING_ASSETS = ['manifest.json', 'content.js', 'zhroma.css'];
+const TIMING_HARNESS = createHash('sha256')
+  .update(readFileSync(new URL('scripts/run-tint-workload.js', root)))
+  .update(readFileSync(new URL('test/performance/tint-workload.js', root))).digest('hex');
 
 const walk = (dir, base = '') => readdirSync(dir).flatMap((name) => {
   const path = `${dir}/${name}`;
@@ -64,6 +67,8 @@ const extensionDir = fileURLToPath(new URL('extension', root));
 const SHIPPED = Object.fromEntries(walk(extensionDir).sort().map((name) => [name,
   createHash('sha256').update(readFileSync(`${extensionDir}/${name}`)).digest('hex')]));
 const SHIPPED_NAMES = Object.keys(SHIPPED);
+const SHIPPED_DIGEST = createHash('sha256').update(SHIPPED_NAMES
+  .map((name) => `${SHIPPED[name]}  extension/${name}\n`).join('')).digest('hex');
 
 const contentSource = readFileSync(`${extensionDir}/content.js`, 'utf8');
 const manifest = JSON.parse(readFileSync(`${extensionDir}/manifest.json`, 'utf8'));
@@ -90,6 +95,10 @@ const nonempty = (value) => typeof value === 'string' && value.trim().length > 0
 const sameKeys = (value, keys) => isObject(value)
   && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
 const requireEvidence = (condition, code) => { if (!condition) throw new Error(`PHASE04_ACCEPTANCE_REJECTED ${code}`); };
+const validLanguageTag = (value) => {
+  if (typeof value !== 'string' || !/^[a-z]{2,8}(?:-[a-z0-9]{1,8})*$/i.test(value)) return false;
+  try { return Intl.getCanonicalLocales(value).length === 1; } catch { return false; }
+};
 
 // Tokenize before JSON.parse can discard repeated members. Strings are opaque
 // tokens; each object gets its own decoded-name set, including inside arrays.
@@ -145,6 +154,7 @@ function priorSourceFacts() {
     const bytes = execFileSync('git', ['show', `${runtimeRevision}:extension/${name}`], { cwd: fileURLToPath(root) });
     requireEvidence(createHash('sha256').update(bytes).digest('hex') === hash, 'prior-runtime-hashes');
   }
+  requireEvidence(sameKeys(prior.runtime_sha256, TIMING_ASSETS), 'prior-runtime-inventory');
   return {
     phase: '03-the-tint-survives-everything',
     revision: runtimeRevision,
@@ -159,9 +169,70 @@ function priorSourceFacts() {
 }
 const PRIOR = priorSourceFacts();
 
-// RED seam: canonical documents historically had no promotion gate. Replaced
-// after the false-completion counterexamples are measured below.
-export function validateCanonicalPromotion() { return true; }
+// Only explicit current evidence can support canonical completion. Old SUMMARY
+// metadata is deliberately not an input. This pure guard never writes files.
+const REQUIREMENT_CHECKS = {
+  'FAIL-01': ['working-icon', 'blank-copy', 'missing-icon-hint', 'language-icon-copy', 'structure-copy', 'navigation-status', 'english-regional-locale'],
+  'FAIL-02': ['missing-icon-hint', 'missing-settle-transition'],
+  'FAIL-03': ['language-icon-copy', 'structure-copy', 'english-regional-locale'],
+  'FAIL-05': ['working-icon', 'missing-icon-hint', 'language-icon-copy', 'structure-copy', 'navigation-status', 'worker-restart'],
+  'CTRL-02': ['off-clears', 'on-restores', 'popup-keyboard'],
+  'CTRL-03': ['restart-off', 'restart-on', 'cross-tab-preference', 'frozen-resume', 'worker-restart'],
+  'CTRL-04': ['off-clears', 'on-restores', 'nonreceiver-status'],
+};
+export function validateCanonicalPromotion(markdown, record, readiness, performance, clock) {
+  const status = validatePhase04Acceptance(record, performance, clock);
+  requireEvidence(typeof markdown === 'string' && isObject(readiness), 'canonical-promotion-input');
+  const technicalReady = readiness.codeReviewReady === true && readiness.securityReviewReady === true
+    && readiness.technicalTestsPassed === true;
+  for (const [id, checks] of Object.entries(REQUIREMENT_CHECKS)) {
+    const boxes = [...markdown.matchAll(new RegExp(`^- \\[([ xX])\\] \\*\\*${id}\\*\\*:`, 'gm'))];
+    const rows = [...markdown.matchAll(new RegExp(`^\\| ${id} \\| Phase 4 \\| ([^|]+)\\|\\s*$`, 'gm'))];
+    requireEvidence(boxes.length === 1 && rows.length === 1, 'canonical-promotion-document');
+    const canonicalStatus = rows[0][1].trim();
+    requireEvidence(['Pending', 'Gaps Found', 'Complete'].includes(canonicalStatus), 'canonical-promotion-status');
+    const checked = boxes[0][1].toLowerCase() === 'x';
+    if (!checked && canonicalStatus !== 'Complete') continue;
+    const observed = checks.every((checkId) => record.checks.find((row) => row.id === checkId)?.status === 'pass');
+    requireEvidence(technicalReady && status !== 'gaps_found' && record.loaded_from_repository
+      && performance && TIMING_KEYS.every((key) => performance.runs?.[key])
+      && observed && readiness.historicResetAcknowledged === true
+      && record.flagged_unverified.every((item) => item.status === 'reviewed-resolved'), `canonical-promotion-${id}`);
+    requireEvidence(checked && canonicalStatus === 'Complete', `canonical-promotion-inconsistent-${id}`);
+  }
+  return true;
+}
+
+export function technicalReviewReadiness(code, security, validation) {
+  const frontmatter = (markdown) => markdown.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1] ?? '';
+  // Count all occurrences before validating values. Counting only values that
+  // already match the expected shape would hide a contradictory invalid value.
+  const field = (markdown, key) => {
+    const matches = [...frontmatter(markdown).matchAll(new RegExp(
+      `^[ \\t]*(?:${key}|"${key}"|'${key}')[ \\t]*:[ \\t]*([^\\r\\n]*)$`, 'gm'))];
+    return matches.length === 1 ? matches[0][1].trim() : null;
+  };
+  const matchesReviewedRuntime = (markdown) => {
+    const digest = field(markdown, 'runtime_digest');
+    const revision = field(markdown, 'reviewed_revision');
+    if (digest !== SHIPPED_DIGEST || !/^[a-f0-9]{40}$/.test(revision ?? '')) return false;
+    try {
+      const options = { cwd: fileURLToPath(root), stdio: ['ignore', 'pipe', 'pipe'] };
+      const names = execFileSync('git', ['ls-tree', '-r', '--name-only', revision, '--', 'extension'], options)
+        .toString().trim().split('\n').sort();
+      if (JSON.stringify(names) !== JSON.stringify(SHIPPED_NAMES.map((name) => `extension/${name}`))) return false;
+      return SHIPPED_NAMES.every((name) => createHash('sha256').update(execFileSync('git',
+        ['show', `${revision}:extension/${name}`], options)).digest('hex') === SHIPPED[name]);
+    } catch { return false; }
+  };
+  return {
+    codeReviewReady: matchesReviewedRuntime(code) && field(code, 'runtime_blockers') === '0'
+      && field(code, 'technical_verdict') === 'clear_for_04_20_evidence_work',
+    securityReviewReady: matchesReviewedRuntime(security) && field(security, 'technical_threats_open') === '0',
+    technicalTestsPassed: field(validation, 'technical_tests') === 'passed',
+    historicResetAcknowledged: field(validation, 'historic_reset_acknowledgement') === 'acknowledged',
+  };
+}
 
 export function validatePhase04Acceptance(record, performance = loadPerformance(), { now = new Date(), timeZone = 'Asia/Nicosia' } = {}) {
   requireEvidence(now instanceof Date && Number.isFinite(now.getTime()), 'clock');
@@ -224,11 +295,11 @@ export function validatePhase04Acceptance(record, performance = loadPerformance(
     // `english-regional-locale`, needs a tag that is English but is not the
     // bare `en` (a bare `en` is `working-icon`'s scope, not this check's).
     if (check.id === 'language-icon-copy') {
-      requireEvidence(typeof check.language_context === 'string' && /^[a-z]{2}(-[a-z0-9]{2,8})*$/i.test(check.language_context)
+      requireEvidence(validLanguageTag(check.language_context)
         && !/^en(?:-|$)/i.test(check.language_context), 'language-context');
     } else if (check.id === 'english-regional-locale') {
-      requireEvidence(typeof check.language_context === 'string'
-        && /^en-[a-z0-9]{2,8}(?:-[a-z0-9]{2,8})*$/i.test(check.language_context), 'language-context');
+      requireEvidence(validLanguageTag(check.language_context)
+        && /^en-/i.test(check.language_context), 'language-context');
     } else requireEvidence(check.language_context === null, 'language-context-scope');
   }
 
@@ -257,11 +328,15 @@ export function validatePhase04Acceptance(record, performance = loadPerformance(
   else {
     requireEvidence(sameKeys(performance.identity?.hashes, TIMING_ASSETS)
       && TIMING_ASSETS.every((name) => performance.identity.hashes[name] === SHIPPED[name]), 'performance-source');
+    requireEvidence(performance.identity.harnessHash === TIMING_HARNESS, 'performance-harness');
     for (const key of TIMING_KEYS) {
       const run = performance.runs?.[key];
       if (!run) { timingComplete = false; continue; }
       const [size, mode] = key.split('-');
       requireEvidence(run.size === Number(size) && run.mode === mode, 'performance-scope');
+      requireEvidence(run.runtime === (mode === 'disabled' ? 'absent' : 'loaded'), 'performance-runtime');
+      if (mode === 'dormant') requireEvidence(run.resources?.observers === 0
+        && run.resources?.pendingTimers === 0, 'performance-dormant-resources');
       if (validateWorkloadReport(run) === 'gaps_found') performanceFailed = true;
     }
   }
@@ -316,14 +391,15 @@ function example(complete = false) {
 }
 
 function acceptedPerformance() {
-  const result = { schema_version: 1, identity: { hashes: Object.fromEntries(TIMING_ASSETS.map((n) => [n, SHIPPED[n]])) }, runs: {} };
+  const result = { schema_version: 1, identity: { hashes: Object.fromEntries(TIMING_ASSETS.map((n) => [n, SHIPPED[n]])), harnessHash: TIMING_HARNESS }, runs: {} };
   for (const key of TIMING_KEYS) {
     const [size, mode] = key.split('-');
     const sample = mode === 'enabled'
       ? { segments: [{ category: 'observer', cpu: 0.2 }, { category: 'timer', cpu: 0.3 }], totalCpu: 0.5, callbacks: 2, passes: 1, writes: 1, latency: 2 }
       : { segments: [], totalCpu: 0, callbacks: 0, passes: 0, writes: 0, latency: 2 };
     result.runs[key] = {
-      size: Number(size), mode, warmups: 10, measured: 100,
+      size: Number(size), mode, runtime: mode === 'disabled' ? 'absent' : 'loaded',
+      resources: { observers: mode === 'enabled' ? 1 : 0, pendingTimers: 0 }, warmups: 10, measured: 100,
       operations: Object.fromEntries(['edit', 'reorder', 'body', 'table', 'invalid-repair', 'unrelated']
         .map((op) => [op, Array.from({ length: 100 }, () => structuredClone(sample))])),
     };
@@ -358,8 +434,15 @@ test('English regional evidence cannot satisfy the non-English scenario', () => 
 });
 
 const canonicalRequirements = () => readFileSync(new URL('.planning/REQUIREMENTS.md', root), 'utf8');
+const hypotheticalRequirements = (markdown = canonicalRequirements()) => {
+  for (const id of Object.keys(REQUIREMENT_CHECKS)) {
+    markdown = markdown.replace(new RegExp(`^- \\[[ xX]\\] (\\*\\*${id}\\*\\*:)`, 'm'), '- [ ] $1')
+      .replace(new RegExp(`^\\| ${id} \\| Phase 4 \\| [^|]+\\|`, 'm'), `| ${id} | Phase 4 | Pending |`);
+  }
+  return markdown;
+};
 test.each(['checkbox', 'Complete'])('canonical promotion rejects a false %s without live evidence', (claim) => {
-  const markdown = canonicalRequirements();
+  const markdown = hypotheticalRequirements();
   const forged = claim === 'checkbox'
     ? markdown.replace('- [ ] **FAIL-01**:', '- [x] **FAIL-01**:')
     : markdown.replace(/(\| FAIL-01 \| Phase 4 \| )[^|]+/, '$1Complete ');
@@ -368,6 +451,124 @@ test.each(['checkbox', 'Complete'])('canonical promotion rejects a false %s with
     codeReviewReady: true, securityReviewReady: true, technicalTestsPassed: true,
     historicResetAcknowledged: true,
   }, acceptedPerformance(), CLOCK)).toThrow(/canonical-promotion/);
+});
+
+test.each(['en', 'EN', 'en-GB', 'EN-us', 'En-gb'])('rejects English tag %s in the non-English scenario', (tag) => {
+  const record = example(true);
+  record.checks.find((row) => row.id === 'language-icon-copy').language_context = tag;
+  expect(() => validatePhase04Acceptance(record, acceptedPerformance(), CLOCK)).toThrow(/language-context/);
+});
+test.each(['en-GB', 'EN-us', 'En-gb', 'en-Latn-US', 'en-US-u-ca-gregory'])('accepts genuine regional English tag %s only in its own scenario', (tag) => {
+  const record = example(true);
+  record.checks.find((row) => row.id === 'english-regional-locale').language_context = tag;
+  expect(validatePhase04Acceptance(record, acceptedPerformance(), CLOCK)).toBe('passed');
+});
+test.each([null, ['en'], ['en', 'non-English', 'en-*'], ['en', 'en-*', 'non-English', 'fr']])('rejects an inexact ordered scope descriptor list %j', (variants) => {
+  const record = example(); record.scope.html_lang_variants = variants;
+  expect(() => validatePhase04Acceptance(record, acceptedPerformance(), CLOCK)).toThrow(/scope/);
+});
+
+const ready = { codeReviewReady: true, securityReviewReady: true, technicalTestsPassed: true, historicResetAcknowledged: true };
+const promote = (markdown, id) => markdown.replace(`- [ ] **${id}**:`, `- [x] **${id}**:`)
+  .replace(new RegExp(`(\\| ${id} \\| Phase 4 \\| )[^|]+`), '$1Complete ');
+// Independent behavioral oracle: do not derive these expected observations
+// from the implementation mapping, or an omitted entry would erase its test.
+test.each([
+  ['FAIL-01', ['working-icon', 'blank-copy', 'missing-icon-hint', 'language-icon-copy', 'structure-copy', 'navigation-status', 'english-regional-locale']],
+  ['FAIL-02', ['missing-icon-hint', 'missing-settle-transition']],
+  ['FAIL-03', ['language-icon-copy', 'structure-copy', 'english-regional-locale']],
+  ['FAIL-05', ['working-icon', 'missing-icon-hint', 'language-icon-copy', 'structure-copy', 'navigation-status', 'worker-restart']],
+  ['CTRL-02', ['off-clears', 'on-restores', 'popup-keyboard']],
+  ['CTRL-03', ['restart-off', 'restart-on', 'cross-tab-preference', 'frozen-resume', 'worker-restart']],
+  ['CTRL-04', ['off-clears', 'on-restores', 'nonreceiver-status']],
+])('canonical promotion requires every mapped observation for %s', (id, checks) => {
+  const markdown = promote(hypotheticalRequirements(), id);
+  expect(validateCanonicalPromotion(markdown, example(true), ready, acceptedPerformance(), CLOCK)).toBe(true);
+  for (const checkId of checks) {
+    const record = example(true); record.status = 'human_needed';
+    record.checks[record.checks.findIndex((row) => row.id === checkId)] = example().checks.find((row) => row.id === checkId);
+    expect(() => validateCanonicalPromotion(markdown, record, ready, acceptedPerformance(), CLOCK), checkId).toThrow(/canonical-promotion/);
+  }
+});
+test.each(Object.keys(ready))('canonical promotion requires explicit %s readiness', (key) => {
+  const markdown = promote(hypotheticalRequirements(), 'CTRL-02');
+  expect(() => validateCanonicalPromotion(markdown, example(true), { ...ready, [key]: false }, acceptedPerformance(), CLOCK)).toThrow(/canonical-promotion/);
+});
+test('canonical Pending and Gaps Found remain legal without review or observations and ignore historical summaries', () => {
+  const markdown = `${hypotheticalRequirements()}\nOld SUMMARY: requirements-completed: [FAIL-01, CTRL-02]\n`;
+  expect(validateCanonicalPromotion(markdown, example(), {}, acceptedPerformance(), CLOCK)).toBe(true);
+  expect(validateCanonicalPromotion(markdown.replace('| FAIL-01 | Phase 4 | Pending |',
+    '| FAIL-01 | Phase 4 | Gaps Found |'), example(), {}, acceptedPerformance(), CLOCK)).toBe(true);
+});
+test('actual canonical requirements cannot be promoted by bookkeeping without current evidence', () => {
+  const record = parsePhase04Acceptance(readFileSync(new URL('04-LIVE-ACCEPTANCE.md', phase), 'utf8'));
+  const code = readFileSync(new URL('04-REVIEW.md', phase), 'utf8');
+  const security = readFileSync(new URL('04-SECURITY.md', phase), 'utf8');
+  const validation = readFileSync(new URL('04-VALIDATION.md', phase), 'utf8');
+  const reviewReadiness = technicalReviewReadiness(code, security, validation);
+  expect(validateCanonicalPromotion(canonicalRequirements(), record, reviewReadiness, loadPerformance())).toBe(true);
+});
+
+test.each(['FAIL-01', 'FAIL-05'])('review gap: %s cannot be Complete while unreadable states are unobserved', (id) => {
+  const record = example(true); record.status = 'human_needed';
+  for (const checkId of ['language-icon-copy', 'structure-copy']) {
+    record.checks[record.checks.findIndex((row) => row.id === checkId)] = example().checks.find((row) => row.id === checkId);
+  }
+  expect(() => validateCanonicalPromotion(promote(hypotheticalRequirements(), id), record, ready, acceptedPerformance(), CLOCK)).toThrow(/canonical-promotion/);
+});
+test.each(['runtime_digest', 'reviewed_revision'])('review gap: stale %s cannot satisfy technical readiness', (field) => {
+  const stale = (name) => readFileSync(new URL(name, phase), 'utf8')
+    .replace(new RegExp(`^${field}: .+$`, 'm'), `${field}: ${'0'.repeat(field === 'runtime_digest' ? 64 : 40)}`);
+  const result = technicalReviewReadiness(stale('04-REVIEW.md'), stale('04-SECURITY.md'), '');
+  expect(result.codeReviewReady).toBe(false);
+  expect(result.securityReviewReady).toBe(false);
+});
+test('technical readiness accepts both independently reviewed current inventories', () => {
+  const result = technicalReviewReadiness(readFileSync(new URL('04-REVIEW.md', phase), 'utf8'),
+    readFileSync(new URL('04-SECURITY.md', phase), 'utf8'), '---\nhistoric_reset_acknowledgement: outstanding\n---\n');
+  expect(result.codeReviewReady).toBe(true);
+  expect(result.securityReviewReady).toBe(true);
+  expect(result.historicResetAcknowledged).toBe(false);
+  expect(technicalReviewReadiness('', '', '---\nhistoric_reset_acknowledgement: acknowledged\n---\n')
+    .historicResetAcknowledged).toBe(true);
+});
+test.each([
+  ['code', 'runtime_blockers', '1'], ['code', 'technical_verdict', 'blocked'],
+  ['code', 'runtime_digest', 'invalid'], ['code', 'reviewed_revision', 'invalid'],
+  ['security', 'technical_threats_open', '1'], ['security', 'runtime_digest', 'invalid'],
+  ['security', 'reviewed_revision', 'invalid'],
+])('review metadata gap: duplicate %s %s cannot certify readiness', (which, key, value) => {
+  const code = readFileSync(new URL('04-REVIEW.md', phase), 'utf8');
+  const security = readFileSync(new URL('04-SECURITY.md', phase), 'utf8');
+  const duplicate = (text) => text.replace('\n---\n', `\n${key}: ${value}\n---\n`);
+  const result = technicalReviewReadiness(which === 'code' ? duplicate(code) : code,
+    which === 'security' ? duplicate(security) : security, '');
+  expect(result[which === 'code' ? 'codeReviewReady' : 'securityReviewReady']).toBe(false);
+});
+test.each(['technical_tests', 'historic_reset_acknowledgement'])('review metadata gap: duplicate %s cannot grant readiness', (key) => {
+  const value = key === 'technical_tests' ? 'passed' : 'acknowledged';
+  const result = technicalReviewReadiness('', '', `---\n${key}: ${value}\n"${key}": invalid\n---\n`);
+  expect(result[key === 'technical_tests' ? 'technicalTestsPassed' : 'historicResetAcknowledged']).toBe(false);
+});
+test.each(['en-12', 'en-GB-GB'])('review gap: malformed %s is not genuine regional English evidence', (tag) => {
+  const record = example(true);
+  record.checks.find((row) => row.id === 'english-regional-locale').language_context = tag;
+  expect(() => validatePhase04Acceptance(record, acceptedPerformance(), CLOCK)).toThrow(/language-context/);
+});
+test('review gap: hypothetical baseline remains pending after legitimate canonical promotion', () => {
+  const promoted = promote(hypotheticalRequirements(), 'FAIL-01');
+  const normalized = hypotheticalRequirements(promoted);
+  expect(normalized).toContain('- [ ] **FAIL-01**:');
+  expect(normalized).toContain('| FAIL-01 | Phase 4 | Pending |');
+});
+
+test.each(['harness', 'dormant-missing', 'dormant-absent', 'dormant-resources'])('rejects stale or false %s timing evidence', (kind) => {
+  const performance = acceptedPerformance();
+  if (kind === 'harness') performance.identity.harnessHash = '0'.repeat(64);
+  if (kind === 'dormant-missing') delete performance.runs['30-dormant'];
+  if (kind === 'dormant-absent') performance.runs['30-dormant'].runtime = 'absent';
+  if (kind === 'dormant-resources') performance.runs['30-dormant'].resources.observers = 1;
+  expect(() => validatePhase04Acceptance(example(true), performance, CLOCK)).toThrow();
 });
 
 test.each([

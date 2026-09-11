@@ -1,0 +1,802 @@
+{
+  "plan": "04-20",
+  "stage": "Task1 complete; Task2 blocking-human",
+  "recorded_at": "2026-09-11T09:36:44.653Z",
+  "pre_update_revision": "70ad1e5",
+  "reviewed_runtime_revision": "255ba31e2b25f7b8c5bde8a3900fb93151594f50",
+  "runtime_inventory": {
+    "inventory_count": 11,
+    "assets": {
+      "background.js": "0f48bb105cdb1edd2aa6b68a6732dba1217502de015670097adbb3eb120d6428",
+      "content.js": "c9e83c837e4933827853a03bc9d7b63f308f403d679a8dc5c34701a6792b3126",
+      "icons/missing.png": "68a032b0500b1ae062a455e3b1bdbf20db8dd71c8d16dee1461e6f3dbf5e8fa0",
+      "icons/neutral.png": "a13c2447cb31526e666a4e050451228480a6221efcee673a6fd30ac2d943f9d4",
+      "icons/off.png": "c1289da1a9235cba4ddb0f8bcd85ca90e355ce89ddf3c24340c6409205198638",
+      "icons/unreadable.png": "1131af46ac5cc421e7e951a4de067566c9a31bbfa032787f5346fb6db8e30c3a",
+      "icons/working.png": "28fc0380a220982d523d39564123933db92e8d492100cd690c0dd333200845bb",
+      "manifest.json": "dafa656a55a1b69b42d4aa6490101e593bc9eea36afe35feacf34f7090b768e5",
+      "popup.html": "4c621c9d92fd21130dc2cafbf5bcaf705a98993c53eb755a53011a381729ad7c",
+      "popup.js": "3e7cac0ebed5141f617af5fb919a6a0c41df6efad2ccbb27076fc7af012ea938",
+      "zhroma.css": "8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0"
+    }
+  },
+  "prior_source": {
+    "phase": "03-the-tint-survives-everything",
+    "revision": "382cc881334aa7edf2103150bd8fe663236b6357",
+    "status": "human_needed",
+    "checks_passed": 11,
+    "checks_pending": 9,
+    "checks_failed": 0,
+    "verification": "28/34",
+    "uat_execution": "skipped-by-user",
+    "observation_revision": "3979fb0730c6f778ddd31ad5ec89cfa997b79cc5"
+  },
+  "timing_identity": {
+    "hashes": {
+      "manifest.json": "dafa656a55a1b69b42d4aa6490101e593bc9eea36afe35feacf34f7090b768e5",
+      "content.js": "c9e83c837e4933827853a03bc9d7b63f308f403d679a8dc5c34701a6792b3126",
+      "zhroma.css": "8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0"
+    },
+    "browser": "Chrome/153.0.8010.37",
+    "revision": "@b75a5a95ea1a1b55bdbfd6d9f42d47be7507fb8b",
+    "os": "darwin 27.0.0 arm64",
+    "cpu": "Apple M5 Max",
+    "cpuThrottle": 1,
+    "headed": false,
+    "harnessHash": "285074ead931dde0f5212951835e10da5e1fb70ba1f8d1a51142ee93b715617b"
+  },
+  "timing_runs": {
+    "30-enabled": {
+      "timestamp": "2026-09-11T09:24:41.220Z",
+      "size": 30,
+      "mode": "enabled",
+      "runtime": "loaded",
+      "warmups": 10,
+      "measured": 100,
+      "resources": {
+        "observers": 1,
+        "pendingTimers": 0
+      },
+      "metrics": {
+        "edit": {
+          "count": 100,
+          "median": 0.4000000022351742,
+          "p95": 0.9000000022351742,
+          "max": 1,
+          "latencyMedian": 18.899999998509884,
+          "observerCpu": 27.099999990314245,
+          "timerCpu": 23.299999989569187,
+          "callbacks": 400,
+          "passes": 100,
+          "writes": 200
+        },
+        "reorder": {
+          "count": 100,
+          "median": 0.6999999992549419,
+          "p95": 0.9000000022351742,
+          "max": 1,
+          "latencyMedian": 19.199999999254942,
+          "observerCpu": 40.19999999925494,
+          "timerCpu": 30.300000000745058,
+          "callbacks": 200,
+          "passes": 100,
+          "writes": 0
+        },
+        "body": {
+          "count": 100,
+          "median": 0.5,
+          "p95": 0.8000000007450581,
+          "max": 0.9000000022351742,
+          "latencyMedian": 19.399999998509884,
+          "observerCpu": 25.69999998807907,
+          "timerCpu": 26.500000026077032,
+          "callbacks": 300,
+          "passes": 100,
+          "writes": 6000
+        },
+        "table": {
+          "count": 100,
+          "median": 0.4000000022351742,
+          "p95": 0.7000000029802322,
+          "max": 1,
+          "latencyMedian": 19.399999998509884,
+          "observerCpu": 22.00000001490116,
+          "timerCpu": 23.600000008940697,
+          "callbacks": 300,
+          "passes": 100,
+          "writes": 6000
+        },
+        "invalid-repair": {
+          "count": 100,
+          "median": 1.2999999970197678,
+          "p95": 1.699999999254942,
+          "max": 1.8000000044703484,
+          "latencyMedian": 37.69999999925494,
+          "observerCpu": 65.00000000372529,
+          "timerCpu": 56.60000003501773,
+          "callbacks": 600,
+          "passes": 200,
+          "writes": 6000
+        },
+        "unrelated": {
+          "count": 100,
+          "median": 0,
+          "p95": 0.10000000149011612,
+          "max": 0.10000000149011612,
+          "latencyMedian": 13.700000002980232,
+          "observerCpu": 1.5000000037252903,
+          "timerCpu": 0,
+          "callbacks": 100,
+          "passes": 0,
+          "writes": 0
+        }
+      }
+    },
+    "30-disabled": {
+      "timestamp": "2026-09-11T09:25:01.637Z",
+      "size": 30,
+      "mode": "disabled",
+      "runtime": "absent",
+      "warmups": 10,
+      "measured": 100,
+      "resources": {
+        "observers": 0,
+        "pendingTimers": 0
+      },
+      "metrics": {
+        "edit": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 13.900000002235174,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "reorder": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 13.899999998509884,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "body": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 15,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "table": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 14.599999997764826,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "invalid-repair": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 27.400000002235174,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "unrelated": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 13.600000001490116,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        }
+      }
+    },
+    "200-enabled": {
+      "timestamp": "2026-09-11T09:25:27.556Z",
+      "size": 200,
+      "mode": "enabled",
+      "runtime": "loaded",
+      "warmups": 10,
+      "measured": 100,
+      "resources": {
+        "observers": 1,
+        "pendingTimers": 0
+      },
+      "metrics": {
+        "edit": {
+          "count": 100,
+          "median": 2.7999999970197678,
+          "p95": 3.400000002235174,
+          "max": 3.800000000745058,
+          "latencyMedian": 19.300000000745058,
+          "observerCpu": 150.9999999962747,
+          "timerCpu": 116.99999999627471,
+          "callbacks": 400,
+          "passes": 100,
+          "writes": 200
+        },
+        "reorder": {
+          "count": 100,
+          "median": 2.100000001490116,
+          "p95": 2.900000002235174,
+          "max": 3.2999999970197678,
+          "latencyMedian": 20.600000001490116,
+          "observerCpu": 108.39999999850988,
+          "timerCpu": 95.89999998733401,
+          "callbacks": 200,
+          "passes": 100,
+          "writes": 0
+        },
+        "body": {
+          "count": 100,
+          "median": 1.4999999962747097,
+          "p95": 1.7000000029802322,
+          "max": 1.800000000745058,
+          "latencyMedian": 25.5,
+          "observerCpu": 66.40000000596046,
+          "timerCpu": 80.6000000052154,
+          "callbacks": 300,
+          "passes": 100,
+          "writes": 40000
+        },
+        "table": {
+          "count": 100,
+          "median": 1.5,
+          "p95": 1.699999999254942,
+          "max": 1.8000000044703484,
+          "latencyMedian": 27.100000001490116,
+          "observerCpu": 67.69999998807907,
+          "timerCpu": 81.10000000149012,
+          "callbacks": 300,
+          "passes": 100,
+          "writes": 40000
+        },
+        "invalid-repair": {
+          "count": 100,
+          "median": 3.899999998509884,
+          "p95": 4.400000002235174,
+          "max": 4.900000002235174,
+          "latencyMedian": 40.69999999925494,
+          "observerCpu": 192.20000003278255,
+          "timerCpu": 186.7999999858439,
+          "callbacks": 600,
+          "passes": 200,
+          "writes": 40000
+        },
+        "unrelated": {
+          "count": 100,
+          "median": 0,
+          "p95": 0.09999999776482582,
+          "max": 0.10000000149011612,
+          "latencyMedian": 13.900000002235174,
+          "observerCpu": 0.6000000052154064,
+          "timerCpu": 0,
+          "callbacks": 100,
+          "passes": 0,
+          "writes": 0
+        }
+      }
+    },
+    "200-disabled": {
+      "timestamp": "2026-09-11T09:25:49.360Z",
+      "size": 200,
+      "mode": "disabled",
+      "runtime": "absent",
+      "warmups": 10,
+      "measured": 100,
+      "resources": {
+        "observers": 0,
+        "pendingTimers": 0
+      },
+      "metrics": {
+        "edit": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 13.800000000745058,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "reorder": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 14.399999998509884,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "body": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 19.699999999254942,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "table": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 19.899999998509884,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "invalid-repair": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 27.800000000745058,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "unrelated": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 13.599999997764826,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        }
+      }
+    },
+    "1000-enabled": {
+      "timestamp": "2026-09-11T09:26:28.574Z",
+      "size": 1000,
+      "mode": "enabled",
+      "runtime": "loaded",
+      "warmups": 10,
+      "measured": 100,
+      "resources": {
+        "observers": 1,
+        "pendingTimers": 0
+      },
+      "metrics": {
+        "edit": {
+          "count": 100,
+          "median": 5.899999998509884,
+          "p95": 7.49999999627471,
+          "max": 7.800000000745058,
+          "latencyMedian": 21.5,
+          "observerCpu": 303.99999998882413,
+          "timerCpu": 310.10000002756715,
+          "callbacks": 400,
+          "passes": 100,
+          "writes": 200
+        },
+        "reorder": {
+          "count": 100,
+          "median": 6.599999997764826,
+          "p95": 6.900000002235174,
+          "max": 7.300000000745058,
+          "latencyMedian": 26.800000000745058,
+          "observerCpu": 323.0000000037253,
+          "timerCpu": 332.9999999962747,
+          "callbacks": 200,
+          "passes": 100,
+          "writes": 0
+        },
+        "body": {
+          "count": 100,
+          "median": 6.50000000372529,
+          "p95": 8.300000000745058,
+          "max": 9.399999998509884,
+          "latencyMedian": 67.59999999776483,
+          "observerCpu": 301.5999999791384,
+          "timerCpu": 360.90000001341105,
+          "callbacks": 300,
+          "passes": 100,
+          "writes": 200000
+        },
+        "table": {
+          "count": 100,
+          "median": 6.5,
+          "p95": 7.299999997019768,
+          "max": 9,
+          "latencyMedian": 65.69999999925494,
+          "observerCpu": 292.00000002235174,
+          "timerCpu": 351.69999999552965,
+          "callbacks": 300,
+          "passes": 100,
+          "writes": 200000
+        },
+        "invalid-repair": {
+          "count": 100,
+          "median": 11.700000002980232,
+          "p95": 12.300000000745058,
+          "max": 13.600000001490116,
+          "latencyMedian": 62.5,
+          "observerCpu": 589.400000013411,
+          "timerCpu": 587.499999973923,
+          "callbacks": 600,
+          "passes": 200,
+          "writes": 200000
+        },
+        "unrelated": {
+          "count": 100,
+          "median": 0,
+          "p95": 0.09999999776482582,
+          "max": 0.10000000149011612,
+          "latencyMedian": 14.699999999254942,
+          "observerCpu": 0.7999999970197678,
+          "timerCpu": 0,
+          "callbacks": 100,
+          "passes": 0,
+          "writes": 0
+        }
+      }
+    },
+    "1000-disabled": {
+      "timestamp": "2026-09-11T09:26:59.021Z",
+      "size": 1000,
+      "mode": "disabled",
+      "runtime": "absent",
+      "warmups": 10,
+      "measured": 100,
+      "resources": {
+        "observers": 0,
+        "pendingTimers": 0
+      },
+      "metrics": {
+        "edit": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 15.100000001490116,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "reorder": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 18.699999999254942,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "body": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 51.29999999701977,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "table": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 52.69999999925494,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "invalid-repair": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 30.699999999254942,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "unrelated": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 13.600000001490116,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        }
+      }
+    },
+    "30-dormant": {
+      "timestamp": "2026-09-11T09:27:19.613Z",
+      "size": 30,
+      "mode": "dormant",
+      "runtime": "loaded",
+      "warmups": 10,
+      "measured": 100,
+      "resources": {
+        "observers": 0,
+        "pendingTimers": 0
+      },
+      "metrics": {
+        "edit": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 13.900000002235174,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "reorder": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 14,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "body": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 15,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "table": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 14.599999997764826,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "invalid-repair": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 27.800000000745058,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        },
+        "unrelated": {
+          "count": 100,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "latencyMedian": 13.600000001490116,
+          "observerCpu": 0,
+          "timerCpu": 0,
+          "callbacks": 0,
+          "passes": 0,
+          "writes": 0
+        }
+      }
+    }
+  },
+  "commands": [
+    {
+      "command": "env GSD_FIXTURE_MANIFEST=test/fixtures/manifest.json npm --prefix . run test:recon",
+      "exit_code": 0,
+      "output": "\n> zhroma@0.0.0 test:recon\n> node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js\n\n✔ approval record covers exactly every devDependency with no duplicate rows (0.500167ms)\n✔ happy-dom approval agrees with package.json and the resolved lockfile version (0.09075ms)\n✔ vitest approval agrees with package.json and the resolved lockfile version (0.034333ms)\n✔ every approval row has a closed attestation state and a basis and date (0.09575ms)\n✔ independence is recorded separately as unconfirmed with the verbatim answer (0.079417ms)\n✔ keeps a zero-row observation as an explicit interaction block (1.143916ms)\n✔ admits the repository interaction evidence after the human gate (2.404625ms)\n✔ admits positive, scenario-bound normal, hover, and selected paint evidence (0.652792ms)\n✔ rejects verified evidence without positive counts or distinct paint observations (0.288709ms)\n✔ rejects incomplete or wrongly attributed verified evidence (0.397833ms)\n✔ fails closed on raw or unexpected evidence without echoing sensitive values (0.2325ms)\n✔ does not accept host.shadowRoot === null as Shadow DOM proof (0.080208ms)\n✔ parses only the named interaction ledger section (0.056459ms)\n✔ canonicalizes whitespace and case before paint distinctness (0.171917ms)\n✔ paint functions reject arbitrary words inside otherwise recognized syntax (0.125833ms)\n✔ bounds computed paint serialization and numeric channels (0.158125ms)\n✔ CLI emits stable codes without echoing an unknown status or duplicate id (200.940292ms)\n✔ CLI rejects an unknown mode with a value-free argument code (98.94ms)\n✔ in-process failures are ReconGateError instances with a fixed message and code (0.2445ms)\n✔ accepts a complete synthetic entry in evidence mode only (0.667875ms)\n✔ evidence mode accepts a complete terminal entry without a final verdict (0.052959ms)\n✔ rejects missing required fields, unknown statuses, and absent scenarios (0.117833ms)\n✔ rejects duplicate entry ids and entries whose heading disagrees with id (0.073375ms)\n✔ final mode requires one explicit recognized verdict (0.081667ms)\n✔ an unresolved English-path item fails evidence and final modes (0.093042ms)\n✔ outside-scope status is reserved for explicitly non-English work (0.079833ms)\n✔ rejects an unsupported validator mode (0.031459ms)\n✔ repository ledger admits terminal evidence for every English-path question (1.03075ms)\n✔ final mode binds the complete repository ledger to admitted scenarios (2.590959ms)\n✔ final proceed fails closed when interaction paint evidence is not positive (0.581459ms)\n✔ CLI rejects omitted and extra arguments for evidence and final modes (293.023417ms)\n✔ final CLI rejects active hash-matching fixtures through the shared validator (102.580541ms)\n✔ final CLI rejects an in-corpus symlink to an external fixture (106.776041ms)\n✔ assumptions contract preserves seven rows with six gating proofs and one flagged exception (0.362542ms)\n✔ required evidence rejects inadmissible statuses and scenario sets (6.802792ms)\n✔ required contracts exactly match recorded evidence including disproved findings (0.575667ms)\n✔ empty ledgers and blank required fields reject with stable codes (0.123917ms)\n✔ blocker ordering does not depend on ledger section order (1.061666ms)\n▶ final gate audit regressions\n  ✔ CLI never echoes a supplied private ledger path unless debug is exactly 1 (616.071625ms)\n  ✔ final gate rejects arbitrary private paint (0.877625ms)\n  ✔ final gate rejects paint differing only by whitespace and case (0.557709ms)\n  ✔ required evidence cannot be relabeled as localization-only (5.56525ms)\n  ✔ CR-08: disproved identifiers with intact prose cannot authorize fallback (0.532542ms)\n  ✔ CR-10: declared-input-unresolved blocks a gating row (0.524209ms)\n✔ final gate audit regressions (624.334875ms)\n✔ proven fallback requires an existing proof path (0.527333ms)\n✔ verdict authorization enums and fallback states are closed (1.977917ms)\n✔ null-shadowRoot alone does not rule out a closed root (0.433708ms)\n✔ resolved gating rows need bound proof references (1.435459ms)\n✔ the non-gating assumption must be surfaced by exact name (0.746084ms)\n✔ assumption section and table shape are required (0.7765ms)\n✔ audit: private words inside CSS functions cannot satisfy paint evidence (0.890792ms)\n✔ audit: existing unrelated test files cannot prove a fallback rung (1.012666ms)\n✔ audit: new verdict metadata uses closed identifiers and proof tokens (1.121375ms)\n✔ final interaction owner vocabulary matches row and direct-cell support (0.630167ms)\n✔ audit: equivalent transparent paint cannot masquerade as distinct states (0.485459ms)\n✔ rejects NFD content against NFC denylist with value-free findings (1.090542ms)\n✔ rejects NFC content against NFD denylist with value-free findings (0.284167ms)\n✔ rejects case folding after normalization with value-free findings (0.062334ms)\n✔ admits structurally useful deterministic sanitized markup (0.074666ms)\n✔ rejects missing or empty capture-specific denylists (0.092875ms)\n✔ rejects every generic forbidden class with stable structured findings (4.424625ms)\n✔ rejects inline handlers, frames, style resources, and JSON state (0.114167ms)\n✔ rejects every capture-specific denylist token without echoing values (0.136083ms)\n✔ deduplicates overlapping matches and returns findings in stable order (0.111291ms)\n✔ rejects non-string content without inspecting or logging it (0.075959ms)\nℹ tests 65\nℹ suites 1\nℹ pass 65\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1563.783792\n\n RUN  v4.1.11 /Users/mike/code/zhroma\n\nLIVE ACCEPTANCE STATUS: passed\nPHASE 03 LIVE ACCEPTANCE STATUS: human_needed\nPHASE 04 LIVE ACCEPTANCE STATUS: human_needed\n\n Test Files  22 passed (22)\n      Tests  975 passed (975)\n   Start at  12:30:39\n   Duration  16.56s (transform 787ms, setup 0ms, import 3.53s, tests 59.57s, environment 642ms)\n\n"
+    },
+    {
+      "command": "npm run test:mutants",
+      "exit_code": 0,
+      "output": "\n> zhroma@0.0.0 test:mutants\n> node scripts/verify-mutation-kills.js\n\n{\"id\":\"worker-lasterror\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a read that fails while still delivering values leaves the worker preference unconfirmed\",\"assertion\":\"[mutant:worker-lasterror]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-lasterror]: expected true to be null // Object.is equality\"}}\n{\"id\":\"content-lasterror\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a read that fails while still delivering values leaves the content script dormant\",\"assertion\":\"[mutant:content-lasterror]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:content-lasterror]: expected [ 'Urgent', 'High', 'Normal', 'Low' ] to deeply equal []\"}}\n{\"id\":\"worker-status-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers get-status is unavailable for that tab alone\",\"assertion\":\"[mutant:worker-status-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-status-unbounded]: expected null not to be null\"}}\n{\"id\":\"worker-apply-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers apply-preference costs one bounded wait, not the off switch\",\"assertion\":\"[mutant:worker-apply-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-apply-unbounded]: expected 4002 to be less than 4000\"}}\n{\"id\":\"worker-status-frameid\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers get-status is unavailable for that tab alone\",\"assertion\":\"[mutant:worker-status-frameid]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-status-frameid]: expected [ …(3) ] to deeply equal []\"}}\n{\"id\":\"worker-apply-frameid\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/failure-seam.test.js\",\"test\":\"a top frame that never answers apply-preference costs one bounded wait, not the off switch\",\"assertion\":\"[mutant:worker-apply-frameid]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:worker-apply-frameid]: expected [ Array(1) ] to deeply equal []\"}}\n{\"id\":\"harness-drain-bound\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/harness-reliability.test.js\",\"test\":\"bounded Chrome harness drain reports reentrant deliveries\",\"assertion\":\"[harness:bounded-drain]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [harness:bounded-drain]: expected null to be +0 // Object.is equality\"}}\n{\"id\":\"malformed-english-blame\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/diagnosis.test.js\",\"test\":\"malformed English shell: underscore English reports structure across content, worker and popup\",\"assertion\":\"[locale:malformed-english-reason]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [locale:malformed-english-reason] underscore English: expected 'This interface language is not suppor…' to be 'Zhroma cannot read this view\\\\'s ticke…' // Object.is equality\"}}\n{\"id\":\"selector-family-regression\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/runtime-contract.test.js\",\"test\":\"happy-dom secondary model: four CSS rules map exact labels to alpha backgrounds and only direct ticket cells\",\"assertion\":\"[locale:actual-selector-family]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [locale:actual-selector-family]: expected [] to deeply equal [ Array(16) ]\"}}\n{\"id\":\"popup-ask-unbounded\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a worker that never answers set-enabled costs one bounded wait and the ratified line\",\"assertion\":\"[mutant:popup-ask-unbounded]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-ask-unbounded]: expected null not to be null\"}}\n{\"id\":\"popup-no-revert\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a reply reporting the save failed returns the switch to the value storage still holds\",\"assertion\":\"[mutant:popup-no-revert]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-no-revert]: expected false to be true // Object.is equality\"}}\n{\"id\":\"popup-stays-disabled\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a reply reporting the save failed returns the switch to the value storage still holds\",\"assertion\":\"[mutant:popup-stays-disabled]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-stays-disabled]: expected true to be false // Object.is equality\"}}\n{\"id\":\"popup-focus-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/popup-recovery.test.js\",\"test\":\"a keyboard agent gets the switch back after a failed save\",\"assertion\":\"[mutant:popup-focus-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-focus-guard]: expected HTMLBodyElement{ …(49) } to be HTMLInputElement{ …(2), …(58) } // Object.is equality\"}}\n{\"id\":\"apply-fresh-diagnosis\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"same-document replacement after captured apply from false with responsive fresh status\",\"assertion\":\"[review:apply-current-diagnosis]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:apply-current-diagnosis]: expected 'working' to be 'neutral' // Object.is equality\"}}\n{\"id\":\"popup-write-epoch\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"popup true held at icon refuses completed opposite write in neutral view\",\"assertion\":\"[review:post-wait-preference-certainty]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:post-wait-preference-certainty]: expected true to be null // Object.is equality\"}}\n{\"id\":\"apply-document-lifetime\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"captured apply from false after navigation preserves only current application\",\"assertion\":\"[review:apply-document-lifetime]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:apply-document-lifetime]: expected true to be false // Object.is equality\"}}\n{\"id\":\"popup-post-action-status\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"popup status after held icon with invalidation true is current\",\"assertion\":\"[review:popup-post-action-current]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:popup-post-action-current]: expected 'working' to be 'unavailable' // Object.is equality\"}}\n{\"id\":\"resume-read-readiness\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"restored true reads false with immediate stays unconfirmed until fresh read\",\"assertion\":\"[review:resume-unconfirmed-no-markers]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [review:resume-unconfirmed-no-markers]: expected [ 'Urgent', 'High', 'Normal', 'Low' ] to deeply equal []\"}}\n{\"id\":\"confirmed-write-revert\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"joint table true write=immediate read=rejected apply=success\",\"assertion\":\"[outcome:confirmed-write-checkbox]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:confirmed-write-checkbox]: expected true to be false // Object.is equality\"}}\n{\"id\":\"write-timeout-as-failure\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"native deferred from true remains unknown through expiry and fresh recovery\",\"assertion\":\"[outcome:false-timeout-failure]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:false-timeout-failure]: expected false to be null // Object.is equality\"}}\n{\"id\":\"timeout-releases-writer\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"a fresh request after observation expiry cannot overlap the still-issued native write\",\"assertion\":\"[outcome:post-timeout-write-exclusion]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:post-timeout-write-exclusion]: expected 2 to be 1 // Object.is equality\"}}\n{\"id\":\"expired-request-dispatch\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"admission overflow in an opposite popup never confirms an obsolete position\",\"assertion\":\"[outcome:expired-request-dispatch]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:expired-request-dispatch]: expected [ { enabled: false }, …(31) ] to deeply equal [ { enabled: false } ]\"}}\n{\"id\":\"popup-stale-refresh\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"opening refresh excludes changes and captured late reply cannot overwrite fresh recovery\",\"assertion\":\"[outcome:opening-refresh-excludes-change]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:opening-refresh-excludes-change]: expected [ { enabled: false } ] to deeply equal []\"}}\n{\"id\":\"whole-request-deadline\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"sequential waits spend one arrival budget rather than renewing every hop\",\"assertion\":\"[outcome:sequential-budget]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:sequential-budget]: expected undefined to be defined\"}}\n{\"id\":\"pending-reopen-certainty\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/preference-outcome.test.js\",\"test\":\"native callback-held from true remains unknown through expiry and fresh recovery\",\"assertion\":\"[outcome:pending-reopen-mixed]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:pending-reopen-mixed]: expected false to be true // Object.is equality\"}}\n{\"id\":\"late-action-reconciliation\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"late native icon preserves exclusion and reconciles newest projection\",\"assertion\":\"[outcome:late-native-reconciled]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [outcome:late-native-reconciled] icon: expected { icon: 'icons/working.png', …(1) } to deeply equal { icon: 'icons/neutral.png', …(1) }\"}}\n{\"id\":\"request-id-echo\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so\",\"assertion\":\"[mutant:request-id-echo]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:request-id-echo]: expected 'Tinting is off' to be 'No readable view is connected' // Object.is equality\"}}\n{\"id\":\"status-reply-gate\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"a status reply carrying an extra member beyond the four the gate names is refused, and the tab reports the connection fact\",\"assertion\":\"[mutant:status-reply-gate]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:status-reply-gate]: expected { icon: 'icons/working.png', …(1) } to deeply equal { icon: 'icons/neutral.png', …(1) }\"}}\n{\"id\":\"diagnosis-pairing\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"an unpaired combination leaves a clean fallback, never a half-written toolbar\",\"assertion\":\"[mutant:diagnosis-pairing]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:diagnosis-pairing]: expected { icon: 'icons/missing.png', …(1) } to deeply equal { icon: 'icons/neutral.png', …(1) }\"}}\n{\"id\":\"popup-valid-gate\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/worker-integrity.test.js\",\"test\":\"a set-enabled reply carrying an out-of-set status is refused, and the popup claims nothing\",\"assertion\":\"[mutant:popup-valid-gate]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-valid-gate]: expected 'No readable view is connected' to be 'Zhroma could not confirm that setting' // Object.is equality\"}}\n{\"id\":\"preference-serialization\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"two popups asking for opposite values are serialized, and neither inverts the other\",\"assertion\":\"[mutant:preference-serialization]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:preference-serialization] 2 preference writes in flight at once: expected 2 to be less than 2\"}}\n{\"id\":\"tabs-onremoved-listener\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"closure during held icon releases entries and forbids stale follow-on paint\",\"assertion\":\"[mutant:tabs-onremoved-listener]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:tabs-onremoved-listener]: expected 2 to be 1 // Object.is equality\"}}\n{\"id\":\"tabs-onremoved-delete\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"repeated create-close cycles and reused ids cannot retain or resurrect a dead tab\",\"assertion\":\"[mutant:tabs-onremoved-delete]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:tabs-onremoved-delete]: expected 3 to be 2 // Object.is equality\"}}\n{\"id\":\"project-guard-after-status\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a superseded status reply is discarded before the preference is ever read\",\"assertion\":\"[mutant:project-guard-after-status]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:project-guard-after-status]: expected 1 to be +0 // Object.is equality\"}}\n{\"id\":\"apply-action-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a generation bump between the icon and the title write stops the superseded title\",\"assertion\":\"[mutant:apply-action-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:apply-action-guard]: expected [ { tabId: 7, …(1) } ] to deeply equal []\"}}\n{\"id\":\"popup-status-guard\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a superseded popup projection reports the connection line and still shows the confirmed preference\",\"assertion\":\"[mutant:popup-status-guard]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:popup-status-guard]: expected 'Zhroma could not confirm that setting' to be 'No readable view is connected' // Object.is equality\"}}\n{\"id\":\"project-queue\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a slow earlier reply cannot repaint over a newer projection\",\"assertion\":\"[mutant:project-queue]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:generation-counter] [mutant:project-queue]: expected [ { tabId: 7, …(1) }, …(1) ] to deeply equal []\"}}\n{\"id\":\"generation-counter\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"a slow earlier reply cannot repaint over a newer projection\",\"assertion\":\"[mutant:generation-counter]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:generation-counter] [mutant:project-queue]: expected [ { tabId: 7, …(1) }, …(1) ] to deeply equal []\"}}\n{\"id\":\"status-catch-reports-unavailable\",\"verdict\":\"KILLED\",\"evidence\":{\"suite\":\"test/extension/toolbar-popup.test.js\",\"test\":\"no receiver reads as unavailable and never as a diagnosis about the view\",\"assertion\":\"[mutant:status-catch-reports-unavailable]\",\"kind\":\"behavioral\",\"message\":\"AssertionError: [mutant:status-catch-reports-unavailable]: expected { icon: 'icons/working.png', …(1) } to deeply equal { icon: 'icons/neutral.png', …(1) }\"}}\nMUTATION KILLS: 39/39 killed\n"
+    },
+    {
+      "command": "node scripts/run-tint-workload.js --size 30 --mode enabled --smoke",
+      "exit_code": 0,
+      "output": "TINT WORKLOAD SMOKE: passed\n{\n  \"identity\": {\n    \"hashes\": {\n      \"manifest.json\": \"dafa656a55a1b69b42d4aa6490101e593bc9eea36afe35feacf34f7090b768e5\",\n      \"content.js\": \"c9e83c837e4933827853a03bc9d7b63f308f403d679a8dc5c34701a6792b3126\",\n      \"zhroma.css\": \"8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0\"\n    },\n    \"browser\": \"Chrome/153.0.8010.37\",\n    \"revision\": \"@b75a5a95ea1a1b55bdbfd6d9f42d47be7507fb8b\",\n    \"os\": \"darwin 27.0.0 arm64\",\n    \"cpu\": \"Apple M5 Max\",\n    \"cpuThrottle\": 1,\n    \"headed\": false,\n    \"harnessHash\": \"285074ead931dde0f5212951835e10da5e1fb70ba1f8d1a51142ee93b715617b\"\n  },\n  \"status\": \"smoke_passed\",\n  \"metrics\": {\n    \"edit\": {\n      \"count\": 1,\n      \"median\": 0.5,\n      \"p95\": 0.5,\n      \"max\": 0.5,\n      \"latencyMedian\": 18.300000000745058,\n      \"observerCpu\": 0.30000000074505806,\n      \"timerCpu\": 0.19999999925494194,\n      \"callbacks\": 4,\n      \"passes\": 1,\n      \"writes\": 2\n    }\n  }\n}\n"
+    },
+    {
+      "command": "runWorkload sequential seven size/mode combinations; smoke:false,headed:false,profile:false,output:/tmp/zhroma-04-20-final-samples-20260911.json",
+      "exit_code": 0,
+      "output": "START 30 enabled 2026-09-11T09:24:17.212Z\nDONE 30 enabled passed\nSTART 30 disabled 2026-09-11T09:24:41.312Z\nDONE 30 disabled passed\nSTART 200 enabled 2026-09-11T09:25:01.738Z\nDONE 200 enabled passed\nSTART 200 disabled 2026-09-11T09:25:27.654Z\nDONE 200 disabled passed\nSTART 1000 enabled 2026-09-11T09:25:49.459Z\nDONE 1000 enabled passed\nSTART 1000 disabled 2026-09-11T09:26:28.682Z\nDONE 1000 disabled passed\nSTART 30 dormant 2026-09-11T09:26:59.161Z\nDONE 30 dormant passed\n"
+    },
+    {
+      "command": "env GSD_FIXTURE_MANIFEST=test/fixtures/manifest.json npm --prefix . run test:recon (after cycle2 repairs)",
+      "exit_code": 0,
+      "output": "\n> zhroma@0.0.0 test:recon\n> node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js\n\n✔ approval record covers exactly every devDependency with no duplicate rows (0.516834ms)\n✔ happy-dom approval agrees with package.json and the resolved lockfile version (0.080709ms)\n✔ vitest approval agrees with package.json and the resolved lockfile version (0.032541ms)\n✔ every approval row has a closed attestation state and a basis and date (0.092ms)\n✔ independence is recorded separately as unconfirmed with the verbatim answer (0.08725ms)\n✔ keeps a zero-row observation as an explicit interaction block (0.9945ms)\n✔ admits the repository interaction evidence after the human gate (2.13625ms)\n✔ admits positive, scenario-bound normal, hover, and selected paint evidence (0.602459ms)\n✔ rejects verified evidence without positive counts or distinct paint observations (0.260458ms)\n✔ rejects incomplete or wrongly attributed verified evidence (0.382209ms)\n✔ fails closed on raw or unexpected evidence without echoing sensitive values (0.239209ms)\n✔ does not accept host.shadowRoot === null as Shadow DOM proof (0.086208ms)\n✔ parses only the named interaction ledger section (0.060667ms)\n✔ canonicalizes whitespace and case before paint distinctness (0.173708ms)\n✔ paint functions reject arbitrary words inside otherwise recognized syntax (0.114458ms)\n✔ bounds computed paint serialization and numeric channels (0.152542ms)\n✔ CLI emits stable codes without echoing an unknown status or duplicate id (195.01825ms)\n✔ CLI rejects an unknown mode with a value-free argument code (100.289ms)\n✔ in-process failures are ReconGateError instances with a fixed message and code (0.262792ms)\n✔ accepts a complete synthetic entry in evidence mode only (0.750334ms)\n✔ evidence mode accepts a complete terminal entry without a final verdict (0.057792ms)\n✔ rejects missing required fields, unknown statuses, and absent scenarios (0.119208ms)\n✔ rejects duplicate entry ids and entries whose heading disagrees with id (0.088042ms)\n✔ final mode requires one explicit recognized verdict (0.086709ms)\n✔ an unresolved English-path item fails evidence and final modes (0.128625ms)\n✔ outside-scope status is reserved for explicitly non-English work (0.137042ms)\n✔ rejects an unsupported validator mode (0.0545ms)\n✔ repository ledger admits terminal evidence for every English-path question (1.120166ms)\n✔ final mode binds the complete repository ledger to admitted scenarios (2.701292ms)\n✔ final proceed fails closed when interaction paint evidence is not positive (0.620708ms)\n✔ CLI rejects omitted and extra arguments for evidence and final modes (293.131042ms)\n✔ final CLI rejects active hash-matching fixtures through the shared validator (102.122291ms)\n✔ final CLI rejects an in-corpus symlink to an external fixture (101.835917ms)\n✔ assumptions contract preserves seven rows with six gating proofs and one flagged exception (0.369167ms)\n✔ required evidence rejects inadmissible statuses and scenario sets (6.74ms)\n✔ required contracts exactly match recorded evidence including disproved findings (0.534666ms)\n✔ empty ledgers and blank required fields reject with stable codes (0.111875ms)\n✔ blocker ordering does not depend on ledger section order (1.116792ms)\n▶ final gate audit regressions\n  ✔ CLI never echoes a supplied private ledger path unless debug is exactly 1 (618.203083ms)\n  ✔ final gate rejects arbitrary private paint (0.908583ms)\n  ✔ final gate rejects paint differing only by whitespace and case (0.62ms)\n  ✔ required evidence cannot be relabeled as localization-only (6.039667ms)\n  ✔ CR-08: disproved identifiers with intact prose cannot authorize fallback (0.6135ms)\n  ✔ CR-10: declared-input-unresolved blocks a gating row (0.560375ms)\n✔ final gate audit regressions (627.155417ms)\n✔ proven fallback requires an existing proof path (0.530708ms)\n✔ verdict authorization enums and fallback states are closed (2.266584ms)\n✔ null-shadowRoot alone does not rule out a closed root (0.68175ms)\n✔ resolved gating rows need bound proof references (1.1495ms)\n✔ the non-gating assumption must be surfaced by exact name (0.492333ms)\n✔ assumption section and table shape are required (0.567208ms)\n✔ audit: private words inside CSS functions cannot satisfy paint evidence (0.7925ms)\n✔ audit: existing unrelated test files cannot prove a fallback rung (0.946ms)\n✔ audit: new verdict metadata uses closed identifiers and proof tokens (1.368125ms)\n✔ final interaction owner vocabulary matches row and direct-cell support (0.472167ms)\n✔ audit: equivalent transparent paint cannot masquerade as distinct states (0.444375ms)\n✔ rejects NFD content against NFC denylist with value-free findings (1.080625ms)\n✔ rejects NFC content against NFD denylist with value-free findings (0.272166ms)\n✔ rejects case folding after normalization with value-free findings (0.059291ms)\n✔ admits structurally useful deterministic sanitized markup (0.074625ms)\n✔ rejects missing or empty capture-specific denylists (0.096791ms)\n✔ rejects every generic forbidden class with stable structured findings (4.2285ms)\n✔ rejects inline handlers, frames, style resources, and JSON state (0.079708ms)\n✔ rejects every capture-specific denylist token without echoing values (0.121ms)\n✔ deduplicates overlapping matches and returns findings in stable order (0.117334ms)\n✔ rejects non-string content without inspecting or logging it (0.079791ms)\nℹ tests 65\nℹ suites 1\nℹ pass 65\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1552.768792\n\n RUN  v4.1.11 /Users/mike/code/zhroma\n\nPHASE 03 LIVE ACCEPTANCE STATUS: human_needed\nLIVE ACCEPTANCE STATUS: passed\nPHASE 04 LIVE ACCEPTANCE STATUS: human_needed\n\n Test Files  22 passed (22)\n      Tests  985 passed (985)\n   Start at  12:42:10\n   Duration  17.31s (transform 699ms, setup 0ms, import 3.79s, tests 61.89s, environment 687ms)\n\n"
+    },
+    {
+      "command": "env GSD_FIXTURE_MANIFEST=test/fixtures/manifest.json npm --prefix . run test:recon (final cycle3 repairs)",
+      "exit_code": 0,
+      "output": "\n> zhroma@0.0.0 test:recon\n> node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js\n\n✔ approval record covers exactly every devDependency with no duplicate rows (0.523875ms)\n✔ happy-dom approval agrees with package.json and the resolved lockfile version (0.092334ms)\n✔ vitest approval agrees with package.json and the resolved lockfile version (0.031333ms)\n✔ every approval row has a closed attestation state and a basis and date (0.09825ms)\n✔ independence is recorded separately as unconfirmed with the verbatim answer (0.085625ms)\n✔ keeps a zero-row observation as an explicit interaction block (1.070167ms)\n✔ admits the repository interaction evidence after the human gate (2.307958ms)\n✔ admits positive, scenario-bound normal, hover, and selected paint evidence (0.639208ms)\n✔ rejects verified evidence without positive counts or distinct paint observations (0.271542ms)\n✔ rejects incomplete or wrongly attributed verified evidence (0.402084ms)\n✔ fails closed on raw or unexpected evidence without echoing sensitive values (0.233084ms)\n✔ does not accept host.shadowRoot === null as Shadow DOM proof (0.080458ms)\n✔ parses only the named interaction ledger section (0.056292ms)\n✔ canonicalizes whitespace and case before paint distinctness (0.176458ms)\n✔ paint functions reject arbitrary words inside otherwise recognized syntax (0.217042ms)\n✔ bounds computed paint serialization and numeric channels (0.195ms)\n✔ CLI emits stable codes without echoing an unknown status or duplicate id (204.643209ms)\n✔ CLI rejects an unknown mode with a value-free argument code (100.718292ms)\n✔ in-process failures are ReconGateError instances with a fixed message and code (0.252542ms)\n✔ accepts a complete synthetic entry in evidence mode only (0.677792ms)\n✔ evidence mode accepts a complete terminal entry without a final verdict (0.056458ms)\n✔ rejects missing required fields, unknown statuses, and absent scenarios (0.117ms)\n✔ rejects duplicate entry ids and entries whose heading disagrees with id (0.09225ms)\n✔ final mode requires one explicit recognized verdict (0.080416ms)\n✔ an unresolved English-path item fails evidence and final modes (0.120084ms)\n✔ outside-scope status is reserved for explicitly non-English work (0.079292ms)\n✔ rejects an unsupported validator mode (0.031792ms)\n✔ repository ledger admits terminal evidence for every English-path question (1.046584ms)\n✔ final mode binds the complete repository ledger to admitted scenarios (2.573542ms)\n✔ final proceed fails closed when interaction paint evidence is not positive (0.566292ms)\n✔ CLI rejects omitted and extra arguments for evidence and final modes (296.676083ms)\n✔ final CLI rejects active hash-matching fixtures through the shared validator (100.556209ms)\n✔ final CLI rejects an in-corpus symlink to an external fixture (102.947292ms)\n✔ assumptions contract preserves seven rows with six gating proofs and one flagged exception (0.355042ms)\n✔ required evidence rejects inadmissible statuses and scenario sets (6.507125ms)\n✔ required contracts exactly match recorded evidence including disproved findings (0.492708ms)\n✔ empty ledgers and blank required fields reject with stable codes (0.103333ms)\n✔ blocker ordering does not depend on ledger section order (0.98925ms)\n▶ final gate audit regressions\n  ✔ CLI never echoes a supplied private ledger path unless debug is exactly 1 (625.429166ms)\n  ✔ final gate rejects arbitrary private paint (0.851666ms)\n  ✔ final gate rejects paint differing only by whitespace and case (0.553ms)\n  ✔ required evidence cannot be relabeled as localization-only (5.404583ms)\n  ✔ CR-08: disproved identifiers with intact prose cannot authorize fallback (0.527417ms)\n  ✔ CR-10: declared-input-unresolved blocks a gating row (0.496542ms)\n✔ final gate audit regressions (633.453292ms)\n✔ proven fallback requires an existing proof path (0.50075ms)\n✔ verdict authorization enums and fallback states are closed (2.121417ms)\n✔ null-shadowRoot alone does not rule out a closed root (0.583042ms)\n✔ resolved gating rows need bound proof references (1.466458ms)\n✔ the non-gating assumption must be surfaced by exact name (0.546084ms)\n✔ assumption section and table shape are required (0.591542ms)\n✔ audit: private words inside CSS functions cannot satisfy paint evidence (0.801833ms)\n✔ audit: existing unrelated test files cannot prove a fallback rung (0.955417ms)\n✔ audit: new verdict metadata uses closed identifiers and proof tokens (1.096125ms)\n✔ final interaction owner vocabulary matches row and direct-cell support (0.707792ms)\n✔ audit: equivalent transparent paint cannot masquerade as distinct states (0.722709ms)\n✔ rejects NFD content against NFC denylist with value-free findings (1.125625ms)\n✔ rejects NFC content against NFD denylist with value-free findings (0.288916ms)\n✔ rejects case folding after normalization with value-free findings (0.062625ms)\n✔ admits structurally useful deterministic sanitized markup (0.072542ms)\n✔ rejects missing or empty capture-specific denylists (0.090291ms)\n✔ rejects every generic forbidden class with stable structured findings (4.297209ms)\n✔ rejects inline handlers, frames, style resources, and JSON state (0.087709ms)\n✔ rejects every capture-specific denylist token without echoing values (0.125917ms)\n✔ deduplicates overlapping matches and returns findings in stable order (0.119167ms)\n✔ rejects non-string content without inspecting or logging it (0.072125ms)\nℹ tests 65\nℹ suites 1\nℹ pass 65\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1581.818084\n\n RUN  v4.1.11 /Users/mike/code/zhroma\n\nPHASE 03 LIVE ACCEPTANCE STATUS: human_needed\nLIVE ACCEPTANCE STATUS: passed\nPHASE 04 LIVE ACCEPTANCE STATUS: human_needed\n\n Test Files  22 passed (22)\n      Tests  994 passed (994)\n   Start at  12:46:01\n   Duration  17.35s (transform 988ms, setup 0ms, import 3.59s, tests 63.00s, environment 624ms)\n\n"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension/phase-04-live-acceptance.test.js (final cycle3 repairs)",
+      "exit_code": 0,
+      "output": "\n RUN  v4.1.11 /Users/mike/code/zhroma\n\nPHASE 04 LIVE ACCEPTANCE STATUS: human_needed\n\n Test Files  1 passed (1)\n      Tests  94 passed (94)\n   Start at  12:45:58\n   Duration  1.71s (transform 24ms, setup 0ms, import 148ms, tests 1.50s, environment 0ms)\n\n"
+    }
+  ],
+  "red_evidence": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension/phase-04-live-acceptance.test.js -t \"primary English scope|English regional evidence\" --reporter=tap",
+      "exitCode": 1,
+      "targetTest": "English regional evidence cannot satisfy the non-English scenario",
+      "expected": "PHASE04_ACCEPTANCE_REJECTED language-context",
+      "actual": "validator admitted en-GB as non-English evidence",
+      "output": "TAP version 13\n1..1\nnot ok 1 - test/extension/phase-04-live-acceptance.test.js # time=18.87ms {\n    1..44\nok 1 - a complete honest pending record validates, and only a fully consistent live claim can pass # SKIP\nok 2 - all seventeen new live checks stay pending absent an actual observation # SKIP\nnot ok 3 - primary English scope admits the exact ordered supplemental descriptors without claiming observations # time=12.01ms\n        ---\n        error:\n            name: \"Error\"\n            message: \"PHASE04_ACCEPTANCE_REJECTED scope\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:90:70\"\n        ...\nnot ok 4 - English regional evidence cannot satisfy the non-English scenario # time=6.28ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:337:81\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\nok 5 - rejects forged pass with a still-pending check while passed is claimed # SKIP\nok 6 - rejects forged pass with an unresolved prohibition while passed is claimed # SKIP\nok 7 - rejects forged pass with an unconfirmed source while passed is claimed # SKIP\nok 8 - rejects missing check while passed is claimed # SKIP\nok 9 - rejects duplicated check ID while passed is claimed # SKIP\nok 10 - rejects extra check while passed is claimed # SKIP\nok 11 - rejects missing prohibition while passed is claimed # SKIP\nok 12 - rejects mixed asset hashes while passed is claimed # SKIP\nok 13 - rejects stale three-asset source binding while passed is claimed # SKIP\nok 14 - rejects missing packaged asset while passed is claimed # SKIP\nok 15 - rejects extra packaged asset while passed is claimed # SKIP\nok 16 - rejects stale derived settings while passed is claimed # SKIP\nok 17 - rejects restated prior-source status while passed is claimed # SKIP\nok 18 - rejects laundered prior-source pending count while passed is claimed # SKIP\nok 19 - rejects future observation date while passed is claimed # SKIP\nok 20 - rejects invalid observation date while passed is claimed # SKIP\nok 21 - rejects pre-confirmation observation while passed is claimed # SKIP\nok 22 - rejects synthetic evidence kind while passed is claimed # SKIP\nok 23 - rejects fixture result described as live while passed is claimed # SKIP\nok 24 - rejects ticket URL in evidence while passed is claimed # SKIP\nok 25 - rejects ticket identifier in evidence while passed is claimed # SKIP\nok 26 - rejects free-text language context while passed is claimed # SKIP\nok 27 - rejects language context on an unrelated check while passed is claimed # SKIP\nok 28 - rejects bare en claimed as an English REGIONAL locale while passed is claimed # SKIP\nok 29 - rejects a non-English tag claimed as an English regional locale while passed is claimed # SKIP\nok 30 - rejects a near-miss primary subtag claimed as English while passed is claimed # SKIP\nok 31 - rejects a missing language context on the English-regional check while passed is claimed # SKIP\nok 32 - rejects hidden defect while passed is claimed # SKIP\nok 33 - rejects failed row claimed as passed while passed is claimed # SKIP\nok 34 - rejects unavailable scenario claimed as observed while passed is claimed # SKIP\nok 35 - rejects a passed claim with missing-run timing evidence # SKIP\nok 36 - rejects a passed claim with slow-sample timing evidence # SKIP\nok 37 - rejects a passed claim with wrong-source timing evidence # SKIP\nok 38 - rejects a passed claim with three-of-six timing evidence # SKIP\nok 39 - rejects a passed claim with mislabelled-size timing evidence # SKIP\nok 40 - a failed observation derives gaps_found and a deferred one stays pending # SKIP\nok 41 - parser rejects duplicate JSON members and more than one canonical record # SKIP\nok 42 - the repository record binds to every current shipped byte and reports its actual status # SKIP\nok 43 - the repository record carries all three prohibition judgments as flagged-unverified # SKIP\nok 44 - the repository record preserves Phase 3 unchanged rather than laundering it # SKIP\n}\n\n# tests 44\n# pass 0\n# fail 2\n# skipped 42\n",
+      "normalization": "Vitest TAP omits node summary footer; appended measured 44 total, 2 failed, 42 filtered tests from actual run, no inferred result. Flattened nested Vitest TAP leaf indentation for node TAP parser; names/results unchanged."
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension/phase-04-live-acceptance.test.js -t 'canonical promotion' --reporter=tap",
+      "exitCode": 1,
+      "targetTest": "canonical promotion rejects a false checkbox without live evidence",
+      "expected": "canonical-promotion rejection",
+      "actual": "no error thrown for checked requirement",
+      "output": "TAP version 13\n1..1\nnot ok 1 - test/extension/phase-04-live-acceptance.test.js # time=10.48ms {\n    1..46\nok 1 - a complete honest pending record validates, and only a fully consistent live claim can pass # SKIP\nok 2 - all seventeen new live checks stay pending absent an actual observation # SKIP\nok 3 - primary English scope admits the exact ordered supplemental descriptors without claiming observations # SKIP\nok 4 - English regional evidence cannot satisfy the non-English scenario # SKIP\nnot ok 5 - canonical promotion rejects a false checkbox without live evidence # time=6.36ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:370:37\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\nnot ok 6 - canonical promotion rejects a false Complete without live evidence # time=3.57ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:370:37\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\nok 7 - rejects forged pass with a still-pending check while passed is claimed # SKIP\nok 8 - rejects forged pass with an unresolved prohibition while passed is claimed # SKIP\nok 9 - rejects forged pass with an unconfirmed source while passed is claimed # SKIP\nok 10 - rejects missing check while passed is claimed # SKIP\nok 11 - rejects duplicated check ID while passed is claimed # SKIP\nok 12 - rejects extra check while passed is claimed # SKIP\nok 13 - rejects missing prohibition while passed is claimed # SKIP\nok 14 - rejects mixed asset hashes while passed is claimed # SKIP\nok 15 - rejects stale three-asset source binding while passed is claimed # SKIP\nok 16 - rejects missing packaged asset while passed is claimed # SKIP\nok 17 - rejects extra packaged asset while passed is claimed # SKIP\nok 18 - rejects stale derived settings while passed is claimed # SKIP\nok 19 - rejects restated prior-source status while passed is claimed # SKIP\nok 20 - rejects laundered prior-source pending count while passed is claimed # SKIP\nok 21 - rejects future observation date while passed is claimed # SKIP\nok 22 - rejects invalid observation date while passed is claimed # SKIP\nok 23 - rejects pre-confirmation observation while passed is claimed # SKIP\nok 24 - rejects synthetic evidence kind while passed is claimed # SKIP\nok 25 - rejects fixture result described as live while passed is claimed # SKIP\nok 26 - rejects ticket URL in evidence while passed is claimed # SKIP\nok 27 - rejects ticket identifier in evidence while passed is claimed # SKIP\nok 28 - rejects free-text language context while passed is claimed # SKIP\nok 29 - rejects language context on an unrelated check while passed is claimed # SKIP\nok 30 - rejects bare en claimed as an English REGIONAL locale while passed is claimed # SKIP\nok 31 - rejects a non-English tag claimed as an English regional locale while passed is claimed # SKIP\nok 32 - rejects a near-miss primary subtag claimed as English while passed is claimed # SKIP\nok 33 - rejects a missing language context on the English-regional check while passed is claimed # SKIP\nok 34 - rejects hidden defect while passed is claimed # SKIP\nok 35 - rejects failed row claimed as passed while passed is claimed # SKIP\nok 36 - rejects unavailable scenario claimed as observed while passed is claimed # SKIP\nok 37 - rejects a passed claim with missing-run timing evidence # SKIP\nok 38 - rejects a passed claim with slow-sample timing evidence # SKIP\nok 39 - rejects a passed claim with wrong-source timing evidence # SKIP\nok 40 - rejects a passed claim with three-of-six timing evidence # SKIP\nok 41 - rejects a passed claim with mislabelled-size timing evidence # SKIP\nok 42 - a failed observation derives gaps_found and a deferred one stays pending # SKIP\nok 43 - parser rejects duplicate JSON members and more than one canonical record # SKIP\nok 44 - the repository record binds to every current shipped byte and reports its actual status # SKIP\nok 45 - the repository record carries all three prohibition judgments as flagged-unverified # SKIP\nok 46 - the repository record preserves Phase 3 unchanged rather than laundering it # SKIP\n}\n\n# tests 46\n# pass 0\n# fail 2\n# skipped 44\n",
+      "normalization": "Flattened Vitest leaf indentation and appended observed total2failed/44filtered; raw TAP retained"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension/phase-04-live-acceptance.test.js -t \"review gap:\" --reporter=tap",
+      "exitCode": 1,
+      "targetTest": "review gap: stale runtime_digest cannot satisfy technical readiness",
+      "expected": "stale report readiness false",
+      "actual": "stale report readiness true",
+      "output": "TAP version 13\n1..1\nnot ok 1 - test/extension/phase-04-live-acceptance.test.js # time=35.10ms {\n    1..82\nok 1 - a complete honest pending record validates, and only a fully consistent live claim can pass # SKIP\nok 2 - all seventeen new live checks stay pending absent an actual observation # SKIP\nok 3 - primary English scope admits the exact ordered supplemental descriptors without claiming observations # SKIP\nok 4 - English regional evidence cannot satisfy the non-English scenario # SKIP\nok 5 - canonical promotion rejects a false checkbox without live evidence # SKIP\nok 6 - canonical promotion rejects a false Complete without live evidence # SKIP\nok 7 - rejects English tag en in the non-English scenario # SKIP\nok 8 - rejects English tag EN in the non-English scenario # SKIP\nok 9 - rejects English tag en-GB in the non-English scenario # SKIP\nok 10 - rejects English tag EN-us in the non-English scenario # SKIP\nok 11 - rejects English tag En-gb in the non-English scenario # SKIP\nok 12 - accepts genuine regional English tag en-GB only in its own scenario # SKIP\nok 13 - accepts genuine regional English tag EN-us only in its own scenario # SKIP\nok 14 - accepts genuine regional English tag En-gb only in its own scenario # SKIP\nok 15 - rejects an inexact ordered scope descriptor list null # SKIP\nok 16 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\nok 17 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\nok 18 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\nok 19 - canonical promotion requires every mapped observation for FAIL-01 # SKIP\nok 20 - canonical promotion requires every mapped observation for FAIL-02 # SKIP\nok 21 - canonical promotion requires every mapped observation for FAIL-03 # SKIP\nok 22 - canonical promotion requires every mapped observation for FAIL-05 # SKIP\nok 23 - canonical promotion requires every mapped observation for CTRL-02 # SKIP\nok 24 - canonical promotion requires every mapped observation for CTRL-03 # SKIP\nok 25 - canonical promotion requires every mapped observation for CTRL-04 # SKIP\nok 26 - canonical promotion requires explicit codeReviewReady readiness # SKIP\nok 27 - canonical promotion requires explicit securityReviewReady readiness # SKIP\nok 28 - canonical promotion requires explicit technicalTestsPassed readiness # SKIP\nok 29 - canonical promotion requires explicit historicResetAcknowledged readiness # SKIP\nok 30 - canonical Pending and Gaps Found remain legal without review or observations and ignore historical summaries # SKIP\nok 31 - actual canonical requirements cannot be promoted by bookkeeping without current evidence # SKIP\nnot ok 32 - review gap: FAIL-01 cannot be Complete while unreadable states are unobserved # time=15.71ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:471:127\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\nnot ok 33 - review gap: FAIL-05 cannot be Complete while unreadable states are unobserved # time=5.53ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:471:127\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\nnot ok 34 - review gap: stale runtime_digest cannot satisfy technical readiness # time=1.03ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:477:34\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 35 - review gap: stale reviewed_revision cannot satisfy technical readiness # time=0.27ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:477:34\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 36 - review gap: malformed en-12 is not genuine regional English evidence # time=4.98ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:483:81\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\nnot ok 37 - review gap: malformed en-GB-GB is not genuine regional English evidence # time=4.94ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:483:81\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\nnot ok 38 - review gap: hypothetical baseline remains pending after legitimate canonical promotion # time=2.03ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected '# Requirements: Zhroma\\n\\n**Defined:*…' to contain '- [ ] **FAIL-01**:'\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:488:22\"\n        actual: \"# Requirements: Zhroma\n\n**Defined:** 2026-09-02\n**Core Value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.\n\n## Phase 03 verification checkpoint — 2026-09-09\n\nIndependent 03-VERIFICATION.md accounts for all eight Phase 03 IDs. DETECT-03/04 and LIVE-01/02/03/04 are satisfied within the admitted English current-view evidence scope; LIVE-05 and FAIL-04 need human evidence. Eleven live checks passed; nine remain untested after user-requested UAT skipping. Formal phase-completion checkboxes and traceability remain pending; no missing evidence is treated as a pass. See .planning/phases/03-the-tint-survives-everything/03-HANDOFF.md for planning inputs and limits.\n\n## v1 Requirements\n\nRequirements for initial release. Each maps to roadmap phases.\n\n### Reconnaissance\n\n<!-- Zendesk publishes no DOM contract for the agent-view ticket table. These are gating deliverables, not user-facing features — everything downstream is built on assumptions until they are answered. -->\n\n- [x] **RECON-01**: A captured `outerHTML` fixture of a real Zendesk agent view is committed to the repo and usable as a test fixture\n- [x] **RECON-02**: Every English-path DOM assumption in the research Verification Ledger is answered against a live English instance, with answers recorded in the repo; localization-only items are explicitly marked unverified and outside Phase 1\n- [x] **RECON-03**: The two terminal risks are explicitly ruled in or out — a closed Shadow DOM around the ticket list, and the absence of `data-garden-id` attributes in a current agent view\n\n### Detection\n\n- [x] **DETECT-01**: Extension locates the Priority column by its header rather than by column position, so it survives user-configured column order\n- [x] **DETECT-02**: Extension reads each ticket row's priority and resolves it to one of Urgent, High, Normal or Low\n- [ ] **DETECT-03**: Extension resolves headers within the same table as the rows it tints, given that agent views render a sticky duplicate header table alongside the body table\n- [ ] **DETECT-04**: Extension distinguishes grouped-view group rows from ticket rows and never tints a group row\n\n### Tinting\n\n- [x] **TINT-01**: Each ticket row is tinted according to its priority, with a visually distinct tint for each of the four values\n- [x] **TINT-02**: Row text remains legible over every tint\n- [x] **TINT-03**: Zendesk's own row states — hover, selected, unread/bold — remain visible and are not suppressed by the tint\n- [x] **TINT-04**: The tint is applied as a translucent layer that composites over whatever Zendesk paints, rather than replacing the row's background colour\n- [x] **TINT-05**: All colour is declared in a stylesheet driven by a single data attribute, so the visual treatment can be changed without touching detection logic\n\n### Liveness\n\n- [ ] **LIVE-01**: Tints re-apply automatically after a view is sorted\n- [ ] **LIVE-02**: Tints re-apply automatically after a view is refreshed\n- [ ] **LIVE-03**: Tints re-apply automatically when the agent switches views, with no page load involved\n- [ ] **LIVE-04**: Rows revealed by scrolling are tinted\n- [ ] **LIVE-05**: Scrolling and interacting with a large view is no less responsive with the extension enabled than without it\n\n### Failure Handling\n\n- [x] **FAIL-01**: Extension distinguishes three states — tinting normally, the view has no Priority column, and priority values are unreadable in this agent's locale\n- [ ] **FAIL-02**: When a view genuinely has no Priority column, an unobtrusive hint tells the agent to add one — shown only when that diagnosis is certain\n- [ ] **FAIL-03**: When priority values cannot be read because the agent's locale is not supported, no hint claiming a missing column is shown\n- [ ] **FAIL-04**: When the extension cannot do its job for any reason, the Zendesk page is left visually untouched rather than partially or wrongly styled\n- [ ] **FAIL-05**: The agent can see which of the three states applies from the toolbar icon, without opening anything\n\n### Control\n\n- [x] **CTRL-01**: Extension works immediately on install with nothing to configure\n- [ ] **CTRL-02**: Agent can turn tinting off and back on from the toolbar popup\n- [ ] **CTRL-03**: The on/off setting persists across browser restarts\n- [ ] **CTRL-04**: Turning tinting off clears tints from the current view without requiring a page refresh\n\n### Distribution\n\n- [ ] **STORE-01**: Extension is published as a public Chrome Web Store listing\n- [x] **STORE-02**: Extension declares no `host_permissions` block and requests `storage` as its only permission\n- [x] **STORE-03**: The content script matches only `https://*.zendesk.com/agent/*`, excluding the customer-facing Help Center on the same domain\n- [ ] **STORE-04**: A privacy policy is published, linked from the listing, and discloses that no data is collected\n- [x] **STORE-05**: Shipped code is unminified and byte-identical to repo source\n- [ ] **STORE-06**: A manual pre-submission smoke checklist lives in the repo and is run before each submission\n\n## v2 Requirements\n\nDeferred to future release. Tracked but not in current roadmap.\n\n### Appearance\n\n- **APPR-01**: Agent can choose the visual treatment — full-row tint, left-edge stripe, or coloured priority pill\n- **APPR-02**: Agent can customise the colour used for each priority\n- **APPR-03**: Tints are readable in Zendesk's dark mode, including a theme switch mid-session\n- **APPR-04**: Palette is colourblind-safe, with lightness varying monotonically across the four priorities\n\n### Reach\n\n- **REACH-01**: Priority values are recognised in the most common Zendesk agent locales beyond English\n- **REACH-02**: Tinting extends to search results and org/user ticket lists\n- **REACH-03**: Agent can report a breakage from the popup via a pre-filled GitHub issue\n\n## Out of Scope\n\nExplicitly excluded. Documented to prevent scope creep.\n\n| Feature | Reason |\n|---------|--------|\n| Dark mode support | Deferred by explicit decision. The CTRL-02 toggle gives dark-mode agents an escape hatch instead of an uninstall. Combines with the palette work in v2 |\n| Colourblind-safe palette / hue constraints | Deferred by explicit decision, including hue selection. Retrofit cost accepted; lands with dark mode as one combined palette job |\n| Fetching priority from the Zendesk API | Needs auth handling and a much heavier permissions ask at review, to cover views the agent can fix themselves by adding a column |\n| SPA route-change detection | An anti-requirement. History patching is broken by design from a content script's isolated world, and a route change is already just a large DOM mutation the observer handles |\n| Colouring the open ticket page, tab strip, search results, org/user lists | v1 is agent views only — that is where list-scanning under time pressure happens |\n| Any options page beyond the on/off toggle | Configuration is the friction the incumbent competitor imposes and Zhroma's wedge is not having it |\n| Telemetry, analytics, or any network call | The zero-network promise is what makes the store listing and enterprise allowlisting simple |\n| Cascade layers (`@layer`) for extension CSS | Verified harmful here: unlayered host declarations beat all layered ones, inverting the intended precedence |\n| A build step or bundler | Shipped bytes must equal repo bytes — the cleanest story at store review, and adequate at this size |\n| Firefox, Edge, Safari ports | Chrome first; other browsers only on demand |\n| Colour-coding by status, SLA, assignee or tags | Priority is the single purpose, and single purpose is a store review policy |\n\n## Traceability\n\nWhich phases cover which requirements. Updated during roadmap creation.\n\n| Requirement | Phase | Status |\n|-------------|-------|--------|\n| RECON-01 | Phase 1 | Complete |\n| RECON-02 | Phase 1 | Complete |\n| RECON-03 | Phase 1 | Complete |\n| DETECT-01 | Phase 2 | Complete |\n| DETECT-02 | Phase 2 | Complete |\n| DETECT-03 | Phase 3 | Pending |\n| DETECT-04 | Phase 3 | Pending |\n| TINT-01 | Phase 2 | Complete |\n| TINT-02 | Phase 2 | Complete |\n| TINT-03 | Phase 2 | Complete |\n| TINT-04 | Phase 2 | Complete |\n| TINT-05 | Phase 2 | Complete |\n| LIVE-01 | Phase 3 | Pending |\n| LIVE-02 | Phase 3 | Pending |\n| LIVE-03 | Phase 3 | Pending |\n| LIVE-04 | Phase 3 | Pending |\n| LIVE-05 | Phase 3 | Pending |\n| FAIL-01 | Phase 4 | Complete |\n| FAIL-02 | Phase 4 | Gaps Found |\n| FAIL-03 | Phase 4 | Pending |\n| FAIL-04 | Phase 3 | Pending |\n| FAIL-05 | Phase 4 | Gaps Found |\n| CTRL-01 | Phase 2 | Complete |\n| CTRL-02 | Phase 4 | Gaps Found |\n| CTRL-03 | Phase 4 | Gaps Found |\n| CTRL-04 | Phase 4 | Pending |\n| STORE-01 | Phase 5 | Pending |\n| STORE-02 | Phase 2 | Complete |\n| STORE-03 | Phase 2 | Complete |\n| STORE-04 | Phase 5 | Pending |\n| STORE-05 | Phase 2 | Complete |\n| STORE-06 | Phase 5 | Pending |\n\n**Coverage:**\n\n- v1 requirements: 32 total\n- Mapped to phases: 32\n- Unmapped: 0 ✓\n\n| Phase | Requirements | Count |\n|-------|--------------|-------|\n| Phase 1 — DOM Recon Spike | RECON-01, RECON-02, RECON-03 | 3 |\n| Phase 2 — First Tint on a Real View | DETECT-01, DETECT-02, TINT-01, TINT-02, TINT-03, TINT-04, TINT-05, CTRL-01, STORE-02, STORE-03, STORE-05 | 11 |\n| Phase 3 — The Tint Survives Everything | DETECT-03, DETECT-04, LIVE-01, LIVE-02, LIVE-03, LIVE-04, LIVE-05, FAIL-04 | 8 |\n| Phase 4 — Honest Failure and an Off Switch | FAIL-01, FAIL-02, FAIL-03, FAIL-05, CTRL-02, CTRL-03, CTRL-04 | 7 |\n| Phase 5 — Published | STORE-01, STORE-04, STORE-06 | 3 |\n\n---\n*Requirements defined: 2026-09-02*\n*Last updated: 2026-09-02 after roadmap creation (traceability mapped)*\n\"\n        expected: \"- [ ] **FAIL-01**:\"\n        ...\nok 39 - rejects stale or false harness timing evidence # SKIP\nok 40 - rejects stale or false dormant-missing timing evidence # SKIP\nok 41 - rejects stale or false dormant-absent timing evidence # SKIP\nok 42 - rejects stale or false dormant-resources timing evidence # SKIP\nok 43 - rejects forged pass with a still-pending check while passed is claimed # SKIP\nok 44 - rejects forged pass with an unresolved prohibition while passed is claimed # SKIP\nok 45 - rejects forged pass with an unconfirmed source while passed is claimed # SKIP\nok 46 - rejects missing check while passed is claimed # SKIP\nok 47 - rejects duplicated check ID while passed is claimed # SKIP\nok 48 - rejects extra check while passed is claimed # SKIP\nok 49 - rejects missing prohibition while passed is claimed # SKIP\nok 50 - rejects mixed asset hashes while passed is claimed # SKIP\nok 51 - rejects stale three-asset source binding while passed is claimed # SKIP\nok 52 - rejects missing packaged asset while passed is claimed # SKIP\nok 53 - rejects extra packaged asset while passed is claimed # SKIP\nok 54 - rejects stale derived settings while passed is claimed # SKIP\nok 55 - rejects restated prior-source status while passed is claimed # SKIP\nok 56 - rejects laundered prior-source pending count while passed is claimed # SKIP\nok 57 - rejects future observation date while passed is claimed # SKIP\nok 58 - rejects invalid observation date while passed is claimed # SKIP\nok 59 - rejects pre-confirmation observation while passed is claimed # SKIP\nok 60 - rejects synthetic evidence kind while passed is claimed # SKIP\nok 61 - rejects fixture result described as live while passed is claimed # SKIP\nok 62 - rejects ticket URL in evidence while passed is claimed # SKIP\nok 63 - rejects ticket identifier in evidence while passed is claimed # SKIP\nok 64 - rejects free-text language context while passed is claimed # SKIP\nok 65 - rejects language context on an unrelated check while passed is claimed # SKIP\nok 66 - rejects bare en claimed as an English REGIONAL locale while passed is claimed # SKIP\nok 67 - rejects a non-English tag claimed as an English regional locale while passed is claimed # SKIP\nok 68 - rejects a near-miss primary subtag claimed as English while passed is claimed # SKIP\nok 69 - rejects a missing language context on the English-regional check while passed is claimed # SKIP\nok 70 - rejects hidden defect while passed is claimed # SKIP\nok 71 - rejects failed row claimed as passed while passed is claimed # SKIP\nok 72 - rejects unavailable scenario claimed as observed while passed is claimed # SKIP\nok 73 - rejects a passed claim with missing-run timing evidence # SKIP\nok 74 - rejects a passed claim with slow-sample timing evidence # SKIP\nok 75 - rejects a passed claim with wrong-source timing evidence # SKIP\nok 76 - rejects a passed claim with three-of-six timing evidence # SKIP\nok 77 - rejects a passed claim with mislabelled-size timing evidence # SKIP\nok 78 - a failed observation derives gaps_found and a deferred one stays pending # SKIP\nok 79 - parser rejects duplicate JSON members and more than one canonical record # SKIP\nok 80 - the repository record binds to every current shipped byte and reports its actual status # SKIP\nok 81 - the repository record carries all three prohibition judgments as flagged-unverified # SKIP\nok 82 - the repository record preserves Phase 3 unchanged rather than laundering it # SKIP\n}\n\n# tests 82\n# pass 0\n# fail 7\n# skipped 75\n",
+      "normalization": "Actual seven assertion failures; nested Vitest TAP flattened and observed summary appended"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.js test/extension/phase-04-live-acceptance.test.js -t \"review metadata gap:\" --reporter=tap",
+      "exitCode": 1,
+      "targetTest": "review metadata gap: duplicate code runtime_blockers cannot certify readiness",
+      "expected": "duplicate metadata rejected",
+      "actual": "contradictory metadata admitted",
+      "output": "TAP version 13\n1..1\nnot ok 1 - test/extension/phase-04-live-acceptance.test.js # time=1054.08ms {\n    1..94\nok 1 - a complete honest pending record validates, and only a fully consistent live claim can pass # SKIP\nok 2 - all seventeen new live checks stay pending absent an actual observation # SKIP\nok 3 - primary English scope admits the exact ordered supplemental descriptors without claiming observations # SKIP\nok 4 - English regional evidence cannot satisfy the non-English scenario # SKIP\nok 5 - canonical promotion rejects a false checkbox without live evidence # SKIP\nok 6 - canonical promotion rejects a false Complete without live evidence # SKIP\nok 7 - rejects English tag en in the non-English scenario # SKIP\nok 8 - rejects English tag EN in the non-English scenario # SKIP\nok 9 - rejects English tag en-GB in the non-English scenario # SKIP\nok 10 - rejects English tag EN-us in the non-English scenario # SKIP\nok 11 - rejects English tag En-gb in the non-English scenario # SKIP\nok 12 - accepts genuine regional English tag en-GB only in its own scenario # SKIP\nok 13 - accepts genuine regional English tag EN-us only in its own scenario # SKIP\nok 14 - accepts genuine regional English tag En-gb only in its own scenario # SKIP\nok 15 - accepts genuine regional English tag en-Latn-US only in its own scenario # SKIP\nok 16 - accepts genuine regional English tag en-US-u-ca-gregory only in its own scenario # SKIP\nok 17 - rejects an inexact ordered scope descriptor list null # SKIP\nok 18 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\nok 19 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\nok 20 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\nok 21 - canonical promotion requires every mapped observation for FAIL-01 # SKIP\nok 22 - canonical promotion requires every mapped observation for FAIL-02 # SKIP\nok 23 - canonical promotion requires every mapped observation for FAIL-03 # SKIP\nok 24 - canonical promotion requires every mapped observation for FAIL-05 # SKIP\nok 25 - canonical promotion requires every mapped observation for CTRL-02 # SKIP\nok 26 - canonical promotion requires every mapped observation for CTRL-03 # SKIP\nok 27 - canonical promotion requires every mapped observation for CTRL-04 # SKIP\nok 28 - canonical promotion requires explicit codeReviewReady readiness # SKIP\nok 29 - canonical promotion requires explicit securityReviewReady readiness # SKIP\nok 30 - canonical promotion requires explicit technicalTestsPassed readiness # SKIP\nok 31 - canonical promotion requires explicit historicResetAcknowledged readiness # SKIP\nok 32 - canonical Pending and Gaps Found remain legal without review or observations and ignore historical summaries # SKIP\nok 33 - actual canonical requirements cannot be promoted by bookkeeping without current evidence # SKIP\nok 34 - review gap: FAIL-01 cannot be Complete while unreadable states are unobserved # SKIP\nok 35 - review gap: FAIL-05 cannot be Complete while unreadable states are unobserved # SKIP\nok 36 - review gap: stale runtime_digest cannot satisfy technical readiness # SKIP\nok 37 - review gap: stale reviewed_revision cannot satisfy technical readiness # SKIP\nok 38 - technical readiness accepts both independently reviewed current inventories # SKIP\nnot ok 39 - review metadata gap: duplicate code runtime_blockers cannot certify readiness # time=150.59ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 40 - review metadata gap: duplicate code technical_verdict cannot certify readiness # time=150.98ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 41 - review metadata gap: duplicate code runtime_digest cannot certify readiness # time=144.32ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 42 - review metadata gap: duplicate code reviewed_revision cannot certify readiness # time=151.05ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 43 - review metadata gap: duplicate security technical_threats_open cannot certify readiness # time=151.03ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 44 - review metadata gap: duplicate security runtime_digest cannot certify readiness # time=154.50ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 45 - review metadata gap: duplicate security reviewed_revision cannot certify readiness # time=150.42ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 46 - review metadata gap: duplicate technical_tests cannot grant readiness # time=0.31ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:545:100\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nnot ok 47 - review metadata gap: duplicate historic_reset_acknowledgement cannot grant readiness # time=0.14ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:545:100\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\nok 48 - review gap: malformed en-12 is not genuine regional English evidence # SKIP\nok 49 - review gap: malformed en-GB-GB is not genuine regional English evidence # SKIP\nok 50 - review gap: hypothetical baseline remains pending after legitimate canonical promotion # SKIP\nok 51 - rejects stale or false harness timing evidence # SKIP\nok 52 - rejects stale or false dormant-missing timing evidence # SKIP\nok 53 - rejects stale or false dormant-absent timing evidence # SKIP\nok 54 - rejects stale or false dormant-resources timing evidence # SKIP\nok 55 - rejects forged pass with a still-pending check while passed is claimed # SKIP\nok 56 - rejects forged pass with an unresolved prohibition while passed is claimed # SKIP\nok 57 - rejects forged pass with an unconfirmed source while passed is claimed # SKIP\nok 58 - rejects missing check while passed is claimed # SKIP\nok 59 - rejects duplicated check ID while passed is claimed # SKIP\nok 60 - rejects extra check while passed is claimed # SKIP\nok 61 - rejects missing prohibition while passed is claimed # SKIP\nok 62 - rejects mixed asset hashes while passed is claimed # SKIP\nok 63 - rejects stale three-asset source binding while passed is claimed # SKIP\nok 64 - rejects missing packaged asset while passed is claimed # SKIP\nok 65 - rejects extra packaged asset while passed is claimed # SKIP\nok 66 - rejects stale derived settings while passed is claimed # SKIP\nok 67 - rejects restated prior-source status while passed is claimed # SKIP\nok 68 - rejects laundered prior-source pending count while passed is claimed # SKIP\nok 69 - rejects future observation date while passed is claimed # SKIP\nok 70 - rejects invalid observation date while passed is claimed # SKIP\nok 71 - rejects pre-confirmation observation while passed is claimed # SKIP\nok 72 - rejects synthetic evidence kind while passed is claimed # SKIP\nok 73 - rejects fixture result described as live while passed is claimed # SKIP\nok 74 - rejects ticket URL in evidence while passed is claimed # SKIP\nok 75 - rejects ticket identifier in evidence while passed is claimed # SKIP\nok 76 - rejects free-text language context while passed is claimed # SKIP\nok 77 - rejects language context on an unrelated check while passed is claimed # SKIP\nok 78 - rejects bare en claimed as an English REGIONAL locale while passed is claimed # SKIP\nok 79 - rejects a non-English tag claimed as an English regional locale while passed is claimed # SKIP\nok 80 - rejects a near-miss primary subtag claimed as English while passed is claimed # SKIP\nok 81 - rejects a missing language context on the English-regional check while passed is claimed # SKIP\nok 82 - rejects hidden defect while passed is claimed # SKIP\nok 83 - rejects failed row claimed as passed while passed is claimed # SKIP\nok 84 - rejects unavailable scenario claimed as observed while passed is claimed # SKIP\nok 85 - rejects a passed claim with missing-run timing evidence # SKIP\nok 86 - rejects a passed claim with slow-sample timing evidence # SKIP\nok 87 - rejects a passed claim with wrong-source timing evidence # SKIP\nok 88 - rejects a passed claim with three-of-six timing evidence # SKIP\nok 89 - rejects a passed claim with mislabelled-size timing evidence # SKIP\nok 90 - a failed observation derives gaps_found and a deferred one stays pending # SKIP\nok 91 - parser rejects duplicate JSON members and more than one canonical record # SKIP\nok 92 - the repository record binds to every current shipped byte and reports its actual status # SKIP\nok 93 - the repository record carries all three prohibition judgments as flagged-unverified # SKIP\nok 94 - the repository record preserves Phase 3 unchanged rather than laundering it # SKIP\n}\n\n# tests 94\n# pass 0\n# fail 9\n# skipped 85\n",
+      "normalization": "Observed9failed/85filtered; flattenedleaf TAP and appendedactualsummary"
+    }
+  ],
+  "raw_red_tap": [
+    "TAP version 13\n1..1\nnot ok 1 - test/extension/phase-04-live-acceptance.test.js # time=18.87ms {\n    1..44\n    ok 1 - a complete honest pending record validates, and only a fully consistent live claim can pass # SKIP\n    ok 2 - all seventeen new live checks stay pending absent an actual observation # SKIP\n    not ok 3 - primary English scope admits the exact ordered supplemental descriptors without claiming observations # time=12.01ms\n        ---\n        error:\n            name: \"Error\"\n            message: \"PHASE04_ACCEPTANCE_REJECTED scope\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:90:70\"\n        ...\n    not ok 4 - English regional evidence cannot satisfy the non-English scenario # time=6.28ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:337:81\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\n    ok 5 - rejects forged pass with a still-pending check while passed is claimed # SKIP\n    ok 6 - rejects forged pass with an unresolved prohibition while passed is claimed # SKIP\n    ok 7 - rejects forged pass with an unconfirmed source while passed is claimed # SKIP\n    ok 8 - rejects missing check while passed is claimed # SKIP\n    ok 9 - rejects duplicated check ID while passed is claimed # SKIP\n    ok 10 - rejects extra check while passed is claimed # SKIP\n    ok 11 - rejects missing prohibition while passed is claimed # SKIP\n    ok 12 - rejects mixed asset hashes while passed is claimed # SKIP\n    ok 13 - rejects stale three-asset source binding while passed is claimed # SKIP\n    ok 14 - rejects missing packaged asset while passed is claimed # SKIP\n    ok 15 - rejects extra packaged asset while passed is claimed # SKIP\n    ok 16 - rejects stale derived settings while passed is claimed # SKIP\n    ok 17 - rejects restated prior-source status while passed is claimed # SKIP\n    ok 18 - rejects laundered prior-source pending count while passed is claimed # SKIP\n    ok 19 - rejects future observation date while passed is claimed # SKIP\n    ok 20 - rejects invalid observation date while passed is claimed # SKIP\n    ok 21 - rejects pre-confirmation observation while passed is claimed # SKIP\n    ok 22 - rejects synthetic evidence kind while passed is claimed # SKIP\n    ok 23 - rejects fixture result described as live while passed is claimed # SKIP\n    ok 24 - rejects ticket URL in evidence while passed is claimed # SKIP\n    ok 25 - rejects ticket identifier in evidence while passed is claimed # SKIP\n    ok 26 - rejects free-text language context while passed is claimed # SKIP\n    ok 27 - rejects language context on an unrelated check while passed is claimed # SKIP\n    ok 28 - rejects bare en claimed as an English REGIONAL locale while passed is claimed # SKIP\n    ok 29 - rejects a non-English tag claimed as an English regional locale while passed is claimed # SKIP\n    ok 30 - rejects a near-miss primary subtag claimed as English while passed is claimed # SKIP\n    ok 31 - rejects a missing language context on the English-regional check while passed is claimed # SKIP\n    ok 32 - rejects hidden defect while passed is claimed # SKIP\n    ok 33 - rejects failed row claimed as passed while passed is claimed # SKIP\n    ok 34 - rejects unavailable scenario claimed as observed while passed is claimed # SKIP\n    ok 35 - rejects a passed claim with missing-run timing evidence # SKIP\n    ok 36 - rejects a passed claim with slow-sample timing evidence # SKIP\n    ok 37 - rejects a passed claim with wrong-source timing evidence # SKIP\n    ok 38 - rejects a passed claim with three-of-six timing evidence # SKIP\n    ok 39 - rejects a passed claim with mislabelled-size timing evidence # SKIP\n    ok 40 - a failed observation derives gaps_found and a deferred one stays pending # SKIP\n    ok 41 - parser rejects duplicate JSON members and more than one canonical record # SKIP\n    ok 42 - the repository record binds to every current shipped byte and reports its actual status # SKIP\n    ok 43 - the repository record carries all three prohibition judgments as flagged-unverified # SKIP\n    ok 44 - the repository record preserves Phase 3 unchanged rather than laundering it # SKIP\n}\n",
+    "TAP version 13\n1..1\nnot ok 1 - test/extension/phase-04-live-acceptance.test.js # time=10.48ms {\n    1..46\n    ok 1 - a complete honest pending record validates, and only a fully consistent live claim can pass # SKIP\n    ok 2 - all seventeen new live checks stay pending absent an actual observation # SKIP\n    ok 3 - primary English scope admits the exact ordered supplemental descriptors without claiming observations # SKIP\n    ok 4 - English regional evidence cannot satisfy the non-English scenario # SKIP\n    not ok 5 - canonical promotion rejects a false checkbox without live evidence # time=6.36ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:370:37\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\n    not ok 6 - canonical promotion rejects a false Complete without live evidence # time=3.57ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:370:37\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\n    ok 7 - rejects forged pass with a still-pending check while passed is claimed # SKIP\n    ok 8 - rejects forged pass with an unresolved prohibition while passed is claimed # SKIP\n    ok 9 - rejects forged pass with an unconfirmed source while passed is claimed # SKIP\n    ok 10 - rejects missing check while passed is claimed # SKIP\n    ok 11 - rejects duplicated check ID while passed is claimed # SKIP\n    ok 12 - rejects extra check while passed is claimed # SKIP\n    ok 13 - rejects missing prohibition while passed is claimed # SKIP\n    ok 14 - rejects mixed asset hashes while passed is claimed # SKIP\n    ok 15 - rejects stale three-asset source binding while passed is claimed # SKIP\n    ok 16 - rejects missing packaged asset while passed is claimed # SKIP\n    ok 17 - rejects extra packaged asset while passed is claimed # SKIP\n    ok 18 - rejects stale derived settings while passed is claimed # SKIP\n    ok 19 - rejects restated prior-source status while passed is claimed # SKIP\n    ok 20 - rejects laundered prior-source pending count while passed is claimed # SKIP\n    ok 21 - rejects future observation date while passed is claimed # SKIP\n    ok 22 - rejects invalid observation date while passed is claimed # SKIP\n    ok 23 - rejects pre-confirmation observation while passed is claimed # SKIP\n    ok 24 - rejects synthetic evidence kind while passed is claimed # SKIP\n    ok 25 - rejects fixture result described as live while passed is claimed # SKIP\n    ok 26 - rejects ticket URL in evidence while passed is claimed # SKIP\n    ok 27 - rejects ticket identifier in evidence while passed is claimed # SKIP\n    ok 28 - rejects free-text language context while passed is claimed # SKIP\n    ok 29 - rejects language context on an unrelated check while passed is claimed # SKIP\n    ok 30 - rejects bare en claimed as an English REGIONAL locale while passed is claimed # SKIP\n    ok 31 - rejects a non-English tag claimed as an English regional locale while passed is claimed # SKIP\n    ok 32 - rejects a near-miss primary subtag claimed as English while passed is claimed # SKIP\n    ok 33 - rejects a missing language context on the English-regional check while passed is claimed # SKIP\n    ok 34 - rejects hidden defect while passed is claimed # SKIP\n    ok 35 - rejects failed row claimed as passed while passed is claimed # SKIP\n    ok 36 - rejects unavailable scenario claimed as observed while passed is claimed # SKIP\n    ok 37 - rejects a passed claim with missing-run timing evidence # SKIP\n    ok 38 - rejects a passed claim with slow-sample timing evidence # SKIP\n    ok 39 - rejects a passed claim with wrong-source timing evidence # SKIP\n    ok 40 - rejects a passed claim with three-of-six timing evidence # SKIP\n    ok 41 - rejects a passed claim with mislabelled-size timing evidence # SKIP\n    ok 42 - a failed observation derives gaps_found and a deferred one stays pending # SKIP\n    ok 43 - parser rejects duplicate JSON members and more than one canonical record # SKIP\n    ok 44 - the repository record binds to every current shipped byte and reports its actual status # SKIP\n    ok 45 - the repository record carries all three prohibition judgments as flagged-unverified # SKIP\n    ok 46 - the repository record preserves Phase 3 unchanged rather than laundering it # SKIP\n}\n",
+    "TAP version 13\n1..1\nnot ok 1 - test/extension/phase-04-live-acceptance.test.js # time=35.10ms {\n    1..82\n    ok 1 - a complete honest pending record validates, and only a fully consistent live claim can pass # SKIP\n    ok 2 - all seventeen new live checks stay pending absent an actual observation # SKIP\n    ok 3 - primary English scope admits the exact ordered supplemental descriptors without claiming observations # SKIP\n    ok 4 - English regional evidence cannot satisfy the non-English scenario # SKIP\n    ok 5 - canonical promotion rejects a false checkbox without live evidence # SKIP\n    ok 6 - canonical promotion rejects a false Complete without live evidence # SKIP\n    ok 7 - rejects English tag en in the non-English scenario # SKIP\n    ok 8 - rejects English tag EN in the non-English scenario # SKIP\n    ok 9 - rejects English tag en-GB in the non-English scenario # SKIP\n    ok 10 - rejects English tag EN-us in the non-English scenario # SKIP\n    ok 11 - rejects English tag En-gb in the non-English scenario # SKIP\n    ok 12 - accepts genuine regional English tag en-GB only in its own scenario # SKIP\n    ok 13 - accepts genuine regional English tag EN-us only in its own scenario # SKIP\n    ok 14 - accepts genuine regional English tag En-gb only in its own scenario # SKIP\n    ok 15 - rejects an inexact ordered scope descriptor list null # SKIP\n    ok 16 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\n    ok 17 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\n    ok 18 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\n    ok 19 - canonical promotion requires every mapped observation for FAIL-01 # SKIP\n    ok 20 - canonical promotion requires every mapped observation for FAIL-02 # SKIP\n    ok 21 - canonical promotion requires every mapped observation for FAIL-03 # SKIP\n    ok 22 - canonical promotion requires every mapped observation for FAIL-05 # SKIP\n    ok 23 - canonical promotion requires every mapped observation for CTRL-02 # SKIP\n    ok 24 - canonical promotion requires every mapped observation for CTRL-03 # SKIP\n    ok 25 - canonical promotion requires every mapped observation for CTRL-04 # SKIP\n    ok 26 - canonical promotion requires explicit codeReviewReady readiness # SKIP\n    ok 27 - canonical promotion requires explicit securityReviewReady readiness # SKIP\n    ok 28 - canonical promotion requires explicit technicalTestsPassed readiness # SKIP\n    ok 29 - canonical promotion requires explicit historicResetAcknowledged readiness # SKIP\n    ok 30 - canonical Pending and Gaps Found remain legal without review or observations and ignore historical summaries # SKIP\n    ok 31 - actual canonical requirements cannot be promoted by bookkeeping without current evidence # SKIP\n    not ok 32 - review gap: FAIL-01 cannot be Complete while unreadable states are unobserved # time=15.71ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:471:127\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\n    not ok 33 - review gap: FAIL-05 cannot be Complete while unreadable states are unobserved # time=5.53ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:471:127\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\n    not ok 34 - review gap: stale runtime_digest cannot satisfy technical readiness # time=1.03ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:477:34\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 35 - review gap: stale reviewed_revision cannot satisfy technical readiness # time=0.27ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:477:34\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 36 - review gap: malformed en-12 is not genuine regional English evidence # time=4.98ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:483:81\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\n    not ok 37 - review gap: malformed en-GB-GB is not genuine regional English evidence # time=4.94ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected [Function] to throw an error\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:483:81\"\n        actual: \"undefined\"\n        expected: \"null\"\n        ...\n    not ok 38 - review gap: hypothetical baseline remains pending after legitimate canonical promotion # time=2.03ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected '# Requirements: Zhroma\\n\\n**Defined:*…' to contain '- [ ] **FAIL-01**:'\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:488:22\"\n        actual: \"# Requirements: Zhroma\n\n**Defined:** 2026-09-02\n**Core Value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.\n\n## Phase 03 verification checkpoint — 2026-09-09\n\nIndependent 03-VERIFICATION.md accounts for all eight Phase 03 IDs. DETECT-03/04 and LIVE-01/02/03/04 are satisfied within the admitted English current-view evidence scope; LIVE-05 and FAIL-04 need human evidence. Eleven live checks passed; nine remain untested after user-requested UAT skipping. Formal phase-completion checkboxes and traceability remain pending; no missing evidence is treated as a pass. See .planning/phases/03-the-tint-survives-everything/03-HANDOFF.md for planning inputs and limits.\n\n## v1 Requirements\n\nRequirements for initial release. Each maps to roadmap phases.\n\n### Reconnaissance\n\n<!-- Zendesk publishes no DOM contract for the agent-view ticket table. These are gating deliverables, not user-facing features — everything downstream is built on assumptions until they are answered. -->\n\n- [x] **RECON-01**: A captured `outerHTML` fixture of a real Zendesk agent view is committed to the repo and usable as a test fixture\n- [x] **RECON-02**: Every English-path DOM assumption in the research Verification Ledger is answered against a live English instance, with answers recorded in the repo; localization-only items are explicitly marked unverified and outside Phase 1\n- [x] **RECON-03**: The two terminal risks are explicitly ruled in or out — a closed Shadow DOM around the ticket list, and the absence of `data-garden-id` attributes in a current agent view\n\n### Detection\n\n- [x] **DETECT-01**: Extension locates the Priority column by its header rather than by column position, so it survives user-configured column order\n- [x] **DETECT-02**: Extension reads each ticket row's priority and resolves it to one of Urgent, High, Normal or Low\n- [ ] **DETECT-03**: Extension resolves headers within the same table as the rows it tints, given that agent views render a sticky duplicate header table alongside the body table\n- [ ] **DETECT-04**: Extension distinguishes grouped-view group rows from ticket rows and never tints a group row\n\n### Tinting\n\n- [x] **TINT-01**: Each ticket row is tinted according to its priority, with a visually distinct tint for each of the four values\n- [x] **TINT-02**: Row text remains legible over every tint\n- [x] **TINT-03**: Zendesk's own row states — hover, selected, unread/bold — remain visible and are not suppressed by the tint\n- [x] **TINT-04**: The tint is applied as a translucent layer that composites over whatever Zendesk paints, rather than replacing the row's background colour\n- [x] **TINT-05**: All colour is declared in a stylesheet driven by a single data attribute, so the visual treatment can be changed without touching detection logic\n\n### Liveness\n\n- [ ] **LIVE-01**: Tints re-apply automatically after a view is sorted\n- [ ] **LIVE-02**: Tints re-apply automatically after a view is refreshed\n- [ ] **LIVE-03**: Tints re-apply automatically when the agent switches views, with no page load involved\n- [ ] **LIVE-04**: Rows revealed by scrolling are tinted\n- [ ] **LIVE-05**: Scrolling and interacting with a large view is no less responsive with the extension enabled than without it\n\n### Failure Handling\n\n- [x] **FAIL-01**: Extension distinguishes three states — tinting normally, the view has no Priority column, and priority values are unreadable in this agent's locale\n- [ ] **FAIL-02**: When a view genuinely has no Priority column, an unobtrusive hint tells the agent to add one — shown only when that diagnosis is certain\n- [ ] **FAIL-03**: When priority values cannot be read because the agent's locale is not supported, no hint claiming a missing column is shown\n- [ ] **FAIL-04**: When the extension cannot do its job for any reason, the Zendesk page is left visually untouched rather than partially or wrongly styled\n- [ ] **FAIL-05**: The agent can see which of the three states applies from the toolbar icon, without opening anything\n\n### Control\n\n- [x] **CTRL-01**: Extension works immediately on install with nothing to configure\n- [ ] **CTRL-02**: Agent can turn tinting off and back on from the toolbar popup\n- [ ] **CTRL-03**: The on/off setting persists across browser restarts\n- [ ] **CTRL-04**: Turning tinting off clears tints from the current view without requiring a page refresh\n\n### Distribution\n\n- [ ] **STORE-01**: Extension is published as a public Chrome Web Store listing\n- [x] **STORE-02**: Extension declares no `host_permissions` block and requests `storage` as its only permission\n- [x] **STORE-03**: The content script matches only `https://*.zendesk.com/agent/*`, excluding the customer-facing Help Center on the same domain\n- [ ] **STORE-04**: A privacy policy is published, linked from the listing, and discloses that no data is collected\n- [x] **STORE-05**: Shipped code is unminified and byte-identical to repo source\n- [ ] **STORE-06**: A manual pre-submission smoke checklist lives in the repo and is run before each submission\n\n## v2 Requirements\n\nDeferred to future release. Tracked but not in current roadmap.\n\n### Appearance\n\n- **APPR-01**: Agent can choose the visual treatment — full-row tint, left-edge stripe, or coloured priority pill\n- **APPR-02**: Agent can customise the colour used for each priority\n- **APPR-03**: Tints are readable in Zendesk's dark mode, including a theme switch mid-session\n- **APPR-04**: Palette is colourblind-safe, with lightness varying monotonically across the four priorities\n\n### Reach\n\n- **REACH-01**: Priority values are recognised in the most common Zendesk agent locales beyond English\n- **REACH-02**: Tinting extends to search results and org/user ticket lists\n- **REACH-03**: Agent can report a breakage from the popup via a pre-filled GitHub issue\n\n## Out of Scope\n\nExplicitly excluded. Documented to prevent scope creep.\n\n| Feature | Reason |\n|---------|--------|\n| Dark mode support | Deferred by explicit decision. The CTRL-02 toggle gives dark-mode agents an escape hatch instead of an uninstall. Combines with the palette work in v2 |\n| Colourblind-safe palette / hue constraints | Deferred by explicit decision, including hue selection. Retrofit cost accepted; lands with dark mode as one combined palette job |\n| Fetching priority from the Zendesk API | Needs auth handling and a much heavier permissions ask at review, to cover views the agent can fix themselves by adding a column |\n| SPA route-change detection | An anti-requirement. History patching is broken by design from a content script's isolated world, and a route change is already just a large DOM mutation the observer handles |\n| Colouring the open ticket page, tab strip, search results, org/user lists | v1 is agent views only — that is where list-scanning under time pressure happens |\n| Any options page beyond the on/off toggle | Configuration is the friction the incumbent competitor imposes and Zhroma's wedge is not having it |\n| Telemetry, analytics, or any network call | The zero-network promise is what makes the store listing and enterprise allowlisting simple |\n| Cascade layers (`@layer`) for extension CSS | Verified harmful here: unlayered host declarations beat all layered ones, inverting the intended precedence |\n| A build step or bundler | Shipped bytes must equal repo bytes — the cleanest story at store review, and adequate at this size |\n| Firefox, Edge, Safari ports | Chrome first; other browsers only on demand |\n| Colour-coding by status, SLA, assignee or tags | Priority is the single purpose, and single purpose is a store review policy |\n\n## Traceability\n\nWhich phases cover which requirements. Updated during roadmap creation.\n\n| Requirement | Phase | Status |\n|-------------|-------|--------|\n| RECON-01 | Phase 1 | Complete |\n| RECON-02 | Phase 1 | Complete |\n| RECON-03 | Phase 1 | Complete |\n| DETECT-01 | Phase 2 | Complete |\n| DETECT-02 | Phase 2 | Complete |\n| DETECT-03 | Phase 3 | Pending |\n| DETECT-04 | Phase 3 | Pending |\n| TINT-01 | Phase 2 | Complete |\n| TINT-02 | Phase 2 | Complete |\n| TINT-03 | Phase 2 | Complete |\n| TINT-04 | Phase 2 | Complete |\n| TINT-05 | Phase 2 | Complete |\n| LIVE-01 | Phase 3 | Pending |\n| LIVE-02 | Phase 3 | Pending |\n| LIVE-03 | Phase 3 | Pending |\n| LIVE-04 | Phase 3 | Pending |\n| LIVE-05 | Phase 3 | Pending |\n| FAIL-01 | Phase 4 | Complete |\n| FAIL-02 | Phase 4 | Gaps Found |\n| FAIL-03 | Phase 4 | Pending |\n| FAIL-04 | Phase 3 | Pending |\n| FAIL-05 | Phase 4 | Gaps Found |\n| CTRL-01 | Phase 2 | Complete |\n| CTRL-02 | Phase 4 | Gaps Found |\n| CTRL-03 | Phase 4 | Gaps Found |\n| CTRL-04 | Phase 4 | Pending |\n| STORE-01 | Phase 5 | Pending |\n| STORE-02 | Phase 2 | Complete |\n| STORE-03 | Phase 2 | Complete |\n| STORE-04 | Phase 5 | Pending |\n| STORE-05 | Phase 2 | Complete |\n| STORE-06 | Phase 5 | Pending |\n\n**Coverage:**\n\n- v1 requirements: 32 total\n- Mapped to phases: 32\n- Unmapped: 0 ✓\n\n| Phase | Requirements | Count |\n|-------|--------------|-------|\n| Phase 1 — DOM Recon Spike | RECON-01, RECON-02, RECON-03 | 3 |\n| Phase 2 — First Tint on a Real View | DETECT-01, DETECT-02, TINT-01, TINT-02, TINT-03, TINT-04, TINT-05, CTRL-01, STORE-02, STORE-03, STORE-05 | 11 |\n| Phase 3 — The Tint Survives Everything | DETECT-03, DETECT-04, LIVE-01, LIVE-02, LIVE-03, LIVE-04, LIVE-05, FAIL-04 | 8 |\n| Phase 4 — Honest Failure and an Off Switch | FAIL-01, FAIL-02, FAIL-03, FAIL-05, CTRL-02, CTRL-03, CTRL-04 | 7 |\n| Phase 5 — Published | STORE-01, STORE-04, STORE-06 | 3 |\n\n---\n*Requirements defined: 2026-09-02*\n*Last updated: 2026-09-02 after roadmap creation (traceability mapped)*\n\"\n        expected: \"- [ ] **FAIL-01**:\"\n        ...\n    ok 39 - rejects stale or false harness timing evidence # SKIP\n    ok 40 - rejects stale or false dormant-missing timing evidence # SKIP\n    ok 41 - rejects stale or false dormant-absent timing evidence # SKIP\n    ok 42 - rejects stale or false dormant-resources timing evidence # SKIP\n    ok 43 - rejects forged pass with a still-pending check while passed is claimed # SKIP\n    ok 44 - rejects forged pass with an unresolved prohibition while passed is claimed # SKIP\n    ok 45 - rejects forged pass with an unconfirmed source while passed is claimed # SKIP\n    ok 46 - rejects missing check while passed is claimed # SKIP\n    ok 47 - rejects duplicated check ID while passed is claimed # SKIP\n    ok 48 - rejects extra check while passed is claimed # SKIP\n    ok 49 - rejects missing prohibition while passed is claimed # SKIP\n    ok 50 - rejects mixed asset hashes while passed is claimed # SKIP\n    ok 51 - rejects stale three-asset source binding while passed is claimed # SKIP\n    ok 52 - rejects missing packaged asset while passed is claimed # SKIP\n    ok 53 - rejects extra packaged asset while passed is claimed # SKIP\n    ok 54 - rejects stale derived settings while passed is claimed # SKIP\n    ok 55 - rejects restated prior-source status while passed is claimed # SKIP\n    ok 56 - rejects laundered prior-source pending count while passed is claimed # SKIP\n    ok 57 - rejects future observation date while passed is claimed # SKIP\n    ok 58 - rejects invalid observation date while passed is claimed # SKIP\n    ok 59 - rejects pre-confirmation observation while passed is claimed # SKIP\n    ok 60 - rejects synthetic evidence kind while passed is claimed # SKIP\n    ok 61 - rejects fixture result described as live while passed is claimed # SKIP\n    ok 62 - rejects ticket URL in evidence while passed is claimed # SKIP\n    ok 63 - rejects ticket identifier in evidence while passed is claimed # SKIP\n    ok 64 - rejects free-text language context while passed is claimed # SKIP\n    ok 65 - rejects language context on an unrelated check while passed is claimed # SKIP\n    ok 66 - rejects bare en claimed as an English REGIONAL locale while passed is claimed # SKIP\n    ok 67 - rejects a non-English tag claimed as an English regional locale while passed is claimed # SKIP\n    ok 68 - rejects a near-miss primary subtag claimed as English while passed is claimed # SKIP\n    ok 69 - rejects a missing language context on the English-regional check while passed is claimed # SKIP\n    ok 70 - rejects hidden defect while passed is claimed # SKIP\n    ok 71 - rejects failed row claimed as passed while passed is claimed # SKIP\n    ok 72 - rejects unavailable scenario claimed as observed while passed is claimed # SKIP\n    ok 73 - rejects a passed claim with missing-run timing evidence # SKIP\n    ok 74 - rejects a passed claim with slow-sample timing evidence # SKIP\n    ok 75 - rejects a passed claim with wrong-source timing evidence # SKIP\n    ok 76 - rejects a passed claim with three-of-six timing evidence # SKIP\n    ok 77 - rejects a passed claim with mislabelled-size timing evidence # SKIP\n    ok 78 - a failed observation derives gaps_found and a deferred one stays pending # SKIP\n    ok 79 - parser rejects duplicate JSON members and more than one canonical record # SKIP\n    ok 80 - the repository record binds to every current shipped byte and reports its actual status # SKIP\n    ok 81 - the repository record carries all three prohibition judgments as flagged-unverified # SKIP\n    ok 82 - the repository record preserves Phase 3 unchanged rather than laundering it # SKIP\n}\n",
+    "TAP version 13\n1..1\nnot ok 1 - test/extension/phase-04-live-acceptance.test.js # time=1054.08ms {\n    1..94\n    ok 1 - a complete honest pending record validates, and only a fully consistent live claim can pass # SKIP\n    ok 2 - all seventeen new live checks stay pending absent an actual observation # SKIP\n    ok 3 - primary English scope admits the exact ordered supplemental descriptors without claiming observations # SKIP\n    ok 4 - English regional evidence cannot satisfy the non-English scenario # SKIP\n    ok 5 - canonical promotion rejects a false checkbox without live evidence # SKIP\n    ok 6 - canonical promotion rejects a false Complete without live evidence # SKIP\n    ok 7 - rejects English tag en in the non-English scenario # SKIP\n    ok 8 - rejects English tag EN in the non-English scenario # SKIP\n    ok 9 - rejects English tag en-GB in the non-English scenario # SKIP\n    ok 10 - rejects English tag EN-us in the non-English scenario # SKIP\n    ok 11 - rejects English tag En-gb in the non-English scenario # SKIP\n    ok 12 - accepts genuine regional English tag en-GB only in its own scenario # SKIP\n    ok 13 - accepts genuine regional English tag EN-us only in its own scenario # SKIP\n    ok 14 - accepts genuine regional English tag En-gb only in its own scenario # SKIP\n    ok 15 - accepts genuine regional English tag en-Latn-US only in its own scenario # SKIP\n    ok 16 - accepts genuine regional English tag en-US-u-ca-gregory only in its own scenario # SKIP\n    ok 17 - rejects an inexact ordered scope descriptor list null # SKIP\n    ok 18 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\n    ok 19 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\n    ok 20 - rejects an inexact ordered scope descriptor list \"en\" # SKIP\n    ok 21 - canonical promotion requires every mapped observation for FAIL-01 # SKIP\n    ok 22 - canonical promotion requires every mapped observation for FAIL-02 # SKIP\n    ok 23 - canonical promotion requires every mapped observation for FAIL-03 # SKIP\n    ok 24 - canonical promotion requires every mapped observation for FAIL-05 # SKIP\n    ok 25 - canonical promotion requires every mapped observation for CTRL-02 # SKIP\n    ok 26 - canonical promotion requires every mapped observation for CTRL-03 # SKIP\n    ok 27 - canonical promotion requires every mapped observation for CTRL-04 # SKIP\n    ok 28 - canonical promotion requires explicit codeReviewReady readiness # SKIP\n    ok 29 - canonical promotion requires explicit securityReviewReady readiness # SKIP\n    ok 30 - canonical promotion requires explicit technicalTestsPassed readiness # SKIP\n    ok 31 - canonical promotion requires explicit historicResetAcknowledged readiness # SKIP\n    ok 32 - canonical Pending and Gaps Found remain legal without review or observations and ignore historical summaries # SKIP\n    ok 33 - actual canonical requirements cannot be promoted by bookkeeping without current evidence # SKIP\n    ok 34 - review gap: FAIL-01 cannot be Complete while unreadable states are unobserved # SKIP\n    ok 35 - review gap: FAIL-05 cannot be Complete while unreadable states are unobserved # SKIP\n    ok 36 - review gap: stale runtime_digest cannot satisfy technical readiness # SKIP\n    ok 37 - review gap: stale reviewed_revision cannot satisfy technical readiness # SKIP\n    ok 38 - technical readiness accepts both independently reviewed current inventories # SKIP\n    not ok 39 - review metadata gap: duplicate code runtime_blockers cannot certify readiness # time=150.59ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 40 - review metadata gap: duplicate code technical_verdict cannot certify readiness # time=150.98ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 41 - review metadata gap: duplicate code runtime_digest cannot certify readiness # time=144.32ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 42 - review metadata gap: duplicate code reviewed_revision cannot certify readiness # time=151.05ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 43 - review metadata gap: duplicate security technical_threats_open cannot certify readiness # time=151.03ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 44 - review metadata gap: duplicate security runtime_digest cannot certify readiness # time=154.50ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 45 - review metadata gap: duplicate security reviewed_revision cannot certify readiness # time=150.42ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:540:80\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 46 - review metadata gap: duplicate technical_tests cannot grant readiness # time=0.31ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:545:100\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    not ok 47 - review metadata gap: duplicate historic_reset_acknowledgement cannot grant readiness # time=0.14ms\n        ---\n        error:\n            name: \"AssertionError\"\n            message: \"expected true to be false // Object.is equality\"\n        at: \"/Users/mike/code/zhroma/test/extension/phase-04-live-acceptance.test.js:545:100\"\n        actual: \"true\"\n        expected: \"false\"\n        ...\n    ok 48 - review gap: malformed en-12 is not genuine regional English evidence # SKIP\n    ok 49 - review gap: malformed en-GB-GB is not genuine regional English evidence # SKIP\n    ok 50 - review gap: hypothetical baseline remains pending after legitimate canonical promotion # SKIP\n    ok 51 - rejects stale or false harness timing evidence # SKIP\n    ok 52 - rejects stale or false dormant-missing timing evidence # SKIP\n    ok 53 - rejects stale or false dormant-absent timing evidence # SKIP\n    ok 54 - rejects stale or false dormant-resources timing evidence # SKIP\n    ok 55 - rejects forged pass with a still-pending check while passed is claimed # SKIP\n    ok 56 - rejects forged pass with an unresolved prohibition while passed is claimed # SKIP\n    ok 57 - rejects forged pass with an unconfirmed source while passed is claimed # SKIP\n    ok 58 - rejects missing check while passed is claimed # SKIP\n    ok 59 - rejects duplicated check ID while passed is claimed # SKIP\n    ok 60 - rejects extra check while passed is claimed # SKIP\n    ok 61 - rejects missing prohibition while passed is claimed # SKIP\n    ok 62 - rejects mixed asset hashes while passed is claimed # SKIP\n    ok 63 - rejects stale three-asset source binding while passed is claimed # SKIP\n    ok 64 - rejects missing packaged asset while passed is claimed # SKIP\n    ok 65 - rejects extra packaged asset while passed is claimed # SKIP\n    ok 66 - rejects stale derived settings while passed is claimed # SKIP\n    ok 67 - rejects restated prior-source status while passed is claimed # SKIP\n    ok 68 - rejects laundered prior-source pending count while passed is claimed # SKIP\n    ok 69 - rejects future observation date while passed is claimed # SKIP\n    ok 70 - rejects invalid observation date while passed is claimed # SKIP\n    ok 71 - rejects pre-confirmation observation while passed is claimed # SKIP\n    ok 72 - rejects synthetic evidence kind while passed is claimed # SKIP\n    ok 73 - rejects fixture result described as live while passed is claimed # SKIP\n    ok 74 - rejects ticket URL in evidence while passed is claimed # SKIP\n    ok 75 - rejects ticket identifier in evidence while passed is claimed # SKIP\n    ok 76 - rejects free-text language context while passed is claimed # SKIP\n    ok 77 - rejects language context on an unrelated check while passed is claimed # SKIP\n    ok 78 - rejects bare en claimed as an English REGIONAL locale while passed is claimed # SKIP\n    ok 79 - rejects a non-English tag claimed as an English regional locale while passed is claimed # SKIP\n    ok 80 - rejects a near-miss primary subtag claimed as English while passed is claimed # SKIP\n    ok 81 - rejects a missing language context on the English-regional check while passed is claimed # SKIP\n    ok 82 - rejects hidden defect while passed is claimed # SKIP\n    ok 83 - rejects failed row claimed as passed while passed is claimed # SKIP\n    ok 84 - rejects unavailable scenario claimed as observed while passed is claimed # SKIP\n    ok 85 - rejects a passed claim with missing-run timing evidence # SKIP\n    ok 86 - rejects a passed claim with slow-sample timing evidence # SKIP\n    ok 87 - rejects a passed claim with wrong-source timing evidence # SKIP\n    ok 88 - rejects a passed claim with three-of-six timing evidence # SKIP\n    ok 89 - rejects a passed claim with mislabelled-size timing evidence # SKIP\n    ok 90 - a failed observation derives gaps_found and a deferred one stays pending # SKIP\n    ok 91 - parser rejects duplicate JSON members and more than one canonical record # SKIP\n    ok 92 - the repository record binds to every current shipped byte and reports its actual status # SKIP\n    ok 93 - the repository record carries all three prohibition judgments as flagged-unverified # SKIP\n    ok 94 - the repository record preserves Phase 3 unchanged rather than laundering it # SKIP\n}\n"
+  ],
+  "human": {
+    "loaded_from_repository": false,
+    "source_confirmed_on": null,
+    "environment": {
+      "browser": null,
+      "os": null,
+      "mounted_rows": null,
+      "interface_language": null,
+      "appearance": null
+    },
+    "pending": [
+      "working-icon",
+      "blank-copy",
+      "missing-icon-hint",
+      "missing-settle-transition",
+      "language-icon-copy",
+      "structure-copy",
+      "english-regional-locale",
+      "off-clears",
+      "on-restores",
+      "restart-off",
+      "restart-on",
+      "cross-tab-preference",
+      "frozen-resume",
+      "nonreceiver-status",
+      "navigation-status",
+      "worker-restart",
+      "popup-keyboard"
+    ],
+    "ack": "outstanding",
+    "waived_pending": [
+      "language-icon-copy",
+      "structure-copy"
+    ]
+  },
+  "history_preservation": {
+    "revision": "1bb57cd912c470ed4463c4fb95fac709c405d724",
+    "files": {
+      ".planning/phases/04-honest-failure-and-an-off-switch/history/2026-09-10-before-review-repair/04-LIVE-ACCEPTANCE.md": "8dddb30cbb1f21b7b24f2e4a71e5869c7226d22c62972e87f561c42a88dc8bf4",
+      ".planning/phases/04-honest-failure-and-an-off-switch/history/2026-09-10-before-review-repair/04-PERFORMANCE-SAMPLES.json": "8875c8b9e7208222bfe5c15a60e648243a90cce218beeea07f37adc1d6d0caa4",
+      ".planning/phases/04-honest-failure-and-an-off-switch/history/2026-09-10-before-review-repair/04-PERFORMANCE.md": "003ddb4f349c5593023cff7b80fc65f525042c006b1007e6d1bdf7690377195e",
+      ".planning/phases/04-honest-failure-and-an-off-switch/history/2026-09-10-before-review-repair/04-VALIDATION.md": "f5b9531cc0487831ed2bd238140427039994741e1bad7aec9bcd4617a49f7e95",
+      ".planning/phases/04-honest-failure-and-an-off-switch/history/2026-09-10-before-review-repair/README.md": "cf2f566017afcc77a752362779e7e2a78760f7bd8f3ac695cfcf00b1b94521d2"
+    }
+  },
+  "validation_review": {
+    "status": "passed_for_task_2_human_checkpoint",
+    "cycles": [
+      {
+        "cycle": 1,
+        "diff_sha256": "8830425c69f51298bfb9cba58acf3eda7636d121e8da4d19eebe741921cdbbc3",
+        "actionable": 4
+      },
+      {
+        "cycle": 2,
+        "diff_sha256": "b085df03b729e55501759a7f27d6fe2b8b3d11fba6e21928809871859029996c",
+        "actionable": 2
+      },
+      {
+        "cycle": 3,
+        "diff_sha256": "9abf9a910f5eb36140a7d862920194412cad42284820e08fdad67e89ccdd32f4",
+        "actionable": 0
+      }
+    ],
+    "report": "04-20-VALIDATOR-REVIEW.md",
+    "reviewer": "independent gsd-code-reviewer /root/phase04_plan20/validator_review",
+    "validator_sha256": "534ef7de8c882c82e11b923d3a3c016c4857ac8c95f47969688642322a4c4ca7",
+    "validation_before_appraisal": "---\nphase: 04-honest-failure-and-an-off-switch\nplan: \"20\"\ntechnical_tests: passed\nbrowser_timing: passed\nindependent_code_review: technical-clear-for-evidence\nsecurity_asvs_level1: technical-clear-four-final-evidence-threats-open\nvalidation_tool_review: pending-independent-review\ngoal_verification: pending-task-3\nhuman_acceptance: human_needed\nhistoric_reset_acknowledgement: outstanding\noverall: human_needed\n---\n\n# Phase 04 Final Validation Inventory\n\nTechnical preparation is separate from human acceptance. All seventeen live\nchecks remain pending, source loading is unconfirmed, and ACK-04-01 still requires\nthe user's own response. No canonical requirement was promoted.\n\n## Source and recoverable provenance\n\nBefore evidence edits, all eleven recursive shipped assets matched both reviewed\ncommit `255ba31e2b25f7b8c5bde8a3900fb93151594f50` and 04-19-MEASUREMENTS.json.\nSHA256 of sorted hash/path lines:\n`46090012ab1a8ebd265273c327b214afbed0321a2fa149ab801ce8c205891065`.\nNo runtime, package, tool or harness byte changed in Task1. Source-derived settings\nremain settle100ms, enabled preference key, local area and minimum Chrome106.\n\nPre-update committed revision: **70ad1e5**. Exact prior evidence paths relative to\nthis phase directory: 04-LIVE-ACCEPTANCE.md, 04-PERFORMANCE-SAMPLES.json,\n04-PERFORMANCE.md and 04-VALIDATION.md. Read their former contents with\n`git show 70ad1e5:PATH`; they were not overwritten in Git or presented as final\nsource observations. The five-file history/2026-09-10-before-review-repair/\ndirectory remains byte-identical, including its README and fourteen attributed\nobservations.\n\nPhase3 has separate runtime repair identity\n`382cc881334aa7edf2103150bd8fe663236b6357` and later observation-record identity\n`3979fb0730c6f778ddd31ad5ec89cfa997b79cc5`. The validator derives the record\ncommit from Git, compares its complete contents with disk, derives the last runtime\ncommit at that observation revision and checks all three prior asset hashes.\nMatching two hardcoded literals would not establish this relationship. Phase3\nremains human_needed,28/34 truths,eleven live passes/nine pending,UAT skipped by\nuser. Its files and observations remain unchanged.\n\n## Gate inventory\n\n| Gate | Current result | Evidence / remaining work |\n|---|---|---|\n| Full default tests | initial pass; recheck pending |65 smoke checks and975 Vitest tests across22 files before independent-review fixes; former binding failure gone. Final recheck follows below. |\n| Acceptance/promotion validator | repair recheck pending |82 tests passed after four review fixes; additional oracle/positive controls added before final recheck. |\n| Complete mutation gate | passed |39/39 intended behavioral kills,exit0; actual structured assertion evidence retained. |\n| Actual Chrome synthetic timing | passed |Seven runs,4200 measurements,one final identity; maximum13.600ms,largest30-row median1.300ms. |\n| Independent runtime code review | technical clear |04-REVIEW.md has zero runtime blockers/plan19 actionable findings; two inherited validator issues assigned Task1. |\n| Independent security | technical clear; final evidence threats open |04-SECURITY.md:66 mitigated,12 documented accepted,four high deferred T-04G3-21..24; zero technical threats. |\n| Independent validator/evidence review | pending |Exact Task1 diff,counterexamples,binding independently reviewed before Task2; record appended below. |\n| Independent goal verification | pending Task3 |No old SUMMARY or technical result supplies this verdict. |\n| Human acceptance | human_needed |Zero observed of17; loaded_from_repository:false,source_confirmed_on:null,and every environment member null. |\n\n## Promotion contract and counterexamples\n\n1. Any pending or failed live check blocks overall human passed.\n2. Any flagged-unverified prohibition blocks overall passed.\n3. Changed shipped bytes invalidate source-dependent acceptance. Old attestations\n   remain attached to their original bytes.\n4. Missing timing makes acceptance incomplete; failed timing makes gaps_found.\n   All six enabled/disabled runs plus loaded dormant are required. Harness identity\n   is bound alongside the three measured runtime assets.\n5. Canonical checked boxes and Complete rows require mapped current observations,\n   technical-test readiness, independent code/security readiness, actual reset\n   acknowledgement and resolved prohibition judgments. Both canonical forms must\n   agree. Pending/Gaps Found remain legal without those inputs. Historical\n   requirements-completed metadata is never an input to the pure guard.\n\nThe primary walkthrough uses bare en. Exact ordered scope descriptors are\n[\"en\",\"en-*\",\"non-English\"]; these are scope, not observations. English tags in any\ncase, including regional tags, cannot satisfy language-icon-copy. A genuine\nregional English tag is required for english-regional-locale. Strict\nnull/live/date/privacy evidence fields remain enforced.\n\n| Requirement | Required current live checks |\n|---|---|\n| FAIL-01 |working-icon,blank-copy,missing-icon-hint,language-icon-copy,structure-copy,navigation-status,english-regional-locale |\n| FAIL-02 |missing-icon-hint,missing-settle-transition |\n| FAIL-03 |language-icon-copy,structure-copy,english-regional-locale |\n| FAIL-05 |working-icon,missing-icon-hint,language-icon-copy,structure-copy,navigation-status,worker-restart |\n| CTRL-02 |off-clears,on-restores,popup-keyboard |\n| CTRL-03 |restart-off,restart-on,cross-tab-preference,frozen-resume,worker-restart |\n| CTRL-04 |off-clears,on-restores,nonreceiver-status |\n\nThe existing suite exercises every mapped missing-check counterexample,\nin-memory false checkbox/Complete claims, absent technical/ACK inputs, complete\npositive controls, exact scope order, both locale directions, wrong source/harness\nidentity and false/missing dormant evidence. Actual REQUIREMENTS is guarded on\nevery default run. Tests never write claims to disk or consume old summary\ncompletion metadata.\n\nTDD: locale regressions failed before implementation (new scope was refused;\nen-GB incorrectly satisfied the non-English scenario). Canonical regressions then\nfailed for false checked/Complete claims. Both measured normalized TAP records\nreturned RED_EVIDENCE_OK before implementation. Vitest nests leaf TAP and omits\nNode's summary footer; normalization preserves leaf names/results and appends\nactual measured counts. Raw outputs are retained in 04-20-MEASUREMENTS.json.\nNo failed module load was accepted as RED.\n\nIndependent review cycle1 found four actionable issues: missing unreadable-state\nobservations for FAIL-01/FAIL-05, technical readiness accepting stale review\nidentities, hypothetical controls tied to current unchecked requirements, and\nmalformed regional tags accepted as genuine language evidence. Seven direct\ncounterexamples failed intentionally; normalized evidence returned RED_EVIDENCE_OK.\nThe narrow repair adds both unreadable observations to those requirements,\nbinds both review digests and committed inventories to current shipped bytes,\nnormalizes only hypothetical document copies, and validates raw well-formed\nBCP47 tags through Intl.getCanonicalLocales. Explicit independent mapping oracles\nprevent implementation omissions from deleting their own tests. AR-04-01 remains\ntwo pending waived observations and cannot promote FAIL-01/FAIL-03/FAIL-05.\n\nIndependent cycle2 reduced four findings to two same-ID residuals: contradictory\nduplicate metadata could still satisfy readiness, and a positive test assumed\nthe actual ACK would forever stay outstanding. Nine duplicate-metadata controls\nfailed before repair and returned RED_EVIDENCE_OK. The final repair counts every\nrelevant key before checking its single value, including quoted/invalid duplicate\nvalues. ACK controls now use explicit in-memory outstanding and acknowledged\ndocuments; the actual-file guard permits either honest state without forcing\nfuture observations or acknowledgements to stay pending. Final review cycle3 is\nrequired before Task2. No runtime/tool/harness change occurred in either repair.\n\n## ACK-04-01 — outstanding\n\nFourteen user attestations on2026-09-10 remain preserved and attributed at their\noriginal revision77b3a19. Runtime changes mean they do not establish acceptance\nof this build. The reset was required by source binding. **The user has not yet\nacknowledged that consequence.** Task2 asks for their actual words, separately\nfrom any new observation. No executor may answer it.\n\nEarlier approved concerned the exact unknown-preference contract, not ACK-04-01\nor live UAT. No response means pending. AR-04-01 is a separate authentic waiver\nof only language-icon-copy and structure-copy. Both stay pending; it supplies\nneither observation nor an exemption for other unavailable scenarios.\n\n## Prohibitions and seven edge classifications\n\nAll three prohibition IDs remain flagged-unverified. Existing qualified user\nratifications remain in LIVE-ACCEPTANCE disposition text, including genuine\nuntested-is-not-consent ratification with its UAT citation. Current no-blame and\nno-pressure judgments require the actual user's response. No automated descriptor\nis fabricated for these product judgments.\n\n| Requirement | Unclassified assumption | Status |\n|---|---|---|\n| FAIL-01 |Three-state semantics need actual behavioral and visual evidence |unresolved |\n| FAIL-02 |Real mount timing may defeat certainty |unresolved |\n| FAIL-03 |Unsupported/malformed language presentation needs evidence |unresolved |\n| FAIL-05 |Artwork distinguishability is a browser/user judgment |unresolved |\n| CTRL-02 |Popup must reflect authoritative intent under every outcome |unresolved |\n| CTRL-03 |VM recreation is not real browser restart |unresolved |\n| CTRL-04 |Marker removal alone does not prove visual cleanup |unresolved |\n\nPhase3 profiling stays deferred. Layout/retainer attribution was not taken.\nApproved native-write and worker-epoch uncertainty limits remain distinct from\nunobserved scenarios. No package install, remote publication or live account\ninteraction occurred. Shared STATE/ROADMAP/REQUIREMENTS/WINDOWS remain outside\nTask1 ownership; Task3 reconciliation has not run.\n"
+  }
+}

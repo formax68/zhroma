@@ -2,7 +2,7 @@
 phase: 04-honest-failure-and-an-off-switch
 status: human_needed
 source_confirmation: unconfirmed
-uat_execution: re-established-on-repaired-bytes-0-of-17-observed
+uat_execution: final-reviewed-source-0-of-17-observed
 prior_phase_status: human_needed
 ---
 
@@ -11,8 +11,8 @@ prior_phase_status: human_needed
 **Seventeen checks. Zero have been observed against the bytes that now ship.**
 The source has not been confirmed in a browser: `loaded_from_repository` is
 `false`, `source_confirmed_on` is `null`, and every `environment` member is
-`null`. Nobody has loaded the repaired `extension/` into Chrome yet, and this
-record does not pretend otherwise.
+`null`. No current-source browser loading has been attested to this record. Synthetic
+Chrome measurements do not populate these fields.
 
 **Fourteen observations were attested by the user on 2026-09-10, and they are not
 carried forward.** They were taken against the pre-repair bytes and are preserved
@@ -35,9 +35,10 @@ re-observation.
 **Two checks were never observed at all and remain unobserved:**
 `language-icon-copy` (no non-English tenant context available) and
 `structure-copy` (no safely prepared uninterpretable-table context available).
-Both are recorded in `limitations.unavailable_scenarios` with reasons. They are
-**FAIL-03's only two live checks**, so that requirement carries automated coverage
-and **zero live evidence**. The user **waived** both as accepted residual risk
+Both are recorded in `limitations.unavailable_scenarios` with reasons. They were
+the two FAIL-03 scenarios covered by the original waiver. The final mapping also
+requires `english-regional-locale`; all three remain unobserved, so FAIL-03 has
+automated coverage and **zero live evidence**. The user **waived** only the first two as accepted residual risk
 **`AR-04-01`** (`04-RISK-ACCEPTANCE.md`, recorded 2026-09-10; dated addendum for
 the repair). The waiver permits Phase 04 to proceed to its remaining gates. It is
 **not evidence**: FAIL-03 still has no live observation, both checks stay
@@ -74,8 +75,12 @@ Manual profiling remains deferred.
 
 This phase neither resumes nor closes any of that. `03-LIVE-ACCEPTANCE.md` and
 `test/extension/phase-03-live-acceptance.test.js` were not touched by 04-05 or by
-04-11; the Phase 3 record stays bound to its own historical revision
-`382cc881334aa7edf2103150bd8fe663236b6357` (see `04-BASELINE.md`). The
+04-11; the Phase 3 runtime was repaired at
+`382cc881334aa7edf2103150bd8fe663236b6357`. Its current eleven-pass/nine-pending
+observation record was committed later at
+`3979fb0730c6f778ddd31ad5ec89cfa997b79cc5`. The validator derives both from Git,
+compares the committed observation file with disk, and checks all three prior
+runtime hashes against the runtime commit; matching two literals is insufficient. The
 `prior_source` block in the canonical record below is validated **against Phase
 3's own file**, so a later edit that quietly promotes Phase 3 fails this phase's
 test rather than passing unnoticed.
@@ -84,6 +89,13 @@ Phase 3's nine pending checks are `skipped-by-user`. **Phase 4's seventeen check
 are not skipped — they are untested against the repaired bytes.** Do not carry
 the Phase 3 skip across, and do not describe Phase 4's reset as a skip either;
 they have different causes and different remedies.
+
+The primary walkthrough is bare `en`. The exact ordered descriptors
+`["en", "en-*", "non-English"]` describe primary and supplemental scope only.
+They do not claim that any language was observed. A genuine regional English
+tag belongs only to `english-regional-locale`; it cannot satisfy the non-English
+check. AR-04-01 still waives only `language-icon-copy` and `structure-copy`,
+which remain pending.
 
 ## Start with source confirmation
 
@@ -199,6 +211,21 @@ diagnoses remain three. The ratification is a decision about copy, not about
 bytes, and the repair did not touch either string, so it survives this
 re-establishment unchanged.
 
+## Current uncertainty presentation — prepared, not observed
+
+The user approved the unknown-preference contract in 04-15. Its current line is
+"Zhroma could not confirm that setting". The existing labelled checkbox shows a
+mixed position and is temporarily disabled until a fresh bounded read can confirm
+the setting after physical settlement. Confirmed save failure uses "Zhroma could
+not save that setting"; a confirmed save whose application is not confirmed uses
+"Setting saved, but this view did not update". The off path remains "Tinting is off".
+
+These are source-derived expectations, not browser observations or a synthetic
+demonstration claimed as live. The 2026-09-10 qualified judgments below are
+historical: the new uncertainty presentation and current failure/off paths still
+need the user's no-blame/no-pressure judgment at Task 2. The genuine
+untested-is-not-consent ratification remains attributed to 04-UAT.md test 20.
+
 ## Independent gates remain separate
 
 Automated technical results live in `04-VALIDATION.md`; synthetic timing lives in
@@ -207,10 +234,10 @@ the ASVS level 1 (high/critical-blocking) security verdict, phase goal
 verification and human acceptance are **four separate verdicts** and none of them
 is supplied by this document or by a green test suite.
 
-The independent code review has now been performed once (`04-REVIEW.md`, one
-critical and ten warnings). Its findings are what moved the bytes this record is
-re-bound to. Whether the repairs themselves satisfy an independent reviewer is a
-separate question and is not answered here.
+The final 04-19 code and security reviews independently cleared runtime defects
+on revision `255ba31e2b25f7b8c5bde8a3900fb93151594f50`. Their remaining validation
+and human boundaries are tracked separately in `04-VALIDATION.md`; neither
+review supplies live acceptance.
 
 ## Canonical record
 
@@ -230,13 +257,18 @@ derived from the working tree, not transcribed.
     "language": "English",
     "html_lang": "en",
     "shell": "current Agent Workspace",
-    "interface": "light"
+    "interface": "light",
+    "html_lang_variants": [
+      "en",
+      "en-*",
+      "non-English"
+    ]
   },
   "source": {
     "inventory_count": 11,
     "assets": {
-      "background.js": "141b192fecc263a2add910bed0bc29f3f18ec9abbcfd1c03510925235a840e6e",
-      "content.js": "2dd1ac4c892aaadf5c4bc14b47c61e5a7aee4f9bdca42b26351b9ecd999c6c42",
+      "background.js": "0f48bb105cdb1edd2aa6b68a6732dba1217502de015670097adbb3eb120d6428",
+      "content.js": "c9e83c837e4933827853a03bc9d7b63f308f403d679a8dc5c34701a6792b3126",
       "icons/missing.png": "68a032b0500b1ae062a455e3b1bdbf20db8dd71c8d16dee1461e6f3dbf5e8fa0",
       "icons/neutral.png": "a13c2447cb31526e666a4e050451228480a6221efcee673a6fd30ac2d943f9d4",
       "icons/off.png": "c1289da1a9235cba4ddb0f8bcd85ca90e355ce89ddf3c24340c6409205198638",
@@ -244,7 +276,7 @@ derived from the working tree, not transcribed.
       "icons/working.png": "28fc0380a220982d523d39564123933db92e8d492100cd690c0dd333200845bb",
       "manifest.json": "dafa656a55a1b69b42d4aa6490101e593bc9eea36afe35feacf34f7090b768e5",
       "popup.html": "4c621c9d92fd21130dc2cafbf5bcaf705a98993c53eb755a53011a381729ad7c",
-      "popup.js": "6a6f07c3e1dc891faf6b8f341e074d941115965f1907b8bc5a1b5b70293fa79f",
+      "popup.js": "3e7cac0ebed5141f617af5fb919a6a0c41df6efad2ccbb27076fc7af012ea938",
       "zhroma.css": "8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0"
     }
   },
@@ -271,7 +303,8 @@ derived from the working tree, not transcribed.
     "checks_pending": 9,
     "checks_failed": 0,
     "verification": "28/34",
-    "uat_execution": "skipped-by-user"
+    "uat_execution": "skipped-by-user",
+    "observation_revision": "3979fb0730c6f778ddd31ad5ec89cfa997b79cc5"
   },
   "checks": [
     {
