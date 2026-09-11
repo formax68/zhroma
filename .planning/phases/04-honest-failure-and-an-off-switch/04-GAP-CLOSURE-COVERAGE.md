@@ -1,6 +1,52 @@
 # Phase 04 gap-closure coverage and current contract
 
-## 04-19 halt and current authority — 2026-09-11
+## 04-19 final technical handoff — 2026-09-11
+
+**Plan 04-19 is technically complete; 04-20 evidence work may proceed.** The
+user's explicit “proceed” authorized attempt 2 in 8f77223. Both independent
+reviewers closed runtime findings 2 -> 0 at 31ed071 and harness warning 1 -> 0
+at 255ba31. The original mandatory 2 -> 2 halt remains historical evidence below
+and at 790872e/08ab51a; it was not silently ignored or relabeled success.
+
+| Current gate | Final measured disposition |
+|---|---|
+| CR-19-01 / T-04-05 | CLOSED: fresh resume readiness after RED4965287/GREEN199e642 and independent held-read controls. |
+| CR-19-02 / T-04-13 | CLOSED: original lifetime repair028265e plus fresh current diagnosis31ed071, durable exact same-document regression, bounded original deadline and independent both-direction probes. |
+| CR-19-03 / T-04G-23 | CLOSED: post-artwork generation plus issued-write epoch31ed071; held icon/title and completed opposite write yield approved uncertainty and correct focus recovery. |
+| WR-19-01 | CLOSED: RED e2a3edc3fail/1pass then GREEN255ba31; finite FIFO cap/preserved queue. Both reviewers independently checked; exact child timeout fails, never false-green. |
+| Complete mutation gate | 39/39 intended kills; two historical exclusions independently remain SURVIVED, not included as kills. |
+| Behavioral/default gates | 423/423 prescribed suites; 65/65 smoke; 941/942 Vitest with only known current-source acceptance binding failure. Default suite not green pending20. |
+| Independent code | Zero plan19 actionable findings/runtime blockers. Two inherited validator warnings (pass2 IN-02, pass1 IN-08) explicitly deferred20. |
+| Independent security | 66 mitigated +12 documented accepted +4 deferred OPEN =82. Zero technical threats; T-04G3-21..24 remain20 obligations. |
+
+04-19-MEASUREMENTS.json preserves complete outputs and65 per-file hashes.
+Both reports bind255ba31e2b25f7b8c5bde8a3900fb93151594f50: runtime11 digest
+46090012ab1a8ebd265273c327b214afbed0321a2fa149ab801ce8c205891065;
+tests42 a48ee5a0fdfd6d7792879d22c557fceb34b8a221d23833d1c7f2e90bbd49fb66;
+tools12 f7459b816951733542019ffb01d7e249ea8d97dfed0a60621e06cc70e91f3323.
+
+The old04-12 ANY ONE syntax-deletion promise is explicitly superseded by
+independently verified mechanisms: exact pair validation before render and
+state/generation/deadline checks at action admission/physical dispatch. Current
+popup-copy-fallback and project-guard-after-preference were independently
+remeasured survivors. The registry's ONLY-request-ID note is corrected; the
+inherited test comment retains obsolete wording qualified in REVIEW. This is
+not an individual kill claim.04-14 retention/no-committed-paint now has actual
+Map/call/commit observations including closure/reuse and held boundaries.
+Already-issued native effects and cross-worker ordering remain approved limits,
+not cancellation or ordering proofs. Both failed-read/successful-write tracer
+directions preserve acknowledged switch certainty with zero forbidden channels.
+
+The reports finish all pass-qualified historical dispositions. Pass2 IN-05 remains
+unimplemented type tooling; tsc was not run. All seven canonical requirements,
+seven edge classifications, prohibition judgments, current human observations
+and ACK remain unpromoted. AR-04-01 retains only its two original scenarios;
+Phase3 remains human_needed. Final source/timing binding, validator corrections,
+independent validation review and authentic acceptance remain04-20, with no live
+evidence changed by19. Planning rows below retain their historical provenance;
+this final section supplies the current technical outcome only.
+
+## Historical 04-19 first-attempt halt — superseded above
 
 **Execution halted at runtime revision 028265e. Plan 04-20 is blocked.**
 Independent packet-2 rechecks left affected actionable findings **2 -> 2**;
