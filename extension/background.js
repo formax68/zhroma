@@ -66,6 +66,9 @@
   const preferenceQueue = [];
   let activePreference = null;
   let pendingWrite = null;
+  // An issued write invalidates every earlier captured preference, even if its
+  // callback settles before a waiting popup resumes. This is epoch-local only.
+  let writeEpoch = 0;
 
   const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
   const isExact = (value, keys) => isObject(value)
@@ -251,6 +254,22 @@
     if (!isExact(reply, ['type', 'requestId', 'applied', 'diagnosis', 'reason'])
       || typeof reply.applied !== 'boolean'
       || !validDiagnosis(reply, requestId, 'applied')) return null;
+    if (reply.applied) {
+      // The acknowledgement proves work completed, not that its captured view
+      // diagnosis survived a later same-document mutation. Reobserve under the
+      // original admission deadline; own-apply invalidation is already past.
+      // A queued own-apply invalidation may arrive during the first handshake.
+      // Permit one fresh retry, never an unbounded observer or renewed budget.
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const generation = generationOf(tabId);
+        const current = await requestStatus(tabId, generation, expires);
+        if (tabs.get(tabId) !== state || state.lifetime !== lifetime) return null;
+        if (current === null) continue;
+        if (current.status === 'unavailable') return null;
+        return { applied: true, status: current.status, reason: current.reason };
+      }
+      return null;
+    }
     return { applied: reply.applied, status: reply.diagnosis, reason: reply.reason };
   }
 
@@ -340,15 +359,19 @@
   }
 
   async function popupStatus(requestId, expires) {
+    const preferenceEpoch = writeEpoch;
+    const confirmed = (value) => pendingWrite !== null || preferenceEpoch !== writeEpoch ? null : value;
     const tab = await activeTab(expires);
-    if (tab === null) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));
-    if (!await liveTab(tab.id, expires)) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));
+    if (tab === null) return unavailable(requestId, confirmed(pendingWrite !== null ? null : await bounded(readPreference, expires)));
+    if (!await liveTab(tab.id, expires)) return unavailable(requestId, confirmed(pendingWrite !== null ? null : await bounded(readPreference, expires)));
     const generation = invalidate(tab.id);
     const result = await requestStatus(tab.id, generation, expires);
     const enabled = pendingWrite !== null ? null : await bounded(readPreference, expires);
+    if (preferenceEpoch !== writeEpoch) return unavailable(requestId);
     if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);
     const projected = operational(result, enabled);
     await bounded(() => applyAction(tab.id, projected, generation, expires), expires);
+    if (preferenceEpoch !== writeEpoch) return unavailable(requestId);
     if (generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);
     return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,
       enabled: pendingWrite !== null ? null : enabled };
@@ -356,6 +379,7 @@
 
   async function setEnabled(job) {
     job.saved = null;
+    writeEpoch += 1;
     const raw = writePreference(job.desired);
     pendingWrite = raw;
     job.raw = raw.then((saved) => {
