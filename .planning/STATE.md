@@ -2,8 +2,8 @@
 gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
-status: executing
-stopped_at: 04-19 complete; executing 04-20 final evidence preparation
+status: human_needed
+stopped_at: 04-20 Task 1 complete; awaiting source-confirmed human walkthrough and ACK-04-01
 last_updated: "2026-09-11T06:29:12.871054Z"
 last_activity: 2026-09-11
 last_activity_desc: 04-15 approved and complete; remaining gap execution resumed
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 ## Current Position
 
-Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 20 of 20 (wave 17; 19 plans complete)
-Status: Technical review converged; final evidence preparation underway; human acceptance pending
+Phase: 04 (Honest Failure and an Off Switch) — HUMAN VERIFICATION NEEDED
+Plan: 20 of 20 (wave 17 human checkpoint; 19 plans complete)
+Status: Technical preparation and independent review passed; human acceptance pending
 Last activity: 2026-09-11 — Review recheck at 028265e retains CR-19-02 and CR-19-03; 04-20 blocked
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
@@ -285,3 +285,7 @@ After the previous non-decreasing review halt, the user was offered a revised re
 ## 2026-09-11 — Wave 16 complete after authorized repair attempt
 
 04-19 completed at 70ad1e5. Both independent reviewers cleared all four findings against the same65-file identity at 255ba31. Complete mutation gate39/39; prescribedfocused423/423; default65smoke and941/942Vitest, only expectedstale04sourcebinding failure. Four evidence/human security obligations and two inheritedvalidatorwarnings are assigned04-20, now executingTask1. Priorhalt remains recorded above. No requirementorhumanacceptance is promoted.
+
+## 2026-09-11 — Final preparation complete; actual human checkpoint
+
+04-20 Task 1 completed at 4848b83; checkpoint summary 54316bb. Final default suite: 65 smoke tests and 994 Vitest tests pass. Acceptance validator: 94 tests pass. Complete mutation gate: 39/39 killed. Seven actual synthetic Chrome workloads passed, with one reviewed runtime identity. Independent validator review converged 4 to 2 to 0 and permits Task 2. Preserved historical evidence is unchanged. All 17 current-build live checks remain pending; loaded-source confirmation, environment, genuine observations and ACK-04-01 require the user. AR-04-01 retains only its two waived, still-pending scenarios. No requirement completion or Phase 3 acceptance is inferred. Task 3 final reconciliation remains after the actual response or explicit deferral.
