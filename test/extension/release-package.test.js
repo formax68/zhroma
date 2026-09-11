@@ -1,13 +1,13 @@
 // @vitest-environment node
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, expect, test } from 'vitest';
-import { RELEASE_FILES, compareReleaseSources, readReleaseSource } from '../../scripts/release-source.js';
-import { packageRelease, validateReleaseArchive } from '../../scripts/package-release.js';
+import { RELEASE_FILES, compareReleaseSources, digestOf, readReleaseSource } from '../../scripts/release-source.js';
+import { packageRelease, readArchiveEntries, readManifestVersion, validateReleaseArchive } from '../../scripts/package-release.js';
 
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 const extensionDirectory = join(repositoryRoot, 'extension');
@@ -155,4 +155,237 @@ test('treats an interrupted output as a conflict rather than a finished candidat
   const partial = workspace('partial');
   mkdirSync(join(partial, 'zhroma-0.1.0'), { recursive: true });
   expect(() => packageRelease({ outDir: partial })).toThrow(/output-conflict/);
+});
+
+// --- Task 2: the controls that must fail closed -----------------------------
+// Every case below starts from a real archive or a real source tree and breaks
+// exactly one thing. A happy-path round trip that cannot tell these apart is
+// not evidence of anything.
+
+function runZip(args, cwd) {
+  const result = spawnSync('zip', args, { cwd, encoding: 'utf8' });
+  expect(result.status).toBe(0);
+}
+
+function sourceCopy(label) {
+  const directory = join(workspace(label), 'extension');
+  cpSync(extensionDirectory, directory, { recursive: true });
+  return directory;
+}
+
+// A single-entry archive whose stored name is rewritten in place. The
+// placeholder is the same length as the hostile name, so both the local header
+// and the central directory copy are replaced without moving any offset.
+// Rewrite a stored entry name in place. Both copies of the name -- local
+// header and central directory -- are the same length, so no offset moves.
+function rewriteStoredName(archive, from, to) {
+  const bytes = readFileSync(archive);
+  const needle = Buffer.from(from, 'utf8');
+  const replacement = Buffer.from(to, 'utf8');
+  expect(replacement.length).toBe(needle.length);
+  let replaced = 0;
+  for (let index = 0; index <= bytes.length - needle.length; index += 1) {
+    if (bytes.subarray(index, index + needle.length).equals(needle)) {
+      replacement.copy(bytes, index);
+      replaced += 1;
+      index += needle.length - 1;
+    }
+  }
+  expect(replaced).toBe(2);
+  writeFileSync(archive, bytes);
+  return archive;
+}
+
+function craftedArchive(label, entryName) {
+  const directory = workspace(label);
+  const placeholder = 'p'.repeat(entryName.length);
+  writeFileSync(join(directory, placeholder), '{}');
+  const archive = join(directory, 'crafted.zip');
+  runZip(['-X', '-q', archive, placeholder], directory);
+  return rewriteStoredName(archive, placeholder, entryName);
+}
+
+test('refuses an archive larger than the declared inventory could justify before reading it', () => {
+  const source = readReleaseSource(extensionDirectory);
+  const ceiling = source.assets.reduce((total, asset) => total + asset.size, 0) + 1024 * 1024;
+  const oversized = join(workspace('oversized'), 'huge.zip');
+  writeFileSync(oversized, Buffer.alloc(ceiling + 1));
+
+  expect(() => validateReleaseArchive(oversized, source)).toThrow(/archive-too-large/);
+
+  const honest = packageRelease({ outDir: workspace('oversized-out') });
+  expect(statSync(honest.archive).size).toBeLessThanOrEqual(ceiling);
+});
+
+test('treats a leftover exclusive work directory as an occupied output', () => {
+  const out = workspace('stale-work');
+  const stale = join(out, '.zhroma-release-work-abc123');
+  mkdirSync(stale, { recursive: true });
+
+  expect(() => packageRelease({ outDir: out })).toThrow(/output-conflict/);
+  // Only directories this run created are ever removed.
+  expect(readdirSync(out)).toEqual(['.zhroma-release-work-abc123']);
+});
+
+test('rejects a changed asset byte even when every length is identical', () => {
+  const changed = sourceCopy('changed-png');
+  const icon = join(changed, 'icons/neutral.png');
+  const bytes = readFileSync(icon);
+  bytes[bytes.length - 1] ^= 0xff;
+  writeFileSync(icon, bytes);
+
+  const honest = packageRelease({ outDir: workspace('changed-png-out') });
+  const tampered = readReleaseSource(changed);
+  expect(tampered.assets.find((a) => a.name === 'icons/neutral.png').size)
+    .toBe(readReleaseSource(extensionDirectory).assets.find((a) => a.name === 'icons/neutral.png').size);
+  expect(() => validateReleaseArchive(honest.archive, tampered)).toThrow(/asset-hash-mismatch/);
+});
+
+test('rejects an extra nested file, a missing asset, an empty tree and a manifest-only tree', () => {
+  const extra = sourceCopy('extra');
+  mkdirSync(join(extra, 'vendor'), { recursive: true });
+  writeFileSync(join(extra, 'vendor/extra.js'), '');
+  expect(() => readReleaseSource(extra)).toThrow(/unexpected-asset/);
+
+  const incomplete = sourceCopy('incomplete');
+  rmSync(join(incomplete, 'popup.js'));
+  expect(() => readReleaseSource(incomplete)).toThrow(/missing-asset/);
+
+  expect(() => readReleaseSource(workspace('empty-tree'))).toThrow(/missing-asset/);
+
+  const manifestOnly = join(workspace('manifest-only'), 'extension');
+  mkdirSync(manifestOnly, { recursive: true });
+  cpSync(join(extensionDirectory, 'manifest.json'), join(manifestOnly, 'manifest.json'));
+  expect(() => readReleaseSource(manifestOnly)).toThrow(/missing-asset/);
+});
+
+test('refuses to follow a symlink in the source tree', () => {
+  const linked = sourceCopy('symlink-source');
+  rmSync(join(linked, 'popup.js'));
+  symlinkSync(join(extensionDirectory, 'popup.js'), join(linked, 'popup.js'));
+
+  expect(() => readReleaseSource(linked)).toThrow(/symlink-entry/);
+});
+
+test('refuses a symlink entry inside an archive', () => {
+  const directory = workspace('symlink-archive');
+  const tree = join(directory, 'extension');
+  cpSync(extensionDirectory, tree, { recursive: true });
+  rmSync(join(tree, 'popup.js'));
+  symlinkSync('../../../../etc/hosts', join(tree, 'popup.js'));
+  const archive = join(directory, 'symlink.zip');
+  runZip(['-X', '-q', '--symlinks', archive, ...RELEASE_FILES], tree);
+
+  expect(() => validateReleaseArchive(archive, readReleaseSource(extensionDirectory)))
+    .toThrow(/archive-symlink-entry/);
+});
+
+test.each([
+  ['../escape.json', 'archive-traversal-entry'],
+  ['/etc/rogue.jsn', 'archive-absolute-entry'],
+  ['icons\\rogue.png', 'archive-backslash-entry'],
+])('refuses the hostile entry name %s and writes nothing', (entryName, code) => {
+  const archive = craftedArchive(`hostile-${code}`, entryName);
+  const target = join(workspace(`hostile-${code}-out`), 'extracted');
+
+  expect(() => validateReleaseArchive(archive, readReleaseSource(extensionDirectory), { extractDir: target }))
+    .toThrow(new RegExp(code));
+  expect(existsSync(target)).toBe(false);
+});
+
+// The archiver refuses to store one name twice, so the duplicate has to be
+// forged the way a hostile uploader would: rewrite the stored name afterwards.
+test('refuses duplicate entry names', () => {
+  const directory = workspace('duplicate');
+  writeFileSync(join(directory, 'first.json'), '{}');
+  writeFileSync(join(directory, 'secnd.json'), '{}');
+  const archive = join(directory, 'duplicate.zip');
+  runZip(['-X', '-q', archive, 'first.json', 'secnd.json'], directory);
+  rewriteStoredName(archive, 'secnd.json', 'first.json');
+
+  expect(readArchiveEntries(readFileSync(archive)).map((entry) => entry.name))
+    .toEqual(['first.json', 'first.json']);
+  expect(() => validateReleaseArchive(archive, readReleaseSource(extensionDirectory)))
+    .toThrow(/archive-duplicate-entry/);
+});
+
+test('refuses an archive packaged from the wrong root or carrying directory entries', () => {
+  const source = readReleaseSource(extensionDirectory);
+
+  const nested = workspace('wrong-root');
+  cpSync(extensionDirectory, join(nested, 'extension'), { recursive: true });
+  const wrongRoot = join(nested, 'wrong-root.zip');
+  runZip(['-X', '-q', wrongRoot, ...RELEASE_FILES.map((name) => `extension/${name}`)], nested);
+  expect(() => validateReleaseArchive(wrongRoot, source)).toThrow(/archive-unexpected-entry/);
+
+  const directoryEntries = workspace('directory-entries');
+  const tree = join(directoryEntries, 'extension');
+  cpSync(extensionDirectory, tree, { recursive: true });
+  const withDirectories = join(directoryEntries, 'directories.zip');
+  runZip(['-X', '-q', '-r', withDirectories, 'icons', 'background.js', 'content.js', 'manifest.json',
+    'popup.html', 'popup.js', 'zhroma.css'], tree);
+  expect(() => validateReleaseArchive(withDirectories, source)).toThrow(/archive-nonregular-entry/);
+});
+
+test('refuses a stale archive held against a changed manifest', () => {
+  const honest = packageRelease({ outDir: workspace('stale-out') });
+  const changed = sourceCopy('stale-source');
+  const manifest = JSON.parse(readFileSync(join(changed, 'manifest.json'), 'utf8'));
+  manifest.version = '0.2.0';
+  writeFileSync(join(changed, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+
+  expect(readManifestVersion(changed)).toBe('0.2.0');
+  expect(() => validateReleaseArchive(honest.archive, readReleaseSource(changed)))
+    .toThrow(/archive-size-mismatch|asset-hash-mismatch/);
+});
+
+test('refuses null, empty and partially populated source records', () => {
+  const source = readReleaseSource(extensionDirectory);
+  const honest = packageRelease({ outDir: workspace('null-inputs') });
+
+  expect(() => compareReleaseSources(null, source)).toThrow(/expected-source-required/);
+  expect(() => compareReleaseSources(source, null)).toThrow(/actual-source-required/);
+  expect(() => compareReleaseSources(source, { assets: [], digest: source.digest }))
+    .toThrow(/actual-source-required/);
+  expect(() => compareReleaseSources(source, { assets: source.assets })).toThrow(/actual-source-required/);
+  // A digest that does not follow from the assets it claims to summarise.
+  expect(() => validateReleaseArchive(honest.archive, { assets: source.assets, digest: '0'.repeat(64) }))
+    .toThrow(/source-digest-unbound/);
+  expect(() => validateReleaseArchive(null, source)).toThrow(/archive-path-required/);
+  expect(() => validateReleaseArchive(honest.archive, null)).toThrow(/source-required/);
+});
+
+test('keeps identically-hashed files under different names distinct', () => {
+  const sha256 = createHash('sha256').update('{}').digest('hex');
+  const build = (names) => {
+    const assets = names.map((name) => ({ name, size: 2, sha256 }));
+    return { assets, digest: digestOf(assets) };
+  };
+
+  expect(() => compareReleaseSources(build(['a.js', 'b.js']), build(['b.js', 'a.js'])))
+    .toThrow(/asset-name-mismatch/);
+  expect(build(['a.js', 'b.js']).digest).not.toBe(build(['b.js', 'a.js']).digest);
+});
+
+test('derives an identical inventory regardless of filesystem discovery order', () => {
+  const forward = join(workspace('order-forward'), 'extension');
+  const reverse = join(workspace('order-reverse'), 'extension');
+  for (const directory of [forward, reverse]) mkdirSync(join(directory, 'icons'), { recursive: true });
+  for (const name of RELEASE_FILES) cpSync(join(extensionDirectory, name), join(forward, name));
+  for (const name of [...RELEASE_FILES].reverse()) cpSync(join(extensionDirectory, name), join(reverse, name));
+
+  expect(readReleaseSource(forward).assets).toEqual(readReleaseSource(reverse).assets);
+  expect(readReleaseSource(forward).digest).toBe(readReleaseSource(extensionDirectory).digest);
+});
+
+test('reports a finite rejection code without echoing any packaged bytes', () => {
+  const broken = sourceCopy('diagnostics');
+  writeFileSync(join(broken, 'vendor.js'), 'SECRET-TICKET-SUBJECT');
+  const result = spawnSync(process.execPath, [join(repositoryRoot, 'scripts/package-release.js'),
+    '--source-dir', broken, '--out-dir', join(workspace('diagnostics-out'), 'candidate')], { encoding: 'utf8' });
+
+  expect(result.status).toBe(1);
+  expect(result.stdout).toBe('');
+  expect(result.stderr).toBe('RELEASE_REJECTED unexpected-asset\n');
+  expect(result.stderr).not.toContain('SECRET');
 });
