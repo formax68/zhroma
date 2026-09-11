@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "run_id": "rc-01",
+  "status": "human_needed",
+  "started_at": "2026-09-11T13:35:40Z",
+  "finished_at": null,
+  "candidate": {
+    "version": "0.1.0",
+    "frozen_at": "2026-09-11T13:34:48Z",
+    "source_git_revision": "6d3ab0b10e9419a5c1077e59e468977c00d59d4a",
+    "zip": {
+      "path": "zhroma-0.1.0.zip",
+      "sha256": "8afcb7ae9cd4ee37973348f18bd26c432438d49a7d973bba61cc4a12be9d8a11"
+    },
+    "source": {
+      "assets": [
+        {
+          "name": "background.js",
+          "size": 21542,
+          "sha256": "0f48bb105cdb1edd2aa6b68a6732dba1217502de015670097adbb3eb120d6428"
+        },
+        {
+          "name": "content.js",
+          "size": 25850,
+          "sha256": "c9e83c837e4933827853a03bc9d7b63f308f403d679a8dc5c34701a6792b3126"
+        },
+        {
+          "name": "icons/brand.png",
+          "size": 1239,
+          "sha256": "5479aa7f2988ddb765e5dff4316bc7c440670d68badd311e36edfde5b1eb06a6"
+        },
+        {
+          "name": "icons/missing.png",
+          "size": 163,
+          "sha256": "68a032b0500b1ae062a455e3b1bdbf20db8dd71c8d16dee1461e6f3dbf5e8fa0"
+        },
+        {
+          "name": "icons/neutral.png",
+          "size": 420,
+          "sha256": "a13c2447cb31526e666a4e050451228480a6221efcee673a6fd30ac2d943f9d4"
+        },
+        {
+          "name": "icons/off.png",
+          "size": 344,
+          "sha256": "c1289da1a9235cba4ddb0f8bcd85ca90e355ce89ddf3c24340c6409205198638"
+        },
+        {
+          "name": "icons/unreadable.png",
+          "size": 301,
+          "sha256": "1131af46ac5cc421e7e951a4de067566c9a31bbfa032787f5346fb6db8e30c3a"
+        },
+        {
+          "name": "icons/working.png",
+          "size": 379,
+          "sha256": "28fc0380a220982d523d39564123933db92e8d492100cd690c0dd333200845bb"
+        },
+        {
+          "name": "manifest.json",
+          "size": 710,
+          "sha256": "5cf11d9aafa1b773bde9b55b40b1ad1bcd694a0af3a85e1421625b7df8d84f95"
+        },
+        {
+          "name": "popup.html",
+          "size": 845,
+          "sha256": "4c621c9d92fd21130dc2cafbf5bcaf705a98993c53eb755a53011a381729ad7c"
+        },
+        {
+          "name": "popup.js",
+          "size": 8684,
+          "sha256": "3e7cac0ebed5141f617af5fb919a6a0c41df6efad2ccbb27076fc7af012ea938"
+        },
+        {
+          "name": "zhroma.css",
+          "size": 1402,
+          "sha256": "8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0"
+        }
+      ],
+      "digest": "19eaf98eeb5385a37f95fc0882968f18f4db2d6203003d0471283df22700c0cf"
+    },
+    "extracted": {
+      "path": "/tmp/zhroma-release-rc-01/zhroma-0.1.0"
+    }
+  },
+  "loaded_from_extracted": false,
+  "environment": {
+    "browser": null,
+    "os": null,
+    "locale": null,
+    "appearance": null,
+    "view_state": null,
+    "fresh_install_preference": null,
+    "loaded_directory": null,
+    "loaded_version": null,
+    "active_candidate_copies": null
+  },
+  "checks": [
+    {
+      "id": "candidate-loaded",
+      "status": "pending",
+      "observed_at": null,
+      "observation": null,
+      "observer": null
+    },
+    {
+      "id": "default-tint",
+      "status": "pending",
+      "observed_at": null,
+      "observation": null,
+      "observer": null
+    },
+    {
+      "id": "toolbar-popup",
+      "status": "pending",
+      "observed_at": null,
+      "observation": null,
+      "observer": null
+    },
+    {
+      "id": "off-clears",
+      "status": "pending",
+      "observed_at": null,
+      "observation": null,
+      "observer": null
+    },
+    {
+      "id": "on-restores",
+      "status": "pending",
+      "observed_at": null,
+      "observation": null,
+      "observer": null
+    },
+    {
+      "id": "safe-transition",
+      "status": "pending",
+      "observed_at": null,
+      "observation": null,
+      "observer": null
+    },
+    {
+      "id": "restart-preference",
+      "status": "pending",
+      "observed_at": null,
+      "observation": null,
+      "observer": null
+    },
+    {
+      "id": "extension-errors-channels",
+      "status": "pending",
+      "observed_at": null,
+      "observation": null,
+      "observer": null
+    }
+  ],
+  "unavailable": [
+    {
+      "id": "missing-column",
+      "reason": "Not yet established whether a safe existing Priority-less view is available in the user tenant; no view will be created or altered to produce one."
+    }
+  ],
+  "automated_checks": [
+    {
+      "id": "default-suite",
+      "command": "env GSD_FIXTURE_MANIFEST=test/fixtures/manifest.json npm --prefix . run test:recon",
+      "result": "pass",
+      "ran_at": "2026-09-11T13:34:43Z"
+    },
+    {
+      "id": "release-package",
+      "command": "node scripts/package-release.js --out-dir /tmp/zhroma-release-rc-01",
+      "result": "pass",
+      "ran_at": "2026-09-11T13:34:48Z"
+    },
+    {
+      "id": "synthetic-chrome-workload",
+      "command": "node scripts/run-tint-workload.js --size 30 --mode enabled --smoke",
+      "result": "pass",
+      "ran_at": "2026-09-11T13:34:56Z"
+    },
+    {
+      "id": "committed-source-parity",
+      "command": "git ls-tree -r --name-only 6d3ab0b -- extension, then git show per asset",
+      "result": "pass",
+      "ran_at": "2026-09-11T13:35:33Z"
+    }
+  ],
+  "predecessor_limits": {
+    "phase_03": {
+      "phase": "03-the-tint-survives-everything",
+      "status": "human_needed",
+      "checks_passed": 11,
+      "checks_pending": 9,
+      "checks_failed": 0,
+      "uat_execution": "skipped-by-user"
+    },
+    "phase_04": {
+      "phase": "04-honest-failure-and-an-off-switch",
+      "status": "human_needed",
+      "checks_passed": 14,
+      "checks_pending": 3,
+      "checks_failed": 0,
+      "pending_ids": [
+        "language-icon-copy",
+        "structure-copy",
+        "english-regional-locale"
+      ]
+    }
+  }
+}
