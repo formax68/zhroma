@@ -2,13 +2,13 @@
 phase: 04-honest-failure-and-an-off-switch
 status: human_needed
 source_confirmation: confirmed
-uat_execution: final-reviewed-source-6-of-17-observed
+uat_execution: final-reviewed-source-9-of-17-observed
 prior_phase_status: human_needed
 ---
 
 # Phase 04 Current-Source Live Acceptance
 
-**Seventeen checks: six passed, eleven pending.** On 2026-09-11 the user confirmed the repaired build and passed the working-icon check. Environment numbers were confirmed unchanged from the prior run: Chrome 152, macOS 27 beta 6, 30 mounted rows; English/light interface. The user also acknowledged that the earlier fourteen observations apply only to the old build.
+**Seventeen checks: nine passed, eight pending.** On 2026-09-11 the user confirmed the repaired build and passed the working-icon check. Environment numbers were confirmed unchanged from the prior run: Chrome 152, macOS 27 beta 6, 30 mounted rows; English/light interface. The user also acknowledged that the earlier fourteen observations apply only to the old build.
 
 **Fourteen observations were attested by the user on 2026-09-10, and they are not
 carried forward.** They were taken against the pre-repair bytes and are preserved
@@ -377,26 +377,26 @@ derived from the working tree, not transcribed.
     },
     {
       "id": "restart-off",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to restart-off: after turning tinting OFF, quitting Chrome completely and reopening the view, the switch remains off, the view is untinted and the toolbar shows the power symbol.",
       "language_context": null
     },
     {
       "id": "restart-on",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to restart-on: after turning tinting ON, quitting Chrome completely and reopening the view, the switch remains on and priority tinting returns.",
       "language_context": null
     },
     {
       "id": "cross-tab-preference",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to cross-tab-preference: two Zendesk view tabs, one with a Priority column and one without, follow OFF then ON changes made in one tab while each icon and popup describes its own view.",
       "language_context": null
     },
     {

@@ -521,3 +521,15 @@ User response to preparation checkpoint: "numbers are the same as before, let's 
 ### On switch restores tint — pass
 
 2026-09-11: User replied "pass" to on-restores: tint returns immediately without refresh and matches currently displayed priorities. Next: restart-off.
+
+### Restart with tinting off — pass
+
+2026-09-11: User replied "pass" to restart-off: after a full Chrome quit and reopen, OFF persists, the view remains untinted and the power-symbol artwork remains. Next: restart-on.
+
+### Restart with tinting on — pass
+
+2026-09-11: User replied "pass" to restart-on: after a full Chrome quit and reopen, ON persists and priority tinting returns. Next: cross-tab-preference.
+
+### Cross-tab preference — pass
+
+2026-09-11: User replied "pass" to cross-tab-preference: both tabs follow OFF and ON while each retains the diagnosis of its own view. Next: frozen-resume.
