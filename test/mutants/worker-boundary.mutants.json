@@ -7,7 +7,7 @@
     "suites": [
       "test/extension/worker-integrity.test.js"
     ],
-    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the echoed request id stops being compared with the one that was minted, so a superseded or replayed reply is accepted on both hops. 04-VALIDATION names this clause as requestApply's ONLY staleness key \u2014 the apply reply is deliberately not generation-guarded \u2014 so its deletion is the whole staleness failure on that path (04-REVIEW WR-02, T-04G-27)",
+    "note": "Echoed request identity rejects a mismatched or replayed operation reply on both hops. It is one ownership check: current requestApply separately guards tab/document lifetime and obtains a bounded fresh diagnosis after acknowledged application. This mutation measures operation identity only; apply-document-lifetime and apply-fresh-diagnosis measure those separate mechanisms (04-19 supersedes the historical ONLY-staleness-key claim).",
     "expected_failure": {
       "suite": "test/extension/worker-integrity.test.js",
       "test": "an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so",

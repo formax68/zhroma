@@ -165,12 +165,16 @@ export function createChromeHarness({ stored = ABSENT, readMode = 'deferred', ex
     storageListenerCount: () => storageListeners.length,
     messageListenerCount: () => messageListeners.length,
     /** Release every queued Chrome delivery, in the order Chrome queued it. */
-    flush() {
+    flush(maxDeliveries = 1000) {
+      if (!Number.isInteger(maxDeliveries) || maxDeliveries < 1) throw new Error('Invalid Chrome harness delivery limit');
       let released = 0;
-      // A release can queue the next delivery (a status hint answered by no
-      // receiver); drain to quiescence rather than one generation deep.
+      // Drain finite generations in FIFO order; preserve undispatched work
+      // when a reentrant callback exceeds this flush's delivery budget.
       while (pending.length > 0) {
-        for (const deliver of pending.splice(0)) { deliver(); released += 1; }
+        if (released >= maxDeliveries) throw new Error('Chrome harness delivery limit exceeded');
+        const deliver = pending.shift();
+        deliver();
+        released += 1;
       }
       return released;
     },
