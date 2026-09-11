@@ -39,6 +39,49 @@ function change(popup, value) {
 const answered = (world, type = 'set-enabled') => world.traffic.filter((entry) =>
   entry.direction === 'response' && entry.payload.type === type);
 
+for (const initial of [true, false]) {
+  for (const current of [true, false]) {
+    for (const readMode of ['immediate', 'rejected']) {
+      test(`restored ${initial} reads ${current} with ${readMode} stays unconfirmed until fresh read`, async () => {
+        const { world, content } = await timedBoot(initial);
+        content.window.dispatchEvent(new content.window.Event('pagehide'));
+        world.freezeTab(TAB_ID);
+        world.setStored('enabled', current);
+        world.emitStorageChange({ enabled: { oldValue: initial, newValue: current } });
+        world.thawTab(TAB_ID);
+        world.setReadMode(readMode, 'content');
+        world.hold('content-read');
+        content.window.dispatchEvent(new content.window.Event('pageshow'));
+        await vi.advanceTimersByTimeAsync(50);
+        expect(world.pending('content-read')).toBe(1);
+        expect(markers(content.document), '[review:resume-unconfirmed-no-markers]').toEqual([]);
+        expect(world.snapshot()).toEqual({ enabled: current });
+        world.unhold('content-read'); world.release('content-read');
+        await vi.advanceTimersByTimeAsync(100);
+        expect(markers(content.document)).toEqual(readMode === 'immediate' && current ? tinted : []);
+        expect(world.forbidden).toEqual([]);
+      });
+    }
+  }
+}
+
+test('newer OFF confirmation defeats a held restored ON read', async () => {
+  const { world, content } = await timedBoot(true);
+  content.window.dispatchEvent(new content.window.Event('pagehide'));
+  world.hold('content-read');
+  content.window.dispatchEvent(new content.window.Event('pageshow'));
+  await vi.advanceTimersByTimeAsync(50);
+  expect(markers(content.document), '[review:resume-unconfirmed-no-markers]').toEqual([]);
+  world.setStored('enabled', false);
+  world.emitStorageChange({ enabled: { oldValue: true, newValue: false } });
+  await vi.advanceTimersByTimeAsync(50);
+  world.unhold('content-read'); world.release('content-read');
+  await vi.advanceTimersByTimeAsync(100);
+  expect(world.snapshot()).toEqual({ enabled: false });
+  expect(markers(content.document)).toEqual([]);
+  expect(world.forbidden).toEqual([]);
+});
+
 test('admission overflow in an opposite popup never confirms an obsolete position', async () => {
   const { world, popup } = await timedBoot(true);
   const opposite = loadPopup(world);
