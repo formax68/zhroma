@@ -1,5 +1,24 @@
 # Phase 04 gap-closure coverage and current contract
 
+## 04-19 initial independent review — 2026-09-11
+
+Independent code and security reviews of 832926e found CR-19-01 (stale ON on
+page restore), CR-19-02 (old-document application acknowledgement), CR-19-03
+(stale popup diagnosis after native artwork await), and WR-19-01 (unbounded
+test-harness drain). All remain open pending bounded RED/GREEN repair and
+independent recheck. The required two-suite run passed 234 tests despite these
+counterexamples. Canonical REVIEW preserves pass 2 at 1469810596704ed72b631d8409a3e77cbdddbd41
+and pass 1 at bc25a2c. No prior canonical Phase 4 SECURITY report existed.
+
+The full independent security register has 82 entries: three current technical
+high blockers, four high evidence/human threats explicitly deferred to 04-20,
+and twelve existing accept dispositions whose canonical log needs a presence
+recheck. None of the approved native/epoch limits waives the three new defects.
+04-12's ANY ONE guard promise is superseded by independently justified observable
+mechanism coverage; excluded redundant sites remain survivors, not kills.
+04-14 now has behavioral retained-entry/committed-paint evidence, subject to the
+worker repair recheck. No requirement, edge classifier or human judgment closes.
+
 Planning baseline: `0cc45c38f8fc1c38cfa2a522890385d21a66de64`, 2026-09-11.
 This is the append-only 04-15–04-20 plan ledger. **COVERED means planned, not repaired or accepted.** Execution must add direct evidence and an independent disposition before changing that status. Old plans, summaries and attributed observations remain immutable history.
 
