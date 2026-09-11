@@ -223,7 +223,19 @@ const expectedPaint = {
   Normal: [202, 138, 4, 0.09], Low: [22, 163, 74, 0.08],
 };
 
-test('four CSS rules map exact labels to alpha backgrounds and only direct ticket cells', () => {
+test('locale selector family: four exact source heads preserve direct-cell paint rules', () => {
+  // A source oracle independent of happy-dom's selector parser. The ASCII i
+  // flag is a defensive convention, not a claimed Chrome behavioral kill.
+  const sourceRules = [...asset('zhroma.css').matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+  expect(sourceRules.length, '[locale:selector-family] nonempty four-rule extraction').toBe(4);
+  for (const [index, [, selector, declarations]] of sourceRules.entries()) {
+    expect(selector.trim().startsWith('html[lang|="en" i] '), `[locale:selector-family] head ${index + 1}`).toBe(true);
+    expect(selector.trim()).toMatch(/> td\[data-garden-id="tables\.cell"\]$/);
+    expect(declarations.trim()).toMatch(/^background-color: rgb\([\d .\/]+\) !important;$/);
+  }
+});
+
+test('happy-dom secondary model: four CSS rules map exact labels to alpha backgrounds and only direct ticket cells', () => {
   const window = createDocument();
   const { document } = window;
   const rules = loadRules(window);
@@ -327,7 +339,7 @@ function scriptAcceptsShell(lang) {
   return markers.join('|') === 'Urgent|High|Normal|Low';
 }
 
-test('the JS language predicate and the CSS language predicate accept exactly the same shells', () => {
+test('happy-dom secondary model: JS and CSS shell agreement with documented right-padding divergence', () => {
   vi.useFakeTimers();
   const accepted = ['en', 'EN', 'en-US', 'en-GB', 'EN-gb', 'en-Latn-GB'];
   const refused = ['fr', 'fr-CA', 'eng', 'ende', '', ' ', ' en'];
@@ -341,6 +353,7 @@ test('the JS language predicate and the CSS language predicate accept exactly th
   // matches a right-padded attribute value where Chrome does not, so `'en '` is
   // excluded from the agreement assertion and covered on the JavaScript side alone.
   expect(scriptAcceptsShell('en ')).toBe(false);
+  expect(cssAcceptsShell('en ')).toBe(true);
 });
 
 test('CSS rule reordering preserves hue mapping; CSS-only shade edits leave detector bytes unchanged', () => {

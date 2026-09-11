@@ -18,6 +18,8 @@ import { createContext, Script } from 'node:vm';
 import { Window } from 'happy-dom';
 import { afterEach, expect, test, vi } from 'vitest';
 import { createChromeHarness } from './chrome-harness.js';
+import { closeWindows, createWorld, loadContent, loadWorker, loadPopup, settle,
+  statusText, markers, COPY, ICON, TAB_ID } from './tracer-world.js';
 
 const asset = (name) => readFileSync(new URL(`../../extension/${name}`, import.meta.url), 'utf8');
 
@@ -32,6 +34,7 @@ afterEach(async () => {
   }
   vi.restoreAllMocks();
   vi.useRealTimers();
+  await closeWindows();
 });
 
 // --- synthetic table construction -------------------------------------------
@@ -287,6 +290,29 @@ test('a Priority column whose every value is empty is working with the blank rea
 });
 
 // --- the language boundary (D-04, D-08) --------------------------------------
+
+test.each([
+  ['leading English padding', ' en'],
+  ['trailing English padding', 'en '],
+  ['padded regional English', ' en-GB '],
+  ['underscore English', 'en_US'],
+])('malformed English shell: %s reports structure across content, worker and popup', async (name, lang) => {
+  vi.useRealTimers();
+  const world = createWorld();
+  loadWorker(world);
+  const content = loadContent(world);
+  content.document.documentElement.lang = lang;
+  await settle();
+  const popup = loadPopup(world);
+  await settle();
+  await settle();
+  expect(statusText(popup.document), `[locale:malformed-english-reason] ${name}`).toBe(COPY.structure);
+  expect(world.actions.get(TAB_ID)).toEqual({ icon: ICON.unreadable, title: COPY.structure });
+  expect(markers(content.document)).toEqual([]);
+  expect(content.document.documentElement.lang).toBe(lang);
+  expect(world.forbidden).toEqual([]);
+  expect(world.traffic.some(({ payload }) => payload?.diagnosis === 'cannot-read' && payload.reason === 'structure')).toBe(true);
+});
 
 test('a non-English shell is cannot-read with the unsupported-language reason', () => {
   const runtime = load({ lang: 'fr' });
