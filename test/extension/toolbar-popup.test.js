@@ -61,7 +61,7 @@ for (const stage of ['icon', 'title']) {
     expect(world.action(OTHER_TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
     world.unhold(stage, TAB_ID); world.release(stage, TAB_ID);
     await vi.advanceTimersByTimeAsync(100);
-    expect(world.action(TAB_ID), `[outcome:late-${stage}-reconciled]`).toEqual({ icon: ICON.neutral, title: COPY.checking });
+    expect(world.action(TAB_ID), `[outcome:late-native-reconciled] ${stage}`).toEqual({ icon: ICON.neutral, title: COPY.checking });
     await vi.advanceTimersByTimeAsync(22000);
     expect(vi.getTimerCount()).toBe(0);
     expect(world.forbidden).toEqual([]);
@@ -525,11 +525,11 @@ test('a slow earlier reply cannot repaint over a newer projection', async () => 
   expect(world.action()).toEqual({ icon: ICON.neutral, title: COPY.checking });
   // Fails if either `project` recheck is removed: the superseded working reply
   // would reach `applyAction` and paint an artwork the view no longer earns.
-  expect(world.actionLog.filter((entry) => entry.icon === ICON.working || entry.title === COPY.working), '[mutant:generation-counter]').toEqual([]);
+  expect(world.actionLog.filter((entry) => entry.icon === ICON.working || entry.title === COPY.working), '[mutant:generation-counter] [mutant:project-queue]').toEqual([]);
   // Fails if the per-tab queue is collapsed: two concurrent projections let the
   // held stale reply land last.
   const icons = world.actionLog.filter((entry) => entry.icon).map((entry) => entry.icon);
-  expect(icons.at(-1), '[mutant:project-queue]').toBe(ICON.neutral);
+  expect(icons.at(-1)).toBe(ICON.neutral);
   expect(world.forbidden).toEqual([]);
 }, 15000);
 
@@ -574,11 +574,11 @@ test('a superseded status reply is discarded before the preference is ever read'
   await settle();
   // The superseded projection stopped at the status recheck: it never reached
   // `readPreference`, so exactly one read — the current projection's — is held.
-  expect(world.pendingReadCount(), '[mutant:project-guard-after-status]').toBe(1);
+  expect(world.pendingReadCount()).toBe(1);
   world.flushReads();
   await settle();
   // One flush is enough precisely because only one projection got that far.
-  expect(world.pendingReadCount()).toBe(0);
+  expect(world.pendingReadCount(), '[mutant:project-guard-after-status]').toBe(0);
   expect(world.action()).toEqual({ icon: ICON.neutral, title: COPY.checking });
   expect(world.forbidden).toEqual([]);
 }, 15000);
@@ -647,10 +647,10 @@ test('a superseded popup projection reports the connection line and still shows 
   await wait(800);
   world.setResponseDelay(0);
   await settle();
-  expect(statusText(popup.document)).toBe(COPY.unavailable);
+  expect(statusText(popup.document), '[mutant:popup-status-guard]').toBe(COPY.unavailable);
   // The connection is what went missing, not the preference: the switch still
   // shows the value storage confirmed, and stays operable.
-  expect(control(popup.document).checked, '[mutant:popup-status-guard]').toBe(true);
+  expect(control(popup.document).checked).toBe(true);
   expect(control(popup.document).disabled).toBe(false);
   expect(world.forbidden).toEqual([]);
 }, 15000);

@@ -4,47 +4,101 @@
     "file": "extension/background.js",
     "find": "if (chrome.runtime.lastError) { resolve(null); return; }",
     "replace": "",
-    "suites": ["test/extension/failure-seam.test.js"],
-    "note": "the worker reads a failed storage read as an absent key (04-REVIEW WR-03; removal previously left 277/277 passing)"
+    "suites": [
+      "test/extension/failure-seam.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the worker reads a failed storage read as an absent key (04-REVIEW WR-03; removal previously left 277/277 passing)",
+    "expected_failure": {
+      "suite": "test/extension/failure-seam.test.js",
+      "test": "a read that fails while still delivering values leaves the worker preference unconfirmed",
+      "assertion": "[mutant:worker-lasterror]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "content-lasterror",
     "file": "extension/content.js",
     "find": "if (chrome.runtime.lastError) { finish(null); return; }",
     "replace": "",
-    "suites": ["test/extension/failure-seam.test.js"],
-    "note": "the content script reads a failed storage read as an absent key and tints a view the agent may have switched off (04-REVIEW WR-03)"
+    "suites": [
+      "test/extension/failure-seam.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the content script reads a failed storage read as an absent key and tints a view the agent may have switched off (04-REVIEW WR-03)",
+    "expected_failure": {
+      "suite": "test/extension/failure-seam.test.js",
+      "test": "a read that fails while still delivering values leaves the content script dormant",
+      "assertion": "[mutant:content-lasterror]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "worker-status-unbounded",
     "file": "extension/background.js",
-    "find": "bounded(chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 }))",
+    "find": "bounded(() => chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 }), expires, REQUEST_TIMEOUT_MS)",
     "replace": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 })",
-    "suites": ["test/extension/failure-seam.test.js"],
-    "note": "a silent top frame stalls the toolbar projection with no deadline (04-REVIEW WR-04, T-04G-04)"
+    "suites": [
+      "test/extension/failure-seam.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a silent top frame stalls the toolbar projection with no deadline (04-REVIEW WR-04, T-04G-04)",
+    "expected_failure": {
+      "suite": "test/extension/failure-seam.test.js",
+      "test": "a top frame that never answers get-status is unavailable for that tab alone",
+      "assertion": "[mutant:worker-status-unbounded]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "worker-apply-unbounded",
     "file": "extension/background.js",
-    "find": "bounded(chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 }))",
+    "find": "bounded(() => chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 }), expires, REQUEST_TIMEOUT_MS)",
     "replace": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 })",
-    "suites": ["test/extension/failure-seam.test.js"],
-    "note": "a silent top frame wedges the single preference writer for every tab (04-REVIEW WR-04, T-04G-04)"
+    "suites": [
+      "test/extension/failure-seam.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a silent top frame wedges the single preference writer for every tab (04-REVIEW WR-04, T-04G-04)",
+    "expected_failure": {
+      "suite": "test/extension/failure-seam.test.js",
+      "test": "a top frame that never answers apply-preference costs one bounded wait, not the off switch",
+      "assertion": "[mutant:worker-apply-unbounded]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "worker-status-frameid",
     "file": "extension/background.js",
     "find": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId }, { frameId: 0 })",
     "replace": "chrome.tabs.sendMessage(tabId, { type: 'get-status', requestId })",
-    "suites": ["test/extension/failure-seam.test.js", "test/extension/toolbar-popup.test.js"],
-    "note": "the status request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)"
+    "suites": [
+      "test/extension/failure-seam.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the status request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)",
+    "expected_failure": {
+      "suite": "test/extension/failure-seam.test.js",
+      "test": "a top frame that never answers get-status is unavailable for that tab alone",
+      "assertion": "[mutant:worker-status-frameid]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "worker-apply-frameid",
     "file": "extension/background.js",
     "find": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 })",
     "replace": "chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId })",
-    "suites": ["test/extension/failure-seam.test.js", "test/extension/toolbar-popup.test.js"],
-    "note": "the apply request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)"
+    "suites": [
+      "test/extension/failure-seam.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the apply request is no longer addressed to the top frame, so a subframe could answer for the document (T-04G-05)",
+    "expected_failure": {
+      "suite": "test/extension/failure-seam.test.js",
+      "test": "a top frame that never answers apply-preference costs one bounded wait, not the off switch",
+      "assertion": "[mutant:worker-apply-frameid]",
+      "kind": "behavioral"
+    },
+    "count": 1
   }
 ]

@@ -98,7 +98,7 @@ test('a top frame that never answers apply-preference costs one bounded wait, no
     { type: 'set-enabled', requestId: 1, enabled: false }, POPUP_SENDER), CEILING);
 
   // The switch answered at all: this is the whole of WR-04.
-  expect(reply, '[mutant:worker-apply-unbounded]').not.toBe(TIMED_OUT);
+  expect(reply).not.toBe(TIMED_OUT);
   // Three facts, still reported as three facts. The write landed, storage says
   // so, and the document confirmed nothing — none is dressed up as another.
   expect(reply.saved).toBe(true);
@@ -107,7 +107,7 @@ test('a top frame that never answers apply-preference costs one bounded wait, no
   expect(reply.status).toBe('unavailable');
   expect(world.getStored('enabled')).toBe(false);
   // Bounded by the SHIPPED constant, not by the double's port-close fallback.
-  expect(elapsed).toBeLessThan(bound() * 2);
+  expect(elapsed, '[mutant:worker-apply-unbounded]').toBeLessThan(bound() * 2);
   expect(elapsed).toBeGreaterThanOrEqual(bound() - 200);
   expect(world.forbidden, '[mutant:worker-apply-frameid]').toEqual([]);
 }, SLOW);

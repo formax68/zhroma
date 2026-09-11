@@ -7,7 +7,14 @@
     "suites": [
       "test/extension/worker-integrity.test.js"
     ],
-    "note": "the echoed request id stops being compared with the one that was minted, so a superseded or replayed reply is accepted on both hops. 04-VALIDATION names this clause as requestApply's ONLY staleness key — the apply reply is deliberately not generation-guarded — so its deletion is the whole staleness failure on that path (04-REVIEW WR-02, T-04G-27)"
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the echoed request id stops being compared with the one that was minted, so a superseded or replayed reply is accepted on both hops. 04-VALIDATION names this clause as requestApply's ONLY staleness key \u2014 the apply reply is deliberately not generation-guarded \u2014 so its deletion is the whole staleness failure on that path (04-REVIEW WR-02, T-04G-27)",
+    "expected_failure": {
+      "suite": "test/extension/worker-integrity.test.js",
+      "test": "an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so",
+      "assertion": "[mutant:request-id-echo]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "status-reply-gate",
@@ -17,7 +24,14 @@
     "suites": [
       "test/extension/worker-integrity.test.js"
     ],
-    "note": "requestStatus's combined shape-and-diagnosis gate never holds, so no status reply is ever refused and any object reaching the worker becomes a diagnosis about the agent's view. Fences the gate as a whole; the individual clauses inside validDiagnosis are fenced by request-id-echo and diagnosis-pairing (04-REVIEW WR-02, T-04G-28)"
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. requestStatus's combined shape-and-diagnosis gate never holds, so no status reply is ever refused and any object reaching the worker becomes a diagnosis about the agent's view. Fences the gate as a whole; the individual clauses inside validDiagnosis are fenced by request-id-echo and diagnosis-pairing (04-REVIEW WR-02, T-04G-28)",
+    "expected_failure": {
+      "suite": "test/extension/worker-integrity.test.js",
+      "test": "a status reply carrying an extra member beyond the four the gate names is refused, and the tab reports the connection fact",
+      "assertion": "[mutant:status-reply-gate]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "diagnosis-pairing",
@@ -27,26 +41,30 @@
     "suites": [
       "test/extension/worker-integrity.test.js"
     ],
-    "note": "an unpaired {diagnosis, reason} becomes renderable. ICONS is keyed by status alone while TITLES is keyed by the whole pair, so the artwork write SUCCEEDS and the title write carries no value — one state's artwork under no sentence at all, which is the FAIL-05 failure mode. MEASURED killed on the clean-fallback behavioural test's toolbar equality, which carries both halves at once (icons/missing.png under an undefined title). The separate no-valueless-title invariant in the same test guards that second half but is NOT the assertion that fires here, because the toolbar equality precedes it (04-REVIEW WR-05, T-04G-29)"
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. an unpaired {diagnosis, reason} becomes renderable. ICONS is keyed by status alone while TITLES is keyed by the whole pair, so the artwork write SUCCEEDS and the title write carries no value \u2014 one state's artwork under no sentence at all, which is the FAIL-05 failure mode.",
+    "expected_failure": {
+      "suite": "test/extension/worker-integrity.test.js",
+      "test": "an unpaired combination leaves a clean fallback, never a half-written toolbar",
+      "assertion": "[mutant:diagnosis-pairing]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "popup-valid-gate",
     "file": "extension/popup.js",
-    "find": "      || typeof reply.saved !== 'boolean' || typeof reply.applied !== 'boolean'\n      || !validPreference(reply.enabled) || !validStatus(reply.status, reply.reason)) {",
-    "replace": "      || typeof reply.saved !== 'boolean' || typeof reply.applied !== 'boolean') {",
+    "find": "      || !validPreference(reply.enabled) || !validStatus(reply.status, reply.reason)",
+    "replace": "",
     "suites": [
       "test/extension/worker-integrity.test.js"
     ],
-    "note": "requestEnabled stops checking that the worker's reply carries an in-set status and a boolean-or-null preference, so a buggy worker's unrecognised value is rendered instead of reported as a failed save. Fences the popup's own second line of defence on the set-enabled path only; refresh's gate has the same two clauses in the opposite order and is a distinct literal (04-REVIEW WR-02, T-04G-30)"
-  },
-  {
-    "id": "popup-copy-fallback",
-    "file": "extension/popup.js",
-    "find": "    say(Object.hasOwn(COPY, key) ? COPY[key] : COPY.unavailable);",
-    "replace": "    say(COPY[key]);",
-    "suites": [
-      "test/extension/worker-integrity.test.js"
-    ],
-    "note": "render indexes the copy map directly, so an unpaired-but-individually-valid pair writes no sentence into the status region instead of reporting the connection fact. This is the popup-side mirror of diagnosis-pairing and is what keeps a malformed state from being blamed on the agent's view (04-REVIEW WR-05, T-04G-30)"
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. requestEnabled stops checking that the worker's reply carries an in-set status and a boolean-or-null preference, so a buggy worker's unrecognised value is rendered instead of reported as a failed save. Fences the popup's own second line of defence on the set-enabled path only; refresh's gate has the same two clauses in the opposite order and is a distinct literal (04-REVIEW WR-02, T-04G-30)",
+    "expected_failure": {
+      "suite": "test/extension/worker-integrity.test.js",
+      "test": "a set-enabled reply carrying an out-of-set status is refused, and the popup claims nothing",
+      "assertion": "[mutant:popup-valid-gate]",
+      "kind": "behavioral"
+    },
+    "count": 1
   }
 ]

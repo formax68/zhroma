@@ -4,31 +4,67 @@
     "file": "extension/popup.js",
     "find": "await Promise.race([chrome.runtime.sendMessage(message), deadline])",
     "replace": "await chrome.runtime.sendMessage(message)",
-    "suites": ["test/extension/popup-recovery.test.js"],
-    "note": "a worker that receives the request and never answers leaves the switch disabled for the life of the popup (04-REVIEW WR-04, T-04G-14)"
+    "suites": [
+      "test/extension/popup-recovery.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a worker that receives the request and never answers leaves the switch disabled for the life of the popup (04-REVIEW WR-04, T-04G-14)",
+    "expected_failure": {
+      "suite": "test/extension/popup-recovery.test.js",
+      "test": "a worker that never answers set-enabled costs one bounded wait and the ratified line",
+      "assertion": "[mutant:popup-ask-unbounded]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "popup-no-revert",
     "file": "extension/popup.js",
-    "find": "control.checked = lastConfirmed;",
-    "replace": "",
-    "suites": ["test/extension/popup-recovery.test.js"],
-    "note": "the failed-save path shows the unconfirmed position the click left instead of the last value storage confirmed (04-REVIEW WR-07, T-04G-13)"
+    "find": "      control.checked = enabled;",
+    "replace": "      control.checked = control.checked;",
+    "suites": [
+      "test/extension/popup-recovery.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the failed-save path shows the unconfirmed position the click left instead of the last value storage confirmed (04-REVIEW WR-07, T-04G-13)",
+    "expected_failure": {
+      "suite": "test/extension/popup-recovery.test.js",
+      "test": "a reply reporting the save failed returns the switch to the value storage still holds",
+      "assertion": "[mutant:popup-no-revert]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "popup-stays-disabled",
     "file": "extension/popup.js",
-    "find": "control.disabled = false;",
-    "replace": "control.disabled = true;",
-    "suites": ["test/extension/popup-recovery.test.js"],
-    "note": "the switch is taken out of service after a failed save even though a confirmed value exists, so no retry is possible (04-REVIEW WR-07, T-04G-14)"
+    "find": "      control.disabled = outstanding;",
+    "replace": "      control.disabled = true;",
+    "suites": [
+      "test/extension/popup-recovery.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the switch is taken out of service after a failed save even though a confirmed value exists, so no retry is possible (04-REVIEW WR-07, T-04G-14)",
+    "expected_failure": {
+      "suite": "test/extension/popup-recovery.test.js",
+      "test": "a reply reporting the save failed returns the switch to the value storage still holds",
+      "assertion": "[mutant:popup-stays-disabled]",
+      "kind": "behavioral"
+    },
+    "count": 1
   },
   {
     "id": "popup-focus-guard",
     "file": "extension/popup.js",
     "find": "if (hadFocus) control.focus();",
     "replace": "",
-    "suites": ["test/extension/popup-recovery.test.js"],
-    "note": "focus is never handed back after the round trip, so a keyboard agent is left in body with no way to retry (04-REVIEW WR-07, T-04G-14)"
+    "suites": [
+      "test/extension/popup-recovery.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. focus is never handed back after the round trip, so a keyboard agent is left in body with no way to retry (04-REVIEW WR-07, T-04G-14)",
+    "expected_failure": {
+      "suite": "test/extension/popup-recovery.test.js",
+      "test": "a keyboard agent gets the switch back after a failed save",
+      "assertion": "[mutant:popup-focus-guard]",
+      "kind": "behavioral"
+    },
+    "count": 1
   }
 ]
