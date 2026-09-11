@@ -82,6 +82,45 @@ test('newer OFF confirmation defeats a held restored ON read', async () => {
   expect(world.forbidden).toEqual([]);
 });
 
+for (const initial of [true, false]) {
+  for (const transition of ['same-document', 'navigation', 'closed', 'reused']) {
+    test(`captured apply from ${initial} after ${transition} preserves only current application`, async () => {
+      const { world, content, popup } = await timedBoot(initial);
+      world.hold('content-response');
+      change(popup, !initial);
+      await vi.advanceTimersByTimeAsync(100);
+      expect(world.snapshot()).toEqual({ enabled: !initial });
+      expect(markers(content.document)).toEqual(initial ? [] : tinted);
+      expect(world.pending('content-response')).toBeGreaterThan(0);
+      world.unhold('content-response');
+      let current = content;
+      if (transition !== 'same-document') {
+        content.window.dispatchEvent(new content.window.Event('pagehide'));
+        if (transition === 'navigation') {
+          world.silenceContent(TAB_ID);
+          for (const listener of world.tabsEvents.updated) listener(TAB_ID, { status: 'loading' });
+        } else {
+          world.closeTab(TAB_ID);
+          if (transition === 'reused') { world.openTab(TAB_ID); world.activateTab(TAB_ID); }
+        }
+        if (transition !== 'closed') current = loadContent(world, { html: '<p>synthetic replacement document</p>' });
+        await vi.advanceTimersByTimeAsync(100);
+      }
+      world.release('content-response');
+      await vi.advanceTimersByTimeAsync(100);
+      const response = answered(world).at(-1)?.payload;
+      expect(response?.applied, '[review:apply-document-lifetime]').toBe(transition === 'same-document');
+      expect(response).toMatchObject({ saved: true, enabled: !initial,
+        status: transition === 'same-document' ? (initial ? 'off' : 'working') : 'unavailable' });
+      expect(control(popup.document).checked).toBe(!initial);
+      expect(statusText(popup.document)).toBe(transition === 'same-document'
+        ? (initial ? COPY.off : COPY.working) : COPY.unavailable);
+      expect(markers(current.document)).toEqual(transition === 'same-document' && !initial ? tinted : []);
+      expect(world.forbidden).toEqual([]);
+    });
+  }
+}
+
 test('admission overflow in an opposite popup never confirms an obsolete position', async () => {
   const { world, popup } = await timedBoot(true);
   const opposite = loadPopup(world);

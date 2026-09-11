@@ -38,6 +38,33 @@ async function timedTabs() {
 }
 
 for (const stage of ['icon', 'title']) {
+  for (const invalidated of [false, true]) {
+    test(`popup status after held ${stage} with invalidation ${invalidated} is current`, async () => {
+      const { world, content } = await timedTabs();
+      world.hold(stage, TAB_ID);
+      const popup = loadPopup(world);
+      await vi.advanceTimersByTimeAsync(50);
+      expect(world.pending(stage, TAB_ID)).toBe(1);
+      if (invalidated) {
+        content.document.body.replaceChildren();
+        await vi.advanceTimersByTimeAsync(50);
+      }
+      world.unhold(stage, TAB_ID); world.release(stage, TAB_ID);
+      await vi.advanceTimersByTimeAsync(100);
+      const response = world.traffic.filter((entry) => entry.direction === 'response'
+        && entry.payload.type === 'popup-status').at(-1)?.payload;
+      expect(response?.status, '[review:popup-post-action-current]').toBe(invalidated ? 'unavailable' : 'working');
+      expect(response?.enabled).toBe(true);
+      expect(statusText(popup.document)).toBe(invalidated ? COPY.unavailable : COPY.working);
+      expect(control(popup.document).checked).toBe(true);
+      expect(world.action(TAB_ID)).toEqual(invalidated
+        ? { icon: ICON.neutral, title: COPY.checking } : { icon: ICON.working, title: COPY.working });
+      expect(world.forbidden).toEqual([]);
+    });
+  }
+}
+
+for (const stage of ['icon', 'title']) {
   test(`late native ${stage} preserves exclusion and reconciles newest projection`, async () => {
     const { world, content } = await timedTabs();
     world.hold(stage, TAB_ID);
