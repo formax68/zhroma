@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 17
-waived_count: 0
-fixed_count: 3
+open_count: 15
+waived_count: 1
+fixed_count: 6
 total_count: 22
-last_updated: 2026-09-10T18:05:00.000Z
+last_updated: 2026-09-11T13:55:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -25,9 +25,11 @@ last_updated: 2026-09-10T18:05:00.000Z
 | 8 | 04 | unrun-verify | test/extension/runtime-contract.test.js |  | 6 of 9 tests fail: readdirSync asset inventory, manifest deep-equal and the throwing chrome.storage Proxy all predate the Phase 4 surfaces. Deliberate contract change ordered in 04-06; not adapted here. | fixed |  | 2026-09-10T05:32:57.876Z | 2026-09-10T05:51:04.409Z |
 | 9 | 04 | unrun-verify | test/extension/initial-tint.test.js |  | 59 of 60 tests fail: the VM context supplies no chrome, so the content script stays fail-closed unconfirmed and never tints. Chrome-mock harness adaptation ordered in 04-06. | fixed |  | 2026-09-10T05:32:57.952Z | 2026-09-10T05:51:04.489Z |
 | 10 | 04 | unrun-verify | test/extension/persistent-tint.test.js |  | 66 of 68 tests fail: same missing chrome mock plus the one-active-observer assertion, which must assert zero while unconfirmed. Harness adaptation ordered in 04-06. | fixed |  | 2026-09-10T05:32:58.028Z | 2026-09-10T05:51:04.566Z |
-| 11 | 04 | deviation | extension/popup.js |  | Two operational copy strings added beyond the 04-01 decided set ('Zhroma could not save that setting', 'Setting saved, but this view did not update'); the plan mandates finite honest failure text and the decided set contained none. Needs user ratification before ship. | open |  | 2026-09-10T06:49:17.218Z |  |
+| 11 | 04 | deviation | extension/popup.js |  | Two operational copy strings added beyond the 04-01 decided set ('Zhroma could not save that setting', 'Setting saved, but this view did not update'); the plan mandates finite honest failure text and the decided set contained none. Needs user ratification before ship. | fixed | Ratified by the user at the Phase 4 UAT checkpoint on 2026-09-10 (04-UAT.md test 21). Both operational copy strings accepted; the three product diagnoses remain three. | 2026-09-10T06:49:17.218Z | 2026-09-10T10:56:00.000Z |
+| 12 | 04 | accepted-risk | .planning/phases/04-honest-failure-and-an-off-switch/04-RISK-ACCEPTANCE.md |  | AR-04-01: FAIL-03 ships with automated coverage and zero live browser evidence. Its only two live checks (language-icon-copy, structure-copy) were unobservable and are waived by the user as accepted residual risk. Both remain status: pending in 04-LIVE-ACCEPTANCE.md; the record stays human_needed. Not evidence, not carried to later phases, and not a basis for describing non-English behaviour as verified. | accepted | User waiver 2026-09-10, verbatim: "waive the pendings one from FAIL-03" | 2026-09-10T10:58:00.000Z |  |
+| 13 | 04 | deviation | test/extension/phase-04-live-acceptance.test.js |  | Acceptance byte pin fails: 04-07 changed extension/content.js and extension/zhroma.css, so 04-LIVE-ACCEPTANCE.md no longer binds the shipped bytes. Expected intermediate state under 04-VALIDATION.md promotion rule 3; re-establishment is 04-11's work, not a re-point. | fixed | Final 04-20 acceptance validator now binds the current shipped bytes to the reviewed runtime identity and passes 94/94 while computing human_needed; no old observation was re-pointed. | 2026-09-10T15:06:00.000Z | 2026-09-11T13:55:00.000Z |
 | 14 | 04 | deviation | test/extension/failure-seam.test.js |  | Timeout path asserts the ratified 'No readable view is connected' line, not the plan's named not-applied line: a timed-out apply yields outcome null, so setEnabled reports status 'unavailable' and popup.js renders that branch before the applied branch. Producing NOT_APPLIED would require inventing a status the document never reported. | open |  | 2026-09-10T15:31:12.000Z |  |
-| 15 | 04 | deviation | .planning/phases/04-honest-failure-and-an-off-switch/04-PERFORMANCE-SAMPLES.json |  | 04-09 changed both files behind identity.harnessHash (f889a9eb -> 285074ea), so mergeReport now refuses the recorded six-run file as a mixed identity. Expected intermediate state declared in 04-09; the file is preserved as history and 04-11 regenerates it against final source. | open |  | 2026-09-10T15:45:00.000Z |  |
+| 15 | 04 | deviation | .planning/phases/04-honest-failure-and-an-off-switch/04-PERFORMANCE-SAMPLES.json |  | 04-09 changed both files behind identity.harnessHash (f889a9eb -> 285074ea), so mergeReport now refuses the recorded six-run file as a mixed identity. Expected intermediate state declared in 04-09; the file is preserved as history and 04-11 regenerates it against final source. | fixed | Final 04-20 performance samples were regenerated against one reviewed source/environment/harness identity; seven Chrome runs passed and the mixed-identity interim state is preserved only as history. | 2026-09-10T15:45:00.000Z | 2026-09-11T13:55:00.000Z |
 | 16 | 04 | deviation | extension/popup.js |  | The popup's REQUEST_TIMEOUT_MS ships at 5000, not the 2000 the plan named: answering the popup can cost the worker a full bounded wait of its own, so an equal deadline cut off the worker's honest reply and the confirmed preference it carried, regressing failure-seam's 'the switch is usable again'. The ordering between the two processes' copies is asserted from the shipped bytes. | open |  | 2026-09-10T16:10:00.000Z |  |
 | 17 | 04 | deviation | test/mutants/popup-recovery.mutants.json |  | popup-focus-guard mutates the focus restoration itself, not the disabled-state guard 04-10 Task 3 named. Reinstating that guard was measured SURVIVED (0/1 killed): the corrected ordering re-enables the control before end() runs, so the guard is unreachable and cannot be load-bearing. | open |  | 2026-09-10T16:10:00.000Z |  |
 | 18 | 04 | deviation | test/extension/toggle.test.js |  | A file outside the plan's files_modified was edited: 'a rejected read after a write refuses to claim a preference it could not confirm' asserted the control is taken out of service, which is the defect WR-07 reports. Rewritten to the corrected contract (revert to the last confirmed value, stay operable). | open |  | 2026-09-10T16:10:00.000Z |  |
@@ -189,10 +191,10 @@ last_updated: 2026-09-10T18:05:00.000Z
     "file": "test/extension/phase-04-live-acceptance.test.js",
     "line": null,
     "description": "Acceptance byte pin fails: 04-07 changed extension/content.js and extension/zhroma.css, so 04-LIVE-ACCEPTANCE.md no longer binds the shipped bytes. Expected intermediate state under 04-VALIDATION.md promotion rule 3; re-establishment is 04-11's work, not a re-point.",
-    "status": "open",
-    "reason": "",
+    "status": "fixed",
+    "reason": "Final 04-20 acceptance validator now binds the current shipped bytes to the reviewed runtime identity and passes 94/94 while computing human_needed; no old observation was re-pointed.",
     "recorded_at": "2026-09-10T15:06:00.000Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-11T13:55:00.000Z"
   },
   {
     "id": 14,
@@ -213,10 +215,10 @@ last_updated: 2026-09-10T18:05:00.000Z
     "file": ".planning/phases/04-honest-failure-and-an-off-switch/04-PERFORMANCE-SAMPLES.json",
     "line": null,
     "description": "04-09 changed both files behind identity.harnessHash (f889a9eb -> 285074ea), so mergeReport now refuses the recorded six-run file as a mixed identity. Expected intermediate state declared in 04-09; the file is preserved as history and 04-11 regenerates it against final source.",
-    "status": "open",
-    "reason": "",
+    "status": "fixed",
+    "reason": "Final 04-20 performance samples were regenerated against one reviewed source/environment/harness identity; seven Chrome runs passed and the mixed-identity interim state is preserved only as history.",
     "recorded_at": "2026-09-10T15:45:00.000Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-11T13:55:00.000Z"
   },
   {
     "id": 16,
@@ -296,7 +298,7 @@ last_updated: 2026-09-10T18:05:00.000Z
     "phase": "04",
     "file": ".planning/phases/04-honest-failure-and-an-off-switch/04-14-PLAN.md",
     "line": null,
-    "description": "must_haves truth 4 claims a projection for a closed tab \"neither throws nor paints\". Measured false for the paint half: after chrome.tabs.onRemoved has released the entry, project() mints a fresh generation via stateFor, sendMessage rejects, and requestStatus's catch reports the connection fact \u2014 so applyAction writes icons/neutral.png and 'No readable view is connected' against the dead tab id. The tracer's action double does not model Chrome refusing an action write for a closed tab, and making it do so would change a harness this plan does not own. The test asserts the honest form instead: the projection resolves without throwing, every write it makes is scoped to the closed tab, it is the operational connection state and never a diagnosis, and the living neighbour's toolbar is untouched. Truth 3's closed-tab cleanup guard is also source-shape only, as the plan's own <closed_tab_cleanup_constraint> states.",
+    "description": "must_haves truth 4 claims a projection for a closed tab \"neither throws nor paints\". Measured false for the paint half: after chrome.tabs.onRemoved has released the entry, project() mints a fresh generation via stateFor, sendMessage rejects, and requestStatus's catch reports the connection fact — so applyAction writes icons/neutral.png and 'No readable view is connected' against the dead tab id. The tracer's action double does not model Chrome refusing an action write for a closed tab, and making it do so would change a harness this plan does not own. The test asserts the honest form instead: the projection resolves without throwing, every write it makes is scoped to the closed tab, it is the operational connection state and never a diagnosis, and the living neighbour's toolbar is untouched. Truth 3's closed-tab cleanup guard is also source-shape only, as the plan's own <closed_tab_cleanup_constraint> states.",
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-10T18:05:00.000Z",

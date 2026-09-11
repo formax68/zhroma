@@ -2,13 +2,13 @@
 phase: 04-honest-failure-and-an-off-switch
 status: human_needed
 source_confirmation: confirmed
-uat_execution: final-reviewed-source-12-of-17-observed
+uat_execution: final-reviewed-source-14-of-17-observed
 prior_phase_status: human_needed
 ---
 
 # Phase 04 Current-Source Live Acceptance
 
-**Seventeen checks: Twelve passed, five pending.** On 2026-09-11 the user confirmed the repaired build and passed the working-icon check. Environment numbers were confirmed unchanged from the prior run: Chrome 152, macOS 27 beta 6, 30 mounted rows; English/light interface. The user also acknowledged that the earlier fourteen observations apply only to the old build.
+**Seventeen checks: Fourteen passed, three pending; english-regional-locale was explicitly deferred as non-blocking by the user.** On 2026-09-11 the user confirmed the repaired build and passed the working-icon check. Environment numbers were confirmed unchanged from the prior run: Chrome 152, macOS 27 beta 6, 30 mounted rows; English/light interface. The user also acknowledged that the earlier fourteen observations apply only to the old build.
 
 **Fourteen observations were attested by the user on 2026-09-10, and they are not
 carried forward.** They were taken against the pre-repair bytes and are preserved
@@ -23,18 +23,20 @@ repairs changed four of the eleven shipped assets — `content.js` and `zhroma.c
 bytes. **Re-observing them is a UAT activity against the repaired bytes and was
 explicitly out of scope for the run that re-established this record.**
 
-The user has not yet acknowledged that reset. It is recorded as the outstanding
-item **`ACK-04-01`** in `04-VALIDATION.md` and queued for the end-of-phase human
-verification harvest. It asks for acknowledgement only; it requests no
-re-observation.
+The user acknowledged that reset on 2026-09-11 while confirming the repaired
+build was loaded from this repository. `ACK-04-01` is recorded as acknowledged in
+`04-VALIDATION.md`; the historical observations remain history and are not
+transferred to the repaired bytes.
 
 **Two checks were never observed at all and remain unobserved:**
 `language-icon-copy` (no non-English tenant context available) and
 `structure-copy` (no safely prepared uninterpretable-table context available).
 Both are recorded in `limitations.unavailable_scenarios` with reasons. They were
 the two FAIL-03 scenarios covered by the original waiver. The final mapping also
-requires `english-regional-locale`; all three remain unobserved, so FAIL-03 has
-automated coverage and **zero live evidence**. The user **waived** only the first two as accepted residual risk
+requires `english-regional-locale`; the user explicitly deferred that regional
+English check as non-blocking on 2026-09-11 because no known safe context was
+available. All three remain unobserved, so FAIL-03 has automated coverage and
+**zero live evidence**. The user **waived** only the first two as accepted residual risk
 **`AR-04-01`** (`04-RISK-ACCEPTANCE.md`, recorded 2026-09-10; dated addendum for
 the repair). The waiver permits Phase 04 to proceed to its remaining gates. It is
 **not evidence**: FAIL-03 still has no live observation, both checks stay
@@ -56,8 +58,9 @@ instead. Promoting the status fields requires changing that guard — a user
 decision, not a side effect of re-binding a record.
 
 **The disposition is `human_needed`, and it is computed rather than asserted.**
-There is no failed check and no unresolved defect, so it is not `gaps_found`; the
-source is unconfirmed and seventeen checks are pending, so it cannot be `passed`.
+There is no failed check and no unresolved defect, so it is not `gaps_found`;
+fourteen current-source checks passed and three remain pending, so it cannot be
+`passed`.
 A green run of `test/extension/phase-04-live-acceptance.test.js` proves this record
 is *well-formed and correctly bound to current source*. It does not promote it,
 and it is not an observation.
@@ -193,11 +196,9 @@ Also unclosed, and deliberately so:
   rewritten as proof.
 - The **permanent native marker-removal** platform limit (T-04-16) is a disclosed
   limit, honoured by reporting `applied: false` rather than a claimed cleanup.
-- **`ACK-04-01`** — the user's fourteen 2026-09-10 attestations no longer count
-  toward Phase 4 acceptance, and the user has not yet acknowledged that. Recorded
-  as outstanding in `04-VALIDATION.md` and queued for the end-of-phase human
-  verification harvest. No executor may answer it; an executor answering it would
-  be the silent write-off it exists to prevent.
+- **`ACK-04-01`** — acknowledged by the user on 2026-09-11. The acknowledgement
+  closes the reset notice only; it does not transfer the earlier observations to
+  the repaired bytes.
 
 `WINDOWS.md` entry 11 — the two operational copy strings added by 04-04 beyond the
 04-01 decided set — was **ratified by the user** at the 2026-09-10 checkpoint
@@ -425,18 +426,18 @@ derived from the working tree, not transcribed.
     },
     {
       "id": "worker-restart",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to worker-restart: after stopping/restarting the extension service worker in chrome://extensions, the icon and popup rebuilt status from the current document without stale diagnosis and without needing a page refresh.",
       "language_context": null
     },
     {
       "id": "popup-keyboard",
-      "status": "pending",
-      "evidence_kind": "pending",
-      "observed_on": null,
-      "evidence": null,
+      "status": "pass",
+      "evidence_kind": "live",
+      "observed_on": "2026-09-11",
+      "evidence": "User replied \"pass\" to popup-keyboard: opening the popup and using keyboard only placed clearly visible focus on the switch by default, exposed label \"Enable priority tinting\", announced the stored state correctly, and turning it off produced no nag, warning tone, or prompt to re-enable.",
       "language_context": null
     }
   ],
@@ -470,6 +471,10 @@ derived from the working tree, not transcribed.
       {
         "id": "structure-copy",
         "reason": "No safely prepared, user-approved uninterpretable-table context available; an operational view was deliberately not edited to manufacture the state. Recorded in 04-UAT.md test 7. Waived by the user on 2026-09-10 as accepted residual risk AR-04-01 (04-RISK-ACCEPTANCE.md): the user accepted that FAIL-03 carries no live evidence. The check remains pending because a waiver is not an observation — it permits progression, it does not create evidence, and it cannot promote this record. RE-ESTABLISHED 2026-09-10 against the repaired bytes under promotion rule 3: the repair does not touch the structure branch at all, so this check is unaffected by it. AR-04-01 continues to apply unchanged, and this check was pending before the repair and is pending after it."
+      },
+      {
+        "id": "english-regional-locale",
+        "reason": "User said \"I don't know how to do this, defer, not a blocker\" on 2026-09-11. No English regional Zendesk locale context was available in this run, so the check remains pending as a non-blocking deferral rather than observed evidence."
       }
     ]
   }

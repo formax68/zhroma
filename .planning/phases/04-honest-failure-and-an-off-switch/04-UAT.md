@@ -547,3 +547,18 @@ User response to preparation checkpoint: "numbers are the same as before, let's 
 
 - Result: pass.
 - Evidence: User replied "pass" after moving from a tinted Zendesk view to a non-view surface and back with the popup closed; icon and popup state tracked the current document, and the prior working state did not carry onto the non-view page.
+
+### 2026-09-11 current-build observation: worker-restart
+
+- Result: pass.
+- Evidence: User replied "pass" after stopping/restarting the extension service worker in chrome://extensions; icon and popup rebuilt from the current document, no stale diagnosis returned, and no page refresh was needed.
+
+### 2026-09-11 current-build observation: popup-keyboard
+
+- Result: pass.
+- Evidence: User replied "pass" after opening the popup and operating it with keyboard only; focus landed visibly on the switch by default, the label read "Enable priority tinting", the announced state matched stored state, and turning it off produced no nag, warning tone, or prompt to re-enable.
+
+### 2026-09-11 current-build deferral: english-regional-locale
+
+- Result: deferred, non-blocking by user direction.
+- Evidence: User replied "I don't know how to do this, defer, not a blocker" when asked to test an English regional Zendesk locale. This is not recorded as a pass; no language tag or live regional-locale observation was provided.

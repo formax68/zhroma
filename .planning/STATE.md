@@ -3,7 +3,7 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: human_needed
-stopped_at: 04-20 Task 1 complete; awaiting source-confirmed human walkthrough and ACK-04-01
+stopped_at: 04-20 complete; Phase 4 human_needed with 14 current-source live passes and 3 pending non-blocking checks
 last_updated: "2026-09-11T06:29:12.871054Z"
 last_activity: 2026-09-11
 last_activity_desc: 04-15 approved and complete; remaining gap execution resumed
@@ -12,7 +12,7 @@ progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 42
-  completed_plans: 39
+  completed_plans: 40
   percent: 40
 ---
 
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — HUMAN VERIFICATION NEEDED
-Plan: 20 of 20 (wave 17 human checkpoint; 19 plans complete)
-Status: Technical preparation and independent review passed; human acceptance pending
-Last activity: 2026-09-11 — Review recheck at 028265e retains CR-19-02 and CR-19-03; 04-20 blocked
+Plan: 20 of 20 (wave 17 final reconciliation; 20 plans complete)
+Status: Gap closure technically complete; human acceptance remains human_needed
+Last activity: 2026-09-11 — 04-20 complete with 14 current-source live passes, 3 pending checks and no canonical requirement promotion
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 
@@ -154,7 +154,7 @@ CR-01/CR-02 repairs and independent reverification are complete; 403 tests and f
 - Phase 1 found no locale-independent Priority signal; the observed English-text fallback remains scoped to English current Agent Workspace.
 - Store submission has latency and the direct predecessor was delisted at this step. Register the developer account early; budget one rejection-and-resubmit cycle in Phase 5.
 - Phase 2 product evidence now passes: user clarified both G-02-1 reports meant opening Zendesk then clicking a view, including from a fresh tab. Direct-document controls passed; no runtime repair. UAT 11 live passes and 12 explicit decisions. Independent code review clean; security reassessment 10/10 closed. Independent goal verification passed 25/25. Combined tests 301 passed and post-reconciliation evidence validator 56 passed.
-- ACK-04-01 is outstanding and awaiting the user, not awaiting work: the fourteen observations the user attested on 2026-09-10 no longer count toward Phase 4 acceptance, and the user has not yet acknowledged that. It asks for acknowledgement only and requests no re-observation. No executor may answer it. Routes: 04-VALIDATION.md, and the human-check block on 04-11 Task 3 queued for the end-of-phase harvest.
+- ACK-04-01 is acknowledged as of 2026-09-11. The fourteen observations attested on 2026-09-10 remain history and do not count toward repaired-byte acceptance. The current-source walkthrough has 14 passes and 3 pending checks: language-icon-copy and structure-copy under AR-04-01, plus english-regional-locale explicitly deferred by the user as non-blocking.
 
 ### Roadmap Evolution
 
@@ -288,4 +288,4 @@ After the previous non-decreasing review halt, the user was offered a revised re
 
 ## 2026-09-11 — Final preparation complete; actual human checkpoint
 
-04-20 Task 1 completed at 4848b83; checkpoint summary 54316bb. Final default suite: 65 smoke tests and 994 Vitest tests pass. Acceptance validator: 94 tests pass. Complete mutation gate: 39/39 killed. Seven actual synthetic Chrome workloads passed, with one reviewed runtime identity. Independent validator review converged 4 to 2 to 0 and permits Task 2. Preserved historical evidence is unchanged. All 17 current-build live checks remain pending; loaded-source confirmation, environment, genuine observations and ACK-04-01 require the user. AR-04-01 retains only its two waived, still-pending scenarios. No requirement completion or Phase 3 acceptance is inferred. Task 3 final reconciliation remains after the actual response or explicit deferral.
+04-20 completed after the source-confirmed human walkthrough and final reconciliation. Final default suite: 65 smoke tests and 994 Vitest tests pass. Acceptance validator: 94 tests pass and computes human_needed. Complete mutation gate: 39/39 killed. Seven actual synthetic Chrome workloads passed, with one reviewed runtime identity. Independent validator review converged 4 to 2 to 0. Current-source live acceptance has 14 passes and 3 pending checks: language-icon-copy and structure-copy under AR-04-01, plus english-regional-locale explicitly deferred by the user as non-blocking. ACK-04-01 is acknowledged. No requirement completion or Phase 3 acceptance is inferred; Phase 4 remains human_needed rather than passed.

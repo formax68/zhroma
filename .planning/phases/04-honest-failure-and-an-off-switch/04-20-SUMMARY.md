@@ -3,9 +3,9 @@ phase: 04-honest-failure-and-an-off-switch
 plan: "20"
 subsystem: acceptance-validation
 tags: [source-binding, canonical-promotion, independent-review, synthetic-timing]
-status: halted
-halt_reason: designed-blocking-human-checkpoint
-completed_tasks: 1
+status: complete
+halt_reason: null
+completed_tasks: 3
 total_tasks: 3
 checkpoint_task: 2
 checkpoint_gate: blocking-human
@@ -16,10 +16,10 @@ requires:
   - phase: 04-19
     provides: Independently reviewed final runtime and mutation gate
 provides:
-  - Final eleven-asset acceptance binding with seventeen pending observation slots
+  - Final eleven-asset acceptance binding with fourteen observed current-source passes and three pending checks
   - Seven actual Chrome synthetic timing runs with one identity
   - Independently reviewed strict locale and canonical-promotion guard
-affects: [04-20-Task2, 04-20-Task3]
+affects: [04-LIVE-ACCEPTANCE, 04-VALIDATION, 04-VERIFICATION, STATE, REQUIREMENTS, WINDOWS]
 tech-stack:
   added: []
   patterns: [exact source and review identity, pure promotion guard, attributed human evidence]
@@ -42,7 +42,7 @@ requirements-addressed: [FAIL-01, FAIL-02, FAIL-03, FAIL-05, CTRL-02, CTRL-03, C
 plan_head_before: eb209b05ed276131fdaa4a91d2613c5b893dd8bd
 actuals:
   tokens: 560185
-  tasks: 1
+  tasks: 3
   commits: 4
   basis: Measured2240737characters/4roundedup over realized seven-file diff through Task1 commit; excludes this summary and its metadata commit
 ---
@@ -51,7 +51,10 @@ actuals:
 
 Final acceptance binds all eleven reviewed assets; seven fresh synthetic Chrome
 runs pass, and an independently reviewed promotion guard prevents unsupported
-canonical completion. **Task1 is complete; Tasks2–3 remain unfinished.**
+canonical completion. The user completed fourteen current-source live checks and
+explicitly deferred the remaining regional-English check as non-blocking. The
+two AR-04-01 scenarios remain pending. **Plan 20 is complete; the phase remains
+human_needed.**
 
 ## Completed work and commits
 
@@ -123,47 +126,42 @@ were derived from Git and all three prior runtime hashes checked. Phase3 remains
 human_needed,28/34,eleven passes/nine pending,user-skipped UAT; profiling stays
 deferred. Synthetic layout and retainer attribution were not taken.
 
-Current Phase4 record:loaded_from_repository:false,source_confirmed_on:null,
-all environment members null,all seventeen checks pending. AR-04-01 still covers
+Current Phase4 record:loaded_from_repository:true,source_confirmed_on:2026-09-11,
+environment confirmed as Chrome152,macOS27 beta6,30 mounted rows,English/light.
+Fourteen of seventeen current-source live checks passed. AR-04-01 still covers
 only language-icon-copy and structure-copy; neither is marked passed and no waiver
-was expanded. All seven edge classifications and three flagged prohibition IDs
-remain explicit. Existing qualified ratifications are preserved with their source
-citations. Current unknown/failure/off judgments need an actual response.
+was expanded. english-regional-locale remains pending after the user explicitly
+deferred it as non-blocking. All seven edge classifications and three flagged
+prohibition IDs remain explicit. Existing qualified ratifications are preserved
+with their source citations.
 
 04-19 code review is technically clear; security still has four deferred final
-evidence threats,66 mitigated and12 documented accepted. This validator review
-does not update canonical security or supply independent goal verification.
-No implementation stub, test skip, installation, remote publication or live
-account action was introduced. Filtered RED runs are not permanently skipped tests.
+evidence threats,66 mitigated and12 documented accepted. Task3 supplies current
+goal verification in 04-VERIFICATION.md and keeps the result human_needed. No
+implementation stub, test skip, installation, remote publication or live account
+action was introduced. Filtered RED runs are not permanently skipped tests.
 
-## Exact resume point — Task2 blocking-human
+## Final state after Task2 and Task3
 
-First obtain the user's acknowledgement for ACK-04-01 in their own words:
-fourteen former observations remain history and cannot attest this changed build.
-The prior approved unknown-setting contract does not answer this item.
+ACK-04-01 is acknowledged. The user confirmed the repaired repository build and
+unchanged environment numbers, then passed fourteen checks:
+working-icon,blank-copy,missing-icon-hint,missing-settle-transition,off-clears,
+on-restores,restart-off,restart-on,cross-tab-preference,frozen-resume,
+nonreceiver-status,navigation-status,worker-restart,popup-keyboard.
 
-For a new walkthrough, the user loads/reloads
-/Users/mike/code/zhroma/extension in chrome://extensions and refreshes the Zendesk
-document once for setup, then confirms Chrome version,OS,bare-en current Agent
-Workspace/light appearance and actual mounted row count. User controls login,
-MFA,navigation,browser restart and consequential view changes. Keep only bounded,
-dated aggregate observations; no tenant/ticket text,identifying URL or screenshot.
+Three checks remain pending. language-icon-copy and structure-copy are the
+previously waived AR-04-01 residuals, still not evidence. english-regional-locale
+was explicitly deferred by the user as non-blocking because they did not know how
+to set that Zendesk context safely.
 
-Required unobserved IDs:working-icon,blank-copy,missing-icon-hint,
-missing-settle-transition,english-regional-locale,off-clears,on-restores,
-restart-off,restart-on,cross-tab-preference,frozen-resume,nonreceiver-status,
-navigation-status,worker-restart,popup-keyboard. The two separately waived IDs
-language-icon-copy and structure-copy remain pending without repeating their waiver.
-
-Task2's existing checklist provides one coherent sequence. New unavailable
-scenarios stay individually pending. An observed failure returns to04-19's repair
-gate before rebinding; no bulk transfer of observations is permitted. Resume only
-with actual attributed observations/ACK or explicit deferral. Do not execute Task3
-canonical reconciliation before that response. No human acknowledgement or
-observation was supplied during this preparation.
+Task3 reconciled the current evidence in 04-VERIFICATION.md, 04-VALIDATION.md,
+STATE, REQUIREMENTS and WINDOWS. No canonical requirement was promoted to
+Complete. The final phase disposition is `human_needed`, not `passed` and not
+`gaps_found`.
 
 ## Self-Check: PASSED
 
-All created artifacts and four task commits exist. Reviewed validator hash and
-eleven runtime hashes match. Only unrelated baseline dirt remains outside the
-owned summary; Task2 is accurately pending and no requirement was promoted.
+All created artifacts and task commits exist. Reviewed validator hash and eleven
+runtime hashes match. Only unrelated baseline dirt remains outside the owned
+evidence files. The final record accurately reports fourteen live passes and
+three pending checks; no requirement was promoted from unobserved evidence.

@@ -6,7 +6,7 @@ browser_timing: passed
 independent_code_review: technical-clear-for-evidence
 security_asvs_level1: technical-clear-four-final-evidence-threats-open
 validation_tool_review: independently-passed-for-task-2
-goal_verification: pending-task-3
+goal_verification: passed-human-needed
 human_acceptance: human_needed
 historic_reset_acknowledgement: acknowledged
 overall: human_needed
@@ -14,7 +14,7 @@ overall: human_needed
 
 # Phase 04 Final Validation Inventory
 
-Technical preparation is separate from human acceptance. Twelve live checks passed and five remain pending. Source loading and ACK-04-01 were confirmed on 2026-09-11. No canonical requirement was promoted.
+Technical preparation is separate from human acceptance. Fourteen live checks passed and three remain pending; english-regional-locale was explicitly deferred by the user as non-blocking, without observation. Source loading and ACK-04-01 were confirmed on 2026-09-11. No canonical requirement was promoted.
 
 ## Source and recoverable provenance
 
@@ -53,8 +53,8 @@ user. Its files and observations remain unchanged.
 | Independent runtime code review | technical clear |04-REVIEW.md has zero runtime blockers/plan19 actionable findings; two inherited validator issues assigned Task1. |
 | Independent security | technical clear; final evidence threats open |04-SECURITY.md:66 mitigated,12 documented accepted,four high deferred T-04G3-21..24; zero technical threats. |
 | Independent validator/evidence review | passed for Task2 |04-20-VALIDATOR-REVIEW.md,cycle3:4→2→0 findings;21 direct negative controls refused and2 legitimate completion controls accepted. |
-| Independent goal verification | pending Task3 |No old SUMMARY or technical result supplies this verdict. |
-| Human acceptance | human_needed |Twelve passed of 17; source confirmed 2026-09-11 with attributed environment. Five remain pending. |
+| Independent goal verification | passed-human-needed |`04-VERIFICATION.md` rechecked the current repaired source, live acceptance record and final gates. It confirms technical completion while preserving human_needed. |
+| Human acceptance | human_needed |Fourteen passed of 17; source confirmed 2026-09-11 with attributed environment. Three remain pending, including english-regional-locale as a user-deferred non-blocking check. |
 
 ## Promotion contract and counterexamples
 
@@ -149,8 +149,9 @@ is fabricated for these product judgments.
 Phase3 profiling stays deferred. Layout/retainer attribution was not taken.
 Approved native-write and worker-epoch uncertainty limits remain distinct from
 unobserved scenarios. No package install, remote publication or live account
-interaction occurred. Shared STATE/ROADMAP/REQUIREMENTS/WINDOWS remain outside
-Task1 ownership; Task3 reconciliation has not run.
+interaction occurred. Shared STATE/REQUIREMENTS/WINDOWS were reconciled after
+the current-source walkthrough without promoting any canonical requirement to
+Complete.
 
 ## Independent final recheck — 2026-09-11
 
@@ -173,7 +174,8 @@ default:65 smoke+994 Vitest,exit0. Full39 mutation kills and seven Chrome runs
 remain valid: their runtime,tool,harness and registry inputs did not change during
 the validation-only repair cycles. Mandatory actual-Chrome smoke also passed.
 
-Task1 preparation is complete. **Task2 is blocking-human.** No current browser
-loading, observation, product judgment or ACK has been supplied. Four final
-evidence/security threats remain qualified by the actual human/goal gates;
-this validation review does not rewrite canonical SECURITY or award Phase4 passed.
+Plan 20 reconciliation is complete. Task2 gathered fourteen current-source live
+passes, recorded the regional-English deferral as pending, and preserved the two
+AR-04-01 pending checks. Task3 confirms the final disposition is
+`human_needed`, not `passed`: no failed observation remains, but three live
+checks are still pending and the canonical requirements are not promoted.

@@ -7,6 +7,17 @@
 
 Independent 03-VERIFICATION.md accounts for all eight Phase 03 IDs. DETECT-03/04 and LIVE-01/02/03/04 are satisfied within the admitted English current-view evidence scope; LIVE-05 and FAIL-04 need human evidence. Eleven live checks passed; nine remain untested after user-requested UAT skipping. Formal phase-completion checkboxes and traceability remain pending; no missing evidence is treated as a pass. See .planning/phases/03-the-tint-survives-everything/03-HANDOFF.md for planning inputs and limits.
 
+## Phase 04 gap-closure checkpoint — 2026-09-11
+
+04-15 through 04-20 repaired the Phase 04 gaps and passed the technical gates:
+independent code review, security review, 65 smoke checks, 994 Vitest tests, 39/39
+mutation kills, seven synthetic Chrome timing runs and the 94-test acceptance
+validator. Current-source live acceptance has fourteen passed checks and three
+pending checks: `language-icon-copy` and `structure-copy` under AR-04-01, plus
+`english-regional-locale` explicitly deferred by the user as non-blocking. The
+Phase 04 requirement rows therefore return to Pending rather than Gaps Found or
+Complete. No waiver, deferral or green suite is treated as human acceptance.
+
 ## v1 Requirements
 
 Requirements for initial release. Each maps to roadmap phases.
@@ -124,14 +135,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LIVE-03 | Phase 3 | Pending |
 | LIVE-04 | Phase 3 | Pending |
 | LIVE-05 | Phase 3 | Pending |
-| FAIL-01 | Phase 4 | Gaps Found |
-| FAIL-02 | Phase 4 | Gaps Found |
+| FAIL-01 | Phase 4 | Pending |
+| FAIL-02 | Phase 4 | Pending |
 | FAIL-03 | Phase 4 | Pending |
 | FAIL-04 | Phase 3 | Pending |
-| FAIL-05 | Phase 4 | Gaps Found |
+| FAIL-05 | Phase 4 | Pending |
 | CTRL-01 | Phase 2 | Complete |
-| CTRL-02 | Phase 4 | Gaps Found |
-| CTRL-03 | Phase 4 | Gaps Found |
+| CTRL-02 | Phase 4 | Pending |
+| CTRL-03 | Phase 4 | Pending |
 | CTRL-04 | Phase 4 | Pending |
 | STORE-01 | Phase 5 | Pending |
 | STORE-02 | Phase 2 | Complete |
