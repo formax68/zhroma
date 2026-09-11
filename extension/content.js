@@ -73,7 +73,11 @@
       // Only a shell that actually declares another language may be reported
       // as an unsupported language (D-04). The declared value itself is never
       // read out, transmitted or interpolated — the reason is a fixed token.
-      return result(shellLanguage.trim() === '' ? 'unsafe' : 'unsupported');
+      // Normalize only to choose the refusal reason. Malformed English shell
+      // metadata is not proof of another language and must remain untinted.
+      const reasonLanguage = lower.trim().replace(/_/g, '-');
+      const englishReason = reasonLanguage === LANGUAGE_PRIMARY || reasonLanguage.startsWith(LANGUAGE_PREFIX);
+      return result(reasonLanguage === '' || englishReason ? 'unsafe' : 'unsupported');
     }
     const tables = [...document.querySelectorAll(TABLE)];
     if (tables.length === 0) return result('waiting');
