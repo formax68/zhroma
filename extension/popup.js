@@ -56,8 +56,8 @@
   const control = document.getElementById('zhroma-enabled');
   let requestCounter = 0;
   let outstanding = false;
-  // The last value STORAGE reported back, never a value anyone hoped for.
-  // `null` until a reply has actually delivered a boolean, which is what makes
+  // The last value confirmed by a read or a successful write acknowledgement,
+  // never an unacknowledged desired value. `null` until confirmation, making
   // "there is nothing confirmed to show" distinguishable from "off".
   let lastConfirmed = null;
 
@@ -81,10 +81,10 @@
       control.disabled = outstanding;
       return;
     }
-    // Nothing read the preference back. The `change` has already moved the
+    // Neither a read nor a successful write confirmed this value. The change moved the
     // control to the desired value, so leaving it alone would display a
     // position nothing confirmed next to copy saying the save failed. Return
-    // it to the last value storage did confirm, and leave it operable so a
+    // it to the last confirmed value, and leave it operable so a
     // retry is possible without reopening the panel.
     if (typeof lastConfirmed === 'boolean') {
       control.checked = lastConfirmed;
@@ -183,10 +183,12 @@
       return;
     }
     outstanding = false;
-    showPreference(reply.enabled);
+    // A fresh readable boolean takes precedence. Otherwise a successful write
+    // confirms the requested value; a failed read does not undo that write.
+    showPreference(reply.enabled === null && reply.saved ? desired : reply.enabled);
     // Three separate facts, reported separately. Persistence is not
     // application, and a connection failure is neither.
-    if (!reply.saved || reply.enabled === null) say(NOT_SAVED);
+    if (!reply.saved) say(NOT_SAVED);
     else if (reply.status === 'unavailable') render('unavailable', null);
     else if (!reply.applied) say(NOT_APPLIED);
     else render(reply.status, reply.reason);

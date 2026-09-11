@@ -258,7 +258,10 @@
     const result = outcome === null
       ? { status: 'unavailable', reason: null }
       : { status: outcome.status, reason: outcome.reason };
-    const projected = operational(result, enabled);
+    // Preserve the read-back fact in the reply, but use an acknowledged write
+    // when choosing operation copy if that read failed. A successful OFF must
+    // not become "checking" merely because its read-back was unavailable.
+    const projected = operational(result, enabled === null && saved ? desired : enabled);
     // Repaint through the ordinary per-tab projection rather than writing the
     // action here, so a preference change can never paint over a newer status.
     project(tab.id);
