@@ -2,8 +2,8 @@
 gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
-status: executing
-stopped_at: 04-18 complete; executing 04-19 independent review
+status: halted
+stopped_at: 04-19 halted; two blocking findings remain after non-decreasing recheck
 last_updated: "2026-09-11T06:29:12.871054Z"
 last_activity: 2026-09-11
 last_activity_desc: 04-15 approved and complete; remaining gap execution resumed
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 ## Current Position
 
-Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 19 of 20 (wave 16; 18 plans complete)
-Status: Approved uncertainty decision; gap execution resumed; verification remains gaps_found
-Last activity: 2026-09-11 — Mutation gate 33/33; independent integrated review underway
+Phase: 04 (Honest Failure and an Off Switch) — HALTED
+Plan: 19 of 20 (wave 16 halted; 18 plans complete)
+Status: Independent recheck retains two technical blockers; verification remains gaps_found
+Last activity: 2026-09-11 — Review recheck at 028265e retains CR-19-02 and CR-19-03; 04-20 blocked
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 
@@ -273,3 +273,7 @@ codex/phase04-gap-closure after explicit04-15 approval.
 ## 2026-09-11 — Wave 15 complete
 
 04-18 completed at b33663e: the nonexistent-suite false kill is reproduced and rejected by the repaired runner; 43 runner/registry controls pass. Full mutation gate is 33/33 (23 historical plus 10 new); two measured redundant historical survivors are explicitly superseded and excluded. Default suite has 65 smoke passes and 902 Vitest passes, with one expected stale Phase 4 source-binding failure reserved for 04-20. Independent code/security review in 04-19 is now executing. Wave drift/UI checks report no blocker. Requirements and human acceptance remain unchanged.
+
+## 2026-09-11 — Wave 16 halted at review convergence gate
+
+Independent review found three runtime blockers and one harness warning. CR-19-01 (resume freshness) was repaired and independently closed. The worker packet repaired original document-close/navigation and post-action variants, but recheck at 028265e retains two actionable findings: CR-19-02 same-document table replacement can return stale working/applied state; CR-19-03 a competing OFF settling during a held popup action can return enabled=true against storage=false. Affected actionable count remains 2 to 2, activating 04-19 Task 3 mandatory stop. WR-19-01 callback-drain warning remains unimplemented. Final current reports and halted summary retain exact reproductions and digests. No final full mutation/default-suite pass is claimed after these repairs; plan 04-20 source binding and human walkthrough did not start. All seven requirement statuses and Phase 3 human_needed remain unchanged.
