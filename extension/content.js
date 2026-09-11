@@ -408,6 +408,7 @@
   function onPageShow() {
     // A restored document re-reads the preference rather than trusting the
     // value it was frozen with, and stays untinted until that read confirms.
+    preferenceReady = false;
     suspended = false;
     syncController();
     readPreference();

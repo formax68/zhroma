@@ -1,5 +1,20 @@
 [
   {
+    "id": "resume-read-readiness",
+    "file": "extension/content.js",
+    "find": "    preferenceReady = false;\n    suspended = false;",
+    "replace": "    suspended = false;",
+    "count": 1,
+    "suites": ["test/extension/preference-outcome.test.js"],
+    "note": "A restored page must remain untinted while its fresh preference read is held, even if it was previously ON.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "restored true reads false with immediate stays unconfirmed until fresh read",
+      "assertion": "[review:resume-unconfirmed-no-markers]",
+      "kind": "behavioral"
+    }
+  },
+  {
     "id": "confirmed-write-revert",
     "file": "extension/popup.js",
     "find": "else showPreference(reply.enabled === null ? desired : reply.enabled);",
