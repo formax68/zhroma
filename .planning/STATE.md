@@ -2,11 +2,11 @@
 gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
-status: paused
-stopped_at: 04-15 Task 2 blocking-human uncertainty decision; Task 1 committed and verified
+status: executing
+stopped_at: 04-15 decision approved; executing 04-17 then 04-16
 last_updated: "2026-09-11T06:29:12.871054Z"
 last_activity: 2026-09-11
-last_activity_desc: 04-15 confirmed-save repair complete; waiting for uncertainty decision
+last_activity_desc: 04-15 approved and complete; remaining gap execution resumed
 state_head: 8382d826d7d54934d75d8dd5858317866e6f487f
 progress:
   total_phases: 5
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 ## Current Position
 
-Phase: 04 (Honest Failure and an Off Switch) — PAUSED AT DECISION
-Plan: 15 of 20 (Task 1 complete; Task 2 pending; 14 plans complete)
-Status: Blocking-human decision pending; phase verification remains gaps_found
+Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
+Plan: 17 of 20 (wave 13; 15 plans complete)
+Status: Approved uncertainty decision; gap execution resumed; verification remains gaps_found
 Last activity: 2026-09-11 — Confirmed-save repair committed; 153 focused tests pass
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
@@ -251,3 +251,9 @@ Next: obtain the actual 04-15 Task 2 unknown-setting decision from the completed
 from DECISIONS.json. 04-16 depends on that decision; 04-17 is still unexecuted.
 Resume Task 2 rather than repeating Task 1. 04-15-SUMMARY.md deliberately carries
 status: halted and requirements-completed: []. Existing ACK-04-01 is separate.
+
+## Phase 04 decision approved — 2026-09-11
+
+User replied approved to 04-15 Task 2. Exact unknown-setting presentation and
+native/epoch limits recorded in DECISIONS.json; 04-15 complete in 0d3d784.
+04-17 executes before wave14 04-16. No phase requirements or acceptance promoted.
