@@ -1,12 +1,21 @@
 // @vitest-environment node
 //
-// Phase 4's browser acceptance record, bound to the CURRENT shipped bytes.
+// Phase 4's browser acceptance record, bound to the bytes it was OBSERVED
+// against.
+//
+// Until Phase 5 those bytes were also the current ones, and this file read them
+// straight from `extension/`. Phase 5 changes shipped bytes on purpose — a
+// store title, a short description and a 128px brand icon — so the source input
+// moved to `scripts/phase-04-source.js`, which serves the exact Git blobs at
+// the pinned observation revision and refuses to fall back to the working tree.
+// The observations did not change; what they are compared against is now stated
+// explicitly instead of being whatever `extension/` happens to hold today.
 //
 // This is the Phase 2/3 strict-acceptance validator applied to Phase 4, with
 // three deliberate strengthenings:
 //
 //   1. The asset inventory is RECURSIVE and COMPLETE. Phase 3 hashed three
-//      files; Phase 4 ships eleven across two directories, so a flat
+//      files; Phase 4 shipped eleven across two directories, so a flat
 //      three-asset binding would let a changed worker, popup or PNG ride along
 //      under an unchanged content.js digest.
 //   2. The three descriptor-less prohibition judgments are carried IN the
@@ -24,7 +33,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 import { validateWorkloadReport } from '../../scripts/run-tint-workload.js';
-import { BASELINE_PATH, readBaseline, readPhase04Source } from '../../scripts/phase-04-source.js';
+import { BASELINE_PATH, readBaseline, readPhase04Source, readWorkingCopy } from '../../scripts/phase-04-source.js';
 
 const root = new URL('../../', import.meta.url);
 const phase = new URL('.planning/phases/04-honest-failure-and-an-off-switch/', root);
@@ -54,31 +63,31 @@ const PROHIBITION_IDS = ['no-agent-blame', 're-enable-not-pressured', 'untested-
 const PROHIBITION_STATUSES = ['flagged-unverified', 'reviewed-resolved'];
 const TIMING_KEYS = [...[30, 200, 1000].flatMap((size) => ['enabled', 'disabled'].map((mode) => `${size}-${mode}`)), '30-dormant'];
 const TIMING_ASSETS = ['manifest.json', 'content.js', 'zhroma.css'];
-const TIMING_HARNESS = createHash('sha256')
-  .update(readFileSync(new URL('scripts/run-tint-workload.js', root)))
-  .update(readFileSync(new URL('test/performance/tint-workload.js', root))).digest('hex');
 
 const walk = (dir, base = '') => readdirSync(dir).flatMap((name) => {
   const path = `${dir}/${name}`;
   return statSync(path).isDirectory() ? walk(path, `${base}${name}/`) : [`${base}${name}`];
 });
 const extensionDir = fileURLToPath(new URL('extension', root));
-// The complete packaged inventory, recursively. A new directory cannot hide a
-// file from this and an extra file cannot hide inside one.
-const SHIPPED = Object.fromEntries(walk(extensionDir).sort().map((name) => [name,
-  createHash('sha256').update(readFileSync(`${extensionDir}/${name}`)).digest('hex')]));
-const SHIPPED_NAMES = Object.keys(SHIPPED);
-const SHIPPED_DIGEST = createHash('sha256').update(SHIPPED_NAMES
-  .map((name) => `${SHIPPED[name]}  extension/${name}\n`).join('')).digest('hex');
 
-const contentSource = readFileSync(`${extensionDir}/content.js`, 'utf8');
-const manifest = JSON.parse(readFileSync(`${extensionDir}/manifest.json`, 'utf8'));
+// The observed packaged inventory, complete and recursive, read from the pinned
+// Git revision rather than from disk. A new directory cannot hide a file from
+// it, an extra file cannot hide inside one, and — the Phase 5 addition — a
+// later edit to `extension/` cannot move it at all.
+const OBSERVED_SOURCE = readPhase04Source();
+const OBSERVED = OBSERVED_SOURCE.assets;
+const OBSERVED_NAMES = OBSERVED_SOURCE.names;
+const OBSERVED_DIGEST = OBSERVED_SOURCE.digest;
+const TIMING_HARNESS = OBSERVED_SOURCE.timingHarnessHash;
+
+const contentSource = OBSERVED_SOURCE.contentSource;
+const manifest = OBSERVED_SOURCE.manifest;
 const literal = (pattern, label) => {
   const match = contentSource.match(pattern);
   if (!match) throw new Error(`Final source setting could not be extracted: ${label}`);
   return match[1];
 };
-// Derived from the shipped bytes, never transcribed. A source edit that moves
+// Derived from the observed bytes, never transcribed. A source edit that moves
 // any of these makes an already-written record stale rather than silently true.
 const settings = {
   settle_ms: Number(literal(/const SETTLE_MS = (\d+);/, 'SETTLE_MS')),
@@ -216,14 +225,14 @@ export function technicalReviewReadiness(code, security, validation) {
   const matchesReviewedRuntime = (markdown) => {
     const digest = field(markdown, 'runtime_digest');
     const revision = field(markdown, 'reviewed_revision');
-    if (digest !== SHIPPED_DIGEST || !/^[a-f0-9]{40}$/.test(revision ?? '')) return false;
+    if (digest !== OBSERVED_DIGEST || !/^[a-f0-9]{40}$/.test(revision ?? '')) return false;
     try {
       const options = { cwd: fileURLToPath(root), stdio: ['ignore', 'pipe', 'pipe'] };
       const names = execFileSync('git', ['ls-tree', '-r', '--name-only', revision, '--', 'extension'], options)
         .toString().trim().split('\n').sort();
-      if (JSON.stringify(names) !== JSON.stringify(SHIPPED_NAMES.map((name) => `extension/${name}`))) return false;
-      return SHIPPED_NAMES.every((name) => createHash('sha256').update(execFileSync('git',
-        ['show', `${revision}:extension/${name}`], options)).digest('hex') === SHIPPED[name]);
+      if (JSON.stringify(names) !== JSON.stringify(OBSERVED_NAMES.map((name) => `extension/${name}`))) return false;
+      return OBSERVED_NAMES.every((name) => createHash('sha256').update(execFileSync('git',
+        ['show', `${revision}:extension/${name}`], options)).digest('hex') === OBSERVED[name]);
     } catch { return false; }
   };
   return {
@@ -254,9 +263,9 @@ export function validatePhase04Acceptance(record, performance = loadPerformance(
 
   // Complete recursive asset binding: exact inventory, exact bytes.
   requireEvidence(sameKeys(record.source, ['inventory_count', 'assets']), 'source-fields');
-  requireEvidence(record.source.inventory_count === SHIPPED_NAMES.length, 'inventory-count');
-  requireEvidence(sameKeys(record.source.assets, SHIPPED_NAMES), 'asset-inventory');
-  requireEvidence(SHIPPED_NAMES.every((name) => record.source.assets[name] === SHIPPED[name]), 'source-hashes');
+  requireEvidence(record.source.inventory_count === OBSERVED_NAMES.length, 'inventory-count');
+  requireEvidence(sameKeys(record.source.assets, OBSERVED_NAMES), 'asset-inventory');
+  requireEvidence(OBSERVED_NAMES.every((name) => record.source.assets[name] === OBSERVED[name]), 'source-hashes');
   requireEvidence(sameKeys(record.settings, Object.keys(settings))
     && Object.entries(settings).every(([key, value]) => record.settings[key] === value), 'settings');
 
@@ -328,7 +337,7 @@ export function validatePhase04Acceptance(record, performance = loadPerformance(
   if (!performance) timingComplete = false;
   else {
     requireEvidence(sameKeys(performance.identity?.hashes, TIMING_ASSETS)
-      && TIMING_ASSETS.every((name) => performance.identity.hashes[name] === SHIPPED[name]), 'performance-source');
+      && TIMING_ASSETS.every((name) => performance.identity.hashes[name] === OBSERVED[name]), 'performance-source');
     requireEvidence(performance.identity.harnessHash === TIMING_HARNESS, 'performance-harness');
     for (const key of TIMING_KEYS) {
       const run = performance.runs?.[key];
@@ -364,7 +373,7 @@ function example(complete = false) {
     schema_version: 1,
     status: complete ? 'passed' : 'human_needed',
     scope: { ...SCOPE, html_lang_variants: [...LANG_VARIANTS] },
-    source: { inventory_count: SHIPPED_NAMES.length, assets: { ...SHIPPED } },
+    source: { inventory_count: OBSERVED_NAMES.length, assets: { ...OBSERVED } },
     settings: { ...settings },
     loaded_from_repository: complete,
     source_confirmed_on: complete ? '2026-09-10' : null,
@@ -392,7 +401,7 @@ function example(complete = false) {
 }
 
 function acceptedPerformance() {
-  const result = { schema_version: 1, identity: { hashes: Object.fromEntries(TIMING_ASSETS.map((n) => [n, SHIPPED[n]])), harnessHash: TIMING_HARNESS }, runs: {} };
+  const result = { schema_version: 1, identity: { hashes: Object.fromEntries(TIMING_ASSETS.map((n) => [n, OBSERVED[n]])), harnessHash: TIMING_HARNESS }, runs: {} };
   for (const key of TIMING_KEYS) {
     const [size, mode] = key.split('-');
     const sample = mode === 'enabled'
@@ -582,7 +591,7 @@ test.each([
   ['missing prohibition', (r) => r.flagged_unverified.pop()],
   ['mixed asset hashes', (r) => { r.source.assets['content.js'] = 'aaf2596dd41e67b520d6accd9ff55ecf8ab525de0098571dc284c81773998dc2'; }],
   ['stale three-asset source binding', (r) => {
-    r.source = { inventory_count: 3, assets: { 'manifest.json': SHIPPED['manifest.json'], 'content.js': SHIPPED['content.js'], 'zhroma.css': SHIPPED['zhroma.css'] } };
+    r.source = { inventory_count: 3, assets: { 'manifest.json': OBSERVED['manifest.json'], 'content.js': OBSERVED['content.js'], 'zhroma.css': OBSERVED['zhroma.css'] } };
   }],
   ['missing packaged asset', (r) => { delete r.source.assets['icons/off.png']; r.source.inventory_count = 10; }],
   ['extra packaged asset', (r) => { r.source.assets['icons/extra.png'] = '0'.repeat(64); r.source.inventory_count = 12; }],
@@ -644,8 +653,8 @@ test('parser rejects duplicate JSON members and more than one canonical record',
 test('the repository record binds to every current shipped byte and reports its actual status', () => {
   const markdown = readFileSync(new URL('04-LIVE-ACCEPTANCE.md', phase), 'utf8');
   const record = parsePhase04Acceptance(markdown);
-  expect(Object.keys(record.source.assets).sort()).toEqual(SHIPPED_NAMES);
-  expect(record.source.assets).toEqual(SHIPPED);
+  expect(Object.keys(record.source.assets).sort()).toEqual(OBSERVED_NAMES);
+  expect(record.source.assets).toEqual(OBSERVED);
   expect(record.source.inventory_count).toBe(11);
   const status = validatePhase04Acceptance(record);
   process.stdout.write(`PHASE 04 LIVE ACCEPTANCE STATUS: ${status}\n`);
@@ -728,9 +737,15 @@ test.each([
 
 test('a missing historical revision fails loudly instead of falling back to the working tree', () => {
   const adapter = readFileSync(new URL('scripts/phase-04-source.js', root), 'utf8');
-  // The adapter may read the baseline and Git. It may not read extension/.
-  expect(adapter).not.toMatch(/extension\//);
+  // No silent degradation to whatever `extension/` happens to hold today.
   expect(adapter).not.toMatch(/catch\s*\{\s*return readFileSync/);
+  expect(adapter).not.toMatch(/\|\|\s*readFileSync/);
+  // Exactly one disk read exists in the adapter, and it is guarded: the shipped
+  // runtime tree is refused outright rather than merely avoided by convention.
+  expect([...adapter.matchAll(/readFileSync\(/g)]).toHaveLength(1);
+  expect(() => readWorkingCopy('extension/manifest.json')).toThrow(/phase-04-runtime-source-read/);
+  expect(() => readWorkingCopy('extension/icons/brand.png')).toThrow(/phase-04-runtime-source-read/);
+  expect(readWorkingCopy(BASELINE_PATH)).toBeInstanceOf(Buffer);
   const baseline = { ...JSON.parse(JSON.stringify(BASELINE)), runtime_revision: '0'.repeat(40) };
   expect(() => readPhase04Source({ baseline })).toThrow(/PHASE04_SOURCE_REJECTED phase-04-missing-revision/);
 });
