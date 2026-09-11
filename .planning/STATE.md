@@ -2,12 +2,12 @@
 gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
-status: ready_to_execute
-stopped_at: Gap plans 04-15 through 04-20 independently verified; next 04-15
-last_updated: "2026-09-11T06:16:11.783Z"
+status: paused
+stopped_at: 04-15 Task 2 blocking-human uncertainty decision; Task 1 committed and verified
+last_updated: "2026-09-11T06:29:12.871054Z"
 last_activity: 2026-09-11
-last_activity_desc: Phase 04 comprehensive gap planning verified; implementation gaps remain
-state_head: 0cc45c38f8fc1c38cfa2a522890385d21a66de64
+last_activity_desc: 04-15 confirmed-save repair complete; waiting for uncertainty decision
+state_head: 8382d826d7d54934d75d8dd5858317866e6f487f
 progress:
   total_phases: 5
   completed_phases: 2
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 ## Current Position
 
-Phase: 04 (Honest Failure and an Off Switch) — READY TO EXECUTE
-Plan: 15 of 20 (next; 14 executed)
-Status: Ready to execute gap plans; phase verification remains gaps_found
-Last activity: 2026-09-11 — Six gap plans independently verified; no implementation or acceptance promoted
+Phase: 04 (Honest Failure and an Off Switch) — PAUSED AT DECISION
+Plan: 15 of 20 (Task 1 complete; Task 2 pending; 14 plans complete)
+Status: Blocking-human decision pending; phase verification remains gaps_found
+Last activity: 2026-09-11 — Confirmed-save repair committed; 153 focused tests pass
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 
@@ -237,3 +237,17 @@ The existing ACK-04-01 remains outstanding; AR-04-01 still waives only two live
 scenarios without making them observed passes. Phase 04 remains `gaps_found` and
 Phase 03 remains `human_needed`; requirements and historical observations were
 not promoted. No runtime, test, package or acceptance-record changes were made.
+
+## Phase 04 execution checkpoint — 2026-09-11
+
+04-15 Task 1 is committed (d2e2c1f, 0f0cf05, 0b9ac92), with halted summary
+a3a967b. Both-direction save/read/application checks and related suites: 153
+passed. Expected current-source binding mismatch remains pending 04-20 after
+integrated reviews. No acceptance hash, historical observation, requirement or
+Phase 3 status was promoted.
+
+Next: obtain the actual 04-15 Task 2 unknown-setting decision from the completed
+04-PREFERENCE-CONTRACT.md. No response exists; unknown_preference remains absent
+from DECISIONS.json. 04-16 depends on that decision; 04-17 is still unexecuted.
+Resume Task 2 rather than repeating Task 1. 04-15-SUMMARY.md deliberately carries
+status: halted and requirements-completed: []. Existing ACK-04-01 is separate.

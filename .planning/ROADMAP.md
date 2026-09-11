@@ -236,7 +236,7 @@ Plans:
 
 **Wave 13** *(depends on completed 04-14)*
 
-- [ ] 04-15-PLAN.md — Reproduce contradictory setting outcomes and obtain the explicit uncertainty decision.
+- [ ] 04-15-PLAN.md — Confirmed-setting repair complete (153 focused tests); halted at Task 2 explicit uncertainty decision.
 - [ ] 04-17-PLAN.md — Align malformed-locale diagnosis with strict tint eligibility and verify real Chrome rendering.
 
 **Wave 14** *(depends on 04-15)*
