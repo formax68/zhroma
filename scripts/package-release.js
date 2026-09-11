@@ -18,6 +18,7 @@ import {
   realpathSync,
   renameSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -51,6 +52,8 @@ const CENTRAL_SIGNATURE = 0x02014b50;
 const CENTRAL_HEADER_LENGTH = 46;
 const EOCD_LENGTH = 22;
 const TOOL_TIMEOUT_MS = 120_000;
+const ARCHIVE_SLACK_BYTES = 1024 * 1024;
+const WORK_DIRECTORY_PREFIX = '.zhroma-release-work-';
 
 const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -216,17 +219,35 @@ export function readArchiveEntries(buffer) {
   return entries;
 }
 
-/** Refuse any entry name that could place a file outside the directory we chose for it. */
+/**
+ * Refuse any entry name that could place a file outside the directory we chose
+ * for it. A single trailing slash is the archive format's directory marker and
+ * is tolerated here so that such an entry is refused for being a directory
+ * rather than misreported as a traversal attempt.
+ */
 export function assertSafeEntryName(name) {
   reject(typeof name === 'string' && name !== '', 'archive-entry-name-invalid');
   // eslint-disable-next-line no-control-regex
   reject(!/[\u0000-\u001f]/u.test(name), 'archive-entry-name-invalid');
   reject(!name.includes('\\'), 'archive-backslash-entry');
   reject(!name.startsWith('/') && !/^[A-Za-z]:/u.test(name), 'archive-absolute-entry');
-  for (const segment of name.split('/')) {
+  const path = name.endsWith('/') ? name.slice(0, -1) : name;
+  reject(path !== '', 'archive-entry-name-invalid');
+  for (const segment of path.split('/')) {
     reject(segment !== '' && segment !== '.' && segment !== '..', 'archive-traversal-entry');
   }
   return name;
+}
+
+/**
+ * The largest an archive of this inventory could honestly be: every byte stored
+ * without compression, plus a megabyte of headers and slack. Derived from the
+ * declared source, so the ceiling moves with the thing being packaged instead
+ * of being an arbitrary constant.
+ */
+export function archiveByteCeiling(source) {
+  const expected = requireReleaseSourceShape(source, 'source-required');
+  return expected.assets.reduce((total, asset) => total + asset.size, 0) + ARCHIVE_SLACK_BYTES;
 }
 
 /**
@@ -272,8 +293,19 @@ export function validateReleaseArchive(archive, source, options = {}) {
     : (isObject(archive) && typeof archive.path === 'string' ? archive.path : null);
   reject(typeof archivePath === 'string' && archivePath.trim() !== '', 'archive-path-required');
   const expectedHash = isObject(archive) && archive.sha256 !== undefined ? archive.sha256 : options.sha256;
+  const expected = requireReleaseSourceShape(source, 'source-required');
 
   const resolved = resolve(archivePath);
+  // Size before bytes: an archive that could not possibly hold this inventory
+  // is refused without ever being loaded into memory.
+  let stats;
+  try {
+    stats = statSync(resolved);
+  } catch (cause) {
+    throw new ReleasePackageError('archive-unreadable', { cause });
+  }
+  reject(stats.isFile(), 'archive-unreadable');
+  reject(stats.size <= archiveByteCeiling(expected), 'archive-too-large');
   let bytes;
   try {
     bytes = readFileSync(resolved);
@@ -286,7 +318,6 @@ export function validateReleaseArchive(archive, source, options = {}) {
     reject(expectedHash === sha256, 'archive-hash-mismatch');
   }
 
-  const expected = requireReleaseSourceShape(source, 'source-required');
   const entries = readArchiveEntries(bytes);
   assertArchiveMatchesSource(entries, expected);
 
@@ -392,7 +423,11 @@ export function packageRelease(options = {}) {
   const names = releaseNames(version);
 
   mkdirSync(outDir, { recursive: true });
-  const occupied = [names.archive, names.extracted, names.candidate]
+  // A leftover work directory means a previous run was interrupted (or another
+  // is in flight). Either way this location is not free to be written into, and
+  // the leftover is not ours to delete.
+  const interrupted = readdirSync(outDir).some((name) => name.startsWith(WORK_DIRECTORY_PREFIX));
+  const occupied = interrupted || [names.archive, names.extracted, names.candidate]
     .some((name) => existsSync(join(outDir, name)));
   if (occupied) {
     try {
@@ -402,7 +437,7 @@ export function packageRelease(options = {}) {
     }
   }
 
-  const work = mkdtempSync(join(outDir, '.zhroma-release-work-'));
+  const work = mkdtempSync(join(outDir, WORK_DIRECTORY_PREFIX));
   try {
     const archivePath = join(work, names.archive);
     // Explicit relative names from the source root: the manifest lands at the
