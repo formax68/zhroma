@@ -1,5 +1,35 @@
 [
   {
+    "id": "apply-document-lifetime",
+    "file": "extension/background.js",
+    "find": "    if (tabs.get(tabId) !== state || state.lifetime !== lifetime) return null;",
+    "replace": "",
+    "count": 1,
+    "suites": ["test/extension/preference-outcome.test.js"],
+    "note": "A matching request ID cannot certify application in a replaced document.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "captured apply from false after navigation preserves only current application",
+      "assertion": "[review:apply-document-lifetime]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "popup-post-action-status",
+    "file": "extension/background.js",
+    "find": "    if (generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);",
+    "replace": "",
+    "count": 1,
+    "suites": ["test/extension/toolbar-popup.test.js"],
+    "note": "A native artwork wait cannot authorize a newly returned obsolete popup diagnosis.",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "popup status after held icon with invalidation true is current",
+      "assertion": "[review:popup-post-action-current]",
+      "kind": "behavioral"
+    }
+  },
+  {
     "id": "resume-read-readiness",
     "file": "extension/content.js",
     "find": "    preferenceReady = false;\n    suspended = false;",
@@ -119,8 +149,8 @@
   {
     "id": "pending-reopen-certainty",
     "file": "extension/background.js",
-    "find": "  async function popupStatus(requestId, expires) {\n    const tab = await activeTab(expires);\n    if (tab === null) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));\n    if (!await liveTab(tab.id, expires)) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));\n    const generation = invalidate(tab.id);\n    const result = await requestStatus(tab.id, generation, expires);\n    const enabled = pendingWrite !== null ? null : await bounded(readPreference, expires);\n    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);\n    const projected = operational(result, enabled);\n    await bounded(() => applyAction(tab.id, projected, generation, expires), expires);\n    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,\n      enabled: pendingWrite !== null ? null : enabled };\n  }\n\n",
-    "replace": "  async function popupStatus(requestId, expires) {\n    const tab = await activeTab(expires);\n    if (tab === null) return unavailable(requestId, await bounded(readPreference, expires));\n    if (!await liveTab(tab.id, expires)) return unavailable(requestId, await bounded(readPreference, expires));\n    const generation = invalidate(tab.id);\n    const result = await requestStatus(tab.id, generation, expires);\n    const enabled = await bounded(readPreference, expires);\n    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, enabled);\n    const projected = operational(result, enabled);\n    await bounded(() => applyAction(tab.id, projected, generation, expires), expires);\n    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,\n      enabled: enabled };\n  }\n\n",
+    "find": "  async function popupStatus(requestId, expires) {\n    const tab = await activeTab(expires);\n    if (tab === null) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));\n    if (!await liveTab(tab.id, expires)) return unavailable(requestId, pendingWrite !== null ? null : await bounded(readPreference, expires));\n    const generation = invalidate(tab.id);\n    const result = await requestStatus(tab.id, generation, expires);\n    const enabled = pendingWrite !== null ? null : await bounded(readPreference, expires);\n    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);\n    const projected = operational(result, enabled);\n    await bounded(() => applyAction(tab.id, projected, generation, expires), expires);\n    if (generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);\n    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,\n      enabled: pendingWrite !== null ? null : enabled };\n  }\n\n",
+    "replace": "  async function popupStatus(requestId, expires) {\n    const tab = await activeTab(expires);\n    if (tab === null) return unavailable(requestId, await bounded(readPreference, expires));\n    if (!await liveTab(tab.id, expires)) return unavailable(requestId, await bounded(readPreference, expires));\n    const generation = invalidate(tab.id);\n    const result = await requestStatus(tab.id, generation, expires);\n    const enabled = await bounded(readPreference, expires);\n    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, enabled);\n    const projected = operational(result, enabled);\n    await bounded(() => applyAction(tab.id, projected, generation, expires), expires);\n    if (generationOf(tab.id) !== generation) return unavailable(requestId, enabled);\n    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,\n      enabled: enabled };\n  }\n\n",
     "count": 1,
     "suites": [
       "test/extension/preference-outcome.test.js"

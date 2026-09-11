@@ -92,7 +92,7 @@
   function stateFor(tabId) {
     let state = tabs.get(tabId);
     if (state === undefined) {
-      state = { generation: 0, pending: null, observing: false, actionPending: null, actionRunning: false, reconcile: false };
+      state = { generation: 0, lifetime: 0, pending: null, observing: false, actionPending: null, actionRunning: false, reconcile: false };
       tabs.set(tabId, state);
     }
     return state;
@@ -237,14 +237,17 @@
   // generation orders TOOLBAR PAINTS, and applying a preference makes the
   // document publish a new status, which invalidates the generation the caller
   // is holding — so reusing it here would throw away a true answer about work
-  // that had just been done. The echoed requestId is this reply's own
-  // staleness guard, and painting stays generation-guarded in `project`.
+  // that had just been done. The echoed requestId binds the operation; a
+  // separate document lifetime rejects navigation/closure during its await.
   async function requestApply(tabId, expires) {
+    const state = stateFor(tabId);
+    const lifetime = state.lifetime;
     const requestId = nextRequestId();
     let reply;
     try {
       reply = await bounded(() => chrome.tabs.sendMessage(tabId, { type: 'apply-preference', requestId }, { frameId: 0 }), expires, REQUEST_TIMEOUT_MS);
     } catch { return null; }
+    if (tabs.get(tabId) !== state || state.lifetime !== lifetime) return null;
     if (!isExact(reply, ['type', 'requestId', 'applied', 'diagnosis', 'reason'])
       || typeof reply.applied !== 'boolean'
       || !validDiagnosis(reply, requestId, 'applied')) return null;
@@ -346,6 +349,7 @@
     if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);
     const projected = operational(result, enabled);
     await bounded(() => applyAction(tab.id, projected, generation, expires), expires);
+    if (generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);
     return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,
       enabled: pendingWrite !== null ? null : enabled };
   }
@@ -417,6 +421,7 @@
   chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (!Number.isInteger(tabId) || !isObject(changeInfo)) return;
     if (changeInfo.status !== 'loading' && changeInfo.status !== 'complete') return;
+    if (changeInfo.status === 'loading') stateFor(tabId).lifetime += 1;
     project(tabId);
   });
 
