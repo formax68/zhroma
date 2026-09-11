@@ -3,7 +3,7 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
 status: executing
-stopped_at: 04-16 complete; executing 04-18 mutation gate
+stopped_at: 04-18 complete; executing 04-19 independent review
 last_updated: "2026-09-11T06:29:12.871054Z"
 last_activity: 2026-09-11
 last_activity_desc: 04-15 approved and complete; remaining gap execution resumed
@@ -12,7 +12,7 @@ progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 42
-  completed_plans: 37
+  completed_plans: 38
   percent: 40
 ---
 
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
-Plan: 18 of 20 (wave 15; 17 plans complete)
+Plan: 19 of 20 (wave 16; 18 plans complete)
 Status: Approved uncertainty decision; gap execution resumed; verification remains gaps_found
-Last activity: 2026-09-11 — Transaction/lifecycle repair committed; 364 focused tests pass; mutation validation underway
+Last activity: 2026-09-11 — Mutation gate 33/33; independent integrated review underway
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
 
@@ -269,3 +269,7 @@ codex/phase04-gap-closure after explicit04-15 approval.
 ## 2026-09-11 — Wave 14 complete
 
 04-16 completed at e1c3e00 (runtime 3ad8a58): three RED/GREEN task pairs; six focused suites, 364/364 pass. The 4000 ms admission budget does not release issued native writes or artwork ownership. Closed-tab retention and worker epochs are exercised with synthetic actual-source tests. Native-stall and cross-worker limits remain the explicitly approved residuals; this is not live acceptance. 04-18 is executing; mutation remeasurement and independent review remain outstanding. Wave drift/UI checks report no blocker (codebase drift skipped without STRUCTURE.md). All seven Phase 4 requirements retain their existing pending/gaps status; Phase 3 remains human_needed.
+
+## 2026-09-11 — Wave 15 complete
+
+04-18 completed at b33663e: the nonexistent-suite false kill is reproduced and rejected by the repaired runner; 43 runner/registry controls pass. Full mutation gate is 33/33 (23 historical plus 10 new); two measured redundant historical survivors are explicitly superseded and excluded. Default suite has 65 smoke passes and 902 Vitest passes, with one expected stale Phase 4 source-binding failure reserved for 04-20. Independent code/security review in 04-19 is now executing. Wave drift/UI checks report no blocker. Requirements and human acceptance remain unchanged.

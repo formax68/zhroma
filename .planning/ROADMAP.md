@@ -180,7 +180,7 @@ Plans:
   3. The popup carries an on/off switch that is already on; turning it off clears every tint from the view currently on screen without a refresh, and turning it back on restores them.
   4. Quitting Chrome and reopening it preserves whichever way the switch was left.
 
-**Plans**: 17/20 plans executed (6 original + 8 first-round gap plans); 3 second-round gap plans complete; 3 remaining across waves 15–17. Phase verification remains `gaps_found`.
+**Plans**: 18/20 plans executed (6 original + 8 first-round gap plans); 4 second-round gap plans complete; 2 remaining across waves 16–17. Phase verification remains `gaps_found`.
 **UI hint**: yes
 
 Plans:
@@ -245,7 +245,7 @@ Plans:
 
 **Wave 15** *(depends on 04-16 and 04-17)*
 
-- [ ] 04-18-PLAN.md — Make the mutation gate reject invalid tests and require the intended behavioral failure.
+- [x] 04-18-PLAN.md — Make the mutation gate reject invalid tests and require the intended behavioral failure.
 
 **Wave 16** *(depends on 04-18)*
 
