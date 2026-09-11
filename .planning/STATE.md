@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Published
 status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-09-11T12:58:51.875Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-09-11T13:21:24.394Z"
 last_activity: 2026-09-11
 last_activity_desc: Phase 05 execution started
-state_head: 33c7e75b5290e23e6bb5ed8abeade64c834de7ea
+state_head: 79863ae30e08025e3489a8a27064da3674d0657a
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 49
-  completed_plans: 44
+  completed_plans: 45
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 05 (Published) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-09-11 — Phase 05 execution started
 
@@ -84,6 +84,7 @@ Milestone progress: 2/5 phases complete (40%). Phase 03 remains human_needed wit
 | Phase 04 P14 | 19 min | 2 tasks | 3 files |
 | Phase 05 P01 | 25 min | 2 tasks | 3 files |
 | Phase 05 P02 | 8 min | 2 tasks | 6 files |
+| Phase 05 P03 | 14 min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -146,6 +147,9 @@ Recent decisions affecting current work:
 - [Phase 05]: Zhroma DOES handle user data under Chrome FAQ Q2/Q4 (reading rendered website content is using it), so a privacy policy is required and no document claims the extension accesses nothing — FAQ Q3 states local-only processing is not a disclosure exemption; this is the evidence that justifies D-11 retaining STORE-04
 - [Phase 05]: The Limited Use affirmative statement is adapted rather than copied verbatim — The policy example names information received from Google APIs, which Zhroma never receives; pasting it would publish a false claim
 - [Phase 05]: Store item name and short description are authored in release/listing.md and installed into the manifest by plan 05-03 Task 2 — Editing extension/manifest.json here would change shipped bytes and invalidate the 05-01 release candidate for no gain
+- [Phase 05]: Phase 4 live acceptance reads its source from pinned Git blobs via scripts/phase-04-source.js, so a Phase 5 shipped-byte change can neither invalidate nor silently re-earn a human observation — 05-BASELINE.json pins the observation revision, runtime revision, eleven asset hashes, aggregate digest, validator, timing harness and predecessor evidence; the adapter refuses to fall back to the working tree
+- [Phase 05]: The 128px brand icon is packaged but never projected by the worker, keeping store identity and the five diagnostic status treatments separate artwork — D-06 requires preserving meaningful toolbar status distinctions; the tests assert the five mappings unchanged and that they exclude icons/brand.png
+- [Phase 05]: manifest.version stays pinned at 0.1.0 until an actual dashboard upload requires an increment — The store rejects a re-upload with an unchanged version, but nothing has been uploaded; bumping it now would invent a release history
 
 ### Pending Todos
 
@@ -181,8 +185,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-11T12:58:51.773Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-09-11T13:21:24.288Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.

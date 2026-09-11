@@ -283,7 +283,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-03-PLAN.md — Brand/manifest assets and immutable predecessor evidence continuity.
+- [x] 05-03-PLAN.md — Brand/manifest assets and immutable predecessor evidence continuity.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -316,7 +316,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. First Tint on a Real View | 3/3 | Complete    | 2026-09-09 |
 | 3. The Tint Survives Everything | 3/4 | human_needed; remaining UAT skipped by user |  |
 | 4. Honest Failure and an Off Switch | 20/20 | human_needed; technical execution complete |  |
-| 5. Published | 2/7 | In Progress|  |
+| 5. Published | 3/7 | In Progress|  |
 
 ## Requirement Coverage
 
