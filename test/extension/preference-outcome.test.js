@@ -39,6 +39,123 @@ function change(popup, value) {
 const answered = (world, type = 'set-enabled') => world.traffic.filter((entry) =>
   entry.direction === 'response' && entry.payload.type === type);
 
+test('admission overflow in an opposite popup never confirms an obsolete position', async () => {
+  const { world, popup } = await timedBoot(true);
+  const opposite = loadPopup(world);
+  await vi.advanceTimersByTimeAsync(50);
+  world.setWriteMode('deferred');
+  change(popup, false);
+  const burst = Array.from({ length: 31 }, (_, i) => world.popupChrome.runtime.sendMessage({
+    type: 'set-enabled', requestId: 100 + i, enabled: Boolean(i % 2),
+  }));
+  await vi.advanceTimersByTimeAsync(10);
+  const arrival = Date.now();
+  change(opposite, false);
+  await vi.advanceTimersByTimeAsync(10);
+  const overflow = answered(world).find((entry) => entry.at >= arrival);
+  expect(overflow?.payload, '[outcome:admission-overflow]').toMatchObject({ saved: false, enabled: null });
+  expect(control(opposite.document).indeterminate, '[outcome:pending-write-invalidates-old-confirmation]').toBe(true);
+  expect(control(opposite.document).disabled).toBe(true);
+  await vi.advanceTimersByTimeAsync(4010);
+  const replies = await Promise.all(burst);
+  expect(replies.every((reply) => reply.saved === false)).toBe(true);
+  world.flushWrites(); world.setWriteMode('immediate');
+  await vi.advanceTimersByTimeAsync(50);
+  expect(world.writeLog, '[outcome:expired-request-dispatch]').toEqual([{ enabled: false }]);
+  opposite.window.dispatchEvent(new opposite.window.Event('focus'));
+  await vi.advanceTimersByTimeAsync(50);
+  change(opposite, true);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(world.snapshot()).toEqual({ enabled: true });
+  expect(Math.max(...world.writeObservations), '[outcome:physical-write-overlap]').toBe(1);
+});
+
+test('opening refresh excludes changes and captured late reply cannot overwrite fresh recovery', async () => {
+  const { world } = await timedBoot(true);
+  world.hold('popup-response');
+  const popup = loadPopup(world);
+  await vi.advanceTimersByTimeAsync(50);
+  change(popup, false);
+  popup.window.dispatchEvent(new popup.window.Event('focus'));
+  await vi.advanceTimersByTimeAsync(50);
+  expect(world.writeLog, '[outcome:opening-refresh-excludes-change]').toEqual([]);
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(statusText(popup.document)).toBe(COPY.unknown);
+  world.unhold('popup-response');
+  popup.window.dispatchEvent(new popup.window.Event('focus'));
+  await vi.advanceTimersByTimeAsync(50);
+  change(popup, false);
+  await vi.advanceTimersByTimeAsync(100);
+  world.release('popup-response');
+  await vi.advanceTimersByTimeAsync(50);
+  expect(control(popup.document).checked, '[outcome:stale-refresh-overwrite]').toBe(false);
+  expect(statusText(popup.document)).toBe(COPY.off);
+  expect(world.snapshot()).toEqual({ enabled: false });
+});
+
+test('a captured old change response cannot replace a newer popup result', async () => {
+  const { world, popup } = await timedBoot(true);
+  world.hold('popup-response');
+  change(popup, false);
+  await vi.advanceTimersByTimeAsync(5010);
+  expect(answered(world)[0].payload.saved).toBe(true);
+  expect(statusText(popup.document), '[outcome:transport-is-unknown]').toBe(COPY.unknown);
+  world.unhold('popup-response');
+  popup.window.dispatchEvent(new popup.window.Event('focus'));
+  await vi.advanceTimersByTimeAsync(50);
+  change(popup, true);
+  await vi.advanceTimersByTimeAsync(100);
+  world.release('popup-response');
+  await vi.advanceTimersByTimeAsync(50);
+  expect(statusText(popup.document), '[outcome:late-change-overwrite]').toBe(COPY.working);
+  expect(control(popup.document).checked).toBe(true);
+});
+
+for (const initial of [true, false]) for (const write of ['immediate', 'rejected', 'throws', 'deferred']) {
+  for (const read of ['immediate', 'rejected', 'rejected-with-values', 'malformed', 'deferred']) {
+    for (const apply of ['success', 'negative', 'invalid', 'silent']) {
+      test(`joint table ${initial} write=${write} read=${read} apply=${apply}`, async () => {
+        const { world, popup, content } = await timedBoot(initial);
+        world.setWriteMode(write);
+        world.setReadMode(read, 'worker');
+        const send = world.workerChrome.tabs.sendMessage.bind(world.workerChrome.tabs);
+        world.workerChrome.tabs.sendMessage = (...args) => {
+          const response = send(...args);
+          if (args[1].type !== 'apply-preference') return response;
+          if (apply === 'silent') { response.catch(() => {}); return new Promise(() => {}); }
+          return response.then((reply) => apply === 'negative' ? { ...reply, applied: false }
+            : apply === 'invalid' ? { ...reply, requestId: -1 } : reply);
+        };
+        change(popup, !initial);
+        await vi.advanceTimersByTimeAsync(4010);
+        const reply = answered(world)[0]?.payload;
+        const saved = write === 'deferred' ? null : write === 'immediate';
+        const persisted = saved === true ? !initial : initial;
+        const readable = read === 'immediate' && saved !== null;
+        const applied = saved !== null && read !== 'deferred' && apply === 'success';
+        expect(reply, '[outcome:joint-table-fields]').toMatchObject({ saved,
+          enabled: readable ? persisted : null, applied });
+        expect(world.snapshot()).toEqual({ enabled: persisted });
+        expect(markers(content.document)).toEqual(persisted ? tinted : []);
+        const box = control(popup.document);
+        const mixed = saved === null || (saved === false && !readable);
+        expect(box.indeterminate, '[outcome:joint-table-certainty]').toBe(mixed);
+        expect(box.disabled).toBe(mixed);
+        if (!mixed) expect(box.checked, '[outcome:confirmed-write-checkbox]').toBe(persisted);
+        const copy = saved === null ? COPY.unknown : saved === false ? COPY.notSaved
+          : read === 'deferred' || ['silent', 'invalid'].includes(apply) ? COPY.unavailable
+          : apply === 'negative' ? COPY.notApplied : persisted ? COPY.working : COPY.off;
+        expect(statusText(popup.document), '[outcome:joint-table-copy]').toBe(copy);
+        world.setReadMode('immediate', 'worker'); world.flushReads(); world.flushWrites();
+        await vi.advanceTimersByTimeAsync(22000);
+        expect(world.forbidden).toEqual([]);
+        expect(Math.max(...world.writeObservations, 0), '[outcome:physical-write-overlap]').toBeLessThanOrEqual(1);
+        expect(vi.getTimerCount()).toBe(0);
+      });
+    }
+  }
+}
+
 for (const initial of [true, false]) {
   for (const stage of ['worker-read', 'query', 'icon', 'title']) {
     test(`absolute admission deadline from ${initial} with independently parked ${stage}`, async () => {
