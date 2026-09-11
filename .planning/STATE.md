@@ -2,8 +2,8 @@
 gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Honest Failure and an Off Switch
-status: halted
-stopped_at: 04-19 halted; two blocking findings remain after non-decreasing recheck
+status: executing
+stopped_at: 04-19 resumed with explicit user authorization for targeted repairs
 last_updated: "2026-09-11T06:29:12.871054Z"
 last_activity: 2026-09-11
 last_activity_desc: 04-15 approved and complete; remaining gap execution resumed
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 ## Current Position
 
-Phase: 04 (Honest Failure and an Off Switch) — HALTED
-Plan: 19 of 20 (wave 16 halted; 18 plans complete)
-Status: Independent recheck retains two technical blockers; verification remains gaps_found
+Phase: 04 (Honest Failure and an Off Switch) — EXECUTING
+Plan: 19 of 20 (wave 16 resumed; 18 plans complete)
+Status: New targeted repair attempt authorized; verification remains gaps_found
 Last activity: 2026-09-11 — Review recheck at 028265e retains CR-19-02 and CR-19-03; 04-20 blocked
 
 Milestone progress: 2/5 phases complete (40%). Phase 03 remains incomplete.
@@ -277,3 +277,7 @@ codex/phase04-gap-closure after explicit04-15 approval.
 ## 2026-09-11 — Wave 16 halted at review convergence gate
 
 Independent review found three runtime blockers and one harness warning. CR-19-01 (resume freshness) was repaired and independently closed. The worker packet repaired original document-close/navigation and post-action variants, but recheck at 028265e retains two actionable findings: CR-19-02 same-document table replacement can return stale working/applied state; CR-19-03 a competing OFF settling during a held popup action can return enabled=true against storage=false. Affected actionable count remains 2 to 2, activating 04-19 Task 3 mandatory stop. WR-19-01 callback-drain warning remains unimplemented. Final current reports and halted summary retain exact reproductions and digests. No final full mutation/default-suite pass is claimed after these repairs; plan 04-20 source binding and human walkthrough did not start. All seven requirement statuses and Phase 3 human_needed remain unchanged.
+
+## 2026-09-11 — Explicitly authorized targeted repair attempt
+
+After the previous non-decreasing review halt, the user was offered a revised repair plan for CR-19-02, CR-19-03 and WR-19-01 followed by independent recheck. Their direct response was "proceed". A new bounded attempt is authorized; the previous halt and counterexamples remain historical facts. 04-19 resumes with durable regression capture and narrow repairs. 04-20 remains dependent on technical review convergence, and human acceptance is unchanged.
