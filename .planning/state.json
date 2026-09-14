@@ -6,12 +6,12 @@
     {
       "number": "1",
       "name": "DOM Recon Spike",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "2",
       "name": "First Tint on a Real View",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "3",
@@ -26,13 +26,13 @@
     {
       "number": "5",
       "name": "Published",
-      "status": "pending"
+      "status": "in_progress"
     }
   ],
   "next": {
     "command": "/gsd:progress --next",
     "label": "Advance to the next step",
-    "reason": "Phase 1 of 5 · 0% · executing"
+    "reason": "Phase 05 of 5 · 40% · executing"
   },
-  "updated_at": "2026-09-03T08:26:40.817Z"
+  "updated_at": "2026-09-11T13:21:13.538Z"
 }
