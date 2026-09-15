@@ -1,0 +1,223 @@
+[
+  {
+    "id": "apply-fresh-diagnosis",
+    "file": "extension/background.js",
+    "find": "    if (reply.applied) {\n      // The acknowledgement proves work completed, not that its captured view\n      // diagnosis survived a later same-document mutation. Reobserve under the\n      // original admission deadline; own-apply invalidation is already past.\n      // A queued own-apply invalidation may arrive during the first handshake.\n      // Permit one fresh retry, never an unbounded observer or renewed budget.\n      for (let attempt = 0; attempt < 2; attempt += 1) {\n        const generation = generationOf(tabId);\n        const current = await requestStatus(tabId, generation, expires);\n        if (tabs.get(tabId) !== state || state.lifetime !== lifetime) return null;\n        if (current === null) continue;\n        if (current.status === 'unavailable') return null;\n        return { applied: true, status: current.status, reason: current.reason };\n      }\n      return null;\n    }\n",
+    "replace": "",
+    "count": 1,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "Successful application does not certify a captured diagnosis after same-document view mutation; reobserve under the original budget.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "same-document replacement after captured apply from false with responsive fresh status",
+      "assertion": "[review:apply-current-diagnosis]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "popup-write-epoch",
+    "file": "extension/background.js",
+    "find": "    writeEpoch += 1;",
+    "replace": "",
+    "count": 1,
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "Completed intervening writes invalidate earlier preference snapshots even when no native writer remains and the view diagnosis stays neutral.",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "popup true held at icon refuses completed opposite write in neutral view",
+      "assertion": "[review:post-wait-preference-certainty]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "apply-document-lifetime",
+    "file": "extension/background.js",
+    "find": "    if (tabs.get(tabId) !== state || state.lifetime !== lifetime) return null;",
+    "replace": "",
+    "count": 2,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "Mechanism-level removal of both lifetime checks, before and after fresh diagnosis. A matching request ID cannot certify application in a replaced document; neither redundant lifetime site is claimed individually killed.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "captured apply from false after navigation preserves only current application",
+      "assertion": "[review:apply-document-lifetime]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "popup-post-action-status",
+    "file": "extension/background.js",
+    "find": "    if (generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);",
+    "replace": "",
+    "count": 1,
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "A native artwork wait cannot authorize a newly returned obsolete popup diagnosis.",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "popup status after held icon with invalidation true is current",
+      "assertion": "[review:popup-post-action-current]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "resume-read-readiness",
+    "file": "extension/content.js",
+    "find": "    preferenceReady = false;\n    suspended = false;",
+    "replace": "    suspended = false;",
+    "count": 1,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "A restored page must remain untinted while its fresh preference read is held, even if it was previously ON.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "restored true reads false with immediate stays unconfirmed until fresh read",
+      "assertion": "[review:resume-unconfirmed-no-markers]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "confirmed-write-revert",
+    "file": "extension/popup.js",
+    "find": "else showPreference(reply.enabled === null ? desired : reply.enabled);",
+    "replace": "else showPreference(reply.enabled === null ? lastConfirmed : reply.enabled);",
+    "count": 1,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "Joint persisted value, markers and checkbox must agree after confirmed write and failed read.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "joint table true write=immediate read=rejected apply=success",
+      "assertion": "[outcome:confirmed-write-checkbox]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "write-timeout-as-failure",
+    "file": "extension/background.js",
+    "find": "    job.saved = null;",
+    "replace": "    job.saved = false;",
+    "count": 1,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "An issued native write timeout is unknown, never definite failure.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "native deferred from true remains unknown through expiry and fresh recovery",
+      "assertion": "[outcome:false-timeout-failure]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "timeout-releases-writer",
+    "file": "extension/background.js",
+    "find": "      if (job.raw !== null) await job.raw;",
+    "replace": "",
+    "count": 1,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "Physical write exclusion outlives response expiry.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "a fresh request after observation expiry cannot overlap the still-issued native write",
+      "assertion": "[outcome:post-timeout-write-exclusion]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "expired-request-dispatch",
+    "file": "extension/background.js",
+    "find": "    job.timer = setTimeout(() => {\n      job.expired = true;\n      const index = preferenceQueue.indexOf(job);\n      if (index >= 0) preferenceQueue.splice(index, 1);\n      job.answer();\n    }, WORKER_REQUEST_TIMEOUT_MS);\n    preferenceQueue.push(job);\n    drainPreferences();\n  }\n\n  async function drainPreferences() {\n    if (activePreference !== null) return;\n    const job = preferenceQueue.shift();\n    if (job === undefined) return;\n    activePreference = job;\n    try {\n      if (!job.expired && Date.now() < job.expires) await setEnabled(job);\n    } finally {\n      job.answer();\n      // Observation expiry is not cancellation. This raw callback exclusively\n      // owns the writer even after its requester has already received null.\n      if (job.raw !== null) await job.raw;\n      activePreference = null;\n      drainPreferences();\n    }\n  }\n",
+    "replace": "    job.timer = setTimeout(() => {\n      job.expired = true;\n      const index = preferenceQueue.indexOf(job);\n\n      job.answer();\n    }, WORKER_REQUEST_TIMEOUT_MS);\n    preferenceQueue.push(job);\n    drainPreferences();\n  }\n\n  async function drainPreferences() {\n    if (activePreference !== null) return;\n    const job = preferenceQueue.shift();\n    if (job === undefined) return;\n    activePreference = job;\n    try {\n      await setEnabled(job);\n    } finally {\n      job.answer();\n      // Observation expiry is not cancellation. This raw callback exclusively\n      // owns the writer even after its requester has already received null.\n      if (job.raw !== null) await job.raw;\n      activePreference = null;\n      drainPreferences();\n    }\n  }\n",
+    "count": 1,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "Mechanism-level removal of both expiry dequeue and dispatch refusal; neither redundant clause is claimed individually killed.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "admission overflow in an opposite popup never confirms an obsolete position",
+      "assertion": "[outcome:expired-request-dispatch]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "popup-stale-refresh",
+    "file": "extension/popup.js",
+    "find": "    if (outstanding) return;\n    requestEnabled(control.checked === true);",
+    "replace": "    requestEnabled(control.checked === true);",
+    "count": 1,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "Refresh/change admission exclusion prevents overlapping popup ownership; downstream stale-reply recovery is checked jointly.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "opening refresh excludes changes and captured late reply cannot overwrite fresh recovery",
+      "assertion": "[outcome:opening-refresh-excludes-change]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "whole-request-deadline",
+    "file": "extension/background.js",
+    "find": "const WORKER_REQUEST_TIMEOUT_MS = 4000;",
+    "replace": "const WORKER_REQUEST_TIMEOUT_MS = 8000;",
+    "count": 1,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "All sequential waits share the approved 4000 ms arrival budget.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "sequential waits spend one arrival budget rather than renewing every hop",
+      "assertion": "[outcome:sequential-budget]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "pending-reopen-certainty",
+    "file": "extension/background.js",
+    "find": "  async function popupStatus(requestId, expires) {\n    const preferenceEpoch = writeEpoch;\n    const confirmed = (value) => pendingWrite !== null || preferenceEpoch !== writeEpoch ? null : value;\n    const tab = await activeTab(expires);\n    if (tab === null) return unavailable(requestId, confirmed(pendingWrite !== null ? null : await bounded(readPreference, expires)));\n    if (!await liveTab(tab.id, expires)) return unavailable(requestId, confirmed(pendingWrite !== null ? null : await bounded(readPreference, expires)));\n    const generation = invalidate(tab.id);\n    const result = await requestStatus(tab.id, generation, expires);\n    const enabled = pendingWrite !== null ? null : await bounded(readPreference, expires);\n    if (preferenceEpoch !== writeEpoch) return unavailable(requestId);\n    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);\n    const projected = operational(result, enabled);\n    await bounded(() => applyAction(tab.id, projected, generation, expires), expires);\n    if (preferenceEpoch !== writeEpoch) return unavailable(requestId);\n    if (generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);\n    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,\n      enabled: pendingWrite !== null ? null : enabled };\n  }\n\n",
+    "replace": "  async function popupStatus(requestId, expires) {\n    const preferenceEpoch = writeEpoch;\n    const confirmed = (value) => false || preferenceEpoch !== writeEpoch ? null : value;\n    const tab = await activeTab(expires);\n    if (tab === null) return unavailable(requestId, confirmed(false ? null : await bounded(readPreference, expires)));\n    if (!await liveTab(tab.id, expires)) return unavailable(requestId, confirmed(false ? null : await bounded(readPreference, expires)));\n    const generation = invalidate(tab.id);\n    const result = await requestStatus(tab.id, generation, expires);\n    const enabled = false ? null : await bounded(readPreference, expires);\n    if (preferenceEpoch !== writeEpoch) return unavailable(requestId);\n    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, false ? null : enabled);\n    const projected = operational(result, enabled);\n    await bounded(() => applyAction(tab.id, projected, generation, expires), expires);\n    if (preferenceEpoch !== writeEpoch) return unavailable(requestId);\n    if (generationOf(tab.id) !== generation) return unavailable(requestId, false ? null : enabled);\n    return { type: 'popup-status', requestId, status: projected.status, reason: projected.reason,\n      enabled: false ? null : enabled };\n  }\n\n",
+    "count": 1,
+    "suites": [
+      "test/extension/preference-outcome.test.js"
+    ],
+    "note": "Mechanism-level removal of pending-write uncertainty masking throughout popupStatus. Initial single read-mask removal survived behind independent response masking; no individual guard kill is claimed.",
+    "expected_failure": {
+      "suite": "test/extension/preference-outcome.test.js",
+      "test": "native callback-held from true remains unknown through expiry and fresh recovery",
+      "assertion": "[outcome:pending-reopen-mixed]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "late-action-reconciliation",
+    "file": "extension/background.js",
+    "find": "        if (!owns(tabId, state, work.generation) || Date.now() >= work.expires) state.reconcile = true;",
+    "replace": "",
+    "count": 1,
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "After late native settlement the current projection must be reconciled.",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "late native icon preserves exclusion and reconciles newest projection",
+      "assertion": "[outcome:late-native-reconciled]",
+      "kind": "behavioral"
+    }
+  }
+]

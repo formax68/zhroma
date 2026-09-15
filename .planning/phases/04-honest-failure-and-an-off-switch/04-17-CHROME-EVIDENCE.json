@@ -1,0 +1,337 @@
+{
+  "command": "node scripts/verify-locale-rendering.js --smoke",
+  "exitCode": 0,
+  "elapsedMs": 2205.717292,
+  "observedAt": "2026-09-11T07:03:55.740Z",
+  "hashes": {
+    "extension/content.js": "18aace89e544d197ea8e42e51f3dc61a3771ff843f8f3566b2a495619a5c3f50",
+    "extension/zhroma.css": "8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0",
+    "scripts/verify-locale-rendering.js": "8125bfeab4b97e64924183fba9db57b676059bb196cb33e5afe6e151bf0ac768"
+  },
+  "report": {
+    "scope": "real-Chrome synthetic rendering",
+    "browser": "Chrome/153.0.8010.37",
+    "cases": [
+      {
+        "lang": "en",
+        "paintedCells": 64,
+        "markers": 4,
+        "paletteMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "diagnosis": "working",
+        "reason": null,
+        "selectorMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "cssPaintedCells": 64
+      },
+      {
+        "lang": "EN",
+        "paintedCells": 64,
+        "markers": 4,
+        "paletteMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "diagnosis": "working",
+        "reason": null,
+        "selectorMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "cssPaintedCells": 64
+      },
+      {
+        "lang": "en-GB",
+        "paintedCells": 64,
+        "markers": 4,
+        "paletteMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "diagnosis": "working",
+        "reason": null,
+        "selectorMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "cssPaintedCells": 64
+      },
+      {
+        "lang": "en-US",
+        "paintedCells": 64,
+        "markers": 4,
+        "paletteMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "diagnosis": "working",
+        "reason": null,
+        "selectorMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "cssPaintedCells": 64
+      },
+      {
+        "lang": "EN-gb",
+        "paintedCells": 64,
+        "markers": 4,
+        "paletteMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "diagnosis": "working",
+        "reason": null,
+        "selectorMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "cssPaintedCells": 64
+      },
+      {
+        "lang": "en-Latn-GB",
+        "paintedCells": 64,
+        "markers": 4,
+        "paletteMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "diagnosis": "working",
+        "reason": null,
+        "selectorMatches": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "cssPaintedCells": 64
+      },
+      {
+        "lang": "fr",
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "unsupported-language",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      },
+      {
+        "lang": "fr-CA",
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "unsupported-language",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      },
+      {
+        "lang": "de",
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "unsupported-language",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      },
+      {
+        "lang": "",
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "structure",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      },
+      {
+        "lang": " ",
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "structure",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      },
+      {
+        "lang": " en",
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "structure",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      },
+      {
+        "lang": "en ",
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "structure",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      },
+      {
+        "lang": " en-GB ",
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "structure",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      },
+      {
+        "lang": "en_US",
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "structure",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      },
+      {
+        "lang": null,
+        "paintedCells": 0,
+        "markers": 0,
+        "paletteMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "diagnosis": "cannot-read",
+        "reason": "structure",
+        "selectorMatches": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cssPaintedCells": 0
+      }
+    ]
+  }
+}

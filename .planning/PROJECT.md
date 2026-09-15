@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Zhroma is a Chrome extension that colour-codes ticket rows in Zendesk agent views by priority, so an agent can see what's urgent at a glance instead of reading a column of plain text. It installs from the Chrome Web Store, works on any `*.zendesk.com` agent interface with zero setup, and is aimed at support agents who live in Zendesk views all day.
+Zhroma is a Chrome extension that colour-codes ticket rows in Zendesk agent views by priority, so an agent can see what's urgent at a glance instead of reading a column of plain text. The planned public release installs from the Chrome Web Store; the current unpacked prototype targets English current Agent Workspace views on `*.zendesk.com` with zero setup, and is aimed at support agents who live in Zendesk views all day.
 
 ## Core Value
 
@@ -19,21 +19,26 @@ Open a Zendesk view and know within one second which tickets are urgent — with
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ RECON-01: Three live-derived sanitized fixtures admitted for offline testing, with explicit repository-byte re-admission provenance — Phase 01.
+- ✓ RECON-02: English-path DOM assumptions recorded with evidence; localization explicitly outside the verified scope — Phase 01.
+- ✓ RECON-03: Observed ticket rows reach the top Document directly and current Garden identifiers are present — Phase 01.
+
+- ✓ Header-derived exact-English priority detection and distinct translucent direct-cell tints on initial supported view loads — Phase 02.
+- ✓ Native-state/readability and column-reordering acceptance in tested light-interface views — Phase 02.
+- ✓ Static minimal-permission manifest and source-bound unpacked loading — Phase 02.
+
+Phase 01 acceptance includes historical approval-risk acceptance AR-01-13; package approval independence remains not-attested. Initial tinting is verified locally; public store publication and ongoing in-app liveness are not complete.
 
 ### Active
 
-- [ ] Ticket rows in Zendesk agent views are tinted by priority
-- [ ] All four Zendesk priority values get a distinct tint (Urgent, High, Normal, Low)
-- [ ] Priority is read from the Priority column rendered in the view
 - [ ] When a view has no Priority column, show an unobtrusive hint prompting the agent to add it
-- [ ] Works on any `*.zendesk.com` agent interface with no per-user configuration
+- [ ] Works on English current Agent Workspace views on `*.zendesk.com` with no per-user configuration; fail quietly outside supported evidence
 - [ ] Tinting survives the things agents actually do: scrolling, sorting, refreshing a view, switching views and tabs
 - [ ] Packaged and published as a public Chrome Web Store listing (icons, screenshots, privacy policy, minimal permissions)
 
 ### Out of Scope
 
-- **User-configurable colours** — deferred to v2. v1 ships hard-coded defaults so there is no options page, no storage, and nothing to configure before it works
+- **User-configurable colours** — deferred to v2. v1 ships hard-coded defaults so there is no colour options page and nothing to configure before it works; the separate default-on toggle stores one boolean
 - **Alternative visual treatments (left-edge stripe, coloured priority pill)** — deferred to v2, where they become a configurable choice alongside custom colours. v1 commits to the full-row tint
 - **Colouring the open ticket page, tab strip, search results, and org/user ticket lists** — v1 is scoped to agent views only, which is where the scanning pain actually lives
 - **Fetching priority from the Zendesk API** — rejected for v1. It needs auth handling and a heavier permissions ask at store review, in exchange for covering views the agent can fix themselves by adding a column
@@ -48,7 +53,7 @@ Open a Zendesk view and know within one second which tickets are urgent — with
 - The Zendesk agent interface is a dynamic single-page app: rows are re-rendered on sort, refresh, view switch and scroll. Any implementation that tints once on page load will appear broken within seconds. Re-application on DOM change is a hard requirement, not a nicety.
 - Publishing publicly means the extension must be defensible at Chrome Web Store review: narrow host permissions, no remote code, a clear justification for every permission requested, and a privacy policy — even though the extension collects nothing.
 - Zendesk owns the DOM this extension reads. Selector fragility is the standing risk for the life of the project: a Zendesk front-end change can break tinting without warning, and the extension must fail quietly (page untouched) rather than loudly (page broken).
-- Greenfield. Empty directory, fresh git repo, no prior spike or sketch work to carry in.
+- Phase 01 recon and Phase 02 initial tint are complete. Phase 02 verification is 25/25 with clean code review, 10/10 security threats closed, 301 combined tests and authentic user acceptance. Phase 03 addresses ongoing liveness; both reported startup failures were clarified as opening Zendesk then clicking a view, including from a fresh tab.
 
 ## Constraints
 
@@ -71,6 +76,12 @@ Open a Zendesk view and know within one second which tickets are urgent — with
 | Tint all four priorities rather than High/Urgent only | Distinct tints make the whole list scannable, not just the hot rows | — Pending |
 | Any `*.zendesk.com` rather than a single subdomain | Required for a public listing — a stranger's subdomain is unknowable at build time | — Pending |
 | Accessibility deferred, recorded rather than dropped | Conventional colours ship now; the colourblind-safe palette is logged in Out of Scope so it can't be quietly forgotten | — Pending |
+| Bounded initial snapshot; ongoing liveness follows in Phase 3 | Direct-document controls passed; opening Zendesk then clicking a view and pagination require reapplication | Phase 02 validated; Phase 03 pending |
+| Source-bound acceptance with explicit report clarification | Avoid speculative runtime changes or confusing fresh tabs with direct view-document entry | 02-03 investigation-only closure, 2026-09-09 |
+| English-only current Agent Workspace evidence boundary | Observations do not establish localization, legacy-shell, vanity-domain or cross-plan compatibility | Validated in Phase 01 |
+| Garden selector pair with same-table header ownership | Current corpus proves the Garden strategy; unsupported fallback rungs cannot authorize implementation | Validated in Phase 01 |
+| Re-admit existing sanitized bytes with explicit provenance and exact second-pass parity | Original captures are unavailable; repository history retains originals and checksums | User-approved, verified in Phase 01 |
+| Accept historical approval-independence risk without inventing attestation | User explicitly accepted incomplete historical evidence; exact package versions remain pinned | AR-01-13, 2026-09-08 |
 
 ## Evolution
 
@@ -91,4 +102,4 @@ This document evolves at phase transitions and milestone boundaries.
 5. Update Context with current state
 
 ---
-*Last updated: 2026-09-02 after initialization*
+*Last updated: 2026-09-09 after Phase 02 completion*

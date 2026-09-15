@@ -1,0 +1,27 @@
+html[lang|="en" i] table[data-garden-id="tables.table"][data-test-id="generic-table"]
+> tbody[data-garden-id="tables.body"][data-test-id="generic-table-body"]
+> tr[data-garden-id="tables.row"][data-test-id="generic-table-row"][data-zhroma-priority="Urgent"]
+> td[data-garden-id="tables.cell"] {
+  background-color: rgb(220 38 38 / 0.14) !important;
+}
+
+html[lang|="en" i] table[data-garden-id="tables.table"][data-test-id="generic-table"]
+> tbody[data-garden-id="tables.body"][data-test-id="generic-table-body"]
+> tr[data-garden-id="tables.row"][data-test-id="generic-table-row"][data-zhroma-priority="High"]
+> td[data-garden-id="tables.cell"] {
+  background-color: rgb(234 88 12 / 0.12) !important;
+}
+
+html[lang|="en" i] table[data-garden-id="tables.table"][data-test-id="generic-table"]
+> tbody[data-garden-id="tables.body"][data-test-id="generic-table-body"]
+> tr[data-garden-id="tables.row"][data-test-id="generic-table-row"][data-zhroma-priority="Normal"]
+> td[data-garden-id="tables.cell"] {
+  background-color: rgb(202 138 4 / 0.09) !important;
+}
+
+html[lang|="en" i] table[data-garden-id="tables.table"][data-test-id="generic-table"]
+> tbody[data-garden-id="tables.body"][data-test-id="generic-table-body"]
+> tr[data-garden-id="tables.row"][data-test-id="generic-table-row"][data-zhroma-priority="Low"]
+> td[data-garden-id="tables.cell"] {
+  background-color: rgb(22 163 74 / 0.08) !important;
+}

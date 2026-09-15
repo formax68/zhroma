@@ -1,0 +1,36 @@
+[
+  {
+    "id": "malformed-english-blame",
+    "file": "extension/content.js",
+    "find": "reasonLanguage === '' || englishReason ? 'unsafe' : 'unsupported'",
+    "replace": "reasonLanguage === '' ? 'unsafe' : 'unsupported'",
+    "count": 1,
+    "suites": [
+      "test/extension/diagnosis.test.js"
+    ],
+    "note": "Malformed English metadata refuses paint as structural uncertainty, not unsupported language.",
+    "expected_failure": {
+      "suite": "test/extension/diagnosis.test.js",
+      "test": "malformed English shell: underscore English reports structure across content, worker and popup",
+      "assertion": "[locale:malformed-english-reason]",
+      "kind": "behavioral"
+    }
+  },
+  {
+    "id": "selector-family-regression",
+    "file": "extension/zhroma.css",
+    "find": "html[lang|=\"en\" i]",
+    "replace": "html[lang|=\"fr\" i]",
+    "count": 4,
+    "suites": [
+      "test/extension/runtime-contract.test.js"
+    ],
+    "note": "Actual language-family change removes English direct-cell matches in the secondary happy-dom model. This is not real Chrome mutant execution or removal of redundant case i.",
+    "expected_failure": {
+      "suite": "test/extension/runtime-contract.test.js",
+      "test": "happy-dom secondary model: four CSS rules map exact labels to alpha backgrounds and only direct ticket cells",
+      "assertion": "[locale:actual-selector-family]",
+      "kind": "behavioral"
+    }
+  }
+]

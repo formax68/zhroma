@@ -1,0 +1,70 @@
+[
+  {
+    "id": "request-id-echo",
+    "file": "extension/background.js",
+    "find": "reply.type === type && reply.requestId === requestId",
+    "replace": "reply.type === type",
+    "suites": [
+      "test/extension/worker-integrity.test.js"
+    ],
+    "note": "Echoed request identity rejects a mismatched or replayed operation reply on both hops. It is one ownership check: current requestApply separately guards tab/document lifetime and obtains a bounded fresh diagnosis after acknowledged application. This mutation measures operation identity only; apply-document-lifetime and apply-fresh-diagnosis measure those separate mechanisms (04-19 supersedes the historical ONLY-staleness-key claim).",
+    "expected_failure": {
+      "suite": "test/extension/worker-integrity.test.js",
+      "test": "an apply reply carrying a request id that is not the one minted is not an outcome, and the popup says so",
+      "assertion": "[mutant:request-id-echo]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "status-reply-gate",
+    "file": "extension/background.js",
+    "find": "    if (!isExact(reply, ['type', 'requestId', 'diagnosis', 'reason'])\n      || !validDiagnosis(reply, requestId, 'status')) {",
+    "replace": "    if (false) {",
+    "suites": [
+      "test/extension/worker-integrity.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. requestStatus's combined shape-and-diagnosis gate never holds, so no status reply is ever refused and any object reaching the worker becomes a diagnosis about the agent's view. Fences the gate as a whole; the individual clauses inside validDiagnosis are fenced by request-id-echo and diagnosis-pairing (04-REVIEW WR-02, T-04G-28)",
+    "expected_failure": {
+      "suite": "test/extension/worker-integrity.test.js",
+      "test": "a status reply carrying an extra member beyond the four the gate names is refused, and the tab reports the connection fact",
+      "assertion": "[mutant:status-reply-gate]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "diagnosis-pairing",
+    "file": "extension/background.js",
+    "find": "      && Object.hasOwn(TITLES, statusKey(reply.diagnosis, reply.reason));",
+    "replace": "      ;",
+    "suites": [
+      "test/extension/worker-integrity.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. an unpaired {diagnosis, reason} becomes renderable. ICONS is keyed by status alone while TITLES is keyed by the whole pair, so the artwork write SUCCEEDS and the title write carries no value \u2014 one state's artwork under no sentence at all, which is the FAIL-05 failure mode.",
+    "expected_failure": {
+      "suite": "test/extension/worker-integrity.test.js",
+      "test": "an unpaired combination leaves a clean fallback, never a half-written toolbar",
+      "assertion": "[mutant:diagnosis-pairing]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "popup-valid-gate",
+    "file": "extension/popup.js",
+    "find": "      || !validPreference(reply.enabled) || !validStatus(reply.status, reply.reason)",
+    "replace": "",
+    "suites": [
+      "test/extension/worker-integrity.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. requestEnabled stops checking that the worker's reply carries an in-set status and a boolean-or-null preference, so a buggy worker's unrecognised value is rendered instead of reported as a failed save. Fences the popup's own second line of defence on the set-enabled path only; refresh's gate has the same two clauses in the opposite order and is a distinct literal (04-REVIEW WR-02, T-04G-30)",
+    "expected_failure": {
+      "suite": "test/extension/worker-integrity.test.js",
+      "test": "a set-enabled reply carrying an out-of-set status is refused, and the popup claims nothing",
+      "assertion": "[mutant:popup-valid-gate]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  }
+]

@@ -1,0 +1,19 @@
+[
+  {
+    "id": "harness-drain-bound",
+    "file": "test/extension/chrome-harness.js",
+    "find": "        if (released >= maxDeliveries) throw new Error('Chrome harness delivery limit exceeded');",
+    "replace": "",
+    "count": 1,
+    "suites": [
+      "test/extension/harness-reliability.test.js"
+    ],
+    "note": "Removing the finite drain guard makes the reentrant child time out; its supervising assertion fails within two seconds instead of hanging the test worker. This is a harness liveness gate, not a shipped runtime mitigation.",
+    "expected_failure": {
+      "suite": "test/extension/harness-reliability.test.js",
+      "test": "bounded Chrome harness drain reports reentrant deliveries",
+      "assertion": "[harness:bounded-drain]",
+      "kind": "behavioral"
+    }
+  }
+]

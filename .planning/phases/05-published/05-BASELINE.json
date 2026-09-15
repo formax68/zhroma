@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "phase": "04-honest-failure-and-an-off-switch",
+  "recorded_by": "05-03",
+  "recorded_on": "2026-09-11",
+  "purpose": "Immutable identity of the Phase 4 live-acceptance evidence and of the runtime bytes it was observed against. Phase 5 changes shipped bytes; this baseline is what keeps the Phase 4 record validating against its own source instead of against whatever extension/ contains later.",
+  "observation_path": ".planning/phases/04-honest-failure-and-an-off-switch/04-LIVE-ACCEPTANCE.md",
+  "observation_revision": "47702660d442b9a8f4e955120b687f95f2c9326c",
+  "runtime_revision": "31ed0716a0da44a3004bb961c6d89fa1f9836bd9",
+  "inventory_count": 11,
+  "assets": {
+    "background.js": "0f48bb105cdb1edd2aa6b68a6732dba1217502de015670097adbb3eb120d6428",
+    "content.js": "c9e83c837e4933827853a03bc9d7b63f308f403d679a8dc5c34701a6792b3126",
+    "icons/missing.png": "68a032b0500b1ae062a455e3b1bdbf20db8dd71c8d16dee1461e6f3dbf5e8fa0",
+    "icons/neutral.png": "a13c2447cb31526e666a4e050451228480a6221efcee673a6fd30ac2d943f9d4",
+    "icons/off.png": "c1289da1a9235cba4ddb0f8bcd85ca90e355ce89ddf3c24340c6409205198638",
+    "icons/unreadable.png": "1131af46ac5cc421e7e951a4de067566c9a31bbfa032787f5346fb6db8e30c3a",
+    "icons/working.png": "28fc0380a220982d523d39564123933db92e8d492100cd690c0dd333200845bb",
+    "manifest.json": "dafa656a55a1b69b42d4aa6490101e593bc9eea36afe35feacf34f7090b768e5",
+    "popup.html": "4c621c9d92fd21130dc2cafbf5bcaf705a98993c53eb755a53011a381729ad7c",
+    "popup.js": "3e7cac0ebed5141f617af5fb919a6a0c41df6efad2ccbb27076fc7af012ea938",
+    "zhroma.css": "8eb5da85190bbada5c2f4c6d9a84c068fd988c46ebe2995c1bba9242f2b726c0"
+  },
+  "digest": "46090012ab1a8ebd265273c327b214afbed0321a2fa149ab801ce8c205891065",
+  "validator_path": "test/extension/phase-04-live-acceptance.test.js",
+  "validator_sha256": "534ef7de8c882c82e11b923d3a3c016c4857ac8c95f47969688642322a4c4ca7",
+  "timing_harness_files": [
+    "scripts/run-tint-workload.js",
+    "test/performance/tint-workload.js"
+  ],
+  "timing_harness_hashes": {
+    "scripts/run-tint-workload.js": "0c9f019f32b8b4fdc4cac8045b28eac31de0fe6db3597cd58eddf5f9d2da9de7",
+    "test/performance/tint-workload.js": "a83a40fc6979fea93eee228f0c04dcf75548282f7723a474ad8e074577516f30"
+  },
+  "timing_harness_sha256": "285074ead931dde0f5212951835e10da5e1fb70ba1f8d1a51142ee93b715617b",
+  "evidence_hashes": {
+    ".planning/phases/04-honest-failure-and-an-off-switch/04-LIVE-ACCEPTANCE.md": "30c0c29f43cb75c8a0ca9d125ea50c40daf02722818175531e393408e430fbbd",
+    ".planning/phases/04-honest-failure-and-an-off-switch/04-PERFORMANCE-SAMPLES.json": "d74114bb9447fb2cf4de602d44ba53782890a566961ab61a250633880ec3dfda",
+    ".planning/phases/04-honest-failure-and-an-off-switch/04-REVIEW.md": "a10107f9b98283125bd3b660bf96ac48813aea022da8b8e93a321a6b983d58c0",
+    ".planning/phases/04-honest-failure-and-an-off-switch/04-SECURITY.md": "1a2b9474cc64cb7299be114a375afbaf112ae3f15e306c1aa2640327b736535a",
+    ".planning/phases/04-honest-failure-and-an-off-switch/04-VALIDATION.md": "d67312b632b85131e60c135aa3286a61f99847b9d398c6fcbfdf77834bd1b12c",
+    ".planning/phases/04-honest-failure-and-an-off-switch/04-VERIFICATION.md": "37d950c7da7af9792d4ff0c1af7c822918eedab9a6adc73d6605e797060ef31b",
+    ".planning/phases/03-the-tint-survives-everything/03-LIVE-ACCEPTANCE.md": "2acb67ddc50cf65eed56fe143e0a0a67083d1c0c7e5a3ecdca889e02eecc621b"
+  },
+  "observed": {
+    "status": "human_needed",
+    "checks_passed": 14,
+    "checks_pending": 3,
+    "checks_failed": 0,
+    "pending_ids": [
+      "language-icon-copy",
+      "structure-copy",
+      "english-regional-locale"
+    ]
+  },
+  "prior_phase": {
+    "phase": "03-the-tint-survives-everything",
+    "status": "human_needed",
+    "checks_passed": 11,
+    "checks_pending": 9,
+    "checks_failed": 0,
+    "uat_execution": "skipped-by-user"
+  }
+}

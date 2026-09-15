@@ -1,0 +1,4 @@
+node_modules/
+*.private.html
+*.denylist.txt
+private-capture/

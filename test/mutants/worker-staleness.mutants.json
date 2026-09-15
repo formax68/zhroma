@@ -1,0 +1,104 @@
+[
+  {
+    "id": "project-guard-after-status",
+    "file": "extension/background.js",
+    "find": "        if (result === null || !owns(tabId, state, generation)) continue;",
+    "replace": "",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a superseded status result proceeds to the preference read instead of being dropped, so a discarded projection still does work on behalf of a view that has moved on (04-REVIEW WR-01, T-04G-23)",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "a superseded status reply is discarded before the preference is ever read",
+      "assertion": "[mutant:project-guard-after-status]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "apply-action-guard",
+    "file": "extension/background.js",
+    "find": "      await chrome.action.setIcon({ tabId, path: ICONS[work.result.status] });\n      if (!owns(tabId, state, work.generation) || Date.now() >= work.expires) return;",
+    "replace": "      await chrome.action.setIcon({ tabId, path: ICONS[work.result.status] });",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a generation bump between the icon and the title write no longer stops the title, so the agent reads a sentence about a view that is gone (04-REVIEW WR-01, T-04G-23)",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "a generation bump between the icon and the title write stops the superseded title",
+      "assertion": "[mutant:apply-action-guard]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "popup-status-guard",
+    "file": "extension/background.js",
+    "find": "    if (result === null || generationOf(tab.id) !== generation) return unavailable(requestId, pendingWrite !== null ? null : enabled);",
+    "replace": "",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. a superseded popup projection loses the confirmed preference along with the diagnosis: the popup reports the connection line with enabled null and takes the switch out of service (04-REVIEW WR-01, T-04G-23)",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "a superseded popup projection reports the connection line and still shows the confirmed preference",
+      "assertion": "[mutant:popup-status-guard]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "project-queue",
+    "file": "extension/background.js",
+    "find": "    if (state.observing) return;",
+    "replace": "",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the per-tab serialization is collapsed so two projections for one tab run concurrently and a held earlier reply lands last (04-REVIEW WR-01, T-04G-23)",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "a slow earlier reply cannot repaint over a newer projection",
+      "assertion": "[mutant:project-queue]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "generation-counter",
+    "file": "extension/background.js",
+    "find": "state.generation = ++projectionCounter;",
+    "replace": "state.generation = 0;",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. invalidation stops advancing the counter, so every generation recheck in the worker becomes a no-op at once. Registered deliberately as the mechanism-level fence: requestStatus's own two rechecks are provably redundant with the rechecks its two callers perform immediately afterwards, so neither can be killed on its own \u2014 see 04-12-SUMMARY (04-REVIEW WR-01, T-04G-23)",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "a slow earlier reply cannot repaint over a newer projection",
+      "assertion": "[mutant:generation-counter]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "status-catch-reports-unavailable",
+    "file": "extension/background.js",
+    "find": "      return generationOf(tabId) === generation ? { status: 'unavailable', reason: null } : null;",
+    "replace": "      return null;",
+    "suites": [
+      "test/extension/toolbar-popup.test.js"
+    ],
+    "note": "Historical property remeasured against 04-16 runtime; see 04-18 measured inventory. the catch branch stops reporting the connection fact for a CURRENT rejection, so no receiver silently paints nothing. This fences the REPORTING half of that line only; its staleness half (=== generation) is redundant with the callers' rechecks and is fenced by generation-counter instead (04-REVIEW WR-01, T-04G-23)",
+    "expected_failure": {
+      "suite": "test/extension/toolbar-popup.test.js",
+      "test": "no receiver reads as unavailable and never as a diagnosis about the view",
+      "assertion": "[mutant:status-catch-reports-unavailable]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  }
+]

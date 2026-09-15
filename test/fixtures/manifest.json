@@ -1,0 +1,159 @@
+{
+  "fixtures": [
+    {
+      "scenario": "priority-present-ungrouped",
+      "captureDate": "2026-09-03",
+      "workspace": {
+        "shell": "current Agent Workspace",
+        "plan": "unknown/not shared"
+      },
+      "workspaceShell": "current Agent Workspace",
+      "accountPlan": "unknown/not shared",
+      "domBoundary": "nearest complete table container: immediate overflow wrapper and its ticket table",
+      "sanitizationMethod": "Re-admitted through scripts/sanitize-fixture.js from previously sanitized repository bytes; not a fresh live capture. The prior admission record states that the private inputs were deleted. Unrecoverable enum ARIA redaction stand-ins were removed, the recorded Priority header token was restored in the two Priority-present scenarios, and deterministic text stand-ins were renumbered by the sanitizer. Original repository bytes and hashes remain in Git history.",
+      "file": "zendesk-view-priority-present.html",
+      "sha256": "c0a5b18f96707c8497f22faece606c53eacce170e30781861a1f17a03a346a91",
+      "selectors": {
+        "ticketTable": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"]",
+        "headerRow": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > thead[data-garden-id=\"tables.head\"][data-test-id=\"generic-table-head\"] > tr[data-garden-id=\"tables.header_row\"]",
+        "ticketRow": "[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"]",
+        "groupRow": "[data-garden-id=\"tables.group_row\"][data-test-id=\"generic-table-rows-group-by\"]",
+        "scrollContainer": "body > div"
+      },
+      "structure": {
+        "headerCellCount": 16,
+        "ticketRowCount": 4,
+        "ticketRowWidths": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "groupRowCount": 0,
+        "groupRowPositions": [],
+        "priorityIndex": 6,
+        "stickyHeaderRelationship": "same-table"
+      },
+      "assertions": [
+        {
+          "kind": "exact-text-values",
+          "purpose": "priority-values",
+          "selector": "[data-garden-id=\"tables.row\"] > [data-garden-id=\"tables.cell\"]:nth-child(7)",
+          "values": [
+            "Urgent",
+            "High",
+            "Normal",
+            "Low"
+          ]
+        }
+      ],
+      "priorityHeaderIndex": 6
+    },
+    {
+      "scenario": "priority-absent",
+      "captureDate": "2026-09-03",
+      "workspace": {
+        "shell": "current Agent Workspace",
+        "plan": "unknown/not shared"
+      },
+      "workspaceShell": "current Agent Workspace",
+      "accountPlan": "unknown/not shared",
+      "domBoundary": "nearest complete table container: immediate overflow wrapper and its ticket table",
+      "sanitizationMethod": "Re-admitted through scripts/sanitize-fixture.js from previously sanitized repository bytes; not a fresh live capture. The prior admission record states that the private inputs were deleted. Unrecoverable enum ARIA redaction stand-ins were removed, the recorded Priority header token was restored in the two Priority-present scenarios, and deterministic text stand-ins were renumbered by the sanitizer. Original repository bytes and hashes remain in Git history.",
+      "file": "zendesk-view-priority-absent.html",
+      "sha256": "70ed2ad8c6d53485a1eb3addbbee8f52c24a047520591e93359ca5b3c86db930",
+      "selectors": {
+        "ticketTable": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"]",
+        "headerRow": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > thead[data-garden-id=\"tables.head\"][data-test-id=\"generic-table-head\"] > tr[data-garden-id=\"tables.header_row\"]",
+        "ticketRow": "[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"]",
+        "groupRow": "[data-garden-id=\"tables.group_row\"][data-test-id=\"generic-table-rows-group-by\"]",
+        "scrollContainer": "body > div"
+      },
+      "structure": {
+        "headerCellCount": 6,
+        "ticketRowCount": 4,
+        "ticketRowWidths": [
+          6,
+          6,
+          6,
+          6
+        ],
+        "groupRowCount": 0,
+        "groupRowPositions": [],
+        "priorityIndex": null,
+        "stickyHeaderRelationship": "same-table"
+      },
+      "assertions": [
+        {
+          "kind": "selector-absent",
+          "purpose": "priority-column-absent",
+          "selector": "[data-garden-id=\"tables.header_cell\"]:nth-child(7)"
+        }
+      ],
+      "priorityHeaderIndex": null
+    },
+    {
+      "scenario": "grouped-long",
+      "captureDate": "2026-09-03",
+      "workspace": {
+        "shell": "current Agent Workspace",
+        "plan": "unknown/not shared"
+      },
+      "workspaceShell": "current Agent Workspace",
+      "accountPlan": "unknown/not shared",
+      "domBoundary": "nearest complete table container: immediate overflow wrapper and its same-table sticky header/body topology",
+      "sanitizationMethod": "Re-admitted through scripts/sanitize-fixture.js from previously sanitized repository bytes; not a fresh live capture. The prior admission record states that the private inputs were deleted. Unrecoverable enum ARIA redaction stand-ins were removed, the recorded Priority header token was restored in the two Priority-present scenarios, and deterministic text stand-ins were renumbered by the sanitizer. Original repository bytes and hashes remain in Git history.",
+      "file": "zendesk-view-grouped-long.html",
+      "sha256": "78d403b7f530fad4fbdcbe1f1b3969c9cb0b316513e1454eaa39fac6b8758b6e",
+      "selectors": {
+        "ticketTable": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"]",
+        "headerRow": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > thead[data-garden-id=\"tables.head\"][data-test-id=\"generic-table-head\"] > tr[data-garden-id=\"tables.header_row\"]",
+        "ticketRow": "[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"]",
+        "groupRow": "[data-garden-id=\"tables.group_row\"][data-test-id=\"generic-table-rows-group-by\"]",
+        "scrollContainer": "body > div"
+      },
+      "structure": {
+        "headerCellCount": 15,
+        "ticketRowCount": 12,
+        "ticketRowWidths": [
+          15,
+          15,
+          15,
+          15,
+          15,
+          15,
+          15,
+          15,
+          15,
+          15,
+          15,
+          15
+        ],
+        "groupRowCount": 1,
+        "groupRowPositions": [
+          0
+        ],
+        "priorityIndex": 6,
+        "stickyHeaderRelationship": "same-table"
+      },
+      "assertions": [
+        {
+          "kind": "selector-present",
+          "purpose": "group-row",
+          "selector": "[data-garden-id=\"tables.group_row\"][data-test-id=\"generic-table-rows-group-by\"]"
+        },
+        {
+          "kind": "selector-present",
+          "purpose": "duplicate-or-sticky-header",
+          "selector": "table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"]"
+        },
+        {
+          "kind": "selector-present",
+          "purpose": "scroll-container",
+          "selector": "body > div"
+        }
+      ],
+      "priorityHeaderIndex": 6
+    }
+  ]
+}
