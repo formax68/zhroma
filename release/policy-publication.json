@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-09-14T08:35:54.571653+00:00",
+  "url": "https://formax68.github.io/zhroma-privacy/",
+  "repository": "formax68/zhroma-privacy",
+  "commit": "d00fc9db99a236535292da781839509eb0898e8d",
+  "files": [
+    ".nojekyll",
+    "index.html"
+  ],
+  "policy_sha256": "1b5e15bd4ec4acfdb7b915296ea7bb54754c430582af8948945331929efad6e0",
+  "anonymous_https": true,
+  "live_bytes_match": true,
+  "authorization": "User explicitly answered yes to publishing the prepared privacy page and sending the contact email to Google for verification."
+}

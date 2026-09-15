@@ -1,0 +1,17 @@
+{
+  "recorded_at_utc": "2026-09-14T09:06:04Z",
+  "status": "submitted_for_review",
+  "confirmation": "Your extension was submitted for review",
+  "version": "0.1.0",
+  "publisher_id": "5aac190e-d61e-43c2-8786-8d5fa07022b3",
+  "item_id": "iaachnhcjjfcgkaohcafodoockhdmdbf",
+  "automatic_publication_after_approval": true,
+  "public_availability_verified": false,
+  "candidate": "rc-01",
+  "zip_sha256": "8afcb7ae9cd4ee37973348f18bd26c432438d49a7d973bba61cc4a12be9d8a11",
+  "screenshot_sha256": "6cb208ed14423eb1f65f5d13b7b1addcf35d415e3b2c66515fc1026881636af9",
+  "privacy_url": "https://formax68.github.io/zhroma-privacy/",
+  "authorization": "User explicitly approved three data-use certifications and submission of version 0.1.0 for public release.",
+  "uat": "User explicitly requested skipping remaining UAT; untested checks remain untested.",
+  "policy_interpretation": "Existing consent-applicability uncertainty remains unresolved; submission is not policy approval."
+}

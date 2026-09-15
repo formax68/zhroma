@@ -1,0 +1,29 @@
+{
+  "captured_at": "2026-09-14T09:00:57.283006+00:00",
+  "candidate_source_digest": "19eaf98eeb5385a37f95fc0882968f18f4db2d6203003d0471283df22700c0cf",
+  "candidate_zip_sha256": "8afcb7ae9cd4ee37973348f18bd26c432438d49a7d973bba61cc4a12be9d8a11",
+  "candidate_binding": "User reported loading candidate; capture source not independently byte-attested",
+  "same_view": true,
+  "observed_priorities": [
+    "Normal",
+    "Low",
+    "Urgent",
+    "High"
+  ],
+  "presentation_replacements": "Subject text replaced locally with fictional support requests; all other private columns and account surroundings cropped out. Actual priority labels and tint pixels retained. Native popup switch used for off/on; original enabled preference restored.",
+  "full_image_reviewed": true,
+  "reviewer": "assistant",
+  "files": {
+    "view-off.png": {
+      "sha256": "2a6dccc62dfa22f89000b7d377a5732703501a45da5b25efea9d760cdb156bab"
+    },
+    "view-on.png": {
+      "sha256": "3367219ce53aee9b576ff66595913528053dcd6cb001ecd270e6f0ef5f959b79"
+    },
+    "before-after.png": {
+      "sha256": "6cb208ed14423eb1f65f5d13b7b1addcf35d415e3b2c66515fc1026881636af9"
+    }
+  },
+  "popup": "Not produced: native capture was unusable and browser policy blocked direct extension-page navigation. Required store screenshot is supplied by before-after.png.",
+  "uat": "User explicitly skipped further UAT; marketing images do not constitute UAT."
+}
