@@ -10,8 +10,11 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { sanitizeFixture, sha256 } from '../../scripts/sanitize-fixture.js';
 import { validateSanitizedOutput, PRIORITY_LABELS } from '../../scripts/sanitized-output-contract.js';
 import { validateRecon2Fixtures } from '../../scripts/fixture-contract.js';
+import * as ruleContract from '../../scripts/rule-column-contract.js';
 import {
   DEFAULT_RULE_VOCABULARY,
+  RULE_TOKEN_KINDS,
+  RESERVED_SELF_TOKENS,
   validateRuleColumnOutput,
 } from '../../scripts/rule-column-contract.js';
 
@@ -328,3 +331,232 @@ describe('validateRecon2Fixtures', () => {
     });
   });
 });
+
+const V1_FIXTURES = [
+  'zendesk-view-priority-present.html',
+  'zendesk-view-priority-absent.html',
+  'zendesk-view-grouped-long.html',
+];
+const SELF_ALT_FORM = 'S. Agentworth';
+
+function identityCapture(inner = `<span>${SELF_FORM}</span><span>Profile menu</span>`) {
+  return `<button type="button" class="avatar_hash" aria-label="${SELF_FORM}" aria-haspopup="menu" data-test-id="header-profile-button"><img data-test-id="avatar-image">${inner}</button>`;
+}
+
+function ruleDenylistWith({ plain = denylistValues, self = SELF_FORM, selfAlt } = {}) {
+  const lines = [...plain];
+  if (self !== undefined) lines.push(`self: ${self}`);
+  if (selfAlt !== undefined) lines.push(`self-alt: ${selfAlt}`);
+  return `${lines.join('\n')}\n`;
+}
+
+function structuralNames(markup) {
+  const document = parseDetached(markup);
+  const names = new Set();
+  for (const element of document.body.querySelectorAll('*')) {
+    names.add(element.localName.toLocaleLowerCase('en-US'));
+    for (const attribute of element.attributes) {
+      names.add(attribute.name.toLocaleLowerCase('en-US'));
+      if (attribute.name === 'data-garden-id' || attribute.name === 'data-test-id') {
+        names.add(attribute.value.toLocaleLowerCase('en-US'));
+      }
+    }
+  }
+  return names;
+}
+
+describe('identity-region boundary', () => {
+  test('admits the smallest name-bearing subtree through the 10-argument CLI and maps the name to PERSON-SELF', async () => {
+    const fixture = await createCase(identityCapture());
+    const result = await execFileAsync(process.execPath, [
+      sanitizerCli,
+      '--input', fixture.inputPath,
+      '--output', fixture.outputPath,
+      '--denylist', fixture.denylistPath,
+      '--mode', 'rule-columns',
+      '--boundary', 'identity-region',
+    ], { cwd: fixture.directory });
+    const bytes = await readFile(fixture.outputPath);
+    const output = bytes.toString('utf8');
+
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe(`SANITIZE_FIXTURE_OK ${sha256(bytes)}\n`);
+    const button = parseDetached(output).querySelector('button');
+    expect(button?.getAttribute('aria-label')).toBe('PERSON-SELF');
+    expect([...button.querySelectorAll('span')].map((span) => span.textContent))
+      .toEqual(['PERSON-SELF', 'TEXT-001']);
+    expect(button?.hasAttribute('class')).toBe(false);
+    expect(output).not.toContain(SELF_FORM);
+    expect(validateRuleColumnOutput(output, { boundary: 'identity-region' })).toMatchObject({
+      boundary: 'identity-region',
+      ticketRowCount: 0,
+    });
+
+    const repeat = await createCase(output, PARITY_DENYLIST);
+    await sanitizeFixture({ ...repeat, mode: 'rule-columns', boundary: 'identity-region' });
+    expect(await readFile(repeat.outputPath)).toEqual(bytes);
+  });
+
+  test.each([
+    ['a table', `<table><tbody><tr><td>${SELF_FORM}</td></tr></tbody></table>`],
+    ['a row', `<div role="row">${SELF_FORM}</div>`],
+    ['nav', `<nav>${SELF_FORM}</nav>`],
+    ['header', `<header>${SELF_FORM}</header>`],
+    ['main', `<main>${SELF_FORM}</main>`],
+    ['aside', `<aside>${SELF_FORM}</aside>`],
+    ['role navigation', `<div role="navigation">${SELF_FORM}</div>`],
+    ['role banner', `<div role="banner">${SELF_FORM}</div>`],
+    ['role menubar', `<div role="menubar">${SELF_FORM}</div>`],
+    ['role tablist', `<div role="tablist">${SELF_FORM}</div>`],
+  ])('rejects an identity region containing %s', async (_label, inner) => {
+    const fixture = await createCase(identityCapture(inner));
+    await expectRejected({ ...fixture, mode: 'rule-columns', boundary: 'identity-region' }, 'identity-boundary-required');
+  });
+
+  test.each([
+    ['two root elements', `${identityCapture()}<span>Other</span>`],
+    ['stray body text', `Stray ${identityCapture()}`],
+    ['more than 40 elements', `<div><span>${SELF_FORM}</span>${'<span></span>'.repeat(39)}</div>`],
+    ['no reserved self token', '<button type="button"><span>Someone Else Entirely</span></button>'],
+  ])('rejects an identity region with %s', async (_label, source) => {
+    const fixture = await createCase(source);
+    await expectRejected({ ...fixture, mode: 'rule-columns', boundary: 'identity-region' }, 'identity-boundary-required');
+  });
+
+  test('admits exactly 40 elements', async () => {
+    const fixture = await createCase(`<div><span>${SELF_FORM}</span>${'<span></span>'.repeat(38)}</div>`);
+    await expect(sanitizeFixture({ ...fixture, mode: 'rule-columns', boundary: 'identity-region' }))
+      .resolves.toMatchObject({ sha256: expect.stringMatching(/^[a-f0-9]{64}$/u) });
+  });
+
+  test('rejects an identity-region output without a reserved token in the validator', () => {
+    expect(() => validateRuleColumnOutput('<button type="button"><span>TEXT-001</span></button>\n', {
+      boundary: 'identity-region',
+    })).toThrow(expect.objectContaining({ code: 'identity-boundary-required' }));
+  });
+});
+
+describe('reserved self tokens', () => {
+  test('keeps self and self-alt distinct and marks an embedded self form', async () => {
+    const rows = tracerRows();
+    rows[0][2] = `<span aria-label="Assigned to ${SELF_FORM}">${SELF_ALT_FORM}</span>`;
+    rows[1][2] = SELF_FORM;
+    const { document, output } = await sanitizeRule(
+      ruleCapture(rows),
+      ruleDenylistWith({ selfAlt: SELF_ALT_FORM }),
+    );
+    expect(cellTexts(document, 2)).toEqual(['PERSON-SELF-ALT', 'PERSON-SELF', 'PERSON-SELF']);
+    expect(document.querySelector('td span')?.getAttribute('aria-label')).toBe('PERSON-SELF-EMBEDDED');
+    expect(output).not.toContain(SELF_ALT_FORM);
+    expect(output).not.toContain(SELF_FORM);
+    expect(RESERVED_SELF_TOKENS).toEqual(['PERSON-SELF', 'PERSON-SELF-ALT', 'PERSON-SELF-EMBEDDED']);
+  });
+
+  test('maps the self form in the identity region while self-alt stays separate', async () => {
+    const { output } = await sanitizeRuleBoundary(
+      identityCapture(`<span>${SELF_ALT_FORM}</span>`),
+      ruleDenylistWith({ selfAlt: SELF_ALT_FORM }),
+      'identity-region',
+    );
+    const button = parseDetached(output).querySelector('button');
+    expect(button.getAttribute('aria-label')).toBe('PERSON-SELF');
+    expect(button.querySelector('span').textContent).toBe('PERSON-SELF-ALT');
+  });
+
+  test.each([
+    ['a second self-alt line', ruleDenylistWith({ selfAlt: SELF_ALT_FORM }).concat(`self-alt: ${SELF_ALT_FORM} Two\n`), 'self-directive-invalid'],
+    ['an empty self-alt value', ruleDenylistWith().concat('self-alt:   \n'), 'self-directive-invalid'],
+    ['an empty self value', ruleDenylistWith({ self: undefined }).concat('self:\n'), 'self-directive-required'],
+    ['a repeated self line', ruleDenylistWith().concat(`self: ${SELF_FORM} Two\n`), 'self-directive-required'],
+  ])('rejects %s before parsing', async (_label, denylist, code) => {
+    const fixture = await createCase('<script>unsafe()</script>', denylist);
+    await expectRejected({ ...fixture, mode: 'rule-columns' }, code);
+  });
+});
+
+describe('denylist collisions', () => {
+  test.each([
+    ['self form Tab inside table', { self: 'Tab' }],
+    ['self form Bo inside tbody', { self: 'Bo' }],
+    ['plain row inside tables.row', { plain: [...denylistValues, 'row'] }],
+    ['plain label inside aria-label', { plain: [...denylistValues, 'label'] }],
+    ['plain Norm inside Normal', { plain: [...denylistValues, 'Norm'] }],
+    ['plain person inside PERSON', { plain: [...denylistValues, 'person'] }],
+    ['plain Pending', { plain: [...denylistValues, 'Pending'] }],
+    ['self-alt form elf inside PERSON-SELF', { selfAlt: 'elf' }],
+  ])('rejects %s before the capture is parsed', async (_label, parts) => {
+    const fixture = await createCase('<script>unsafe()</script>', ruleDenylistWith(parts));
+    await expectRejected({ ...fixture, mode: 'rule-columns' }, 'denylist-entry-collides');
+  });
+
+  test('accepts a two-letter self form that lies inside no collision word', async () => {
+    const rows = tracerRows();
+    rows[2][2] = 'Xu';
+    const { document } = await sanitizeRule(ruleCapture(rows), ruleDenylistWith({ self: 'Xu' }));
+    expect(cellTexts(document, 2)[2]).toBe('PERSON-SELF');
+  });
+
+  test('ruleVocabularyWords folds every token kind, reserved token and allowlisted value', () => {
+    const words = ruleContract.ruleVocabularyWords?.(DEFAULT_RULE_VOCABULARY);
+    expect(Array.isArray(words)).toBe(true);
+    for (const expected of [...RULE_TOKEN_KINDS, ...RESERVED_SELF_TOKENS,
+      ...Object.keys(vocabulary.headerKinds), ...vocabulary.statusValues, ...vocabulary.typeValues,
+      ...PRIORITY_LABELS]) {
+      expect(words).toContain(expected.toLocaleLowerCase('en-US'));
+    }
+  });
+
+  test('RULE_STRUCTURAL_WORDS covers the v1 fixtures and the tracer output', async () => {
+    const structural = ruleContract.RULE_STRUCTURAL_WORDS;
+    expect(Array.isArray(structural)).toBe(true);
+    expect(Object.isFrozen(structural)).toBe(true);
+    const { output } = await sanitizeRule(ruleCapture(), ruleDenylist());
+    const markups = [
+      ...await Promise.all(V1_FIXTURES.map((file) => readFile(join(repositoryRoot, 'test', 'fixtures', file), 'utf8'))),
+      output,
+    ];
+    for (const markup of markups) {
+      for (const name of structuralNames(markup)) {
+        expect(structural).toContain(name);
+      }
+    }
+  });
+});
+
+describe('boundary options and CLI forms', () => {
+  test('rejects a boundary without rule-columns mode and an unknown boundary', async () => {
+    const fixture = await createCase();
+    await expectRejected({ ...fixture, boundary: 'table' }, 'boundary-invalid');
+    await expectRejected({ ...fixture, mode: 'rule-columns', boundary: 'grid' }, 'boundary-invalid');
+  });
+
+  test('the 10-argument CLI admits --boundary table', async () => {
+    const fixture = await createCase();
+    const result = await execFileAsync(process.execPath, [
+      sanitizerCli, '--input', fixture.inputPath, '--output', fixture.outputPath,
+      '--denylist', fixture.denylistPath, '--mode', 'rule-columns', '--boundary', 'table',
+    ], { cwd: fixture.directory });
+    expect(result.stdout).toBe(`SANITIZE_FIXTURE_OK ${sha256(await readFile(fixture.outputPath))}\n`);
+  });
+
+  test.each([
+    ['--boundary without --mode', (f) => ['--input', f.inputPath, '--output', f.outputPath, '--denylist', f.denylistPath, '--boundary', 'table']],
+    ['an unknown boundary value', (f) => ['--input', f.inputPath, '--output', f.outputPath, '--denylist', f.denylistPath, '--mode', 'rule-columns', '--boundary', 'region']],
+    ['a duplicated --boundary', (f) => ['--input', f.inputPath, '--output', f.outputPath, '--mode', 'rule-columns', '--boundary', 'table', '--boundary', 'table']],
+  ])('the CLI rejects %s with the exact value-free line', async (_label, argumentsFor) => {
+    const fixture = await createCase();
+    await expect(execFileAsync(process.execPath, [sanitizerCli, ...argumentsFor(fixture)], {
+      cwd: fixture.directory,
+    })).rejects.toMatchObject({
+      code: 1,
+      stdout: '',
+      stderr: 'SANITIZE_FIXTURE_REJECTED cli-arguments-invalid\n',
+    });
+  });
+});
+
+async function sanitizeRuleBoundary(source, denylist, boundary) {
+  const fixture = await createCase(source, denylist);
+  await sanitizeFixture({ ...fixture, mode: 'rule-columns', boundary });
+  return { fixture, output: await readFile(fixture.outputPath, 'utf8') };
+}
