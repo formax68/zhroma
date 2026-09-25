@@ -1,17 +1,16 @@
 ---
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: MVP
-status: Awaiting next milestone
-stopped_at: v1.0 milestone archived
-last_updated: "2026-09-25T09:07:41.997Z"
-last_activity: 2026-09-25 — Milestone v1.0 completed and archived
+gsd_state_version: "1.0"
+milestone: v1.1
+milestone_name: Themes & Rules
+status: planning
+last_updated: "2026-09-25T10:24:26.078Z"
+last_activity: 2026-09-25
 progress:
-  total_phases: 5
-  completed_phases: 4
-  total_plans: 49
-  completed_plans: 46
-  percent: 80
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.
-**Current focus:** Planning the next milestone. v1.0 shipped as 0.1.0 with known evidence gaps (see Deferred Items)
+**Current focus:** Milestone v1.1 Themes & Rules (ships as extension 1.0.0) — defining requirements
 
 ## Current Position
 
-Phase: Milestone v1.0 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-09-25 — Milestone v1.0 completed and archived
+Status: Defining requirements
+Last activity: 2026-09-25 — Milestone v1.1 started
 
 ## Performance Metrics
 
@@ -177,6 +176,7 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 | Category | Item | Status | Deferred At | Milestone |
 |----------|------|--------|-------------|-----------|
+| acceptance | v1.0 remaining UAT (the Phase 03, Phase 04 and Phase 5 items below): on 2026-09-25 the user reported they had run it and that every check was passed or accepted. User-reported acceptance only; no per-check observation records were written, and the archived v1.0 files are unchanged | user-reported accepted | 2026-09-25 | v1.0 |
 | verification | Phase 03: 03-VERIFICATION.md — 28/34 truths, 9/20 live checks untested (live performance ×4, failure-cleanup, ticket/dashboard/admin isolation, document-restoration); LIVE-05 and FAIL-04 unpromoted | human_needed | 2026-09-25 | v1.0 |
 | verification | Phase 04: 04-VERIFICATION.md — 14/17 live checks passed; language-icon-copy and structure-copy waived (AR-04-01), english-regional-locale deferred; 3 judgment prohibitions flagged-unverified | human_needed | 2026-09-25 | v1.0 |
 | uat | Phase 04: 04-UAT.md — 0 pending scenarios | diagnosed | 2026-09-25 | v1.0 |

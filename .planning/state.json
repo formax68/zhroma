@@ -1,7 +1,7 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": null,
+  "milestone": "v1.1",
   "phases": [
     {
       "number": "1",
@@ -26,13 +26,13 @@
     {
       "number": "5",
       "name": "Published",
-      "status": "in_progress"
+      "status": "pending"
     }
   ],
   "next": {
-    "command": "/gsd:progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 05 of 5 · 40% · executing"
+    "command": "/gsd:discuss-phase",
+    "label": "Discuss the first phase",
+    "reason": "Project initialized — plan your first phase"
   },
-  "updated_at": "2026-09-11T13:21:13.538Z"
+  "updated_at": "2026-09-25T10:24:26.080Z"
 }
