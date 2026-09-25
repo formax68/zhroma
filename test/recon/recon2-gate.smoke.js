@@ -708,6 +708,32 @@ describe('Recon 2 block safety and placement', () => {
   });
 });
 
+describe('the registered Recon 2 block in SELECTORS.md', () => {
+  test('registers the handoff, the eight entries in order and the verdict before the Phase 1 assumptions', async () => {
+    const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+    const headings = [...markdown.matchAll(/^## Recon 2 (Session Handoff|Entry: (\S+)|Verdict)$/gm)];
+    assert.deepEqual(headings.map((match) => match[2] ?? match[1]), [
+      'Session Handoff', ...EXPECTED_RECON_TWO_IDS, 'Verdict',
+    ]);
+    const assumptions = markdown.indexOf('## Spec-less Planning Assumptions');
+    assert.ok(headings.every((match) => match.index < assumptions));
+    assert.match(markdown, /^- session-state: `[a-z-]+`$/m);
+    assert.match(markdown, /^- next-step: `\d`$/m);
+  });
+
+  test('the real ledger rejects with recon-two-status-unresolved while any Recon 2 status is pending', async () => {
+    const markdown = await readFile(REPOSITORY_LEDGER, 'utf8');
+    const block = markdown.slice(markdown.indexOf('## Recon 2 '), markdown.indexOf('## Spec-less Planning Assumptions'));
+    if (!/^- status: `pending`$/m.test(block)) return;
+    expectCode(() => reconGate.verifyRecon2Ledger(markdown, { admittedRecon2Scenarios: [] }),
+      'recon-two-status-unresolved');
+    const result = runGate(['recon2', REPOSITORY_LEDGER, join(REPOSITORY_ROOT, 'test', 'fixtures', 'manifest.json')]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, 'RECON_GATE_REJECTED recon-two-status-unresolved\n');
+  });
+});
+
 describe('Phase 1 non-regression', () => {
   test('the Phase 1 final gate is unchanged with a complete Recon 2 block in the real ledger', async () => {
     const markdown = insertBeforeAssumptions(await readFile(REPOSITORY_LEDGER, 'utf8'), recon2Block());

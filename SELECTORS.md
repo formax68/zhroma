@@ -273,6 +273,128 @@ keyboard injection was abandoned after that recovery. The reversible magenta
 style mutation was not repeated through that unsafe path; the exact computed
 paint chain above supplied textual evidence without retaining a visual capture.
 
+## Recon 2 Session Handoff
+
+- session-state: `awaiting-setup`
+- next-step: `0`
+- next-action-owner: `user`
+- capture-date: `pending`
+- shell: `current Agent Workspace`
+- plan-label: `unknown/not shared`
+- probe-path: `pending`
+- zhroma-switch-original: `pending`
+- appearance-original: `pending`
+- os-appearance-original: `pending`
+- restore: `pending`
+- recon-views-deleted: `pending`
+- private-inputs: `not-created`
+- safety: The user performs every click, menu opening, setting change, hover, checkbox selection, Tab press and view creation or deletion; Claude runs only the read-only probes in 06-RUN-SHEET.md plus temporary data-zhroma-probe markers, and nothing identifying is recorded (D-03, D-04).
+
+## Recon 2 Entry: dark-mode-signal
+
+- id: `dark-mode-signal`
+- question: Which document-level signal (an html or body attribute, a class token, or the computed color-scheme) or which surface luminance distinguishes Zendesk Light, Dark and Match system, with the OS set explicitly to light and to dark?
+- scope: `English path`
+- status: `pending`
+- probe: `pending`
+- evidence: pending
+- interpretation: pending
+- fallback: If Appearance is not offered, Phase 8 is blocked (D-24); if there is no document marker and no readable surface, Phase 8 falls back to light (DARK-05).
+- scenario: `appearance-matrix`
+
+## Recon 2 Entry: dark-mode-switch-mutation
+
+- id: `dark-mode-switch-mutation`
+- question: Does a mid-session switch (Light to Dark, Dark to Light, and an OS toggle under Match system) swap an attribute or class, change only the CSSOM, re-mount the table, reload the page, or cause no mutation?
+- scope: `English path`
+- status: `pending`
+- probe: `pending`
+- evidence: pending
+- interpretation: pending
+- fallback: Phase 8 re-evaluates the dark signal on load and on every observed html, body or stylesheet change; a switch that could not be observed leaves Phase 8 to re-read the signal on reload only.
+- scenario: `appearance-matrix`
+
+## Recon 2 Entry: dark-native-states
+
+- id: `dark-native-states`
+- question: In Zendesk Dark with Zhroma off, what are the computed normal, hovered and checkbox-selected row paints, the sticky-header and pane paints, and the focus indicator reached with Tab only?
+- scope: `English path`
+- status: `pending`
+- probe: `pending`
+- evidence: pending
+- interpretation: pending
+- fallback: If focus cannot be observed safely with Tab only, Phase 8 leaves the native focus indicator untouched and checks it in its own acceptance (D-18); unobserved hover or selection paint leaves Phase 8 on its translucent default.
+- scenario: `dark-rule-view`
+
+## Recon 2 Entry: dark-table-topology
+
+- id: `dark-table-topology`
+- question: Do the v1 Garden table, header, row and cell identifiers and the Document-only root chain still hold in Zendesk Dark?
+- scope: `English path`
+- status: `pending`
+- probe: `pending`
+- evidence: pending
+- interpretation: pending
+- fallback: If the Garden identifiers differ in dark mode, Phase 8 is blocked and the difference is reported, not worked around (D-19, D-24).
+- scenario: `dark-rule-view`
+
+## Recon 2 Entry: identity-location
+
+- id: `identity-location`
+- question: Where does the signed-in agent's name render (top-bar avatar alt, button aria-label or title, or only inside the opened profile menu), is it present at load or only later, and is it a full or a short form?
+- scope: `English path`
+- status: `pending`
+- probe: `pending`
+- evidence: pending
+- interpretation: pending
+- fallback: If no name renders anywhere, Phase 10 relies on a typed name (IDENT-03).
+- scenario: `light-rule-view`
+
+## Recon 2 Entry: identity-vs-assignee
+
+- id: `identity-vs-assignee`
+- question: Compared inside the page after NFC, whitespace collapse and trim, does the identity string equal the Assignee cell text on the agent's own ticket, and if not, which difference kind applies?
+- scope: `English path`
+- status: `pending`
+- probe: `pending`
+- evidence: pending
+- interpretation: pending
+- fallback: If the two forms are not comparable, Phase 10 relies on a typed name (IDENT-03); a recorded difference kind tells Phase 10 which normalisation to offer.
+- scenario: `light-rule-view`
+
+## Recon 2 Entry: referenced-cell-representation
+
+- id: `referenced-cell-representation`
+- question: How do Assignee, Requester, Group, Status, Type, Subject, Tags, a relative-time date column and a custom dropdown (and a checkbox field, if the tenant has one) render, including empty placeholders and hidden, truncated or aria-label-only text?
+- scope: `English path`
+- status: `pending`
+- probe: `pending`
+- evidence: pending
+- interpretation: pending
+- fallback: Phase 9 treats an unreadable or unrecorded cell shape as not matching; if the column picker does not offer Tags, Tags rules resolve no header, so RULE-07 keeps them inactive and RULE-F2 stays deferred (D-26).
+- scenario: `light-rule-view`
+
+## Recon 2 Entry: header-label-uniqueness
+
+- id: `header-label-uniqueness`
+- question: Do any two headers in the recon view share a label, does the tenant have two custom fields with the same title, and what exact text does each standard header render?
+- scope: `English path`
+- status: `pending`
+- probe: `pending`
+- evidence: pending
+- interpretation: pending
+- fallback: Phase 10 (EDIT-06) tells any duplicate label apart by column position and uses the exact standard labels recorded here; no admin change is made to create a duplicate (D-25).
+- scenario: `light-rule-view`
+
+## Recon 2 Verdict
+
+- recon2-verdict: `pending`
+- blocked-consumers: `pending`
+- fixture-light-table: `pending`
+- fixture-identity-region: `pending`
+- fixture-dark-table: `pending`
+- rationale: Pending the live session in Plan 03.
+
 ## Spec-less Planning Assumptions
 
 These planner-generated probes are not live DOM conclusions and do not waive a
