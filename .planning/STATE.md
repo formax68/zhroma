@@ -1,38 +1,34 @@
 ---
-gsd_state_version: "1.0"
-current_phase: 05
-current_phase_name: Published
-status: executing
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-09-11T13:21:24.394Z"
-last_activity: 2026-09-11
-last_activity_desc: Phase 05 execution started
-state_head: 79863ae30e08025e3489a8a27064da3674d0657a
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: MVP
+status: Awaiting next milestone
+stopped_at: v1.0 milestone archived
+last_updated: "2026-09-25T09:07:41.997Z"
+last_activity: 2026-09-25 — Milestone v1.0 completed and archived
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 4
   total_plans: 49
-  completed_plans: 45
-  percent: 40
+  completed_plans: 46
+  percent: 80
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-09)
+See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.
-**Current focus:** Phase 05 — Published
+**Current focus:** Planning the next milestone. v1.0 shipped as 0.1.0 with known evidence gaps (see Deferred Items)
 
 ## Current Position
 
-Phase: 05 (Published) — EXECUTING
-Plan: 4 of 7
-Status: Ready to execute
-Last activity: 2026-09-11 — Phase 05 execution started
-
-Milestone progress: 2/5 phases complete (40%). Phase 03 remains human_needed with eleven passes and nine skipped checks. Phase 04 remains human_needed with fourteen of seventeen live checks passed; waivers and deferral do not promote pending requirements.
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-09-25 — Milestone v1.0 completed and archived
 
 ## Performance Metrics
 
@@ -181,12 +177,16 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 | Category | Item | Status | Deferred At | Milestone |
 |----------|------|--------|-------------|-----------|
-| Phase 3 liveness | Opening Zendesk then clicking a view and Next/Previous pagination leave rows untinted; explicit coverage added alongside sorting/view switching | Pending Phase 3 | 2026-09-09 | v1 |
+| verification | Phase 03: 03-VERIFICATION.md — 28/34 truths, 9/20 live checks untested (live performance ×4, failure-cleanup, ticket/dashboard/admin isolation, document-restoration); LIVE-05 and FAIL-04 unpromoted | human_needed | 2026-09-25 | v1.0 |
+| verification | Phase 04: 04-VERIFICATION.md — 14/17 live checks passed; language-icon-copy and structure-copy waived (AR-04-01), english-regional-locale deferred; 3 judgment prohibitions flagged-unverified | human_needed | 2026-09-25 | v1.0 |
+| uat | Phase 04: 04-UAT.md — 0 pending scenarios | diagnosed | 2026-09-25 | v1.0 |
+| phase 5 | 05-04 to 05-07 finished outside GSD with no summaries; release smoke human_needed; popup screenshot not produced; consent-applicability question open; public install user-reported, not independently verified | shipped | 2026-09-25 | v1.0 |
+| Phase 3 liveness | Opening Zendesk then clicking a view and Next/Previous pagination leave rows untinted | Resolved — in-app-entry, pagination-next and pagination-previous passed live on current source | 2026-09-09 | v1 |
 
 ## Session Continuity
 
-Last session: 2026-09-11T13:21:24.288Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-09-25
+Stopped at: v1.0 milestone archived
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
@@ -302,3 +302,7 @@ After the previous non-decreasing review halt, the user was offered a revised re
 ## 2026-09-11 — Final preparation complete; actual human checkpoint
 
 04-20 completed after the source-confirmed human walkthrough and final reconciliation. Final default suite: 65 smoke tests and 994 Vitest tests pass. Acceptance validator: 94 tests pass and computes human_needed. Complete mutation gate: 39/39 killed. Seven actual synthetic Chrome workloads passed, with one reviewed runtime identity. Independent validator review converged 4 to 2 to 0. Current-source live acceptance has 14 passes and 3 pending checks: language-icon-copy and structure-copy under AR-04-01, plus english-regional-locale explicitly deferred by the user as non-blocking. ACK-04-01 is acknowledged. No requirement completion or Phase 3 acceptance is inferred; Phase 4 remains human_needed rather than passed.
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
