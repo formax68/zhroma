@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 
 import { Window } from 'happy-dom';
 import { afterEach, describe, expect, test, vi } from 'vitest';
+import { symlink } from 'node:fs/promises';
 
 import { sanitizeFixture, sha256 } from '../../scripts/sanitize-fixture.js';
 import { validateSanitizedOutput, PRIORITY_LABELS } from '../../scripts/sanitized-output-contract.js';
@@ -33,6 +34,7 @@ const LABELS = {
   group: labelFor('GROUP'),
   status: labelFor('STATUS'),
   subject: labelFor('SUBJECT'),
+  date: labelFor('DATE'),
 };
 const [STANDARD_STATUS, SECOND_STANDARD_STATUS] = vocabulary.statusValues;
 
@@ -560,3 +562,204 @@ async function sanitizeRuleBoundary(source, denylist, boundary) {
   await sanitizeFixture({ ...fixture, mode: 'rule-columns', boundary });
   return { fixture, output: await readFile(fixture.outputPath, 'utf8') };
 }
+
+const SYNTHETIC = Object.freeze({ dateTime: '2000-01-01T00:00:00Z', date: '2000-01-01' });
+const PROBES = Object.freeze(['visually-hidden', 'display-none', 'text-truncated']);
+
+function tableCapture(headers, rows) {
+  return `<div><table data-garden-id="tables.table" data-test-id="generic-table"><thead data-garden-id="tables.head"><tr data-garden-id="tables.header_row">${headers.map(headerCell).join('')}</tr></thead><tbody data-garden-id="tables.body">${rows.map(ticketRow).join('')}</tbody></table></div>`;
+}
+
+function dateCapture(datetime) {
+  return tableCapture(['', LABELS.priority, LABELS.date], [
+    ['', 'High', `<time datetime="${datetime}">Yesterday at 10:03</time>`],
+  ]);
+}
+
+function validRuleOutput() {
+  return `<div><table data-garden-id="tables.table"><thead><tr data-garden-id="tables.header_row"><th>${LABELS.priority}</th><th>${LABELS.person}</th><th>${LABELS.group}</th><th>${LABELS.status}</th><th>${LABELS.date}</th></tr></thead><tbody><tr data-garden-id="tables.row"><td>Urgent</td><td><img alt="PERSON-001">PERSON-001</td><td>GROUP-001</td><td><span title="${STANDARD_STATUS}">${STANDARD_STATUS}</span></td><td><time datetime="${SYNTHETIC.dateTime}">DATE-001</time></td></tr><tr data-garden-id="tables.row"><td>Low</td><td>PERSON-SELF</td><td>GROUP-002</td><td>STATUS-001</td><td><time datetime="${SYNTHETIC.date}">DATE-002</time></td></tr></tbody></table></div>\n`;
+}
+
+describe('kept title, alt and datetime (D-13)', () => {
+  test('keeps title and alt with the owning cell token and a standard Status title verbatim', async () => {
+    const rows = tracerRows();
+    rows[0][2] = `<img alt="${PRIVATE_VALUES.person}" data-test-id="avatar-image"><span>${PRIVATE_VALUES.person}</span>`;
+    rows[0][4] = `<span title="${STANDARD_STATUS}">${STANDARD_STATUS}</span>`;
+    rows[0][5] = `<span title="${PRIVATE_VALUES.subjects[0]}">${PRIVATE_VALUES.subjects[0]}</span>`;
+    const { document, output } = await sanitizeRule(ruleCapture(rows), ruleDenylist());
+    const first = document.querySelector('[data-garden-id="tables.row"]');
+    expect(first.children[2].querySelector('img')?.getAttribute('alt')).toBe('PERSON-001');
+    expect(first.children[2].textContent).toBe('PERSON-001');
+    expect(first.children[4].querySelector('span')?.getAttribute('title')).toBe(STANDARD_STATUS);
+    expect(first.children[5].querySelector('span')?.getAttribute('title')).toBe('SUBJECT-001');
+    expect(first.children[5].textContent).toBe('SUBJECT-001');
+    expect(validateRuleColumnOutput(output)).toMatchObject({ ticketRowCount: 3 });
+  });
+
+  test('keeps an identity-region avatar alt as PERSON-SELF', async () => {
+    const { output } = await sanitizeRuleBoundary(
+      identityCapture().replace('<img data-test-id="avatar-image">', `<img alt="${SELF_FORM}" data-test-id="avatar-image">`),
+      ruleDenylist(),
+      'identity-region',
+    );
+    expect(parseDetached(output).querySelector('img')?.getAttribute('alt')).toBe('PERSON-SELF');
+  });
+
+  test.each([
+    ['2026-09-25T10:03:00Z', SYNTHETIC.dateTime],
+    ['2026-09-25T10:03:00.000+02:00', SYNTHETIC.dateTime],
+    ['2026-09-25T10:03', SYNTHETIC.dateTime],
+    ['2026-09-25', SYNTHETIC.date],
+  ])('replaces datetime %s with its synthetic class literal', async (datetime, expected) => {
+    const { document, output } = await sanitizeRule(dateCapture(datetime), ruleDenylist());
+    const time = document.querySelector('time');
+    expect(time?.getAttribute('datetime')).toBe(expected);
+    expect(time?.textContent).toBe('DATE-001');
+    expect(ruleContract.SYNTHETIC_DATETIME).toEqual(SYNTHETIC);
+
+    const repeat = await createCase(output, PARITY_DENYLIST);
+    await sanitizeFixture({ ...repeat, mode: 'rule-columns' });
+    expect(await readFile(repeat.outputPath, 'utf8')).toBe(output);
+  });
+
+  test.each(['yesterday', '25/09/2026'])('rejects an unrecognised datetime %s', async (datetime) => {
+    const fixture = await createCase(dateCapture(datetime));
+    await expectRejected({ ...fixture, mode: 'rule-columns' }, 'datetime-format-unrecognised');
+  });
+});
+
+describe('identifier grammar, probe markers and removed attributes', () => {
+  test.each([
+    ['data-test-id', 'group-chip-42'],
+    ['data-garden-id', 'tags.tag7'],
+  ])('rejects a digit-bearing %s value', async (name, value) => {
+    const rows = tracerRows();
+    rows[0][3] = `<span ${name}="${value}">${PRIVATE_VALUES.group}</span>`;
+    const fixture = await createCase(ruleCapture(rows));
+    await expectRejected({ ...fixture, mode: 'rule-columns' }, 'identifier-value-invalid');
+  });
+
+  test('keeps digit-free identifiers such as tables.header_cell and tag-chip', async () => {
+    const rows = tracerRows();
+    rows[0][3] = `<span data-test-id="tag-chip">${PRIVATE_VALUES.group}</span>`;
+    const { document } = await sanitizeRule(ruleCapture(rows), ruleDenylist());
+    expect(document.querySelector('[data-test-id="tag-chip"]')?.textContent).toBe('GROUP-001');
+    expect(document.querySelectorAll('[data-garden-id="tables.header_cell"]')).toHaveLength(HEADERS.length);
+  });
+
+  test('keeps the three probe markers and rejects any other value', async () => {
+    expect(ruleContract.PROBE_MARKER_VALUES).toEqual(PROBES);
+    const rows = tracerRows();
+    rows[0][5] = PROBES.map((probe) => `<span data-zhroma-probe="${probe}">${PRIVATE_VALUES.subjects[0]}</span>`).join('');
+    const { document } = await sanitizeRule(ruleCapture(rows), ruleDenylist());
+    expect([...document.querySelectorAll('[data-zhroma-probe]')].map((node) => node.getAttribute('data-zhroma-probe')))
+      .toEqual(PROBES);
+
+    rows[0][5] = `<span data-zhroma-probe="capture">${PRIVATE_VALUES.subjects[0]}</span>`;
+    const fixture = await createCase(ruleCapture(rows));
+    await expectRejected({ ...fixture, mode: 'rule-columns' }, 'probe-marker-invalid');
+  });
+
+  test('removes class, style, id, name, value, placeholder and SVG geometry; unknown attributes reject', async () => {
+    const rows = tracerRows();
+    rows[0][5] = `<span id="subject-9" class="truncate_hash" style="color: red" name="subject" value="v" placeholder="p">${PRIVATE_VALUES.subjects[0]}</span><svg viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M0 0L16 16" fill="currentColor" stroke="none"></path></svg>`;
+    const { document } = await sanitizeRule(ruleCapture(rows), ruleDenylist());
+    const span = document.querySelector('[data-garden-id="tables.row"]').children[5].querySelector('span');
+    for (const name of ['id', 'class', 'style', 'name', 'value', 'placeholder']) {
+      expect(span.hasAttribute(name)).toBe(false);
+    }
+    expect(document.querySelector('svg')?.attributes).toHaveLength(0);
+    expect(document.querySelector('path')?.attributes).toHaveLength(0);
+
+    rows[0][5] = `<span data-ticket-id="x">${PRIVATE_VALUES.subjects[0]}</span>`;
+    const fixture = await createCase(ruleCapture(rows));
+    await expectRejected({ ...fixture, mode: 'rule-columns' }, 'unsafe-attribute');
+  });
+
+  test('probe markers and synthetic dates are structural words, so colliding entries reject early', async () => {
+    for (const word of [...PROBES, SYNTHETIC.dateTime, SYNTHETIC.date]) {
+      expect(ruleContract.RULE_STRUCTURAL_WORDS).toContain(word.toLocaleLowerCase('en-US'));
+    }
+    for (const entry of ['hidden', '2000', 'truncated', 'isually']) {
+      const fixture = await createCase('<script>unsafe()</script>', ruleDenylistWith({ plain: [...denylistValues, entry] }));
+      await expectRejected({ ...fixture, mode: 'rule-columns' }, 'denylist-entry-collides');
+    }
+  });
+});
+
+describe('rule-columns output grammar', () => {
+  test('accepts the canonical valid output', () => {
+    expect(validateRuleColumnOutput(validRuleOutput())).toMatchObject({
+      boundary: 'table',
+      ticketRowCount: 2,
+      tokenKinds: expect.objectContaining({ PERSON: 1, GROUP: 2, STATUS: 1, DATE: 2 }),
+    });
+  });
+
+  test.each([
+    ['a Status value inside a Group cell', (s) => s.replace('>GROUP-001<', `>${STANDARD_STATUS}<`), 'text-stand-in-required'],
+    ['a residual raw word', (s) => s.replace('>GROUP-002<', '>Private Group<'), 'text-stand-in-required'],
+    ['a kept title holding a raw value', (s) => s.replace('alt="PERSON-001"', `alt="${PRIVATE_VALUES.person}"`), 'text-stand-in-required'],
+    ['a non-synthetic datetime', (s) => s.replace(`datetime="${SYNTHETIC.date}"`, 'datetime="2026-09-25"'), 'datetime-format-unrecognised'],
+    ['a digit-bearing identifier', (s) => s.replace('<img ', '<img data-test-id="avatar-4521" '), 'identifier-value-invalid'],
+    ['an invalid probe marker', (s) => s.replace('<img ', '<img data-zhroma-probe="capture" '), 'probe-marker-invalid'],
+    ['a GROUP token inside a PERSON column', (s) => s.replace('>PERSON-SELF<', '>GROUP-001<'), 'token-kind-mismatch'],
+    ['a reserved self token in a header cell', (s) => s.replace('<th>', '<th aria-label="PERSON-SELF">'), 'token-kind-mismatch'],
+    ['a numbering gap', (s) => s.replaceAll('PERSON-001', 'PERSON-002'), 'token-numbering-invalid'],
+    ['an HTML comment', (s) => s.replace('<table', '<!-- private --><table'), 'comment-must-be-absent'],
+    ['a removed attribute', (s) => s.replace('<img ', '<img class="avatar_hash" '), 'unsafe-attribute'],
+  ])('rejects %s with a stable code', (_label, mutate, code) => {
+    expect(() => validateRuleColumnOutput(mutate(validRuleOutput()))).toThrow(expect.objectContaining({ code }));
+  });
+});
+
+describe('v1 isolation and shared custody in rule-columns mode', () => {
+  test('importing the rule module leaves every exported v1 Set with its original members', async () => {
+    vi.resetModules();
+    const v1 = await import('../../scripts/sanitized-output-contract.js');
+    const snapshot = Object.fromEntries(Object.entries(v1)
+      .filter(([, value]) => value instanceof Set)
+      .map(([name, value]) => [name, [...value]]));
+    expect(Object.keys(snapshot).length).toBeGreaterThanOrEqual(5);
+    await import('../../scripts/rule-column-contract.js');
+    await import('../../scripts/sanitize-fixture.js');
+    for (const [name, members] of Object.entries(snapshot)) {
+      expect([...v1[name]]).toEqual(members);
+    }
+    expect(v1.REMOVABLE_ATTRIBUTES.has('title')).toBe(true);
+    expect(v1.REMOVABLE_ATTRIBUTES.has('alt')).toBe(true);
+    expect(v1.REMOVABLE_ATTRIBUTES.has('datetime')).toBe(true);
+    expect(v1.TEXTUAL_ARIA_ATTRIBUTES.has('title')).toBe(false);
+  });
+
+  test('rejects a denylist inside the worktree, directly or through a symlink', async () => {
+    const fixture = await createCase();
+    await expectRejected({ ...fixture, mode: 'rule-columns', denylistPath: join(repositoryRoot, 'package.json') }, 'denylist-inside-worktree');
+    const linkPath = join(fixture.directory, 'denylist-link.txt');
+    await symlink(join(repositoryRoot, 'package.json'), linkPath);
+    await expectRejected({ ...fixture, mode: 'rule-columns', denylistPath: linkPath }, 'denylist-inside-worktree');
+  });
+
+  test('rejects a denylist aliasing the capture', async () => {
+    const fixture = await createCase();
+    await expectRejected({ ...fixture, mode: 'rule-columns', denylistPath: fixture.inputPath }, 'denylist-inside-worktree');
+  });
+
+  test('rejects input from inside the worktree', async () => {
+    const fixture = await createCase();
+    await expectRejected({
+      ...fixture,
+      mode: 'rule-columns',
+      inputPath: join(repositoryRoot, 'scripts', 'sensitive-patterns.js'),
+    }, 'input-inside-worktree');
+  });
+
+  test('never overwrites an existing output', async () => {
+    const fixture = await createCase();
+    await writeFile(fixture.outputPath, 'existing-safe-output', 'utf8');
+    await expect(sanitizeFixture({ ...fixture, mode: 'rule-columns' })).rejects.toMatchObject({
+      code: 'output-write-failed',
+    });
+    expect(await readFile(fixture.outputPath, 'utf8')).toBe('existing-safe-output');
+  });
+});
