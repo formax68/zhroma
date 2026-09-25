@@ -15,6 +15,12 @@ import {
   SensitiveFixtureError,
 } from './sensitive-patterns.js';
 
+import {
+  parseRuleColumnCapture,
+  tokeniseRuleColumns,
+  validateRuleColumnOutput,
+} from './rule-column-contract.js';
+
 const MAX_INPUT_BYTES = 5 * 1024 * 1024;
 const MODULE_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 
@@ -121,6 +127,82 @@ function parseDenylist(bytes) {
   return values;
 }
 
+const RULE_COLUMNS_MODE = 'rule-columns';
+const SELF_DIRECTIVE = 'self:';
+
+/** Resolve the opt-in rule-columns options; `null` keeps the unchanged v1 default path. */
+function ruleModeOptions(options) {
+  if (options.mode === undefined) {
+    return null;
+  }
+  if (options.mode !== RULE_COLUMNS_MODE) {
+    reject('mode-invalid');
+  }
+  return { boundary: 'table' };
+}
+
+/**
+ * Rule-columns denylist: plain lines keep v1 semantics; exactly one `self:` line names the
+ * agent's own display-name form. The bare form joins the scan list, because the scan is a
+ * case-folded substring test and a literal prefix would never match content.
+ */
+function parseRuleDenylist(bytes) {
+  const lines = decodeUtf8(bytes, 'denylist-required')
+    .split(/\r?\n/u)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (lines.length === 0) {
+    reject('denylist-required');
+  }
+
+  const scanList = [];
+  let self = null;
+  for (const line of lines) {
+    if (line.startsWith(SELF_DIRECTIVE)) {
+      const value = line.slice(SELF_DIRECTIVE.length).trim();
+      if (self !== null || value.length === 0) {
+        reject('self-directive-required');
+      }
+      self = value;
+      scanList.push(value);
+      continue;
+    }
+    scanList.push(line);
+  }
+  if (self === null) {
+    reject('self-directive-required');
+  }
+  return { scanList, selfForms: { self } };
+}
+
+function ruleColumnMarkup(source, ruleDenylist, ruleOptions) {
+  let capture;
+  try {
+    assertSafeToParse(source);
+    capture = parseRuleColumnCapture(source, { boundary: ruleOptions.boundary });
+    tokeniseRuleColumns(capture, { selfForms: ruleDenylist.selfForms });
+  } catch (error) {
+    if (error instanceof SanitizedOutputError) reject(error.code);
+    throw error;
+  }
+  const output = `${capture.root.outerHTML}\n`;
+
+  try {
+    scanSensitiveContent(output, { denylist: ruleDenylist.scanList });
+  } catch (error) {
+    if (error instanceof SensitiveFixtureError) {
+      reject('sensitive-residual');
+    }
+    throw error;
+  }
+  try {
+    validateRuleColumnOutput(output, { boundary: ruleOptions.boundary });
+  } catch {
+    reject('output-contract-violated');
+  }
+  return output;
+}
+
 
 function sanitizeAttributes(root) {
   let ariaCounter = 0;
@@ -225,6 +307,7 @@ export async function sanitizeFixture(options) {
   if (!options || typeof options !== 'object' || Array.isArray(options)) {
     reject('options-required');
   }
+  const ruleOptions = ruleModeOptions(options);
 
   const inputPath = requiredPath(options.inputPath, 'input-required');
   const outputPath = requiredPath(options.outputPath, 'output-required');
@@ -253,7 +336,8 @@ export async function sanitizeFixture(options) {
     code: 'denylist-required',
   });
   const denylistBytes = await readRequiredBytes(denylistRealPath, 'denylist-required');
-  const denylist = parseDenylist(denylistBytes);
+  const ruleDenylist = ruleOptions ? parseRuleDenylist(denylistBytes) : null;
+  const denylist = ruleDenylist ? ruleDenylist.scanList : parseDenylist(denylistBytes);
   await assertFileSize(inputRealPath, {
     minimum: 1,
     maximum: MAX_INPUT_BYTES,
@@ -262,16 +346,21 @@ export async function sanitizeFixture(options) {
   const inputBytes = await readRequiredBytes(inputRealPath, 'input-readable-required');
 
   const source = decodeUtf8(inputBytes, 'input-utf8-required');
-  let capture;
-  try {
-    assertSafeToParse(source);
-    capture = parseBoundedCapture(source);
-  } catch (error) {
-    if (error instanceof SanitizedOutputError) reject(error.code);
-    throw error;
+  let output;
+  if (ruleOptions) {
+    output = ruleColumnMarkup(source, ruleDenylist, ruleOptions);
+  } else {
+    let capture;
+    try {
+      assertSafeToParse(source);
+      capture = parseBoundedCapture(source);
+    } catch (error) {
+      if (error instanceof SanitizedOutputError) reject(error.code);
+      throw error;
+    }
+    const { root, priorityCells, priorityHeaderCell } = capture;
+    output = finalMarkup(root, priorityCells, priorityHeaderCell, denylist);
   }
-  const { root, priorityCells, priorityHeaderCell } = capture;
-  const output = finalMarkup(root, priorityCells, priorityHeaderCell, denylist);
   const outputBytes = Buffer.from(output, 'utf8');
 
   try {
@@ -286,7 +375,42 @@ export async function sanitizeFixture(options) {
   };
 }
 
+/** The opt-in rule-columns CLI form: the three v1 flags plus `--mode rule-columns`. */
+function parseRuleCliArguments(argumentsList) {
+  const allowedFlags = ['--input', '--output', '--denylist', '--mode'];
+  if (argumentsList.length !== allowedFlags.length * 2) {
+    reject('cli-arguments-invalid');
+  }
+
+  const values = {};
+  for (let index = 0; index < argumentsList.length; index += 2) {
+    const flag = argumentsList[index];
+    const value = argumentsList[index + 1];
+    if (!allowedFlags.includes(flag) || values[flag]) {
+      reject('cli-arguments-invalid');
+    }
+    if (typeof value !== 'string' || value.length === 0 || value.startsWith('--')) {
+      reject('cli-arguments-invalid');
+    }
+    values[flag] = value;
+  }
+
+  if (allowedFlags.some((flag) => !values[flag]) || values['--mode'] !== RULE_COLUMNS_MODE) {
+    reject('cli-arguments-invalid');
+  }
+
+  return {
+    inputPath: values['--input'],
+    outputPath: values['--output'],
+    denylistPath: values['--denylist'],
+    mode: RULE_COLUMNS_MODE,
+  };
+}
+
 function parseCliArguments(argumentsList) {
+  if (argumentsList.length === 8) {
+    return parseRuleCliArguments(argumentsList);
+  }
   if (argumentsList.length !== 6) {
     reject('cli-arguments-invalid');
   }

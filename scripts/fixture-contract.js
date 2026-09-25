@@ -6,6 +6,7 @@ import { Window } from 'happy-dom';
 
 import { scanSensitiveContent } from './sensitive-patterns.js';
 import { PRIORITY_HEADER_LABEL, resolveBoundedDocument, validateSanitizedOutput, SanitizedOutputError } from './sanitized-output-contract.js';
+import { validateRuleColumnOutput } from './rule-column-contract.js';
 
 const ADMISSION_DENYLIST = Object.freeze([
   '__private_capture_values_were_removed_before_admission__',
@@ -449,6 +450,117 @@ export async function validateFixtureManifest(manifestPath, options = {}) {
 
   return {
     fixtureCount: manifest.fixtures.length,
+    scenarios: [...seenScenarios],
+  };
+}
+
+export const RECON2_SCENARIOS = Object.freeze([
+  'rules-light-table',
+  'rules-identity-region',
+  'rules-dark-table',
+]);
+
+const RECON2_SCENARIO_SHAPES = Object.freeze({
+  'rules-light-table': Object.freeze({ appearances: ['light'], boundaryKind: 'table' }),
+  'rules-identity-region': Object.freeze({ appearances: ['light', 'dark'], boundaryKind: 'identity-region' }),
+  'rules-dark-table': Object.freeze({ appearances: ['dark'], boundaryKind: 'table' }),
+});
+
+/**
+ * Validate the top-level `recon2Fixtures` array: rule-columns fixtures live beside the v1
+ * corpus, never inside `fixtures`, so `validateFixtureManifest` is untouched by them.
+ */
+export async function validateRecon2Fixtures(manifestPath) {
+  const absoluteManifestPath = resolve(manifestPath);
+  let manifest;
+  try {
+    manifest = JSON.parse(await readFile(absoluteManifestPath, 'utf8'));
+  } catch {
+    throw contractError('manifest-readable-json-required');
+  }
+
+  if (manifest === null || typeof manifest !== 'object' || Array.isArray(manifest)) {
+    throw contractError('manifest-object-required');
+  }
+  if (!Object.hasOwn(manifest, 'recon2Fixtures')) {
+    return { recon2FixtureCount: 0, scenarios: [] };
+  }
+  if (!Array.isArray(manifest.recon2Fixtures)) {
+    throw contractError('rule-fixtures-array-required');
+  }
+
+  const manifestDirectory = dirname(absoluteManifestPath);
+  const seenCanonicalFiles = new Set();
+  const seenScenarios = new Set();
+  const canonicalEntries = [];
+
+  for (const entry of manifest.recon2Fixtures) {
+    requireNonEmptyString(entry?.scenario, 'scenario-required');
+    requireNonEmptyString(entry?.captureDate, 'capture-date-required');
+    requireNonEmptyString(entry?.workspace?.shell, 'workspace-shell-required');
+    requireNonEmptyString(entry?.workspace?.plan, 'workspace-plan-required');
+    requireNonEmptyString(entry?.domBoundary, 'dom-boundary-required');
+    requireNonEmptyString(entry?.sanitizationMethod, 'sanitization-method-required');
+    requireNonEmptyString(entry?.sha256, 'sha256-required');
+
+    const shape = RECON2_SCENARIO_SHAPES[entry.scenario];
+    if (!RECON2_SCENARIOS.includes(entry.scenario) || !shape) {
+      throw contractError('rule-fixture-scenario-unsupported');
+    }
+    const parsedCaptureDate = new Date(`${entry.captureDate}T00:00:00.000Z`);
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/u.test(entry.captureDate)
+      || Number.isNaN(parsedCaptureDate.valueOf())
+      || parsedCaptureDate.toISOString().slice(0, 10) !== entry.captureDate
+    ) {
+      throw contractError('capture-date-invalid');
+    }
+    if (!/^[a-f0-9]{64}$/u.test(entry.sha256)) {
+      throw contractError('sha256-invalid');
+    }
+    if (
+      entry.sanitizerMode !== 'rule-columns'
+      || !shape.appearances.includes(entry.appearance)
+      || entry.boundaryKind !== shape.boundaryKind
+    ) {
+      throw contractError('rule-fixture-field-invalid');
+    }
+    if (seenScenarios.has(entry.scenario)) {
+      throw contractError('fixture-entry-duplicate');
+    }
+    seenScenarios.add(entry.scenario);
+
+    const fixturePath = await safeRelativeFixturePath(manifestDirectory, entry.file);
+    if (seenCanonicalFiles.has(fixturePath)) throw contractError('fixture-canonical-duplicate');
+    seenCanonicalFiles.add(fixturePath);
+    canonicalEntries.push({ entry, fixturePath });
+  }
+
+  for (const { entry, fixturePath } of canonicalEntries) {
+    let bytes;
+    try {
+      bytes = await readFile(fixturePath);
+    } catch {
+      throw contractError('fixture-readable-required');
+    }
+
+    const actualHash = createHash('sha256').update(bytes).digest('hex');
+    if (actualHash !== entry.sha256) {
+      throw contractError('fixture-checksum-mismatch');
+    }
+
+    const markup = bytes.toString('utf8');
+    scanSensitiveContent(markup, { denylist: ADMISSION_DENYLIST });
+    try {
+      validateRuleColumnOutput(markup, { boundary: entry.boundaryKind });
+    } catch (error) {
+      if (error instanceof SanitizedOutputError) throw contractError('admitted-bytes-contract-violated');
+      throw error;
+    }
+  }
+
+  return {
+    recon2FixtureCount: manifest.recon2Fixtures.length,
     scenarios: [...seenScenarios],
   };
 }
