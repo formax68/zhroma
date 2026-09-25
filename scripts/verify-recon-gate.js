@@ -6,7 +6,8 @@ import { pathToFileURL } from 'node:url';
 
 import { assessInteractionEvidence, InteractionEvidenceError } from './interaction-evidence.js';
 
-import { validateFixtureManifest } from './fixture-contract.js';
+import { validateFixtureManifest, validateRecon2Fixtures } from './fixture-contract.js';
+import { scanSensitiveContent, SensitiveFixtureError } from './sensitive-patterns.js';
 
 const REPOSITORY_ROOT = realpathSync(fileURLToPath(new URL('..', import.meta.url)));
 
@@ -14,6 +15,21 @@ const ENTRY_HEADING = /^## Ledger Entry:\s*(.+?)\s*$/gm;
 const QUESTION_HEADING = /^## Recon Question:\s*(.+?)\s*$/gm;
 const VERDICT_HEADING = /^## Final Verdict\s*$/gm;
 const FIELD_LINE = /^- ([a-z][a-z0-9-]*):\s*(.*)$/gm;
+
+// Recon 2 (Phase 6) has its own headings so the Phase 1 parsers never see it.
+const RECON2_ENTRY_HEADING = /^## Recon 2 Entry:\s*(.+?)\s*$/gm;
+const RECON2_VERDICT_HEADING = /^## Recon 2 Verdict\s*$/gm;
+const RECON2_TERMINAL_STATUSES = new Set(['verified', 'disproved', 'not observed']);
+export const RECON2_REQUIRED_IDS = Object.freeze([
+  'dark-mode-signal',
+  'dark-mode-switch-mutation',
+  'dark-native-states',
+  'dark-table-topology',
+  'identity-location',
+  'identity-vs-assignee',
+  'referenced-cell-representation',
+  'header-label-uniqueness',
+]);
 
 const REQUIRED_ENTRY_FIELDS = Object.freeze([
   'id',
@@ -685,6 +701,314 @@ export function verifyReconLedger(markdown, { mode, admittedScenarios } = {}) {
   return { entryCount: entries.length, verdict };
 }
 
+const RECON2_BLOCK_HEADING = /^## Recon 2 /gm;
+const RECON2_BLOCK_ANCHORS = Object.freeze([
+  /^## Spec-less Planning Assumptions\s*$/m,
+  /^## Final Verdict\s*$/m,
+]);
+// The scan needs a non-empty denylist; this synthetic token can never occur in ledger text.
+const RECON2_SCAN_DENYLIST = Object.freeze(['__recon_two_ledger_synthetic_denylist__']);
+const RECON2_CONSUMER_FALLBACK = /\bPhase (?:8|9|10)\b/;
+const RECON2_PHASE_EIGHT = /\bPhase 8\b/;
+const RECON2_PHASE_NINE = /\bPhase 9\b/;
+const RECON2_PHASE_TEN = /\bPhase 10\b/;
+const RECON2_REJECTION_CODE = /^[a-z]+(?:-[a-z]+)*$/u;
+const RECON2_APPEARANCE_CELLS = Object.freeze([
+  'cell-light-os-light',
+  'cell-light-os-dark',
+  'cell-dark-os-light',
+  'cell-dark-os-dark',
+  'cell-match-os-light',
+  'cell-match-os-dark',
+]);
+const RECON2_SWITCHES = Object.freeze([
+  'switch-light-to-dark',
+  'switch-dark-to-light',
+  'switch-os-under-match',
+]);
+const RECON2_SWITCH_EFFECTS = Object.freeze([
+  'attribute-or-class-swap',
+  'cssom-only',
+  'remount',
+  'reload',
+  'no-mutation',
+  'not-observed',
+]);
+const RECON2_CELL_FIELDS = Object.freeze([
+  'assignee-cell',
+  'requester-cell',
+  'group-cell',
+  'status-cell',
+  'type-cell',
+  'subject-cell',
+  'date-cell',
+  'custom-field-cell',
+  'empty-placeholders',
+]);
+const RECON2_FIXTURE_OUTCOMES = Object.freeze(['admitted', 'rejected', 'not-required']);
+const RECON2_FIXTURE_FIELDS = Object.freeze([
+  Object.freeze({ field: 'fixture-light-table', scenario: 'rules-light-table', consumer: RECON2_PHASE_NINE }),
+  Object.freeze({ field: 'fixture-identity-region', scenario: 'rules-identity-region', consumer: RECON2_PHASE_TEN }),
+  Object.freeze({ field: 'fixture-dark-table', scenario: 'rules-dark-table', consumer: RECON2_PHASE_EIGHT }),
+]);
+
+function recon2Reject(code, options) {
+  throw new ReconGateError(code, options);
+}
+
+function recon2Enum(fields, name, allowed) {
+  const value = fields.get(name);
+  if (!allowed.includes(value)) recon2Reject('recon-two-field-not-structured');
+  return value;
+}
+
+function recon2Text(fields, name) {
+  const value = fields.get(name);
+  if (!value || value === 'pending') recon2Reject('recon-two-field-not-structured');
+  return value;
+}
+
+function recon2Consistent(condition) {
+  if (!condition) recon2Reject('recon-two-fields-inconsistent');
+}
+
+function recon2Names(entry, pattern) {
+  if (!pattern.test(entry.fields.get('fallback'))) recon2Reject('recon-two-fallback-missing');
+}
+
+function recon2ConsumerFallback(entry) {
+  if (entry.status === 'not observed') recon2Names(entry, RECON2_CONSUMER_FALLBACK);
+}
+
+/**
+ * Return the contiguous Recon 2 block (first `## Recon 2 ` heading up to the first later
+ * `## ` heading that is not a Recon 2 heading), or null when the ledger has none. Every
+ * Recon 2 heading must sit inside that block, before the Phase 1 assumptions and verdict.
+ */
+function recon2BlockText(markdown) {
+  const headings = [...markdown.matchAll(RECON2_BLOCK_HEADING)];
+  if (headings.length === 0) return null;
+  const first = headings[0].index;
+  const last = headings.at(-1).index;
+  for (const anchor of RECON2_BLOCK_ANCHORS) {
+    const offset = markdown.search(anchor);
+    if (offset !== -1 && last > offset) recon2Reject('recon-two-block-misplaced');
+  }
+  const headingEnd = markdown.indexOf('\n', first);
+  const rest = headingEnd === -1 ? '' : markdown.slice(headingEnd);
+  const next = rest.search(/^## (?!Recon 2 )/m);
+  const end = next === -1 ? markdown.length : headingEnd + next;
+  if (last >= end) recon2Reject('recon-two-block-misplaced');
+  return markdown.slice(first, end);
+}
+
+function parseRecon2Entries(markdown) {
+  const sections = collectSections(markdown, RECON2_ENTRY_HEADING);
+  if (sections.length === 0) recon2Reject('recon-two-entries-required');
+
+  const byId = new Map();
+  for (const section of sections) {
+    const fields = parseFields(section.body);
+    for (const field of REQUIRED_ENTRY_FIELDS) {
+      if (!fields.get(field)) throw new ReconGateError('entry-field-missing');
+    }
+    const id = fields.get('id');
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) throw new ReconGateError('entry-id-invalid');
+    if (section.heading !== id) throw new ReconGateError('entry-heading-id-mismatch');
+    if (byId.has(id)) throw new ReconGateError('entry-id-duplicate');
+    if (!RECON2_REQUIRED_IDS.includes(id)) recon2Reject('recon-two-entry-unknown');
+    if (fields.get('scope') !== 'English path') recon2Reject('recon-two-scope-invalid');
+    const status = fields.get('status');
+    if (!RECON2_TERMINAL_STATUSES.has(status)) recon2Reject('recon-two-status-unresolved');
+    byId.set(id, { id, status, fields });
+  }
+
+  for (const id of RECON2_REQUIRED_IDS) {
+    if (!byId.has(id)) recon2Reject('recon-two-entry-missing');
+  }
+  return byId;
+}
+
+function checkDarkEntries(byId) {
+  const signal = byId.get('dark-mode-signal');
+  const offered = recon2Enum(signal.fields, 'dark-mode-offered', ['yes', 'no']);
+  const branch = recon2Enum(signal.fields, 'dark-branch', [
+    'document-marker', 'surface-luminance', 'neither', 'not-offered',
+  ]);
+  const osAuto = recon2Enum(signal.fields, 'os-auto-used', ['yes', 'no']);
+  const zhromaOff = recon2Enum(signal.fields, 'zhroma-off', ['yes', 'no']);
+  recon2Consistent(osAuto === 'no' && zhromaOff === 'yes');
+  recon2Consistent((offered === 'no') === (branch === 'not-offered'));
+  if (offered === 'no') {
+    recon2Consistent(signal.status === 'not observed');
+  } else {
+    const cells = RECON2_APPEARANCE_CELLS.map((name) => recon2Text(signal.fields, name));
+    if (cells.includes('not-observed')) recon2Consistent(signal.status === 'not observed');
+  }
+  recon2ConsumerFallback(signal);
+
+  const mutation = byId.get('dark-mode-switch-mutation');
+  const switches = RECON2_SWITCHES.map((name) => recon2Enum(mutation.fields, name, RECON2_SWITCH_EFFECTS));
+  if (offered === 'no') recon2Consistent(switches.every((value) => value === 'not-observed'));
+  if (switches.includes('not-observed')) recon2Consistent(mutation.status === 'not observed');
+  recon2ConsumerFallback(mutation);
+
+  const states = byId.get('dark-native-states');
+  recon2Consistent(recon2Enum(states.fields, 'zhroma-off', ['yes', 'no']) === 'yes');
+  const hover = recon2Enum(states.fields, 'hover-selection-observed', ['yes', 'no']);
+  const focus = recon2Enum(states.fields, 'focus-observed', ['yes', 'no']);
+  if (offered === 'no') recon2Consistent(hover === 'no' && focus === 'no');
+  if (hover === 'no') recon2Consistent(states.status === 'not observed');
+  if (focus === 'no' && !RECON2_PHASE_EIGHT.test(states.fields.get('focus-fallback') ?? '')) {
+    recon2Reject('recon-two-fallback-missing');
+  }
+  recon2ConsumerFallback(states);
+
+  const topology = byId.get('dark-table-topology');
+  const garden = recon2Enum(topology.fields, 'garden-identifiers', ['hold', 'differ', 'not-observed']);
+  const terminus = recon2Enum(topology.fields, 'root-terminus', ['Document', 'ShadowRoot', 'not-observed']);
+  if (garden === 'hold') recon2Consistent(terminus === 'Document');
+  recon2Consistent((garden === 'not-observed') === (topology.status === 'not observed'));
+  if (offered === 'no') recon2Consistent(garden === 'not-observed');
+  recon2ConsumerFallback(topology);
+
+  return { offered, garden };
+}
+
+function checkIdentityEntries(byId) {
+  const location = byId.get('identity-location');
+  const source = recon2Enum(location.fields, 'identity-source', [
+    'top-bar-at-load', 'top-bar-lazy', 'profile-menu-only', 'not-found',
+  ]);
+  const carrier = recon2Enum(location.fields, 'identity-carrier', [
+    'text', 'aria-label', 'title', 'alt', 'not-found',
+  ]);
+  const form = recon2Enum(location.fields, 'identity-form', ['full', 'short', 'not-found']);
+  recon2Enum(location.fields, 'assignee-cell-renders', ['text', 'avatar-label', 'both']);
+  const identity = [source, carrier, form];
+  recon2Consistent(identity.every((value) => value === 'not-found') || identity.every((value) => value !== 'not-found'));
+  if (source === 'not-found') {
+    recon2Consistent(location.status === 'not observed');
+    recon2Names(location, RECON2_PHASE_TEN);
+  }
+  recon2ConsumerFallback(location);
+
+  const comparison = byId.get('identity-vs-assignee');
+  const equal = recon2Enum(comparison.fields, 'equal', ['true', 'false']);
+  const kind = recon2Enum(comparison.fields, 'difference-kind', [
+    'identical', 'case-only', 'whitespace-only', 'prefix', 'different', 'not-comparable',
+  ]);
+  recon2Consistent((equal === 'true') === (kind === 'identical'));
+  recon2Consistent((kind === 'not-comparable') === (comparison.status === 'not observed'));
+  if (source === 'not-found') {
+    recon2Consistent(kind === 'not-comparable');
+    recon2Names(comparison, RECON2_PHASE_TEN);
+  }
+  recon2ConsumerFallback(comparison);
+
+  return { source };
+}
+
+function checkCellEntries(byId) {
+  const cells = byId.get('referenced-cell-representation');
+  for (const name of RECON2_CELL_FIELDS) recon2Text(cells.fields, name);
+  const tags = recon2Enum(cells.fields, 'tags-column', ['observed', 'not-offered']);
+  if (tags === 'observed') {
+    const shape = cells.fields.get('tags-cell');
+    recon2Consistent(Boolean(shape) && shape !== 'pending');
+  } else {
+    const fallback = cells.fields.get('tags-fallback') ?? '';
+    recon2Consistent(fallback.includes('RULE-07') && fallback.includes('RULE-F2'));
+  }
+  recon2Enum(cells.fields, 'date-text-class', ['relative', 'absolute', 'mixed']);
+  recon2Enum(cells.fields, 'date-machine-value', ['datetime-attribute', 'title', 'both', 'none']);
+  recon2Enum(cells.fields, 'vocabulary', ['confirmed-from-session']);
+  recon2ConsumerFallback(cells);
+
+  const labels = byId.get('header-label-uniqueness');
+  recon2Enum(labels.fields, 'duplicate-in-view', ['yes', 'no']);
+  recon2Enum(labels.fields, 'duplicate-custom-titles', ['yes', 'no', 'unknown']);
+  recon2Text(labels.fields, 'standard-header-labels');
+  recon2ConsumerFallback(labels);
+}
+
+/**
+ * Validate the Recon 2 (Phase 6) ledger block beside, never inside, the Phase 1 gate.
+ *
+ * Checks run in a fixed order so the first failure is deterministic: placement, the
+ * sensitive scan of the whole block, entry registration, per-entry structured facts,
+ * the D-24 verdict, then the D-23 fixture outcomes against the admitted corpus.
+ */
+export function verifyRecon2Ledger(markdown, { admittedRecon2Scenarios = [] } = {}) {
+  if (typeof markdown !== 'string' || markdown.trim() === '') {
+    recon2Reject('recon-two-ledger-required');
+  }
+
+  const block = recon2BlockText(markdown);
+  if (block !== null) {
+    try {
+      scanSensitiveContent(block, { denylist: [...RECON2_SCAN_DENYLIST] });
+    } catch (error) {
+      if (error instanceof SensitiveFixtureError) {
+        recon2Reject('recon-two-ledger-sensitive-content', { cause: error });
+      }
+      throw error;
+    }
+  }
+
+  const byId = parseRecon2Entries(markdown);
+  const { offered, garden } = checkDarkEntries(byId);
+  const { source } = checkIdentityEntries(byId);
+  checkCellEntries(byId);
+
+  const sections = collectSections(markdown, RECON2_VERDICT_HEADING);
+  if (sections.length !== 1) recon2Reject('recon-two-verdict-required');
+  const verdictFields = parseFields(sections[0].body);
+  const verdict = verdictFields.get('recon2-verdict');
+  const blockedConsumers = verdictFields.get('blocked-consumers');
+  if (
+    !['proceed', 'block'].includes(verdict)
+    || !['none', 'phase-8'].includes(blockedConsumers)
+    || !verdictFields.get('rationale')
+  ) {
+    recon2Reject('recon-two-verdict-unresolved');
+  }
+
+  // D-24: only an absent Appearance setting or differing dark identifiers block Phase 8.
+  const blocking = offered === 'no' || garden === 'differ';
+  if (verdict !== (blocking ? 'block' : 'proceed') || blockedConsumers !== (blocking ? 'phase-8' : 'none')) {
+    recon2Reject('recon-two-verdict-inconsistent');
+  }
+
+  if (!Array.isArray(admittedRecon2Scenarios)) {
+    throw new ReconGateError('admitted-scenarios-required');
+  }
+  const admitted = new Set(admittedRecon2Scenarios);
+  const eligible = {
+    'rules-light-table': true,
+    'rules-identity-region': source !== 'not-found',
+    'rules-dark-table': offered === 'yes' && garden === 'hold',
+  };
+  for (const { field, scenario, consumer } of RECON2_FIXTURE_FIELDS) {
+    const outcome = verdictFields.get(field);
+    if (!outcome || outcome === 'pending') recon2Reject('recon-two-verdict-unresolved');
+    if (!RECON2_FIXTURE_OUTCOMES.includes(outcome)) recon2Reject('recon-two-field-not-structured');
+    recon2Consistent((outcome === 'not-required') === !eligible[scenario]);
+    if (outcome === 'rejected') {
+      if (!RECON2_REJECTION_CODE.test(verdictFields.get(`${field}-code`) ?? '')) {
+        recon2Reject('recon-two-field-not-structured');
+      }
+      if (!consumer.test(verdictFields.get(`${field}-fallback`) ?? '')) {
+        recon2Reject('recon-two-fallback-missing');
+      }
+    }
+    recon2Consistent(outcome === 'admitted' || !admitted.has(scenario));
+    if (outcome === 'admitted' && !admitted.has(scenario)) recon2Reject('recon-two-fixture-missing');
+  }
+
+  return { entryCount: RECON2_REQUIRED_IDS.length, verdict, blockedConsumers };
+}
+
 async function runCli() {
   try {
     const args = process.argv.slice(2);
@@ -692,7 +1016,8 @@ async function runCli() {
     if (
       (mode === 'evidence' && args.length !== 2)
       || (mode === 'final' && args.length !== 3)
-      || (mode !== 'evidence' && mode !== 'final')
+      || (mode === 'recon2' && args.length !== 3)
+      || (mode !== 'evidence' && mode !== 'final' && mode !== 'recon2')
     ) {
       throw new ReconGateError('cli-arguments-invalid');
     }
@@ -706,6 +1031,14 @@ async function runCli() {
     if (mode === 'evidence') {
       const result = verifyReconLedger(markdown, { mode });
       process.stdout.write(`EVIDENCE READY: ${result.entryCount} terminal entries\n`);
+      return;
+    }
+    if (mode === 'recon2') {
+      const recon2Corpus = await validateRecon2Fixtures(manifestPath);
+      const result = verifyRecon2Ledger(markdown, {
+        admittedRecon2Scenarios: recon2Corpus.scenarios,
+      });
+      process.stdout.write(`RECON 2 VERDICT: ${result.verdict}\n`);
       return;
     }
 

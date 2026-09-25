@@ -607,6 +607,17 @@ describe('Recon 2 entry registration', () => {
       'entry-id-duplicate');
   });
 
+  test('reused Phase 1 shape codes and a non-array corpus are rejected', () => {
+    const blankEvidence = mutateRecon2Entry(recon2Block(), 'identity-location',
+      (section) => section.replace(/^- evidence:.*$/m, '- evidence: '));
+    expectCode(() => reconGate.verifyRecon2Ledger(blankEvidence), 'entry-field-missing');
+    const invalidId = recon2Block().replace('## Recon 2 Entry: identity-location\n\n- id: `identity-location`',
+      '## Recon 2 Entry: Identity_Location\n\n- id: `Identity_Location`');
+    expectCode(() => reconGate.verifyRecon2Ledger(invalidId), 'entry-id-invalid');
+    expectCode(() => reconGate.verifyRecon2Ledger(recon2Block(), { admittedRecon2Scenarios: 'rules-light-table' }),
+      'admitted-scenarios-required');
+  });
+
   test('a scope other than English path is rejected', () => {
     expectCode(() => check(variant((spec) => {
       spec.entries['identity-location'].scope = 'Localization only';
@@ -690,6 +701,9 @@ describe('Recon 2 block safety and placement', () => {
     const splitBlock = insertBeforeAssumptions(real, recon2Block())
       .replace('## Final Verdict', '## Recon 2 Session Handoff\n\n- session-state: `late`\n\n## Final Verdict');
     expectCode(() => reconGate.verifyRecon2Ledger(splitBlock, { admittedRecon2Scenarios: ALL_RECON_TWO_SCENARIOS }),
+      'recon-two-block-misplaced');
+    const detached = `${recon2Block()}\n## Other Section\n\nUnscanned prose.\n\n## Recon 2 Session Handoff\n\n- session-state: \`late\`\n`;
+    expectCode(() => reconGate.verifyRecon2Ledger(detached, { admittedRecon2Scenarios: ALL_RECON_TWO_SCENARIOS }),
       'recon-two-block-misplaced');
   });
 });
