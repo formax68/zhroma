@@ -443,7 +443,9 @@ test('English regional evidence cannot satisfy the non-English scenario', () => 
   expect(() => validatePhase04Acceptance(record, acceptedPerformance(), CLOCK)).toThrow(/language-context/);
 });
 
-const canonicalRequirements = () => readFileSync(new URL('.planning/REQUIREMENTS.md', root), 'utf8');
+// v1 requirements were archived at the v1.0 milestone close; the archive is
+// the canonical record for the Phase 4 IDs.
+const canonicalRequirements = () => readFileSync(new URL('.planning/milestones/v1.0-REQUIREMENTS.md', root), 'utf8');
 const hypotheticalRequirements = (markdown = canonicalRequirements()) => {
   for (const id of Object.keys(REQUIREMENT_CHECKS)) {
     markdown = markdown.replace(new RegExp(`^- \\[[ xX]\\] (\\*\\*${id}\\*\\*:)`, 'm'), '- [ ] $1')
