@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Themes & Rules
 status: planning
-last_updated: "2026-09-25T10:24:26.078Z"
+last_updated: "2026-09-25T14:30:00.000Z"
 last_activity: 2026-09-25
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.
-**Current focus:** Milestone v1.1 Themes & Rules (ships as extension 1.0.0) — defining requirements
+**Current focus:** Milestone v1.1 Themes & Rules (ships as extension 1.0.0). Phase 6 (Live DOM Recon 2) and Phase 7 (Upgrade-Safe Foundation) are both ready to plan and are independent of each other
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-09-25 — Milestone v1.1 started
+Phase: 6 (first of 6 phases in milestone v1.1, Phases 6-11) — Live DOM Recon 2. Phase 7 (Upgrade-Safe Foundation) may run in parallel
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-09-25 — v1.1 roadmap created (6 phases, 62/62 requirements mapped)
+
+Progress: [░░░░░░░░░░] 0%
+
+v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Themes That Follow Dark Mode → 9 Colouring Rules → 10 Rule Editor, "Is Me" and Settings Files → 11 Release 1.0.0
 
 ## Performance Metrics
 
@@ -88,6 +92,15 @@ Last activity: 2026-09-25 — Milestone v1.1 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [v1.1 Roadmap]: Six phases (6-11) under coarse granularity. Research's palette-seam and dark-mode phases are merged into Phase 8, and identity is folded into the options-page Phase 10, so `content.js` changes in four reviewed steps (7, 8, 9, 10). Recon (6) and Foundation (7) are independent.
+- [v1.1 Roadmap]: The full v1 regression UAT plus v1.1 UAT runs once, on the 1.0.0 release-candidate bytes (Phase 11, STORE-11). Intermediate phases prove themselves with automated suites (the 0.1.0 parity harness, fixtures, v1 mutants) and dev-only smoke checks.
+- [v1.1 Scoping]: Colours are resolved in JavaScript and written as CSS custom properties with 0.1.0-literal fallbacks. `minimum_chrome_version` stays at 106.
+- [v1.1 Scoping]: Identity is detect-then-confirm-once. Only a confirmed or typed name is persisted, with one global identity. Export never includes the name, and import never changes it.
+- [v1.1 Scoping]: "Identical to 0.1.0" applies to the light interface with default settings. Dark mode uses the same hues with dark-tuned strengths, and an undetermined mode falls back to light.
+- [v1.1 Scoping]: Rule logic is Match ALL/ANY with one level of groups, plus "is any of". Negation stays inside single conditions.
+- [v1.1 Scoping]: The toolbar and the three v1 diagnoses stay Priority-only. Rule state appears as a separate popup line.
+- [v1.1 Scoping]: There is no Urgent guard: the first matching tint rule wins. Rules inherit 0.1.0's English-only gate in 1.0.0.
+- [v1.1 Scoping]: The release order is fixed: policy, listing and disclosures are updated and verified live, then publishing uses deferred publishing (STORE-07 before STORE-08).
 - Roadmap: Dark mode and the colourblind-safe palette — including hue selection — are out of v1. The CTRL-02 toggle is the accepted mitigation.
 - Roadmap: The `storage` permission is taken, for exactly one default-on boolean. It is the only permission v1 requests, and the permission set is frozen in Phase 2.
 - Roadmap: English only in v1, but the three-way failure taxonomy (FAIL-01/02/03) ships in v1 so the hint never lies to a non-English agent.
@@ -166,6 +179,8 @@ CR-01/CR-02 repairs and independent reverification are complete; 403 tests and f
 
 ### Roadmap Evolution
 
+- [v1.1]: Roadmap created 2026-09-25. Phases 6-11 were added under a new 🚧 v1.1 Themes & Rules milestone, and the v1.0 grouping stays collapsed. All 62 v1.1 requirements are mapped (Phase 6: 3, Phase 7: 5, Phase 8: 12, Phase 9: 15, Phase 10: 22, Phase 11: 5).
+
 - [Phase 02]: Goal reformatted into the required MVP user-story syntax during verification; original wording retained as Goal scope and all five success criteria unchanged. user-story.validate passed.
 
 - Phase 1 edited: edited fields: goal, success_criteria
@@ -186,7 +201,7 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-09-25
-Stopped at: v1.0 milestone archived
+Stopped at: v1.1 roadmap created (Phases 6-11); ready to plan Phase 6 and/or Phase 7
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
@@ -305,4 +320,5 @@ After the previous non-decreasing review halt, the user was offered a revised re
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Plan Phase 6 (Live DOM Recon 2) with `/gsd-plan-phase 6`. It needs a live, user-driven session on a tenant with dark mode allowed
+- Phase 7 (Upgrade-Safe Foundation) is independent of Phase 6 and can be planned in parallel with `/gsd-plan-phase 7`

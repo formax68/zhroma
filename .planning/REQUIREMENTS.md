@@ -152,12 +152,76 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| COMPAT-01 | Phase 7 | Pending |
+| COMPAT-02 | Phase 7 | Pending |
+| COMPAT-03 | Phase 7 | Pending |
+| COMPAT-04 | Phase 7 | Pending |
+| RECON-04 | Phase 6 | Pending |
+| RECON-05 | Phase 6 | Pending |
+| RECON-06 | Phase 6 | Pending |
+| DARK-01 | Phase 8 | Pending |
+| DARK-02 | Phase 8 | Pending |
+| DARK-03 | Phase 8 | Pending |
+| DARK-04 | Phase 8 | Pending |
+| DARK-05 | Phase 8 | Pending |
+| THEME-01 | Phase 8 | Pending |
+| THEME-02 | Phase 8 | Pending |
+| THEME-03 | Phase 8 | Pending |
+| THEME-04 | Phase 8 | Pending |
+| THEME-05 | Phase 8 | Pending |
+| THEME-06 | Phase 8 | Pending |
+| THEME-07 | Phase 8 | Pending |
+| RULE-01 | Phase 9 | Pending |
+| RULE-02 | Phase 9 | Pending |
+| RULE-03 | Phase 9 | Pending |
+| RULE-04 | Phase 9 | Pending |
+| RULE-05 | Phase 9 | Pending |
+| RULE-06 | Phase 9 | Pending |
+| RULE-07 | Phase 9 | Pending |
+| RULE-08 | Phase 9 | Pending |
+| RULE-09 | Phase 9 | Pending |
+| RULE-10 | Phase 9 | Pending |
+| RULE-11 | Phase 9 | Pending |
+| RULE-12 | Phase 9 | Pending |
+| RULE-13 | Phase 9 | Pending |
+| RULE-14 | Phase 9 | Pending |
+| RULE-15 | Phase 9 | Pending |
+| EDIT-01 | Phase 10 | Pending |
+| EDIT-02 | Phase 10 | Pending |
+| EDIT-03 | Phase 10 | Pending |
+| EDIT-04 | Phase 10 | Pending |
+| EDIT-05 | Phase 10 | Pending |
+| EDIT-06 | Phase 10 | Pending |
+| EDIT-07 | Phase 10 | Pending |
+| EDIT-08 | Phase 10 | Pending |
+| EDIT-09 | Phase 10 | Pending |
+| EDIT-10 | Phase 10 | Pending |
+| IDENT-01 | Phase 10 | Pending |
+| IDENT-02 | Phase 10 | Pending |
+| IDENT-03 | Phase 10 | Pending |
+| IDENT-04 | Phase 10 | Pending |
+| IDENT-05 | Phase 10 | Pending |
+| IDENT-06 | Phase 10 | Pending |
+| DATA-01 | Phase 7 | Pending |
+| DATA-02 | Phase 10 | Pending |
+| DATA-03 | Phase 10 | Pending |
+| DATA-04 | Phase 10 | Pending |
+| DATA-05 | Phase 10 | Pending |
+| DATA-06 | Phase 10 | Pending |
+| DATA-07 | Phase 10 | Pending |
+| STORE-07 | Phase 11 | Pending |
+| STORE-08 | Phase 11 | Pending |
+| STORE-09 | Phase 11 | Pending |
+| STORE-10 | Phase 11 | Pending |
+| STORE-11 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 62 total
-- Mapped to phases: 0
-- Unmapped: 62 ⚠️
+- Mapped to phases: 62
+- Unmapped: 0 ✓
+
+Per phase: Phase 6: 3 · Phase 7: 5 · Phase 8: 12 · Phase 9: 15 · Phase 10: 22 · Phase 11: 5
 
 ---
 *Requirements defined: 2026-09-25*
-*Last updated: 2026-09-25 after initial definition*
+*Last updated: 2026-09-25 after v1.1 roadmap creation (traceability mapped)*
