@@ -46,6 +46,28 @@ export const RESERVED_SELF_TOKENS = Object.freeze([
   'PERSON-SELF', 'PERSON-SELF-ALT', 'PERSON-SELF-EMBEDDED',
 ]);
 
+/* D-13: every kept `datetime` becomes one fixed literal of its format class. */
+export const SYNTHETIC_DATETIME = Object.freeze({
+  dateTime: '2000-01-01T00:00:00Z',
+  date: '2000-01-01',
+});
+/* The in-page projection's shape markers, recording visual state that class removal loses. */
+export const PROBE_MARKER_VALUES = Object.freeze(['visually-hidden', 'display-none', 'text-truncated']);
+
+/* Attribute classes for rule-columns mode: copies of the v1 Sets, never the Sets themselves. */
+export const RULE_PRESERVED_ATTRIBUTES = new Set([...PRESERVED_ATTRIBUTES]);
+export const RULE_TEXT_ATTRIBUTES = new Set([...TEXTUAL_ARIA_ATTRIBUTES, 'title', 'alt']);
+export const RULE_REMOVABLE_ATTRIBUTES = new Set(
+  [...REMOVABLE_ATTRIBUTES].filter((name) => !['title', 'alt', 'datetime'].includes(name)),
+);
+
+const DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?$/u;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
+/* The generic scan only catches 7+ digit runs, so identifier values must carry no digit at all. */
+const IDENTIFIER_VALUE = /^[a-z][a-z._-]*$/iu;
+const IDENTIFIER_ATTRIBUTES = Object.freeze(['data-garden-id', 'data-test-id']);
+const PROBE_ATTRIBUTE = 'data-zhroma-probe';
+
 const RESOURCE_ATTRIBUTE_NAMES = Object.freeze([
   'src', 'srcset', 'href', 'xlink:href', 'action', 'formaction', 'poster', 'srcdoc',
 ]);
@@ -205,6 +227,23 @@ export function parseRuleColumnCapture(markup, options = {}) {
 
 const OTHER_LOCATION = Object.freeze({ region: 'other' });
 
+function syntheticDatetime(value) {
+  const trimmed = String(value).trim();
+  if (DATE_TIME_PATTERN.test(trimmed)) return SYNTHETIC_DATETIME.dateTime;
+  if (DATE_PATTERN.test(trimmed)) return SYNTHETIC_DATETIME.date;
+  return reject('datetime-format-unrecognised');
+}
+
+/* Shared by the tokeniser and the validator: preserved names whose values carry a grammar. */
+function assertPreservedValue(name, value) {
+  if (IDENTIFIER_ATTRIBUTES.includes(name) && !IDENTIFIER_VALUE.test(value)) {
+    reject('identifier-value-invalid');
+  }
+  if (name === PROBE_ATTRIBUTE && !PROBE_MARKER_VALUES.includes(value)) {
+    reject('probe-marker-invalid');
+  }
+}
+
 function locationOf(node, capture) {
   let current = node.nodeType === 1 ? node : node.parentElement;
   while (current) {
@@ -318,14 +357,18 @@ export function tokeniseRuleColumns(capture, options = {}) {
       const name = attribute.name.toLocaleLowerCase('en-US');
       if (name.startsWith('on')) reject('inline-event-handler');
       if (RESOURCE_ATTRIBUTE_NAMES.includes(name)) reject('resource-bearing-attribute');
-      if (REFERENCE_ATTRIBUTES.has(name) || RULE_REMOVABLE_ATTRIBUTES.has(name)) {
-        element.removeAttribute(attribute.name);
-        continue;
-      }
       if (RULE_TEXT_ATTRIBUTES.has(name)) {
         if (normaliseRuleValue(attribute.value)) {
           element.setAttribute(attribute.name, rewrite(attribute.value, location, false));
         }
+        continue;
+      }
+      if (name === 'datetime') {
+        element.setAttribute(attribute.name, syntheticDatetime(attribute.value));
+        continue;
+      }
+      if (REFERENCE_ATTRIBUTES.has(name) || RULE_REMOVABLE_ATTRIBUTES.has(name)) {
+        element.removeAttribute(attribute.name);
         continue;
       }
       if (name.startsWith('aria-')) {
@@ -335,7 +378,10 @@ export function tokeniseRuleColumns(capture, options = {}) {
         element.setAttribute(attribute.name, normalized);
         continue;
       }
-      if (RULE_PRESERVED_ATTRIBUTES.has(name)) continue;
+      if (RULE_PRESERVED_ATTRIBUTES.has(name)) {
+        assertPreservedValue(name, attribute.value);
+        continue;
+      }
       reject('unsafe-attribute');
     }
   }
@@ -363,11 +409,6 @@ export function tokeniseRuleColumns(capture, options = {}) {
   }
   return capture;
 }
-
-/* Attribute classes for rule-columns mode: copies of the v1 Sets, never the Sets themselves. */
-export const RULE_PRESERVED_ATTRIBUTES = new Set([...PRESERVED_ATTRIBUTES]);
-export const RULE_TEXT_ATTRIBUTES = new Set([...TEXTUAL_ARIA_ATTRIBUTES]);
-export const RULE_REMOVABLE_ATTRIBUTES = new Set([...REMOVABLE_ATTRIBUTES]);
 
 function tokenParts(value) {
   const match = TOKEN_PATTERN.exec(value);
@@ -420,13 +461,19 @@ export function validateRuleColumnOutput(markup, options = {}) {
       if (RESOURCE_ATTRIBUTE_NAMES.includes(name)) reject('resource-bearing-attribute');
       if (RULE_TEXT_ATTRIBUTES.has(name)) {
         checkValue(attribute.value, location, false);
+      } else if (name === 'datetime') {
+        if (![SYNTHETIC_DATETIME.dateTime, SYNTHETIC_DATETIME.date].includes(attribute.value)) {
+          reject('datetime-format-unrecognised');
+        }
       } else if (REFERENCE_ATTRIBUTES.has(name) || RULE_REMOVABLE_ATTRIBUTES.has(name)) {
         reject('unsafe-attribute');
       } else if (name.startsWith('aria-')) {
         const normalized = normalizedAriaValue(name, attribute.value);
         if (normalized === undefined) reject('unsafe-aria-attribute');
         if (normalized === null || normalized !== attribute.value) reject('aria-attribute-invalid');
-      } else if (!RULE_PRESERVED_ATTRIBUTES.has(name)) {
+      } else if (RULE_PRESERVED_ATTRIBUTES.has(name)) {
+        assertPreservedValue(name, attribute.value);
+      } else {
         reject('unsafe-attribute');
       }
     }
@@ -484,4 +531,8 @@ export const RULE_STRUCTURAL_WORDS = Object.freeze([...new Set([
   'generic-table', 'generic-table-body', 'generic-table-head', 'generic-table-row',
   'generic-table-rows-group-by', 'tables.body', 'tables.cell', 'tables.group_row', 'tables.head',
   'tables.header_cell', 'tables.header_row', 'tables.row', 'tables.table', 'ticket-row',
+  // Probe marker values and the synthetic datetime literals every carrying output holds.
+  ...PROBE_MARKER_VALUES,
+  SYNTHETIC_DATETIME.dateTime,
+  SYNTHETIC_DATETIME.date,
 ].map((word) => word.toLocaleLowerCase('en-US')))]);
