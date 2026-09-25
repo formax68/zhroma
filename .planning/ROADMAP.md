@@ -53,7 +53,7 @@
      - Tags note (D-26, decided 2026-09-25): Zendesk views very likely cannot show Tags as a column; the live session checks the view's column picker, and a live-confirmed `tags-column: not-offered` in `referenced-cell-representation`, with its fallback (Tags rules resolve no header, so RULE-07 keeps them inactive, and RULE-F2 stays deferred), meets this criterion for Tags and does not block the phase.
   4. A dark-mode table fixture confirms that the v1 Garden table identifiers still hold in dark mode. It also records the measured dark surface and text colours and the native hover, selection and focus appearance that later palette tuning depends on
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 Plans:
 **Wave 1**
 
@@ -61,7 +61,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 06-02-PLAN.md — Recon 2 ledger gate and `recon2` CLI mode, the registered Recon 2 block in SELECTORS.md, the one-sitting run sheet, and the Tags-column notes
+- [x] 06-02-PLAN.md — Recon 2 ledger gate and `recon2` CLI mode, the registered Recon 2 block in SELECTORS.md, the one-sitting run sheet, and the Tags-column notes
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -170,7 +170,7 @@ Plans:
 | 3. The Tint Survives Everything | v1.0 | 3/4 | Shipped; human_needed | 2026-09-14 |
 | 4. Honest Failure and an Off Switch | v1.0 | 20/20 | Shipped; human_needed | 2026-09-14 |
 | 5. Published | v1.0 | 3/7 | Shipped outside GSD | 2026-09-14 |
-| 6. Live DOM Recon 2 | v1.1 | 1/3 | In Progress|  |
+| 6. Live DOM Recon 2 | v1.1 | 2/3 | In Progress|  |
 | 7. Upgrade-Safe Foundation | v1.1 | 0/TBD | Not started | - |
 | 8. Themes That Follow Dark Mode | v1.1 | 0/TBD | Not started | - |
 | 9. Colouring Rules | v1.1 | 0/TBD | Not started | - |

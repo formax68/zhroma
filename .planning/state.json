@@ -31,7 +31,7 @@
     {
       "number": "6",
       "name": "Live DOM Recon 2",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "7",
@@ -64,5 +64,5 @@
     "label": "Advance to the next step",
     "reason": "Phase 06 of 6 · 33% · executing"
   },
-  "updated_at": "2026-09-25T13:55:07.349Z"
+  "updated_at": "2026-09-25T14:19:58.003Z"
 }

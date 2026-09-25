@@ -5,16 +5,16 @@ milestone_name: Themes & Rules
 current_phase: 06
 current_phase_name: Live DOM Recon 2
 status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-09-25T13:55:07.937Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-09-25T14:19:58.602Z"
 last_activity: 2026-09-25
 last_activity_desc: Phase 06 execution started
-state_head: 46d5450effe77adaff6d91cfa6234951f1e39863
+state_head: 2ce56ee8abdc40b75c53e32a34428cf612e52ca5
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 33
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 06 (Live DOM Recon 2) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-09-25 — Phase 06 execution started
 
@@ -90,6 +90,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 05 P02 | 8 min | 2 tasks | 6 files |
 | Phase 05 P03 | 14 min | 2 tasks | 11 files |
 | Phase 06 P01 | 13 min | 3 tasks | 5 files |
+| Phase 06 P02 | 20min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -167,6 +168,9 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-01: Rule-columns fixtures live in manifest.recon2Fixtures and validate through validateRecon2Fixtures; manifest.fixtures and validateFixtureManifest stay v1-only (D-10)
 - [Phase 06]: 06-01: Header column kind resolves by whole label text or exactly one distinct known label among its text nodes; tenant headers become FIELD columns with LABEL-nnn text
 - [Phase 06]: 06-01: A denylist entry inside any vocabulary or structural word rejects denylist-entry-collides before parsing; there is no length rule
+- [Phase 06]: Recon 2 gate: out-of-set enum values reject recon-two-field-not-structured; valid values that break a rule reject recon-two-fields-inconsistent
+- [Phase 06]: The Recon 2 block must be contiguous and before Spec-less Planning Assumptions, so no Recon 2 text escapes the whole-block sensitive scan
+- [Phase 06]: identity-source not-found requires a fallback naming Phase 10 on both identity entries
 
 ### Pending Todos
 
@@ -209,8 +213,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-25T13:55:07.924Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-09-25T14:19:58.588Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
