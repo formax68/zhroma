@@ -1,0 +1,1 @@
+{"content":"File inputs in action popups are unreliable (popup can close when the file chooser takes focus; chromium issues 40114753/114898). Standard workaround: put file import on the options page opened in a tab.","source":"web","provider":"websearch","confidence":"MEDIUM","fetched_at":"2026-09-25T10:53:28.975Z","ttl":86400000,"kind":"web"}

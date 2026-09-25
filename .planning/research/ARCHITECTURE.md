@@ -1,23 +1,22 @@
 # Architecture Research
 
-**Domain:** Chrome MV3 content-script extension that observes and restyles a third-party React SPA (Zendesk agent views)
-**Researched:** 2026-09-02
-**Confidence:** HIGH on the recommended architecture; MIXED on specific Zendesk DOM facts (see [Verification Ledger](#verification-ledger))
+**Domain:** Integrating dark-mode-aware themes, a rule engine over arbitrary view columns, identity detection and a settings UI into Zhroma's shipped MV3 content-script / worker / popup architecture (milestone v1.1, ships as 1.0.0)
+**Researched:** 2026-09-25
+**Confidence:** HIGH on the integration shape. It is derived from the shipped code (`extension/*.js`, `zhroma.css`, `manifest.json`), the v1 DOM ledger (`SELECTORS.md`) and the Garden source. LOW on every Zendesk DOM fact that is new in v1.1: the dark-mode signal, where the agent's name appears, and how non-Priority cells render. Those facts need live recon (see [Recon 2](#dark-mode-detection-and-the-recon-it-needs)).
 
 ---
 
 ## Executive answer
 
-Build **"Stamp and Style"**: a debounced `MutationObserver` on a stable ancestor whose *only* DOM write is a single `data-zhroma-priority` attribute on each ticket `<tr>`. All colour comes from a declaratively injected stylesheet that matches on that attribute. Route changes are not detected at all — they are just a large DOM mutation, and the same observer already handles them.
+**Rules run in the content script, in the same synchronous turn as the existing table inspection. They consume the same validated snapshot, and their output is written as data attributes that a static stylesheet paints.** Themes and dark mode only change which CSS custom property values apply. Neither ever causes rules to be re-evaluated. The worker stays the single writer for every persisted key. It never sees a cell value.
 
-This is not a compromise between the options in the brief. It is strictly better than each of them:
+Concretely:
 
-- It **cannot** infinite-loop, because the observer never watches attributes and the write is idempotent.
-- It needs **zero permissions** beyond `*://*.zendesk.com/*` host access — no `webNavigation`, no `scripting`, no `storage`, no `MAIN`-world injection.
-- It puts the paint in the CSS engine, so scroll and hover repaints cost nothing and Zendesk's own re-render cannot strip the colour before our next pass.
-- It degrades to "page untouched" on every failure path, which is the PROJECT constraint.
-
-The CSS-only-with-no-JS option is **dead**: CSS has no text-content selector, and Zendesk emits no priority class or attribute on rows (verified — see below). Polling is **dead**: it is what the existing prior art does and it is why the existing prior art is rated 3.71/5 with reviews saying "It no longer works."
+1. **One validator, two consumers.** Extend `inspectCandidateTable` so it returns the header cells and every full-width ticket row it already walks. The Priority logic, and the six-state machine that drives the three-way diagnosis, keep their current semantics. A new pure module (`zhroma-rules.js`) resolves the columns a rule references by header label, and evaluates rules against the rows the Priority validator admitted. Rules can never touch a row, or a table, that v1 would have refused.
+2. **Semantic stamps, CSS resolution.** Rows get `data-zhroma-priority` (unchanged), plus `data-zhroma-fill` and `data-zhroma-mark`, each carrying a slot name or `custom`. Custom colours go in `data-zhroma-fill-color` and `data-zhroma-mark-color` as validated `#rrggbb`. `<html>` gets `data-zhroma-theme` and `data-zhroma-scheme`. All colour values live in a static `themes.css`, and custom hex is parsed by CSS itself through `attr(… type(<color>))`. Changing the theme or the scheme is an attribute flip on `<html>`. No row is revisited.
+3. **The `enabled` pipeline is not touched in behaviour.** The one boolean, its worker-serialized write queue, the `apply-preference` handshake and the three-way diagnosis stay as they are. New settings live in new keys (`theme`, `rules`, `identityOverride`, `identityDetected`). Absent keys mean the defaults, and the defaults are 0.1.0. **No migration is the migration.**
+4. **Rule health is a second, orthogonal status channel.** Rules that reference a column the view lacks do not change the toolbar icon or the three diagnoses. The popup fetches the finite `rule-status` enum through a separate additive message pair and shows it as a second line.
+5. **Recon comes first.** The dark-mode signal, where identity is rendered, and how referenced cells render must be read from a live tenant, the same way v1 Phase 1 did it. Garden's own source proves the library emits **no** DOM signal for dark mode (see below), so no desk assumption survives here.
 
 ---
 
@@ -26,655 +25,484 @@ The CSS-only-with-no-JS option is **dead**: CSS has no text-content selector, an
 ### System Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│  DECLARATIVE LAYER  (manifest.json — no JS, runs before DOM exists)   │
-│  ┌────────────────────────┐   ┌─────────────────────────────────┐    │
-│  │ content_scripts.matches│   │ content_scripts.css → palette.css│   │
-│  │  *://*.zendesk.com/*   │   │  tr[data-zhroma-priority="..."] │    │
-│  └────────────────────────┘   └─────────────────────────────────┘    │
-└───────────────────────────────┬──────────────────────────────────────┘
-                                │ (browser injects both)
-┌───────────────────────────────▼──────────────────────────────────────┐
-│  ISOLATED WORLD  (content script, run_at: document_idle)             │
-│                                                                       │
-│  ┌─────────────┐                                                     │
-│  │ 1 Bootstrap │  entry, top-frame guard, one-shot init              │
-│  └──────┬──────┘                                                     │
-│         │ starts                                                     │
-│  ┌──────▼──────────────────────────────────────────────────────┐     │
-│  │ 2 Observer Controller   ◄─── the ONLY stateful component    │     │
-│  │   MutationObserver(childList, subtree) + debounce + reentry │     │
-│  └──────┬──────────────────────────────────────────────────────┘     │
-│         │ schedules pass()                                           │
-│         ▼                                                            │
-│  ┌─────────────┐   ┌──────────────┐   ┌──────────────────────┐      │
-│  │ 3 Table     │──►│ 4 Column     │──►│ 5 Priority Extractor │      │
-│  │   Locator   │   │   Resolver   │   │   (i18n lives here)  │      │
-│  │  (pure)     │   │  (pure+cache)│   │       (pure)         │      │
-│  └─────────────┘   └──────────────┘   └──────────┬───────────┘      │
-│         │                   │                     │ token            │
-│         │ tables[]          │ columnIndex | NONE  ▼                  │
-│         │                   │          ┌────────────────────┐        │
-│         │                   │          │ 6 Stamper          │        │
-│         │                   │          │  ★ ONLY DOM WRITE ★│        │
-│         │                   │          └────────┬───────────┘        │
-│         │                   │                   │ setAttribute       │
-│         │                   ▼                   │                    │
-│         │            ┌──────────────┐           │                    │
-│         └───────────►│ 7 Hint       │           │                    │
-│                      │   Presenter  │           │                    │
-│                      └──────┬───────┘           │                    │
-└─────────────────────────────┼───────────────────┼────────────────────┘
-                              │ runtime.sendMessage│
-┌─────────────────────────────▼────────────┐      │
-│  SERVICE WORKER (≈20 lines, no perms)    │      │
-│  chrome.action.setBadgeText({tabId})     │      │
-│  + default_popup: hint.html (static)     │      │
-└──────────────────────────────────────────┘      │
-                                                   ▼
-                              ┌────────────────────────────────────┐
-                              │  PAGE DOM (shared, light DOM)      │
-                              │  <tr data-garden-id="tables.row"   │
-                              │      data-zhroma-priority="urgent">│
-                              └────────────────────────────────────┘
-                                       ▲
-                                       │ CSS engine paints from
-                                       │ the declarative stylesheet
-                                       └── no JS involved in painting
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ DECLARATIVE LAYER (manifest.json)                                            │
+│  content_scripts.css: themes.css (NEW) → zhroma.css (MODIFIED)               │
+│  content_scripts.js : zhroma-settings.js → zhroma-rules.js → zhroma-scheme.js │
+│                       → zhroma-identity.js → content.js   (one isolated world) │
+│  options_ui: options.html (NEW)   action.default_popup: popup.html (MODIFIED) │
+└───────────────┬──────────────────────────────────────────────────────────────┘
+                │
+┌───────────────▼──────────────────────────────────────────────────────────────┐
+│ CONTENT SCRIPT (top frame, isolated world) — the ONLY place ticket DOM is read │
+│                                                                              │
+│  settings reader ──(storage.get + onChanged)──► compiled RulePlan, themeId,   │
+│  (NEW, in content.js)                           identity   [no DOM, no timer] │
+│                                                                              │
+│  v1 observer ─► inspectCandidateTable (MODIFIED: + headers[], rows[])         │
+│                   │  state ∈ safe|blank|missing|waiting|unsafe|unsupported    │
+│                   ├─► Priority entries ─► commitSnapshot ─► data-zhroma-priority│
+│                   └─► ZhromaRules.bind(headers) + evaluate(rows)  (NEW, pure) │
+│                            └─► commitRuleStamps (NEW) ─► data-zhroma-fill/mark │
+│                                                                              │
+│  ZhromaScheme (NEW): own narrow observer + matchMedia trigger                 │
+│                   └─► <html data-zhroma-scheme="light|dark">                  │
+│  theme applier (NEW, tiny): <html data-zhroma-theme="classic|nord|…">         │
+│  ZhromaIdentity (NEW): own observer, stops after detection                    │
+│                   └─► runtime.sendMessage{identity-detected, name} (on change)│
+│                                                                              │
+│  replies: get-status (v1, unchanged) · get-rule-status (NEW, finite enum)     │
+└───────────────┬───────────────────────────────▲──────────────────────────────┘
+                │ status-invalidated (v1)        │ get-status / get-rule-status
+                │ identity-detected (NEW)        │ apply-preference (v1)
+┌───────────────▼───────────────────────────────┴──────────────────────────────┐
+│ SERVICE WORKER background.js (MODIFIED) — single writer, never sees ticket data│
+│  importScripts('zhroma-settings.js')  → the same validator the others use     │
+│  v1: enabled queue, projections, toolbar icon/title   (behaviour unchanged)   │
+│  NEW: settings write queue (theme, rules+revision CAS, identity, import)      │
+│  NEW: popup-rule-status → tab get-rule-status relay                           │
+└───────▲───────────────────────────────▲──────────────────────────────────────┘
+        │ popup-status / set-enabled (v1)│ save-rules / set-identity-override /
+        │ set-theme / popup-rule-status  │ import-settings (NEW)
+┌───────┴──────────────┐        ┌────────┴──────────────────────────────────────┐
+│ POPUP (MODIFIED)     │        │ OPTIONS PAGE (NEW, open_in_tab)               │
+│ switch (v1) + theme  │        │ rule editor, identity field, export/import;   │
+│ picker + rule-health │        │ reads storage directly, writes via worker     │
+│ line + "Edit rules"  │        │ Blob download / <input type=file> — no perms  │
+└──────────────────────┘        └───────────────────────────────────────────────┘
+        ▲ both link themes.css for swatches (same palette bytes as the page)
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ chrome.storage.local — enabled (v1, untouched) · theme · rules · identityOverride│
+│                        · identityDetected                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| # | Component | Owns | Never does | Purity |
-|---|-----------|------|------------|--------|
-| 0 | **Palette (CSS)** | The mapping token → colour. All visual treatment. Specificity battles with Garden. | Know anything about tables, headers, or locales. | Declarative |
-| 1 | **Bootstrap** | Entry point. Top-frame guard. Constructing and wiring 2–7 once. | Touch the DOM. Contain any Zendesk knowledge. | Impure (wiring) |
-| 2 | **Observer Controller** | The `MutationObserver`, the debounce timer, the "pass in flight" flag, `disconnect()` on teardown. Calling `pass()`. | Know what a ticket row is. Know what priority is. Write to the DOM. | Stateful |
-| 3 | **Table Locator** | "Which `<table>` elements on this page are ticket views?" Returns an array, possibly empty. | Read cells. Write anything. Cache across passes. | Pure read |
-| 4 | **Column Resolver** | Given one table, "which column index holds priority, or NONE?" Owns the header→index mapping and its per-table memo. | Read row values for tinting. Write anything. | Pure read + memo |
-| 5 | **Priority Extractor** | Given a cell, "which canonical token (`urgent`/`high`/`normal`/`low`/`none`)?" **Owns all localisation.** | Know about tables or indices. Write anything. | Pure |
-| 6 | **Stamper** | The *only* `setAttribute` / `removeAttribute` call site in the codebase. Idempotence guard. | Compute anything. Decide anything. | Impure (writes) |
-| 7 | **Hint Presenter** | "This view has no priority column" signal. Debounces its own state so it does not flap. | Inject anything into the page. Persist anything. | Impure (messages) |
-
-### The one boundary that matters
-
-> **Rule: exactly one file in this codebase calls a DOM-mutating method, and that file is `stamper.js`.**
-
-Everything else is a pure function from DOM to data. This is not stylistic tidiness — it is the mechanism that makes the infinite-loop hazard *auditable*. When someone asks "can this extension retrigger its own observer?", the answer is a code review of one ~20-line file, not of the whole extension. If a future contributor adds `row.style.background = ...` in the extractor, the review catches it because that file is supposed to have zero writes.
-
-The second-order benefit: components 3, 4 and 5 are unit-testable against static HTML fixtures with no browser, no extension host, and no Zendesk account. That matters enormously for a project whose main risk is "Zendesk changed the DOM" — a captured fixture from a real instance becomes a regression test.
+| Component | File | Status | Owns | Never does |
+|-----------|------|--------|------|------------|
+| Settings schema | `extension/zhroma-settings.js` | **NEW** | Key names, `DEFAULTS`, `THEME_IDS`, `SLOTS`, `OPERATORS`, caps, `validateRules`, `validateTheme`, `validateIdentity`, `validateExport`, `migrate`. Pure and frozen. Loaded by content, worker (`importScripts`), popup and options | Touch the DOM or storage |
+| Rule engine | `extension/zhroma-rules.js` | **NEW** | `normalizeHeader`, `normalizeCell`, `compile(rules, identity)`, `bind(headerLabels, plan)`, `evaluate(cells, binding)` → `{fill, mark}`, and `health(binding)` | Read the DOM itself, write anything, keep state across passes |
+| Table inspection + controller | `extension/content.js` | **MODIFIED** | v1 state machine, observer, readiness gates, stamping. Gains: snapshot `headers` and `rows`, rule stamp commit/clear, settings reader, `get-rule-status` reply, theme attribute | Evaluate rules outside the inspect→commit turn, or send cell values anywhere |
+| Scheme detector | `extension/zhroma-scheme.js` | **NEW** | Reads the recon-proven host dark signal, stamps `<html data-zhroma-scheme>`, and runs its own narrow observer plus a `matchMedia` *trigger* | Use `prefers-color-scheme` as the signal, or evaluate rules |
+| Identity detector | `extension/zhroma-identity.js` | **NEW** | Reads the recon-proven name location, normalises it, and sends it to the worker on change. Its observer self-stops after detection | Write storage, or read anything beyond the one name element |
+| Palette | `extension/themes.css` | **NEW** | Every preset's slot values × {light, dark}, the priority→slot mapping per theme, and tint strengths. Selectors are only `[data-zhroma-theme=…]` / `[data-zhroma-scheme=…]` | Know about tables |
+| Paint rules | `extension/zhroma.css` | **MODIFIED** | Selectors plus `!important`. Priority tints become `var(--zhroma-tint-*, <exact 0.1.0 literal>)`. Adds fill, mark and custom-hex `attr()` rules | Hold any colour other than the 0.1.0 fallbacks |
+| Worker | `extension/background.js` | **MODIFIED** | Everything it does today. Adds the settings write queue with revision CAS, the `identity-detected` write, the rule-status relay and import | Parse or store cell values or header labels |
+| Popup | `extension/popup.html`, `popup.js` | **MODIFIED** | Switch (v1), theme picker, rule-health line, "Edit rules" (`chrome.runtime.openOptionsPage()`) | Read or write storage directly (the v1 D-11 invariant holds) |
+| Options page | `extension/options.html`, `options.js` | **NEW** | Rule editing (ordered, AND/OR groups), colour source (slot or hex), effect, identity override, export/import | Write storage directly. All writes go through the worker |
 
 ---
 
 ## Recommended Project Structure
 
-Ship **no build step** for v1. MV3 concatenates the `js` array into a single isolated-world scope in array order, so multiple files work without a bundler and without ES module syntax (classic content scripts are not modules). What is shipped to the Chrome Web Store is then byte-identical to what is in the repo, which is the easiest possible story at review — and this extension was already told, by the PROJECT constraints, that "no remote code" and reviewability are load-bearing.
-
 ```
-zhroma/
-├── manifest.json              # matches, content_scripts.js[], content_scripts.css[], action
-├── src/
-│   ├── constants.js           # attribute names, garden ids, token enum. No logic.
-│   ├── locales.js             # DATA: locale → {header, urgent, high, normal, low}
-│   ├── table-locator.js       # (3) document → HTMLTableElement[]
-│   ├── column-resolver.js     # (4) table → {index, locale} | NONE
-│   ├── priority-extractor.js  # (5) (cellText, locale) → token
-│   ├── stamper.js             # (6) ★ the only writes ★
-│   ├── hint.js                # (7)
-│   ├── observer.js            # (2) debounce + lifecycle
-│   └── main.js                # (1) bootstrap — LAST in the js[] array
-├── css/
-│   └── palette.css            # (0) declarative, injected by manifest
-├── sw.js                      # badge only
-├── popup/
-│   ├── hint.html
-│   └── hint.css               # static; no JS needed
-├── test/
-│   └── fixtures/              # captured real Zendesk view HTML, one per scenario
-└── icons/
+extension/
+├── manifest.json          # MODIFIED  version 1.0.0; options_ui; js[] and css[] arrays grow;
+│                          #           minimum_chrome_version 106 → 133 (typed attr()); still permissions:["storage"]
+├── zhroma-settings.js     # NEW       schema + validators (shared, classic script, one frozen global)
+├── zhroma-rules.js        # NEW       pure rule engine (content script only)
+├── zhroma-scheme.js       # NEW       dark-mode signal → <html data-zhroma-scheme>
+├── zhroma-identity.js     # NEW       agent-name detection → worker message
+├── content.js             # MODIFIED  snapshot extension, rule stamps, settings reader, rule-status reply
+├── themes.css             # NEW       palette data (all presets × light/dark)
+├── zhroma.css             # MODIFIED  var() with 0.1.0 literal fallbacks; fill/mark/custom rules
+├── background.js          # MODIFIED  importScripts + settings queue + relay (v1 paths unchanged)
+├── popup.html / popup.js  # MODIFIED  theme picker, rule-health line, options link
+├── options.html           # NEW
+├── options.js             # NEW
+└── icons/                 # unchanged (no new status icon; see diagnosis section)
+
+scripts/release-source.js  # MODIFIED  RELEASE_FILES gains the 7 new shipped files
+SELECTORS.md               # MODIFIED  new ledger entries: dark signal, dark native states,
+                           #           identity location, referenced-cell representation
+test/fixtures/             # NEW files: dark-mode table + header capture(s), multi-column
+                           #           value capture (Assignee/Status/Group/custom field)
+test/extension/            # NEW suites: rules engine, settings schema, rule stamping,
+                           #           CSS precedence/agreement, scheme, identity, options, import
+release/                   # MODIFIED  disclosures.md / privacy policy / listing for identity + options
 ```
 
 ### Structure Rationale
 
-- **`js[]` ordering is the dependency graph.** `constants` → `locales` → pure components → `stamper` → `observer` → `main`. If a file needs something declared later, that is a real cycle and the load order forces you to see it. Cheap discipline, zero tooling.
-- **`locales.js` is data, not code.** Adding Japanese is a JSON edit, not a logic change. This is the seam that makes the i18n problem tractable incrementally (see build order — v1 ships English + a handful, and growth is a data PR).
-- **`css/palette.css` is separate from `src/`** because it is injected by a completely different mechanism (the browser, declaratively, before DOM construction) and has a different failure mode. Co-locating it with JS invites someone to start writing styles from JS.
-- **`test/fixtures/` exists from day one.** The standing risk on this project is Zendesk changing its DOM. A fixture captured the day you first get tinting working is the artefact that tells you *what* changed when it breaks in eight months.
-- **No `options/`, no `storage`.** v1 is zero-config by decision. Not creating the folder is how that decision stays made.
+- **Shared logic lives in separate classic scripts, not in `content.js`.** MV3 runs every file in the `js[]` array in one isolated-world scope, in array order. The worker can take the same file with `importScripts`, which works only in a classic worker at initial evaluation. So there is still no build step, and the shipped bytes are still the authored bytes. Keeping the new logic out of `content.js` keeps the diff to the accepted file small and reviewable. It also gives the rule engine and schema their own test surfaces.
+- **The palette lives in CSS, not JS.** This keeps the existing `runtime-contract` property that `content.js` holds no colour literals. The popup and options pages link the same `themes.css` for their swatches, so the store screenshots, the picker and the page all render from one set of bytes. The JS side only knows the *names* (`THEME_IDS`, `SLOTS`). An agreement test holds the names in JS and CSS together, the same pattern already used for the `en`-family JS/CSS agreement.
+- **The options page is new files, not a mode of the popup.** A rule editor with nested groups needs a full tab (`open_in_tab: true`). Embedded options pages have sizing issues and no `tabs` API. The popup stays a status panel with two controls.
 
 ---
 
-## The re-render problem: strategy comparison and recommendation
+## Answers to the integration questions
 
-Zendesk agent views are React. Rows are replaced — not mutated — on sort, refresh, filter, pagination and view switch. Any tint written into a node is gone the moment React swaps that node. Four candidate strategies:
+### 1. Where rule evaluation runs, and how the rule set is delivered
 
-| Strategy | Survives re-render? | Infinite-loop risk | Permissions | Verdict |
-|----------|--------------------|--------------------|-------------|---------|
-| **A. Pure CSS, no JS** (Zendesk emits a priority class) | Perfectly | None | Host only | **Impossible.** See below. |
-| **B. Polling `setInterval`** | Yes, after up to N ms | None | Host only | **Rejected.** See below. |
-| **C. MutationObserver → inline styles** | Yes | **High** | Host only | **Rejected.** See below. |
-| **D. MutationObserver → `data-*` stamp + declarative CSS** | Yes | **Structurally zero** | Host only | ★ **Recommended** |
+**Content script. Non-negotiable.** Three reasons:
 
-### A. Pure CSS-only — investigated and ruled out
+- The v1 invariant in `commitSnapshot` says: *"Never carry DOM interpretations across a timer or messaging boundary."* Rules are interpretations of cells. Evaluating them in the worker would mean shipping cell values across a process boundary and back, then committing stale conclusions against a DOM that may have been re-rendered in between.
+- The worker is documented as "a disposable adapter, never a database". It can be terminated at any moment. The content script is the long-lived observer that already re-derives everything on each mutation.
+- Privacy posture: today the content script tells the rest of the extension only finite enums. Keeping rule evaluation local preserves that for ticket data. The one explicit exception is the agent's own name (see §5).
 
-This would collapse the architecture to a stylesheet, so it was worth checking properly. It fails on two independent grounds:
+**Delivery and freshness:**
 
-1. **Zendesk emits no priority marker on rows.** Across the Zendesk-specific attributes actually observed in agent views (`generic-table-row`, `generic-table-cells-id`, `ticket-table-cells-subject`, `table_main`, `table_header`, `table_container`, `status-badge-state`) and across all Garden `data-garden-id` values, there is nothing priority-bearing on a `<tr>`. Corroborating: the most substantial maintained Zendesk userscript (`holatuwol/liferay-zendesk-userscript`) does not read priority from the list DOM at all — it fetches it from the Zendesk REST API — and the simpler `pioug` gist resorts to regexing `tr.textContent`. Neither would do that if a class existed. *(Confidence: MEDIUM-HIGH. Marked as an assumption to disprove in five minutes on a live instance — if it turns out a `data-priority` exists, throw away components 4, 5 and 6 and ship a stylesheet. Check this first.)*
-2. **Even if the value is present as text, CSS cannot select on text content.** There is no text-content selector and there is no realistic prospect of one; the documented workaround is precisely "have JS mirror the text into an attribute, then select on the attribute" — which is exactly strategy D.
-
-There is a tempting near-miss worth explicitly dismissing: `tr:has(td:nth-child(7))` can select *structurally* but still cannot read the word "Urgent". Column position is user-configurable, so even structural targeting has nothing stable to hang on.
-
-### B. Polling — the case against
-
-Polling with `setInterval` is what the incumbent prior art does (`liferay-zendesk-userscript` literally comments *"Since there's an SPA framework in place that I don't fully understand, attempt to apply updates once per second"*). Reject it because:
-
-- **It fails the core value proposition.** The product promise is "know within one second." A 1000 ms poll means an agent who sorts a view watches uncoloured rows, then a flash of colour. That flash *is* the bug report. Tightening to 100 ms to hide it means 10 full table scans per second, forever, on a tab an agent leaves open all day.
-- **It burns CPU on the 99.9% of ticks where nothing changed.** On a background tab Chrome throttles the timer, which means the tint is stale exactly when the agent tab-switches back — one of the four survival scenarios in the requirements.
-- **It has no natural teardown.** An interval outlives the thing it was watching.
-- It offers **no upside** over an observer here. Observers are strictly better-informed about the same events.
-
-Polling is only defensible when the mutation is invisible to `MutationObserver` (canvas repaints, shadow-DOM-closed widgets, cross-origin frames). None applies.
-
-### C. MutationObserver + inline styles — the trap
-
-This is the obvious implementation and it is where the infinite loop lives. The failure:
-
-```js
-// ✗ DO NOT
-const obs = new MutationObserver(() => {
-  for (const row of rows()) row.style.backgroundColor = colourFor(row);
-});
-obs.observe(table, { childList: true, subtree: true, attributes: true });
+```
+storage key         value shape                                      written by (via worker)
+enabled             boolean (v1, untouched)                          popup switch
+theme               string ∈ THEME_IDS (unknown → 'classic')         popup, options, import
+rules               { schema: 1, revision: n, items: Rule[] }        options, import
+identityOverride    string | null                                    options, import
+identityDetected    string                                           worker, on content message
 ```
 
-`element.style.x = y` writes the `style` **attribute**. With `attributes: true` the observer fires on its own write, which writes again, which fires again — a tight loop that pegs a core and freezes the tab. It also loses a specificity fight it did not need to have: Garden paints backgrounds on `<td>`, and a `<td>` background paints over a `<tr>` background, so the naive inline style on the row is often invisible anyway.
+- **Read path in the content script.** A new `readSettings()` does one `chrome.storage.local.get(['theme','rules','identityOverride','identityDetected'])`. It runs under its own generation counter, in the same shape as `readPreference`. A new `onSettingsChanged` listener is registered next to `onPreferenceChanged`, as a **separate** `addListener`, so the v1 function is byte-for-byte untouched. On each change the listener validates with `ZhromaSettings`, recompiles the `RulePlan`, and then:
+  - a `theme` change only rewrites `<html data-zhroma-theme>`. No pass.
+  - a change to `rules`, `identityOverride` or `identityDetected` calls `scheduleReconcile()`.
+- **Readiness gate.** Add `settingsReady` to `runnable()`, so the first commit already reflects the stored theme and rules. Without it you get a flash of classic colours, then a repaint. A settings read that **fails** sets `settingsReady = true` with `DEFAULTS` and rule health `settings-unreadable`. Priority tinting must never be held hostage by a corrupt rules blob. This is deliberately different from `enabled`, where a non-boolean means "stay untinted", and the difference should be recorded as a decision.
+- **Versioning.** `rules.schema` is an integer. `migrate(raw)` is pure. The current schema passes through. An older schema is upgraded in memory, and the worker writes the upgraded version back only on the next user save, never on read. A **newer** schema, which happens on downgrade or when importing a file from a later build, is refused: the content script treats it as unreadable and uses defaults, and import shows "made by a newer Zhroma". Reads never write.
+- **Migration from the v1 one-boolean store: none.** `enabled` stays its own key with its own validator. Folding it into a settings object would reopen the whole accepted preference pipeline (the queue, the epochs and the apply handshake). It would also risk an upgrade path where a half-migrated value reads as non-boolean, and `applyPreference` treats that as "unconfirmed, stay untinted". A fresh install and an upgraded 0.1.0 install both have no new keys, so both get the defaults, which reproduce 0.1.0.
+- **All tabs update for free.** `storage.onChanged` reaches every Zendesk tab's content script. The v1 `apply-preference` handshake exists only so the popup can report honestly about the *active* tab. The new settings don't need it (see §7).
 
-**The standard mitigations, and why each is insufficient on its own:**
+### 2. Generalising header-located column resolution without regressing Priority
 
-| Mitigation | What it does | Why not enough alone |
-|-----------|--------------|----------------------|
-| Drop `attributes: true` | Observer never sees attribute writes | Doesn't help if you ever need attribute observation; and `childList` writes (inserting a badge element) still self-trigger |
-| `attributeFilter: [...]` excluding your own | Narrows what is reported | Only helps if you enumerate every attribute you *do* want; brittle |
-| `disconnect()` → write → `observe()` | Observer is deaf during the write | **Loses genuine page mutations** that land in the gap. React can re-render mid-write. Silent, intermittent, unreproducible bugs |
-| `takeRecords()` before reconnect | Drains and *discards* queued records | Same flaw, more explicitly: you are throwing away Zendesk's real mutations along with your own |
-| Idempotence guard (`if (el.getAttribute(A) === v) return;`) | Self-triggered pass becomes a no-op | Loop terminates after exactly one extra cycle. **Strong**, but on its own still costs a wasted pass per write |
-| Debounce | Coalesces React's render batches into one pass | Doesn't prevent the loop, just slows it down |
-| A "pass in flight" reentrancy flag | Stops nested passes | Doesn't stop *sequential* self-retriggering |
-
-**The `disconnect`/`takeRecords` dance is the mitigation people reach for, and it is the worst one.** It trades a loud, obvious bug (frozen tab) for a quiet, intermittent one (occasional untinted rows nobody can reproduce). Avoid it.
-
-### D. ★ Recommended: stamp a `data-*` attribute, style declaratively
+**Extend the snapshot and keep the Priority branch literal.** `inspectCandidateTable` already walks every header cell and every body row, and it rejects malformed topology before branching on Priority. Today it throws away what rules need. The change:
 
 ```js
-// observer.js — the only place a timer or observer exists
-let timer = null;
-let inPass = false;
+// content.js — inside inspectCandidateTable (MODIFIED, sketch)
+const result = (state, table = null, entries = [], headers = [], rows = []) =>
+  ({ state, table, entries, headers, rows });
+// … unchanged validation …
+const indexes = headers.flatMap((cell, index) => cell.textContent.trim() === 'Priority' ? [index] : []);
+// ↑ UNCHANGED: the verified Priority path keeps its exact-English literal test.
+const rows = [];                         // NEW: every witnessed full-width ticket row
+for (const row of bodies[0].children) {
+  // … unchanged group/row/cell validation …
+  if (cells.length < headers.length) { incomplete = true; continue; }
+  witnessed = true;
+  rows.push(cells);                      // NEW — one line, before the Priority branch
+  if (priorityIndex === -1) continue;
+  // … unchanged Priority read, including 'unsafe' on an unknown label …
+}
+if (incomplete || !witnessed) return result('waiting', table);
+if (priorityIndex === -1) return result('missing', table, [], headers, rows);
+return result(entries.some(...) ? 'safe' : 'blank', table, entries, headers, rows);
+```
 
-const observer = new MutationObserver(() => {
-  if (inPass) return;                      // guard 3: reentrancy
-  clearTimeout(timer);
-  timer = setTimeout(runPass, 50);          // guard 2: debounce React batches
-});
+The rule engine then owns a **separate** resolver that never feeds back into Priority:
 
-observer.observe(root, {
-  childList: true,
-  subtree: true,
-  attributes: false,                        // guard 1: THE structural fix
-  characterData: false
-});
-
-function runPass() {
-  inPass = true;
-  try { pass(); } catch (e) { /* fail quiet: page untouched */ }
-  finally { inPass = false; }
+```js
+// zhroma-rules.js (NEW) — pure
+const normalizeHeader = (text) => text.normalize('NFC').replace(/\s+/g, ' ').trim().toLowerCase();
+function bind(headerLabels, plan) {
+  // label → index | AMBIGUOUS. A duplicate label is never guessed at.
+  const index = new Map();
+  headerLabels.forEach((label, i) => index.set(label, index.has(label) ? AMBIGUOUS : i));
+  return plan.columns.map((name) => index.has(name) ? index.get(name) : MISSING);
 }
 ```
 
-```js
-// stamper.js — the ONLY DOM write in the extension
-function stamp(row, token) {
-  if (row.getAttribute(ATTR) === token) return;   // guard 4: idempotence
-  if (token === 'none') row.removeAttribute(ATTR);
-  else row.setAttribute(ATTR, token);
-}
-```
+Rules on design:
+
+- **Rules run only in states `safe`, `blank` and `missing`.** These are the states where the table is proven rendered: a full-width row has been witnessed. In `waiting`, `unsafe` and `unsupported` there are no rule stamps. So a non-English shell, or a table with an unrecognised Priority label, gets no rule stamps either. That is conservative and consistent with the v1 evidence boundary. Note the consequence: **rules inherit the English-only gate**, even though a rule written against localised header text could work. Record this as a decision, not an accident.
+- **Painting in `missing` is allowed. Claiming is not.** A view with no Priority column but an Assignee column should still show "assigned to me". Rule stamps are paint, not a diagnosis. The 100 ms settle certainty still governs only the `missing` *claim*.
+- **Normalising values** (in `normalizeCell`, one place, unit-tested):
+  - `textContent`, NFC-normalised, whitespace runs collapsed, trimmed.
+  - Comparisons are case-insensitive, using `toLowerCase()` on both operands, precomputed at `compile`.
+  - `textContent` includes the visually hidden label spans the fixtures show in icon columns (for example `<span hidden>TEXT-017</span>`). That is the accessible value, and it is correct to match on.
+  - **Do not fall back to `aria-label` until recon proves a column type needs it.** The fixture has cells with an empty text node and a non-empty `aria-label`. Whether that label is the value or a description is unknown.
+  - "is empty" means `normalized === ''` **or** the recon-proven empty placeholder, if Zendesk renders one such as `-`. This must come from recon.
+  - `<time>` cells hold relative text ("2 hours ago"). Operators are text-only in v1.1, so date semantics are out of scope and the options page should say so.
+- **A missing or ambiguous column makes the rule not apply.** It never makes the condition false, and it never makes it empty. If a missing column read as empty, `not equals X` and `is empty` would match every row of every view that lacks the column. That is the worst possible false positive for a glance tool. Such a rule is skipped for this table and counted in rule health.
+- **Evaluation is per pass and stateless.** Re-bind on every pass: the header has at most about 16 cells. No `WeakMap` memo is needed, and none of the stale-index risk that the v1 research warned about. Per row, cache normalised cell text for referenced indexes only.
+- **Precedence.** Walk rules in stored order. The first matching `replace` rule sets `fill`. The first matching `mark` rule sets `mark`. Stop when both are found. Disabled rules are skipped at `compile`.
+
+### 3. Styling seam
+
+**Stamps are semantic, and the CSS resolves colour.** Nothing on a row names a resolved colour except custom hex, which is user data and not palette.
+
+| Element | Attribute | Values | Written when |
+|---------|-----------|--------|--------------|
+| ticket `tr` | `data-zhroma-priority` | `Urgent\|High\|Normal\|Low` (v1, unchanged) | Priority read (v1 path) |
+| ticket `tr` | `data-zhroma-fill` | slot name ∈ `SLOTS`, or `custom` | first matching replace rule |
+| ticket `tr` | `data-zhroma-fill-color` | `#rrggbb` (validated) | fill is `custom` |
+| ticket `tr` | `data-zhroma-mark` | slot name, or `custom` | first matching mark rule |
+| ticket `tr` | `data-zhroma-mark-color` | `#rrggbb` | mark is `custom` |
+| `<html>` | `data-zhroma-theme` | ∈ `THEME_IDS` | settings read/change |
+| `<html>` | `data-zhroma-scheme` | `light\|dark` | scheme detector |
 
 ```css
-/* css/palette.css — injected declaratively by the manifest */
-/* Paint the CELLS, not the row: Garden sets td backgrounds, which
-   would otherwise paint over any tr background. */
-tr[data-zhroma-priority] > td { background-color: transparent; }
-tr[data-zhroma-priority="urgent"] > td { background-color: var(--zhroma-urgent); }
-tr[data-zhroma-priority="high"]   > td { background-color: var(--zhroma-high);   }
-tr[data-zhroma-priority="normal"] > td { background-color: var(--zhroma-normal); }
-tr[data-zhroma-priority="low"]    > td { background-color: var(--zhroma-low);    }
-```
+/* themes.css (NEW) — data only; any element may carry the attributes, so popup/options previews can scope them */
+[data-zhroma-theme="classic"] {                       /* light = the exact 0.1.0 literals */
+  --zhroma-tint-urgent: rgb(220 38 38 / 0.14);  --zhroma-tint-high: rgb(234 88 12 / 0.12);
+  --zhroma-tint-normal: rgb(202 138 4 / 0.09);  --zhroma-tint-low:  rgb(22 163 74 / 0.08);
+  --zhroma-slot-red: rgb(220 38 38); /* … every slot … */  --zhroma-fill-strength: 14%;
+}
+[data-zhroma-theme="classic"][data-zhroma-scheme="dark"] { /* dark variant values, higher strength */ }
+[data-zhroma-theme="nord"] {
+  --zhroma-slot-red: #bf616a; /* … */
+  --zhroma-tint-urgent: color-mix(in srgb, var(--zhroma-slot-red) var(--zhroma-strength-urgent), transparent);
+}
 
-**Why the loop is structurally impossible, not merely mitigated:**
-
-The stamp writes an **attribute**. The observer watches **`childList` only**. There is no path from the write back to the callback. The idempotence guard (guard 4) is defence-in-depth — even if a future maintainer flips `attributes: true`, the loop terminates after one extra cycle instead of hanging the tab. Four independent guards, of which any one would suffice, and none of which discards a real page mutation.
-
-**Additional wins that fall out of this choice:**
-
-- **Scroll costs nothing.** Colour lives in the cascade, so scroll and hover repaints are handled by the compositor. No JS runs on scroll at all. (Requirement: "tinting survives scrolling" — satisfied by doing nothing.)
-- **Stale stamps are self-healing.** If React reuses a `<tr>` node with different ticket data, the next pass overwrites the attribute. If it discards the node, the attribute goes with it.
-- **Uninstall is instant and total.** Remove the extension, the stylesheet unloads, colour vanishes. No orphaned inline styles baked into the page.
-- **DevTools stays readable.** An agent (or a Zendesk engineer debugging a support case) sees one extra attribute, not a wall of inline styles.
-- **`!important` is usually avoidable.** `tr[attr] > td` is `(0,2,1)` specificity, which beats a Garden styled-components single class `(0,1,1)` on `td`. Reach for `!important` only if a real conflict is observed on a live instance — do not pre-emptively splatter it.
-
-### Observer scope: what to observe
-
-Observe the **narrowest stable ancestor you can find, falling back to `document.body`**:
-
-```js
-function findRoot() {
-  return document.querySelector('#views_views-ticket-table')   // narrow, if present
-      ?? document.querySelector('[data-test-id="table_container"]')
-      ?? document.body;                                         // always works
+/* zhroma.css (MODIFIED) — selectors, precedence, !important; no palette beyond v1 fallbacks */
+html[lang|="en" i] table[…] > tbody[…] > tr[…][data-zhroma-priority="Urgent"] > td[data-garden-id="tables.cell"] {
+  background-color: var(--zhroma-tint-urgent, rgb(220 38 38 / 0.14)) !important;   /* fallback = 0.1.0 */
+}
+/* Replace: declared AFTER the priority rules with one more attribute → wins on specificity */
+html[lang|="en" i] table[…] > tbody[…] > tr[…][data-zhroma-fill][data-zhroma-fill] > td[data-garden-id="tables.cell"] {
+  background-color: color-mix(in srgb, var(--zhroma-fill) var(--zhroma-fill-strength, 14%), transparent) !important;
+}
+tr[data-zhroma-fill="red"]    { --zhroma-fill: var(--zhroma-slot-red); }     /* one line per slot */
+tr[data-zhroma-fill="custom"] { --zhroma-fill: attr(data-zhroma-fill-color type(<color>), transparent); }
+/* Mark: a left-edge stripe as a background-image layer on the FIRST direct cell */
+… > tr[…][data-zhroma-mark] > td[data-garden-id="tables.cell"]:first-child {
+  background-image: linear-gradient(to right, var(--zhroma-mark) 0 4px, transparent 4px) !important;
 }
 ```
 
-Do **not** hold a reference to the narrow root forever — on a view switch React may replace it, at which point your observer is watching a detached node and everything silently stops. The safe pattern:
+How the effects compose:
 
-- Observe `document.body` with `childList: true, subtree: true` **always**. It never gets replaced, so the observer never goes deaf.
-- Use the narrow selectors inside `pass()` to bound the *work*, not the *watching*.
+- **Replace vs priority.** Keep the priority stamp on a filled row. It stays truthful, and the v1 commit path is untouched. Let CSS precedence hide it: the fill rule comes later in the file and adds one attribute to its specificity. A test must assert this precedence, because `!important` against `!important` falls through to specificity and then to source order.
+- **Mark vs tint.** `background-image` layers over `background-color` on the same cell, so a mark always sits on top of whichever tint won.
+- **Native hover and selection (v1 ledger `interaction-and-sticky-states`).**
+  - Hover and selected paint belong to the `tr`, and cells are transparent. Translucent fills keep the v1-accepted composition: the row's hover colour shows through the cell's translucent layer.
+  - Selection *also* adds `box-shadow: inset 3px 0 0 rgb(31 115 183)` on the **first direct cell**. **Do not draw the stripe with `box-shadow`**, because `!important` would erase the native selection indicator. An inset box-shadow paints above the background layers, so with a `background-image` stripe the native selection indicator stays visible on selected rows. The dark-mode values of these native states are unknown until recon.
+- **Light/dark without re-evaluation.** The scheme detector flips one attribute on `<html>`. Every `--zhroma-*` variable re-resolves in the cascade. Row stamps, the rule plan and the observer are not involved.
+- **A theme change** is the same kind of single attribute flip. Custom-hex colours are fixed by definition, but they still adapt through the theme's per-scheme `--zhroma-fill-strength`.
+- **Fallback if typed `attr()` inheritance misbehaves.** It is new: Chrome 133, confidence MEDIUM. The fallback is `row.style.setProperty('--zhroma-fill', hex)`, which is an inline custom property on our own stamped row. Run a 30-minute spike in the styling phase before relying on the primary path. Do **not** fall back to a generated `<style>` or `adoptedStyleSheets`: user strings would become CSS text (an injection surface), and adopted sheets from content scripts are poorly specified. They are broken outright in Firefox, and a host that reassigns the array silently drops them.
+- **Minimum Chrome** goes to 133 for typed `attr()`. That also covers `color-mix()` (111) and `light-dark()` (123). Current stable is 152. Users on older Chrome keep 0.1.0. That is a store-visible change, but not a permission change.
 
-This is the "observe a stable ancestor container" strategy from the brief, and it is the correct one — but the stable ancestor is `body`, and the narrowing belongs in the pass, not the observe call. Observing `body` sounds expensive; it is not, because the callback does nothing except reset a 50 ms timer. The cost is one function call per mutation batch.
+### 4. Dark-mode detection and the recon it needs
 
-**Debounce interval: 50 ms.** Rationale: below human perception of "instant" (~100 ms), comfortably longer than a React commit batch, and short enough that sorting a view feels like the colours were always there. Do not use `requestAnimationFrame` — a background tab does not tick rAF, which breaks the tab-switch requirement. Do not use a microtask — it fires mid-React-batch and you will scan a half-rendered table.
+**What is known (primary source).** In the published `@zendeskgarden/react-theming@9.16.1` tarball, `ThemeProvider` is a bare styled-components `ThemeProvider` and renders nothing to the DOM. `ColorSchemeProvider` keeps `'light' | 'dark' | 'system'` in page `localStorage['color-scheme']` (the key is configurable and can be disabled). It follows `prefers-color-scheme` only in system mode, and it sets **no** attribute, class or `color-scheme` on the document. Garden itself therefore gives no CSS-selectable signal. Dark mode shows up as regenerated hashed classes and different computed colours, **unless Zendesk adds its own marker**. Zendesk's help docs say agents choose Light, Dark or Match system from the profile menu. The dark surface is about `#151A1E`, and dark mode covers views.
 
----
+**Decision tree** (recon picks the branch):
 
-## SPA route changes: don't detect them
+1. **Zendesk sets a stable attribute or class on `html` or `body`** (for example `data-color-scheme`, `.dark`, or `color-scheme: dark` on `:root`). Then key CSS directly on it. For `color-scheme`, use `light-dark()`. **There is no detector JS at all**, and a mid-session switch is free. This is the best outcome.
+2. **No marker, but the table's opaque surface changes colour.** The v1 ledger proved the first opaque ancestor is `DIV[data-garden-id="pane"]`. `zhroma-scheme.js` reads `getComputedStyle(pane).backgroundColor`, classifies it by relative luminance (dark if below 0.2), and stamps `<html data-zhroma-scheme>`. To catch a mid-session switch:
+   - It runs its own `MutationObserver` on `documentElement` and `body` (attributes, no subtree) and on the current pane (`class` and `style` only), re-bound when the pane is replaced.
+   - A `matchMedia('(prefers-color-scheme: dark)')` change listener is used **only as a trigger to re-detect**, because system mode flips the host when the OS flips.
+   - It re-detects on `visibilitychange` and `pageshow`.
+   - It also runs one cheap detection at the end of each reconcile pass, as a safety net.
+   - **Do not add `class` to the v1 observer's `attributeFilter`.** That would push every class churn in the SPA through the table classifier.
+3. **Neither.** Default to `light`. That is the 0.1.0 behaviour, so nothing is lost. Report `scheme: unknown` in rule health, or in a debug-only field.
 
-The brief asks how a content script detects navigation inside the agent workspace. **Recommendation: it doesn't, and shouldn't.** Here is the reasoning, including why each of the obvious mechanisms is a worse deal.
+**Never** use `prefers-color-scheme` as the signal: an agent who chose explicit Dark on a light OS would get light tints. **Never** read page `localStorage['color-scheme']` either. The key is Garden's default, not a Zendesk contract. A same-tab change fires no `storage` event. It reads page storage, which is a reviewer smell and banned by the current runtime-contract test. And it still needs `matchMedia` for system mode.
 
-The Zendesk agent workspace routes are `/agent/filters/<view_id>` (agent views), `/agent/tickets/<id>`, `/agent/dashboard`, `/agent/admin/…`. Moving between them changes the URL with no page load. Options:
+**Proposed Recon 2 (this milestone's Phase-1 equivalent).** It uses the same ledger format and sanitizer discipline as `SELECTORS.md`. It is read-only, and the user drives the authenticated session. Entries:
 
-| Mechanism | Works from a content script? | Cost | Verdict |
-|-----------|------------------------------|------|---------|
-| **`popstate`** | Yes | Free | **Insufficient.** Does not fire for `pushState`/`replaceState`, which is how a React router navigates. Only fires on back/forward. Misses the majority of navigations. |
-| **Patch `history.pushState`** | **No** | — | **Broken by design.** Content scripts run in an isolated world; `history.pushState` there is a *different function object* than the page's. Patching it has no effect on Zendesk's router. Requires `world: "MAIN"` injection plus a `CustomEvent` bridge back to the isolated world — a second script, a second execution context, and a script the store reviewer has to reason about. |
-| **Navigation API (`navigation.addEventListener('navigate')`)** | Yes (Chromium; Baseline newly-available Jan 2026) | Free | **Viable but unnecessary.** Chrome-only is fine here. But it introduces a *second* lifecycle path alongside the observer, doubling the states you have to reason about, and it does not fire on initial load, so you need the observer path anyway. Also `pushState`/`replaceState` semantics differ between `navigate` and `currententrychange`, which is a footgun. |
-| **`chrome.webNavigation.onHistoryStateUpdated`** | Via service worker + messaging | **A permission** | **Rejected.** Costs the `webNavigation` permission, which is broad, needs justifying at store review, and directly contradicts the PROJECT constraint "as narrow as possible." Note that the incumbent competitor was delisted in Aug 2026 for policy violations. Do not add reviewable surface for a capability you can get for free. |
-| **★ Nothing — the observer already covers it** | Yes | Free | **Recommended.** |
+| Ledger id | Question | Probe (sketch) |
+|-----------|----------|----------------|
+| `dark-mode-signal` | Which document-level signal differs between Light, Dark and System (OS light/dark)? | `html`/`body` `getAttributeNames()` + `className`, `getComputedStyle(documentElement).colorScheme`, `meta[name=color-scheme]`, count of `[data-theme],[data-color-scheme],[class*=dark]`, pane `backgroundColor` |
+| `dark-mode-switch-mutation` | Does a mid-session switch re-mount the table (childList), swap classes only, or reload? | Temporary observer counting record types on `html`/`body`/pane/table during one switch |
+| `dark-native-states` | Hover, selected, sticky-header and pane paint in dark | Same probe as v1 `interaction-and-sticky-states`, run in dark |
+| `dark-table-topology` | Are the table, row and cell Garden identifiers identical in dark? | Re-run the v1 `stable-identifiers` probe |
+| `identity-location` | Where is the signed-in agent's name rendered *without* opening a menu? | Top-bar avatar `img[alt]`, button `aria-label`/`title`, `[data-test-id*=profile]`/`[data-garden-id^="avatars"]`; also inside the opened profile menu |
+| `identity-vs-assignee` | Is the identity string byte-equal to the Assignee cell text for the agent's own tickets? | Compare normalised strings; record only `equal: true/false` and the kind of difference |
+| `referenced-cell-representation` | How do Assignee, Requester, Group, Status, Type, Subject and one custom dropdown/checkbox field render (text vs `aria-label` vs badge; empty placeholder)? | Per column: `textContent` shape class, `aria-label` present/equal, child tags, empty rendering |
+| `header-label-uniqueness` | Can two columns share a header label, for example custom fields with the same title? | Admin-side check plus a header probe |
 
-**The insight:** a route change in a React SPA *is* a DOM mutation — a very large one. The old view's table is unmounted and a new one is mounted. `MutationObserver` on `document.body` with `subtree: true` sees this unambiguously. Since the extension is **stateless across passes** (it recomputes the table list, the column index and every row value from scratch each pass), it does not need to know *why* the DOM changed. "The DOM changed, so re-derive everything" is both simpler and more robust than "the URL changed, so invalidate these three caches."
+Fixtures to admit, through the existing sanitizer: a dark-mode capture of the table, a sanitized capture of the header region with the name replaced by a token, and a multi-column capture with one ticket assigned to the capturing agent. The sanitizer must learn to tokenise the agent's name consistently across the header and the Assignee cells, otherwise the `identity-vs-assignee` evidence cannot be kept.
 
-Route detection is therefore an *anti-requirement*: adding it would give you a second code path that can disagree with the first.
+### 5. Identity detection and the editable override
 
-**One caveat this creates**, which must be handled anyway: the per-table column-index memo (component 4) must be keyed on something that dies with the table — use a `WeakMap` keyed by the `<table>` element, or stamp `data-zhroma-col` on the table itself. A module-level `let priorityIndex` survives the route change and will tint the wrong column on the next view. This is the single most likely bug in this architecture; call it out in the plan.
+- **Where the name probably renders.** The top-bar profile avatar at the upper right. The name is likely an `img alt`, a `title`/`aria-label` on the avatar button, or visible only inside the opened profile menu. There is no public documentation. This is a recon item, and the architecture must survive the worst case, where the name is only visible while the menu is open.
+- **Detector.** `zhroma-identity.js` has its own debounced observer. It is independent of the table observer, because the header can mount after the table and nothing in the table would re-trigger a pass. On a successful read, it normalises the name (NFC, collapse whitespace, trim, length ≤ 128, no control characters). If the name differs from the last one sent, it sends `{type: 'identity-detected', name}` to the worker. It then disconnects, and re-arms on `pageshow`. In the worst case it detects opportunistically when the agent opens their profile menu, and the persisted `identityDetected` covers every later page load.
+- **Worker write.** The worker checks `fromContent(sender)`, validates the name with `ZhromaSettings.validateIdentity`, and writes `identityDetected` only when it changed, through the settings queue. This is the **one deliberate break** of the "content tells the extension only finite enums" rule. It is scoped to the agent's own display name, which the user explicitly asked to have detected. Record it as a decision, and update `release/disclosures.md` and the privacy policy: a name is now stored on the device. The consent-applicability question in `release/policy-applicability.md` should be re-read in light of this.
+- **Precedence at `compile`.** `identityOverride` (if set) wins, then this document's live detection, then the persisted `identityDetected`, then none. With none, `is me` conditions make the rule **not apply** (same rule as a missing column), and rule health reports `identity-unknown`. The options page shows "Detected: <name>" read from storage, beside an override field with "Use detected" to clear it.
+- **Multi-tenant caveat.** Agents working in two subdomains under different display names will see the last-detected name from the other tenant until the current header is read. Live detection wins within a document, so the window is short. Storing per-host would put tenant hostnames into storage, which v1 carefully avoided. Accept the caveat and document it.
+- **Model.** `is me` is an operand, not a column: `{column: 'Assignee', operator: 'equals', operand: {kind: 'me'}}`. It works with `equals` and `not-equals` on any column, for example Requester. That is free generality, and it stops "assignee" from being hard-coded into the engine.
 
----
+### 6. Three-way diagnosis and toolbar status when rules reference missing columns
 
-## Reading priority robustly
+**The toolbar and the three diagnoses stay Priority-only. Rule health is a separate channel.**
 
-This is the second-hardest problem after re-render, and the one most likely to be under-scoped.
+- The diagnoses (`working`, `missing`, `cannot-read`) are accepted v1 behaviour, backed by paired icons, fixed copy and exact-shape validators in three files (`TITLES`, `COPY`, `validDiagnosis`, and `isExact(reply, ['type','requestId','diagnosis','reason'])`). Adding a rules dimension to them would change every one of those tables and reopen FAIL-01/03/05. It would also blur a clear message: "Add a Priority column" is about Priority.
+- **New finite enum** in the content script: `ruleHealth ∈ {'none', 'ok', 'columns-missing', 'identity-unknown', 'settings-unreadable', 'unknown'}`. It is computed from the same pass, and it only leaves `unknown` in states `safe` or `blank`, or in `missing` once `missingConfirmed` is set. That reuses the v1 certainty: a mounting view is never accused of lacking a rule's column.
+- **Transport is additive.** The popup sends `{type: 'popup-rule-status', requestId}`. The worker relays `{type: 'get-rule-status', requestId}` to `frameId: 0` under the same `bounded()` deadlines. The content script replies `{type: 'rule-status', requestId, health}`. None of the v1 message shapes change.
+- **Popup copy.** Second line, fixed strings. For example: `columns-missing` → "Some rules use a column this view doesn't show". `identity-unknown` → "Zhroma doesn't know who you are yet — set your name in Rules". Nothing appears for `none`/`ok`/`unknown`. No column names are echoed from the page. The line could name the rule, since rule names are the user's own data, but keep v1.1 to fixed copy.
+- **Toolbar icon.** Unchanged. No sixth shape. Rules painting in a `missing` view while the icon says "Add a Priority column" is still true, because the message is about priority tinting.
+- **Off.** The one switch turns off everything: tints, fills, marks and the `<html>` attributes. `pauseController` also clears rule stamps and removes `data-zhroma-theme` and `data-zhroma-scheme`, so the page is left exactly as it was.
 
-### Verified DOM foundation
+### 7. Data flow: options ↔ popup ↔ worker ↔ content, and the import boundary
 
-Zendesk's agent UI is built on **Zendesk Garden**, whose `@zendeskgarden/react-tables` package emits `data-garden-id` attributes on every table element, unconditionally, in production builds. Verified by extracting the published npm tarball (v9.15.8) and reading `dist/esm/styled/*.js`:
+**The worker is the single writer for every key.** This extends the v1 key decision rather than inventing a second policy. It gives three things. First, one serial queue, so a popup theme change, an options save and an identity detection can never interleave a read-modify-write. Second, one trust boundary, because the worker validates with the same `ZhromaSettings` the content script reads with. Third, the existing bounded-hop and admission-cap machinery can be reused. Extension pages may **read** storage directly (the options page does). The popup keeps its v1 rule and asks the worker.
 
-| Selector | Element | Source |
-|----------|---------|--------|
-| `table[data-garden-id="tables.table"]` | `<table>` | `StyledTable = styled.table.attrs({'data-garden-id': 'tables.table'})` |
-| `thead[data-garden-id="tables.head"]` | `<thead>` | `StyledHead = styled.thead.attrs(…)` |
-| `tbody[data-garden-id="tables.body"]` | `<tbody>` | `StyledBody = styled.tbody.attrs(…)` |
-| `tr[data-garden-id="tables.header_row"]` | `<tr>` in head | `StyledHeaderRow` |
-| `th[data-garden-id="tables.header_cell"]` | `<th>` | `StyledHeaderCell = styled(StyledCell).attrs({as:'th', 'data-garden-id':'tables.header_cell'})` |
-| `tr[data-garden-id="tables.row"]` | `<tr>` in body | `StyledRow` |
-| `tr[data-garden-id="tables.group_row"]` | `<tr>` **group header** | `StyledGroupRow` |
-| `td[data-garden-id="tables.cell"]` | `<td>` | `StyledCell = styled.td.attrs(…)` |
-| `button[data-garden-id="tables.sortable"]` | sort `<button>` inside `<th>` | `StyledSortableButton = styled.button.attrs(…)` |
-
-A `data-garden-version` attribute is emitted alongside. Corroborated independently: the `liferay-zendesk-userscript` selects the view ticket table with exactly `table[data-garden-id="tables.table"] tbody` and distinguishes group rows by `data-garden-id === 'tables.group_row'`.
-
-**This is the stable selector surface. Use it, and nothing else, wherever possible.** The class names on the same elements are styled-components hashes (`sc-xxxxxx`) that change on any Garden release — targeting them is the classic way these extensions rot.
-
-Zendesk *also* stamps its own `data-test-id` attributes (`generic-table`, `generic-table-row`, `generic-table-cells-id`, `ticket-table-cells-subject`, `table_main`, `table_header`, `table_container`, `views_views-ticket-table`). These are useful as **secondary** selectors but are less trustworthy than `data-garden-id`, because `data-test-id` values are an internal testing convention with no external contract, whereas `data-garden-id` is baked into a published, versioned, open-source package.
-
-### The three real hazards
-
-1. **Column order is user-configurable** (a view has up to 15 columns, drag-ordered). Never hard-code an index.
-2. **There are two header tables.** Views render a sticky duplicate header (`table[data-test-id="table_header"]`) *alongside* the body table (`table[data-test-id="table_main"]`), inside a shared `div[data-test-id="table_container"]`. Naively `document.querySelector('th')`-ing across the page finds headers belonging to the wrong table. **Always resolve headers from within the same `<table>` element as the rows you are about to stamp.** *(Assumption to validate: the body table appears to carry its own `<thead>` as well as its `<tbody>` — userscript code reads `table.tHead.rows[0].cells` on it successfully. If a live instance shows the body table has no `<thead>`, the resolver must walk up to `[data-test-id="table_container"]` and read headers from the sibling header table by index.)*
-3. **Group rows are `<tr>` too.** A view with "Group by" inserts `tr[data-garden-id="tables.group_row"]` elements. These must be excluded — tinting them looks like a rendering bug. Select `tr[data-garden-id="tables.row"]`, not `tbody tr`.
-
-### Header text is localised — the layered resolver
-
-The Zendesk agent UI ships in a large set of languages, and an agent picks their own UI language independently of the account default. **Both the "Priority" header and the four values are translated UI strings.** An extension that greps for the literal `"Urgent"` is an English-only extension, and the target is *any* `*.zendesk.com`.
-
-Recommended resolver, tried in order, first hit wins:
-
-**Tier 1 — Locale-keyed string table (the primary path).**
-Read the UI locale from the document (`document.documentElement.lang`, falling back to `<html lang>`/`navigator.language`), look it up in `locales.js`, and match the header text against that locale's `header` string. The same entry supplies the four value strings for component 5.
-
-```js
-// locales.js — DATA, not logic
-export const LOCALES = {
-  en: { header: 'Priority', urgent: 'Urgent', high: 'High', normal: 'Normal', low: 'Low' },
-  de: { header: 'Priorität', urgent: 'Dringend', high: 'Hoch', normal: 'Normal', low: 'Niedrig' },
-  // …grown by data PR, not code change
-};
+```
+Options "Save"   → {type:'save-rules', requestId, rules, baseRevision}
+                   worker: validateRules → read rules.revision → baseRevision matches?
+                     yes → set {rules:{schema:1, revision:n+1, items}} → {saved:true, revision:n+1}
+                     no  → {saved:false, conflict:true}  → options reloads from storage and says so
+                   storage.onChanged → every content script recompiles → scheduleReconcile()
+Popup theme      → {type:'set-theme', requestId, theme} → validateTheme → set {theme} → {saved}
+                   storage.onChanged → content flips <html data-zhroma-theme>; no pass
+Content identity → {type:'identity-detected', name} → validateIdentity → set if changed
+Options import   → file ≤ 256 KB → JSON.parse (try) → validateExport (UX preview: "Replace 7 rules, theme Nord?")
+                   → {type:'import-settings', requestId, payload}
+                   worker re-validates (the trust boundary) → ONE set({theme, rules, identityOverride})
+Options export   → read storage → {format:'zhroma-settings', schema:1, theme, rules, identityOverride}
+                   → Blob + <a download> (no downloads permission); identityDetected is NOT exported
 ```
 
-Match rules: case-fold, trim, strip the sort-indicator `<button>` wrapper (header text lives inside `button[data-garden-id="tables.sortable"]` when the column is sortable, and as a bare text node when it is not — handle both), and compare with `localeCompare(…, {sensitivity:'base'})` so accents and case do not defeat you.
-
-**Tier 2 — Value-set fingerprint (fallback for unknown locales).**
-For each column, collect the distinct non-empty cell values across the visible rows. The priority column is the one whose distinct set has **cardinality ≤ 4**. This is language-independent, but it is **ambiguous** — Type (Question/Incident/Problem/Task) is also 4, and Status can be 4 in a filtered view. Therefore apply it **only** when exactly one column qualifies after excluding columns that can be positively identified as something else (the Status column is identifiable structurally by `div[data-cy-test-id="status-badge-state"]` inside its cells — verified in prior art). If two columns qualify, return `NONE` rather than guess. **A wrong tint is worse than no tint.**
-
-**Tier 3 — `NONE`.** Do not tint. Notify the Hint Presenter.
-
-**Ordering the values without knowing the language** is the subtle part: Tier 2 finds *a* four-valued column but cannot tell you which value is `urgent`. Two honest options: (a) don't tint on Tier 2 at all — use it only to suppress a false "no priority column" hint; (b) exploit ordering by clicking the sort header, which is far too invasive. **Recommend (a).** Tier 2 is a *hint suppressor*, not a tinting path. This keeps the promise "fail quietly" intact.
-
-### Handling the column being absent
-
-`NONE` must be distinguishable into two cases, because they need different behaviour:
-
-| Case | Detection | Behaviour |
-|------|-----------|-----------|
-| **Not a ticket view at all** (dashboard, ticket page, admin) | No `table[data-garden-id="tables.table"]` matching the view-table shape | Silent. No hint. No badge. |
-| **A ticket view, locale known, no Priority header** | Table found, locale in `LOCALES`, no header matched | **Show the hint.** This is the actionable case. |
-| **A ticket view, locale unknown** | Table found, locale not in `LOCALES` | Silent. Showing "add a Priority column" to a Japanese agent who already has one is a false accusation and a 1-star review. |
-
-That last row is why the hint must be gated on locale coverage. It also means the **locale table is not optional polish** — every locale you don't ship is a locale where the product silently does nothing. Budget for it.
+- **Import validation is strict and whole-document.** Only exact keys are allowed. Unknown operators or slots reject the file. Hex must match `^#[0-9a-f]{6}$` after lowercasing. Caps apply: 100 rules, 20 conditions per rule, group depth 3, 200-character strings. It replaces rather than silently merges, and the worker revalidates even though the page already did. Reject before any write, so a bad file changes nothing.
+- **Why a revision CAS.** It lets two options tabs, or options plus import, fail honestly ("changed elsewhere, reloaded") instead of last-writer-wins silently eating a rule edit. The popup's theme and the options page's rules are separate keys, so the most common concurrent pair never conflicts at all.
+- **Honest reporting stays the norm.** The save reply is `saved: true/false`, and the options page shows "Zhroma could not save that" on false, mirroring `NOT_SAVED`. An application acknowledgement from tabs is **not** needed: `storage.onChanged` is reliable in every tab, and the v1 handshake existed to report on the switch. For verification, if wanted, have `get-rule-status` also echo the compiled `rules.revision`.
 
 ---
 
-## Virtualisation
+## Architectural Patterns
 
-**Finding: Zendesk agent views appear NOT to virtualise. Confidence: MEDIUM-HIGH. Marked as an assumption to validate.**
+### Pattern 1: One validator, many consumers
 
-Evidence for:
-- Views paginate at **30 tickets per page**, with explicit pagination controls in the DOM: `button[data-test-id="generic-table-pagination-first"]`, `…-next`, and a page counter `span[data-test-id="views_views-header-page-amount"]`. Thirty real `<tr>` elements is nothing; windowing 30 rows would be pointless engineering.
-- Prior-art userscripts iterate `table.tBodies[0].rows` and `document.querySelectorAll('table[data-garden-id="tables.table"] tbody tr')` directly and work. A windowed list would give them only the visible slice, and their features (group-row counting across a whole page) would visibly under-count.
-- Garden's Table docs *do* document a `react-window` virtual-scrolling recipe — but as an opt-in integration example, not default behaviour.
+**What:** Rules, the Priority read and rule health all hang off the single `inspectCandidateTable` walk.
+**When:** Always. A second walker in the rules module would sooner or later disagree with the first about which rows are tickets.
+**Trade-off:** It touches the accepted function, but only additively: two return fields and one `rows.push`. The mutants in `test/mutants/*.json` for inspection should still kill, which is a direct regression check.
 
-**What it would imply if wrong.** Reassuringly little, because of the recommended architecture:
+### Pattern 2: Parallel ownership for new stamps
 
-| Concern | Under strategy D |
-|---------|------------------|
-| Rows enter the DOM on scroll | The observer fires on the `childList` mutation and stamps them. Already handled. |
-| Rows leave the DOM | Nothing to clean up — the attribute leaves with the node. |
-| Scroll fires the observer constantly | The 50 ms debounce coalesces it; each pass is ~30 rows. Acceptable. |
-| Header lives outside the virtualised container | Already handled: the resolver reads headers from the table/container, not from the row's parent. |
-| Rows are `<div role="row">` not `<tr>` | **This is the one that hurts.** `react-window` renders divs, so `tr[data-garden-id="tables.row"]` finds nothing and the CSS selectors miss. Mitigation: write the locator and the CSS against `[data-garden-id="tables.row"]` (attribute-only, no element qualifier) so it survives an element-type change. Cheap insurance — do it. |
+**What:** Rule stamps get their own `ownedRuleRows` set and expected-value `WeakMap`, and their own `commitRuleStamps` / `clearRuleStamps`. These copy the v1 algorithm: copied-marker adoption, one bounded retry on removal, and full rollback on a failed write. They are called at exactly the points where the v1 marker functions are called: `commitSnapshot`, the observer's same-turn invalidation, `pauseController`, and the error paths.
+**When:** For every new row attribute.
+**Trade-off:** About 50 lines of near-duplicate code, in exchange for leaving `clearOwnedMarkers` and `commitSnapshot` behaviour identical. The new attributes are added to `INTERPRETATION_ATTRIBUTES`, so host tampering and cloning are detected just as they are for `data-zhroma-priority`. The `<html>` attributes are **not** added. Our own writes there should not wake the table classifier.
 
-So: assume no virtualisation, but **write element-agnostic selectors** so that being wrong costs an afternoon rather than a rewrite. Validate on a live instance with a view containing 30 rows by scrolling and counting `document.querySelectorAll('[data-garden-id="tables.row"]').length` at top and bottom of scroll.
+### Pattern 3: Colour indirection through CSS custom properties, with literal fallbacks
 
----
+**What:** Rows name a *role* (priority value, slot, `custom`). `<html>` names the theme and scheme. `themes.css` maps them to values. Every var has the 0.1.0 literal as its fallback.
+**When:** For every painted surface.
+**Trade-off:** A few more selectors. In return, a theme or scheme change costs O(1) DOM writes, the default install is provably 0.1.0 (string-comparable in tests), and the popup previews use the same bytes.
 
-## Where the "no Priority column" hint lives
+### Pattern 4: Compile once, evaluate per pass
 
-| Option | Annoyance | Discoverability | Cost | Verdict |
-|--------|-----------|-----------------|------|---------|
-| **Injected in-page banner** | **High** | High | Medium | **Rejected** |
-| **Toast / floating pill** | Medium | Medium | Medium | Rejected |
-| **Action badge + popup** | **Minimal** | Medium | Low | ★ **Recommended** |
-| **Popup only, no badge** | None | **Too low** | Lowest | Rejected |
-| **`console.info`** | None | ~Zero | Trivial | Useful as a debug adjunct, not as the hint |
-
-**Why not an injected banner**, despite it being the most discoverable:
-
-1. It violates the project's own stated failure mode: *"the extension must fail quietly (page untouched) rather than loudly (page broken)."* A banner is the extension being loud precisely when it has failed to do its job.
-2. It reflows Zendesk's layout. Agent views are dense and often on 13" laptops; stealing 40px of vertical space from the ticket list to say "this extension can't help you" is a net negative for the agent.
-3. **It needs a dismiss button, and dismissal needs persistence — and v1 has explicitly decided on no storage.** A banner you cannot dismiss is intolerable on every view switch. A banner you can dismiss requires the `storage` permission and an options surface, both of which v1 ruled out. The banner is not just annoying; it is architecturally incompatible with the zero-config, zero-storage decision.
-4. It is the highest-risk component for CSS conflicts with Zendesk, and the one most likely to look broken after a Garden update.
-
-**Why badge + popup:**
-
-- `chrome.action.setBadgeText({ text: '!', tabId })` **requires no permission at all** — the `action` key in the manifest is sufficient. Nothing to justify at store review, which matters given the incumbent was delisted on policy grounds.
-- It is per-tab, so it accurately reflects the view the agent is currently looking at.
-- It is *ignorable by construction*. An agent who doesn't care never has their workflow interrupted. An agent who wonders why nothing is coloured has a visible affordance in exactly the place they'd look.
-- The popup is **static HTML** — no JS, no messaging, no permissions. It explains the situation and links to Zendesk's own "add a column to a view" documentation. One-click fix, self-service, exactly as the PROJECT decision intends.
-- Zero page footprint. Uninstall leaves nothing.
-
-**Cost:** it requires a service worker, because a content script cannot call `chrome.action`. This is ~20 lines:
+**What:** `compile(rules, identity)` lowercases operands, drops disabled rules, flattens groups into a closure-free tree and lists referenced columns. It runs only on a settings change. `bind` and `evaluate` run per pass.
+**When:** Rules change rarely and passes are frequent.
 
 ```js
-// sw.js
-chrome.runtime.onMessage.addListener((msg, sender) => {
-  if (msg?.type !== 'zhroma:hint' || !sender.tab) return;
-  chrome.action.setBadgeText({ tabId: sender.tab.id, text: msg.show ? '!' : '' });
-  chrome.action.setBadgeBackgroundColor({ tabId: sender.tab.id, color: '#B0. …' });
-});
+// zhroma-rules.js — evaluation core (sketch)
+function test(node, cells, binding) {
+  if (node.group) {
+    const results = node.items.map((child) => test(child, cells, binding));
+    if (results.includes(SKIP)) return SKIP;                 // unresolved column/identity → rule doesn't apply
+    return node.group === 'all' ? results.every(Boolean) : results.some(Boolean);
+  }
+  const index = binding[node.column];
+  if (index === MISSING || index === AMBIGUOUS) return SKIP;
+  const value = cells.text(index);                          // normalised, per-pass cached
+  switch (node.op) {
+    case 'equals':     return node.me ? node.meValue !== null && value === node.meValue : value === node.value;
+    case 'not-equals': return node.me ? node.meValue !== null && value !== node.meValue : value !== node.value;
+    case 'contains':   return value.includes(node.value);
+    case 'is-empty':   return value === '' || value === EMPTY_PLACEHOLDER;   // placeholder from recon
+  }
+}
 ```
 
-The Hint Presenter must **debounce its own state transitions** and only message on *change*, not every pass. Otherwise a 50 ms observer cadence becomes 20 messages/second to the service worker, which will look like abuse and will keep the SW alive needlessly.
-
-**MVP note:** the hint is cleanly severable. Ship v1's first slice with no hint at all; the badge is a self-contained later phase that touches only `sw.js`, `hint.js`, `popup/`, and one line of `manifest.json`.
+(Where `node.meValue === null`, the `me` rule is marked SKIP at `compile`, so no rule quietly matches on an unknown identity.)
 
 ---
 
 ## Data Flow
 
-### Flow 1: Cold start (page load → tinted row)
+### Flow A: Page load with a non-default theme and rules
 
 ```
-Agent opens https://acme.zendesk.com/agent/filters/360012345
-        │
-        ▼
-[Browser] matches content_scripts.matches  → injects css/palette.css
-        │                                     (BEFORE DOM construction;
-        │                                      rules are inert — nothing
-        │                                      carries the attribute yet)
-        ▼
-[Browser] run_at: document_idle            → executes src/*.js in js[] order
-        │
-        ▼
-(1) Bootstrap: window.top === window ? proceed : bail (skip iframes)
-        │
-        ▼
-(2) Observer Controller: observer.observe(document.body, {childList, subtree})
-    then immediately schedules a first pass (React may not have rendered yet)
-        │
-        ▼  pass()
-(3) Table Locator: document.querySelectorAll('[data-garden-id="tables.table"]')
-        │            filtered to those containing [data-garden-id="tables.row"]
-        │  → HTMLTableElement[]           (empty on /agent/dashboard → stop, silent)
-        ▼
-(4) Column Resolver: for each table
-        │   memo hit?  → WeakMap<table, {index, locale}>
-        │   memo miss? → read th[data-garden-id="tables.header_cell"]
-        │                extract text (unwrap button[data-garden-id="tables.sortable"])
-        │                match vs LOCALES[lang].header
-        │  → {index: 6, locale: 'en'}     or  NONE ──────┐
-        ▼                                                 │
-(5) Priority Extractor: for each tr[data-garden-id="tables.row"]   │
-        │   cell = row.cells[6]                           │
-        │   text = cell.textContent.trim()                │
-        │   LOCALES['en'] reverse-map → token             │
-        │  → 'urgent'                                     │
-        ▼                                                 │
-(6) Stamper:  if (row.getAttribute(ATTR) === 'urgent') return;   │
-        │     row.setAttribute('data-zhroma-priority','urgent')  │
-        ▼                                                 │
-[Browser CSS engine] re-evaluates the cascade             │
-        │  tr[data-zhroma-priority="urgent"] > td { background: … }
-        ▼                                                 │
-🎨 ROW IS TINTED                                          │
-                                                          ▼
-                                            (7) Hint Presenter
-                                                locale known? → sendMessage
-                                                → [SW] setBadgeText('!')
+document_idle → settings.js, rules.js, scheme.js, identity.js, content.js evaluate (one scope)
+  content: listeners registered (v1 order) + onSettingsChanged (NEW) → readPreference() ∥ readSettings()
+  scheme:  detect → <html data-zhroma-scheme="dark">           (CSS vars now resolve dark)
+  settings ready → compile(rules, identity) ; <html data-zhroma-theme="nord">
+  preference ready ∧ settings ready ∧ visible → resumeController → observer → reconcile pass
+      inspectCandidateTable → {state:'safe', entries, headers, rows}
+      commitSnapshot (v1) + bind/evaluate + commitRuleStamps (NEW) — same synchronous turn
+      publishStatus('working') (v1)  ;  ruleHealth = 'ok' | 'columns-missing'
+  CSS engine paints: priority tint, overridden by fill where stamped, stripe where marked
+identity (independent): header mounts → name read → worker → identityDetected (if changed)
+      → storage.onChanged → recompile → scheduleReconcile → 'me' rules now apply
 ```
 
-Note the write in step 6 produces an **attribute** mutation, which the observer (`attributes: false`) does not see. The cycle terminates.
-
-### Flow 2: Re-render (agent clicks a column header to sort)
+### Flow B: Agent switches Zendesk to Dark mid-session
 
 ```
-Agent clicks the "Requester" sort header
-        │
-        ▼
-[Zendesk React] refetches, unmounts old <tr>s, mounts new <tr>s
-        │        ⚠ our data-zhroma-priority is GONE — those nodes no longer exist
-        ▼
-[Browser] fires MutationObserver: many childList records on document.body
-        │
-        ▼
-(2) Observer Controller callback:
-        │   inPass? no.
-        │   clearTimeout(timer); timer = setTimeout(runPass, 50)
-        │   ← fires ~30 more times as React commits; each just resets the timer
-        ▼  (50 ms of quiet)
-     runPass():  inPass = true
-        │
-        ▼
-(3) Table Locator re-queries from scratch  ← no stale node references held
-        ▼
-(4) Column Resolver:  WeakMap.get(table)
-        │   Same <table> node reused by React?  → memo HIT, index reused (fast)
-        │   New <table> node?                   → memo MISS, re-derive (correct)
-        │   ⚠ THIS is why the memo must be a WeakMap keyed on the element
-        ▼
-(5)+(6) extract + stamp all ~30 rows.  Rows whose token is unchanged
-        │       hit the idempotence guard and cost one string compare.
-        ▼
-[CSS engine] repaints
-        ▼
-🎨 ROWS RE-TINTED  (total elapsed ≈ 50–60 ms — below the perception threshold)
-        │
-        ▼
-     inPass = false
+Zendesk re-renders its own styles (recon: class swap vs re-mount)
+  scheme observer / matchMedia trigger → re-detect → <html data-zhroma-scheme="dark">
+  CSS: every --zhroma-* re-resolves → tints and marks repaint
+  NO reconcile pass, NO rule evaluation, NO row writes
+  (if the switch re-mounted the table, the v1 observer re-stamps as it would for any re-render)
 ```
 
-The identical flow handles: refresh, filter, pagination, **view switch** (route change), and tab switch (which fires mutations on refocus). One path, five requirements.
+### Flow C: Theme picked in the popup
+
+```
+popup → worker set-theme → storage.set({theme}) → reply {saved}
+  every Zendesk tab: onSettingsChanged → <html data-zhroma-theme="…"> → CSS repaints
+  popup swatches (themes.css) already showed the choice; no tab handshake needed
+```
 
 ### Key Data Flows
 
-1. **DOM → token → attribute → colour.** Strictly one-directional. Nothing reads the attribute back except the idempotence guard and the CSS engine.
-2. **Column index memo.** `WeakMap<HTMLTableElement, {index, locale}>`. The only cache in the system. Keyed on the element so it dies with the table.
-3. **Hint state.** `boolean` in the content script → `runtime.sendMessage` on transition only → `chrome.action.setBadgeText`. Fire-and-forget; no reply, no round-trip.
-4. **No flow exists** for: network, storage, cross-tab, page↔isolated-world. Their absence is the privacy and store-review story.
-
----
-
-## Build Order
-
-Dependencies are strict; each stage is independently demonstrable.
-
-| Stage | Ships | Depends on | Demonstrable by |
-|-------|-------|-----------|-----------------|
-| **0. Recon spike** (½ day, do this first) | Nothing — a captured HTML fixture + a validation note | A live Zendesk instance | Confirming/refuting every ⚠ assumption below |
-| **1. ★ Thinnest slice** | manifest + palette.css + locator + resolver(en) + extractor(en) + stamper, run **once** at `document_idle` | 0 | Load a view, one row is tinted. Sort it — tint disappears. **That's fine.** |
-| **2. Observer** | observer.js | 1 | Sort, scroll, refresh, switch view, switch tab — tint persists through all five |
-| **3. Robustness** | group-row exclusion, two-header-table handling, WeakMap memo, try/catch fail-quiet, top-frame guard | 2 | Grouped view, wide view, dashboard, ticket page — no crashes, no wrong tints |
-| **4. i18n** | locales.js populated; locale detection; Tier-2 fingerprint as hint suppressor | 3 | Switch agent UI language to German — still tints |
-| **5. Hint** | sw.js + hint.js + popup/ + action key | 3 (not 4 — but gate on 4's locale table) | Open a view without a Priority column — badge appears; with one — badge clears |
-| **6. Store readiness** | icons, screenshots, privacy policy, permission justification | 5 | Submitted |
-
-### The thinnest end-to-end vertical slice
-
-**"On a real Zendesk view in English, at least one row is tinted on first load."**
-
-Concretely, the whole of stage 1 is roughly:
-
-```json
-// manifest.json
-{
-  "manifest_version": 3,
-  "name": "Zhroma",
-  "version": "0.0.1",
-  "content_scripts": [{
-    "matches": ["*://*.zendesk.com/agent/*"],
-    "js": ["src/constants.js","src/locales.js","src/table-locator.js",
-           "src/column-resolver.js","src/priority-extractor.js",
-           "src/stamper.js","src/main.js"],
-    "css": ["css/palette.css"],
-    "run_at": "document_idle"
-  }]
-}
-```
-
-```js
-// src/main.js — stage 1 only; no observer yet
-for (const table of locateTables(document)) {
-  const col = resolveColumn(table);
-  if (col === NONE) continue;
-  for (const row of table.querySelectorAll('[data-garden-id="tables.row"]')) {
-    stamp(row, extractPriority(row.cells[col.index], col.locale));
-  }
-}
-```
-
-**Why this is the right slice:** it exercises the *entire* vertical — manifest matching, declarative CSS injection, Garden selectors, header-text column resolution, value extraction, the attribute stamp, and the cascade — and it proves the single riskiest assumption in the project (that the Garden `data-garden-id` selectors are actually present in a real agent view) in the cheapest possible way. It deliberately excludes the observer, because the observer only makes sense once you know the one-shot pass works. Debugging "nothing is tinted" is dramatically easier without a timer and an observer in the loop.
-
-It is also honest about being incomplete: sorting visibly breaks it. That is the demo that motivates stage 2, and it is the fastest possible route to a real answer about whether this product is feasible at all.
-
-**Ordering constraint worth stating explicitly:** stage 0 must precede stage 1. Every ⚠ item in the ledger below is a five-minute DevTools check on a live instance, and any one of them coming back different changes the plan. Do not plan stages 2–6 in detail before stage 0 reports.
-
----
-
-## Anti-Patterns
-
-### 1. Inline styles instead of an attribute + stylesheet
-**What people do:** `row.style.backgroundColor = '#f48fb1'` — both surveyed pieces of prior art do exactly this.
-**Why it's wrong:** writes the `style` attribute (observer self-trigger risk), loses the `td`-over-`tr` background fight, cannot be cleanly reverted, pollutes DevTools, and moves the paint decision from the CSS engine into JS.
-**Instead:** stamp `data-zhroma-priority`, style declaratively.
-
-### 2. `setInterval` because the SPA is confusing
-**What people do:** poll once per second and hope.
-**Why it's wrong:** visible colour flash after every user action, constant CPU on an all-day tab, throttled to uselessness in background tabs.
-**Instead:** debounced `MutationObserver` on `document.body`.
-
-### 3. Matching priority by scanning the whole row's text
-**What people do:** `if (/Urgent/.test(tr.textContent))`.
-**Why it's wrong:** a ticket whose *subject* is "URGENT: server down" gets tinted red regardless of its actual priority. Silent, plausible, and wrong — the worst combination. Also matches the requester's name, the organisation, tags, anything.
-**Instead:** resolve the column index, read exactly `row.cells[index]`.
-
-### 4. Caching node references or a bare column index across passes
-**What people do:** `let priorityIndex = 6;` at module scope, or holding `const rows = [...]` between passes.
-**Why it's wrong:** React replaces nodes and the user switches views. Stale index → tinting by the wrong column. Stale nodes → operating on detached elements. This is the single most likely bug in this architecture.
-**Instead:** re-query every pass; memo only in a `WeakMap` keyed on the `<table>` element.
-
-### 5. Targeting styled-components class names
-**What people do:** `.sc-1a2b3c > td`.
-**Why it's wrong:** those hashes change on every Garden release. This is precisely how the incumbent extension went from working to "It no longer works."
-**Instead:** `[data-garden-id="tables.row"]` — a versioned, published, first-party contract.
-
-### 6. `disconnect()` / `takeRecords()` around your writes
-**What people do:** deafen the observer while writing.
-**Why it's wrong:** discards genuine page mutations that land in the gap, producing intermittent untinted rows that nobody can reproduce. Trades a loud bug for a quiet one.
-**Instead:** don't observe attributes; keep the write idempotent. Then there is nothing to deafen.
-
-### 7. Element-qualified selectors that assume `<tr>`
-**What people do:** `tr[data-garden-id="tables.row"]` everywhere.
-**Why it's wrong:** if any surface ever virtualises, rows become `<div role="row">` and every selector silently misses.
-**Instead:** `[data-garden-id="tables.row"]`. Costs nothing today, saves a rewrite if wrong.
-
-### 8. Tinting group rows
-**What people do:** `tbody tr`.
-**Why it's wrong:** grouped views insert `tr[data-garden-id="tables.group_row"]` section headers. Tinting them looks like a rendering fault.
-**Instead:** select on `tables.row` explicitly; never on `tbody tr`.
-
-### 9. An injected in-page banner for the hint
-**Why it's wrong:** violates "fail quietly," steals vertical space, and needs dismiss-state that v1's no-storage decision forbids.
-**Instead:** action badge + static popup. No permission, no footprint.
-
-### 10. Reaching for `webNavigation` to detect view switches
-**Why it's wrong:** a permission you must justify at store review, for a capability the observer already gives you for free. The incumbent was delisted on policy grounds; don't add surface.
-**Instead:** treat a route change as what it is — a DOM mutation.
+1. **Ticket data** goes DOM → content script → row attributes. It never crosses a messaging boundary, and it is never persisted.
+2. **Settings** go extension page → worker (validate, serialize, CAS) → `storage.local` → `onChanged` → every content script (re-validate, compile).
+3. **Identity** is the one page-derived string that leaves the content script: content → worker → `storage.local`. It is validated, deduplicated and disclosed.
+4. **Status** stays as v1: finite diagnosis → worker → toolbar. Rule health is finite too, pulled on popup open.
 
 ---
 
 ## Scaling Considerations
 
-This extension has no backend and no users-per-server dimension. The meaningful axes are **rows per view** and **mutations per second**.
+The axes are rows per view, rules and mutation rate, not users.
 
-| Scale | Behaviour | Adjustment |
-|-------|-----------|------------|
-| **~30 rows/page** (Zendesk default) | One pass = ~30 `textContent` reads + ~30 string compares ≈ well under 1 ms | None. This is the expected case. |
-| **~200 rows** (third-party "Lovely Views"-style tools raise the page size) | ~7× the work; still ≈1–2 ms | None. |
-| **High mutation rate** (live-updating view, agent scrolling fast) | Observer callback fires hundreds of times/sec, but each call is `clearTimeout` + `setTimeout` | The debounce already bounds work to ≤20 passes/sec. If profiling shows a problem, raise the debounce to 100 ms — still imperceptible. |
-| **Many Zendesk tabs open** | Independent content script per tab | None. Nothing is shared, nothing coordinates. |
-| **Locale table grows to 40 locales** | A ~40×5 string object parsed once at load | Negligible. If it ever mattered, load only the detected locale — but it won't. |
+| Scale | Architecture adjustments |
+|-------|--------------------------|
+| 30 rows × up to 10 rules (typical) | Nothing. Bind (16 headers) plus about 300 condition tests per pass, well under 1 ms |
+| 100 rows × 100 rules × 20 conditions (the cap) | About 200k comparisons worst case. Still a few ms, and passes are already coalesced by the zero-delay reconcile timer. Extend `test/performance/tint-workload` with a rules workload and hold it to the existing LIVE-05 budget |
+| High mutation rate (live-updating view) | Unchanged from v1. The observer callback's same-turn invalidation must stay O(rows) and must **not** run full rule evaluation. Clear rule stamps just as priority stamps are cleared, and let the deferred pass re-evaluate |
 
-### First and second bottlenecks
+### Scaling Priorities
 
-1. **First thing to break: correctness, not performance.** A Zendesk front-end change that alters or removes `data-garden-id`. Mitigation is not architectural but operational: captured fixtures as regression tests, element-agnostic selectors, and fail-quiet everywhere so a break is invisible rather than page-destroying.
-2. **Second: the pass on a page with many tables.** If Zendesk ever renders several Garden tables in an agent view, the locator returns all of them and the resolver runs per table. Bounded and cheap. Do not pre-optimise this.
+1. **First bottleneck: correctness, not speed.** Zendesk renames a header ("Assignee" → "Assigned to") and rules silently stop applying. Rule health `columns-missing` is the mitigation: the agent is told, not left guessing.
+2. **Second: the same-turn observer path.** If rule clearing were made "smart" (diffing, partial keeps), that complexity would sit in the code that runs on every mutation batch. Keep it clear-all-then-restamp, as v1 does for non-`safe` states.
 
-**Explicitly do not** build a virtual-DOM diff, an incremental row tracker, or an `IntersectionObserver` to stamp only visible rows. At 30 rows, the full re-scan is faster than the bookkeeping needed to avoid it, and it is the thing that makes statelessness (and therefore free route-change handling) possible.
+---
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Evaluating rules in the service worker
+**What people do:** Send the header labels and cell texts to the worker "because that's where settings live".
+**Why it's wrong:** Ticket data crosses a process boundary. Conclusions are committed against a DOM that has moved on (breaking the v1 same-turn invariant). The worker can be terminated mid-evaluation.
+**Do this instead:** Compile in the content script from `storage.onChanged`, and evaluate inside the reconcile pass.
+
+### Anti-Pattern 2: Treating a missing column as an empty value
+**What people do:** `cells[index] ?? ''`.
+**Why it's wrong:** `not equals` and `is empty` then match every row in every view that lacks the column. The view lights up with false signals, which is the one failure that destroys trust in a glance tool.
+**Do this instead:** An unresolved column or identity makes the rule not apply, and it is counted in rule health.
+
+### Anti-Pattern 3: `prefers-color-scheme` (or page `localStorage['color-scheme']`) as the dark signal
+**Why it's wrong:** Zendesk offers explicit Light and Dark independent of the OS. The localStorage key is Garden's configurable default, not a Zendesk contract, and it fires no same-tab event.
+**Do this instead:** Use the recon-proven host signal, or the pane surface luminance, with `matchMedia` as a re-detect trigger only.
+
+### Anti-Pattern 4: Stamping resolved colours on rows
+**What people do:** `row.setAttribute('data-color', theme.red)`.
+**Why it's wrong:** Every theme or scheme change becomes a full re-evaluation and restamp. It also puts the palette into JS and breaks the palette-free contract.
+**Do this instead:** Stamp slot names. Resolve colour in CSS. Only user-supplied custom hex goes on the row, and CSS parses it with `attr(type(<color>))`.
+
+### Anti-Pattern 5: Generating CSS text from user settings
+**What people do:** Build `<style>` or `adoptedStyleSheets` from rule colours.
+**Why it's wrong:** A validation slip becomes CSS injection into the agent's Zendesk page. Adopted sheets from isolated worlds are poorly specified (Firefox is broken outright), and a host that reassigns the array drops them silently.
+**Do this instead:** Use static CSS plus attribute stamps. As a fallback, use an inline custom property on our own stamped row.
+
+### Anti-Pattern 6: Drawing the mark with `box-shadow`
+**Why it's wrong:** Native selection is `box-shadow: inset 3px 0 0` on the first cell. Our `!important` shadow would erase it on selected rows.
+**Do this instead:** Put a `background-image` gradient stripe on the first direct cell. It layers over the tint and sits under the native selection shadow.
+
+### Anti-Pattern 7: Folding `enabled` into a new settings object
+**Why it's wrong:** It reopens the accepted preference queue, epochs and apply handshake. It also risks a half-migrated read being treated as "unconfirmed → untinted" for every upgrading user.
+**Do this instead:** Leave `enabled` as it is. New keys, and absent means default.
+
+### Anti-Pattern 8: Letting rules change the three-way diagnosis or the toolbar
+**Why it's wrong:** It rewrites accepted FAIL-01/03/05 behaviour in three files, and it muddies "Add a Priority column".
+**Do this instead:** An orthogonal `rule-status` enum, with a popup second line.
+
+### Anti-Pattern 9: Harvesting header labels or cell values into storage for autocomplete
+**Why it's wrong:** It persists page data, custom-field names included, and makes the content script a storage writer.
+**Do this instead:** Offer a static list of standard Zendesk column names plus free text in the options page. A "pick from current view" helper is a later feature that would need its own privacy decision.
+
+### Anti-Pattern 10: Content script or options page writing storage directly
+**Why it's wrong:** You get multiple writers, lost updates, and no single validation boundary.
+**Do this instead:** Every write goes through the worker queue. Pages may read.
 
 ---
 
@@ -682,104 +510,76 @@ This extension has no backend and no users-per-server dimension. The meaningful 
 
 ### External Services
 
-| Service | Integration Pattern | Notes |
-|---------|--------------------|-------|
-| Zendesk REST API | **None** | Explicitly rejected in PROJECT — needs auth and a heavier permission ask. Note that prior art *does* use it for priority, which is a genuine alternative if DOM reading proves impossible — but it changes the permission story completely. |
-| Any network | **None** | No telemetry, no analytics, no remote config. This is the privacy-policy story and the store-review story. |
-| `chrome.storage` | **None in v1** | Zero-config decision. Adding it later (for v2 custom colours) is additive and does not disturb this architecture — the palette becomes CSS custom properties set from storage. |
+| Service | Integration pattern | Notes |
+|---------|---------------------|-------|
+| Zendesk DOM (table) | Unchanged Garden selector pair, same-table header ownership | Rules add no new selectors. They reuse the validated snapshot |
+| Zendesk DOM (dark signal) | **TBD by recon.** Direct CSS keying, or pane luminance plus a narrow observer | New standing fragility. Fail to `light`, which is the 0.1.0 look |
+| Zendesk DOM (identity) | **TBD by recon.** Header avatar or profile menu | New standing fragility. Fails to `identity-unknown`, and the override always works |
+| Network, Zendesk API | None | Unchanged. The export file is written only on explicit user action |
 
 ### Internal Boundaries
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| Manifest → content script | Declarative injection | The browser does this. No code. |
-| Manifest → page CSS | Declarative injection | Injected before DOM construction; inert until an attribute matches. |
-| Observer → pure components | Direct call | Synchronous, one direction, no callbacks back |
-| Pure components → Stamper | Direct call with a token | The only inbound edge to the write layer |
-| Stamper → page | `setAttribute` | **Single choke point.** Audit here. |
-| Content script → service worker | `chrome.runtime.sendMessage`, fire-and-forget, on state change only | Debounced. No reply expected. |
-| Service worker → browser UI | `chrome.action.setBadgeText({tabId})` | Requires only the `action` manifest key, no permission |
-| Popup → anything | **Nothing** | Static HTML. Deliberately inert. |
-
-### The seam for v2
-
-The PROJECT defers custom colours, alternative treatments (stripe, pill) and a colourblind palette to v2. Under this architecture **all three are pure CSS changes**:
-
-- Custom colours → set `--zhroma-urgent` etc. from `chrome.storage` (adds one permission, one options page; touches no other component).
-- Left-edge stripe → `tr[data-zhroma-priority="urgent"] > td:first-child { box-shadow: inset 4px 0 0 var(--zhroma-urgent); }`
-- Coloured pill → style the priority `<td>` only.
-
-The stamp is the stable contract; the treatment is swappable. That is the strongest argument for strategy D beyond the loop safety: it makes the entire deferred v2 roadmap a stylesheet.
+| Boundary | Communication | Status | Notes |
+|----------|---------------|--------|-------|
+| content ↔ worker `status-invalidated` / `get-status` / `apply-preference` | runtime messages | unchanged | Byte-level edits are possible, but behaviour must not change. Rerun the v1 suites and mutants |
+| content → worker `identity-detected {name}` | fire-and-forget | **NEW** | The only page-derived string leaving the content script. **Tighten the sender check:** the v1 `fromContent` (tab + `frameId: 0` + `documentId`) is also true for the options page opened in a tab, so this handler must additionally require `sender.origin` to be an `https://*.zendesk.com` origin, never `chrome-extension://` |
+| worker → content `get-rule-status` → `rule-status {health}` | request/reply, `frameId: 0`, bounded | **NEW** | Finite enum |
+| popup → worker `set-theme`, `popup-rule-status` | request/reply | **NEW** | `fromPopup` sender check (v1 helper) |
+| options → worker `save-rules`, `set-identity-override`, `import-settings` | request/reply | **NEW** | New `fromOptions` check: `sender.url === getURL('options.html')`, `sender.tab` set because it opens in a tab. Validate the URL, not the tab |
+| worker ↔ `zhroma-settings.js` | `importScripts` at top level | **NEW** | Classic worker only. It must be the first statement, before any listener registration |
+| content scripts ↔ each other | shared isolated-world globals (`ZhromaSettings`, `ZhromaRules`, `ZhromaScheme`, `ZhromaIdentity`), each `Object.freeze`d | **NEW** | The runtime-contract "no new globals" assertion becomes "exactly these four" |
+| page ↔ CSS | `<html>` and `tr` data attributes | **MODIFIED** | Seven owned attributes instead of one. All are removed on pause or off |
 
 ---
 
-## Verification Ledger
+## Suggested build order
 
-Everything load-bearing, with how it was established.
+The ordering is driven by three constraints: DOM recon gates every piece of DOM-dependent design; pure foundations can proceed in parallel with recon; and **each shipped-byte change reopens human checks**. So the v1 behavioural regression UAT should run **once, on the 1.0.0 release candidate bytes**, not once per phase. Intermediate phases prove themselves with the automated suites (Vitest + happy-dom fixtures, Node smoke, mutation kills) and dev-only live smoke.
 
-### Verified — HIGH confidence
+| # | Phase | Ships | Depends on | New / modified | Research flag |
+|---|-------|-------|-----------|----------------|---------------|
+| 1 | **Recon 2: dark mode, identity and column values** | No runtime bytes. `SELECTORS.md` entries, admitted fixtures, sanitizer support for a consistent name token | Live tenant with dark mode allowed, the user driving | MODIFIED `SELECTORS.md`, `scripts/sanitize-fixture.js`; NEW fixtures | **Required.** The whole milestone's DOM facts live here |
+| 2 | **Settings foundation (invisible)** | `zhroma-settings.js`; worker `importScripts` + settings queue + CAS + `set-theme`/`save-rules`/`import-settings` handlers; content `readSettings`, `onSettingsChanged` and the `settingsReady` gate; manifest arrays, `options_ui` stub; `RELEASE_FILES` | None. **Can run in parallel with 1** | NEW `zhroma-settings.js`; MODIFIED `background.js`, `content.js`, `manifest.json`, `scripts/release-source.js` | Standard patterns |
+| 3 | **Styling seam + themes (light)** | `themes.css`; `zhroma.css` refactored to vars with 0.1.0 fallbacks; `<html data-zhroma-theme>`; popup theme picker; colourblind-safe preset; typed-`attr()` spike | 2 | NEW `themes.css`; MODIFIED `zhroma.css`, `content.js`, `popup.html`, `popup.js`, `manifest.json` (min Chrome) | Spike: `attr()` in custom properties plus inheritance to `td` |
+| 4 | **Dark mode** | `zhroma-scheme.js`; dark variants for every preset; `<html data-zhroma-scheme>`; mid-session switch | **1** (signal and dark native states) + 3 | NEW `zhroma-scheme.js`; MODIFIED `themes.css`, `content.js` (pause/cleanup), `manifest.json` | Depends entirely on the recon branch taken |
+| 5 | **Rule engine + effects (no UI)** | `zhroma-rules.js`; snapshot `headers`/`rows`; rule stamps with parallel ownership; fill/mark CSS; `rule-status` relay + popup line. Tests seed rules through storage | 2, 3; **1** for cell normalisation and the empty placeholder | NEW `zhroma-rules.js`; MODIFIED `content.js`, `zhroma.css`, `background.js`, `popup.js` | Moderate: normalisation edge cases |
+| 6 | **Options page + export/import** | `options.html`/`options.js`: ordered rules, nested AND/OR groups, slot-or-hex colour, replace/mark, identity override field, export/import with preview | 2 (schema), 5 (semantics the UI must describe) | NEW `options.html`, `options.js`; MODIFIED `popup.*` ("Edit rules" link) | UI phase (UI-SPEC recommended): nested group editing is the UX risk |
+| 7 | **Identity detection + `is me`** | `zhroma-identity.js`; `identity-detected` handler; `me` operand; `identity-unknown` health | **1** (location) + 5 + 6 | NEW `zhroma-identity.js`; MODIFIED `background.js`, `zhroma-rules.js`, `options.js` | Depends on the recon worst case (menu-only name) |
+| 8 | **Release 1.0.0** | Version bump; privacy policy and disclosures (stored name, options page); listing and screenshots incl. dark; v1 regression UAT + v1.1 UAT on the candidate bytes | All | MODIFIED `manifest.json`, `release/*` | Standard, but budget for the full UAT |
 
-| Claim | Method |
-|-------|--------|
-| Garden emits `data-garden-id` on table elements, unconditionally, in production | Downloaded and extracted `@zendeskgarden/react-tables@9.15.8` from the npm registry; read `dist/esm/styled/Styled{Table,Head,Body,Row,GroupRow,Cell,HeaderCell,SortableButton}.js`. Zero `NODE_ENV` references in the dist bundle — not dev-gated. |
-| `tables.table`→`<table>`, `tables.head`→`<thead>`, `tables.body`→`<tbody>`, `tables.cell`→`<td>`, `tables.header_cell`→`<th>` (via `.attrs({as:'th'})`), `tables.sortable`→`<button>` | Same, read directly from `styled.X.attrs(…)` declarations |
-| `tables.group_row` is a distinct row type from `tables.row` | Same — `StyledGroupRow` vs `StyledRow`, both extending `StyledBaseRow` |
-| Garden class names are styled-components hashes (unstable) | `styled-components` is a declared dependency; hashed `sc-*` class generation is its documented default |
-| History API monkeypatching does not work from an isolated world | Documented: isolated-world `history.pushState` is a different function object; the standard workaround is `world: "MAIN"` injection plus a CustomEvent bridge |
-| `popstate` does not fire for `pushState`/`replaceState` | Long-standing documented History API limitation |
-| CSS has no text-content selector; the documented workaround is JS→attribute→CSS | Confirmed; this *is* the recommended pattern |
-| MV3 `content_scripts.css[]` is injected declaratively, before DOM construction, needing only `matches` | Chrome extension manifest documentation |
-| Navigation API is Baseline newly-available (Jan 2026); Chromium-supported | MDN / web.dev |
+**Ordering rationale:**
 
-### Verified — MEDIUM confidence (real-world code, one source)
-
-| Claim | Method |
-|-------|--------|
-| Zendesk agent views use a Garden table: `table[data-garden-id="tables.table"] tbody` | `holatuwol/liferay-zendesk-userscript`, `src/group_rows.ts` — a maintained production userscript against real Zendesk |
-| Agent view route is `/agent/filters/<view_id>`; also `/agent/tickets/<id>`, `/agent/dashboard`, `/agent/admin/` | Same repo, `src/main.ts` path checks |
-| Views render **two** tables — `table[data-test-id="table_header"]` and `table[data-test-id="table_main"]` — inside `div[data-test-id="table_container"]` | Same repo, `src/main.ts` |
-| Zendesk-specific attrs exist: `generic-table`, `generic-table-row`, `generic-table-cells-id`, `ticket-table-cells-subject`, `views_views-ticket-table`, `views_views-header-page-amount`, `generic-table-pagination-{first,next}`, `status-badge-state` (`data-cy-test-id`) | Same repo, multiple files |
-| Header text lives inside a `<button>` when sortable, as a text node otherwise | Same repo, `getTextHeader()` |
-| Views paginate at 30 tickets/page | Zendesk community/help sources, corroborated by pagination controls in the DOM |
-| The incumbent competitor ("Zendesk Priority Highlights") has 87 installs, 3.71/5, last updated 2019, **delisted 2026-08-27** for "Minor Policy Violation / No Privacy Policy", with reviews reading "It no longer works" | Extpose listing |
-| No priority class/attribute on Zendesk ticket rows | Negative evidence: absent from every observed attribute set; both prior-art implementations work around its absence (one via API, one via `textContent` regex) |
-
-### ⚠ ASSUMPTIONS TO VALIDATE — stage 0, on a live instance
-
-None of these could be confirmed without a real Zendesk account. Each is a few minutes in DevTools.
-
-1. ⚠ **`data-garden-id` is present on rows in a *current* agent view.** The corroborating userscript may target an older Garden version. **Check first — the whole architecture rests on this.** Fallback if absent: `data-test-id="generic-table-row"`, then structural `table tbody tr`.
-2. ⚠ **`table[data-test-id="table_main"]` carries its own `<thead>`** (so headers and rows are resolvable within one `<table>`). If not, the resolver must reach the sibling header table via `[data-test-id="table_container"]`.
-3. ⚠ **No priority class or `data-*` on ticket rows.** If one exists, delete components 4/5/6 and ship a stylesheet. Highest-value check per minute spent.
-4. ⚠ **Views are not virtualised** — count `[data-garden-id="tables.row"]` at scroll top vs bottom on a 30-row view.
-5. ⚠ **The priority `<td>` contains the plain localised word**, not an icon, badge, abbreviation, or `aria-label`-only element. If it is a badge (like Status is), `textContent` may be empty and the extractor needs a different read.
-6. ⚠ **`document.documentElement.lang` reflects the *agent UI* language**, not the account default or the help-centre locale. If not, find the real source (a `<meta>`, a global, or a data attribute on `<body>`).
-7. ⚠ **Exact localised strings** for the Priority header and the four values in each shipped locale. Zendesk publishes a supported-language list but not, publicly, the agent-UI strings; these must be captured from live instances or from a Zendesk locale export.
-8. ⚠ **CSS specificity actually wins.** Verify `tr[data-zhroma-priority] > td` beats Garden's `td` background without `!important`, and decide the precedence against Garden's row `:hover` and selected-row states — a tint that vanishes on hover will read as a bug.
-9. ⚠ **Agent views are not inside an iframe.** The top-frame guard assumes the table is in the top document. If Zendesk frames it, adjust `all_frames`.
-10. ⚠ **`*://*.zendesk.com/agent/*` is sufficient.** Some accounts use custom/vanity domains for the agent interface; those would be out of match scope. Confirm whether that is a real deployment pattern before promising "any Zendesk."
+- **Recon runs first but does not block 2 or 3.** The settings foundation and the light-mode styling seam have no Zendesk DOM dependency beyond what v1 already proved. Phase 2 is deliberately *invisible*: with defaults, the page must be byte-for-byte as painted by 0.1.0. That makes the "fresh install identical" requirement a regression check at the earliest possible moment, instead of a hope at the end.
+- **Styling before rules.** Fill and mark need the var seam and the slot vocabulary. Building rules first would mean inventing a second colour path and deleting it later.
+- **Engine before editor.** The options page must describe semantics that already exist and are tested: missing column → rule doesn't apply, precedence, empty placeholder. The engine is fully testable by seeding storage.
+- **Identity last.** It has the most uncertain recon, and it is one operand. Everything else ships without it, and the override path works without detection at all.
+- **Consolidate `content.js` edits.** Phases 2, 3, 4 and 5 all touch it. If re-acceptance cost bites, merge 2 into 3 and 4 into 5 so the accepted file changes in two reviewed steps, not four.
 
 ---
 
 ## Sources
 
-- `@zendeskgarden/react-tables@9.15.8` — published npm tarball, `dist/esm/styled/*.js` (primary source, HIGH)
-- [Zendesk Garden — Table component](https://garden.zendesk.com/components/table/) (official docs)
-- [`holatuwol/liferay-zendesk-userscript`](https://github.com/holatuwol/liferay-zendesk-userscript) — `src/main.ts`, `src/group_rows.ts`, `src/view_columns.ts` (maintained production prior art)
-- [pioug — Highlight Zendesk tickets based on their priority (gist)](https://gist.github.com/pioug/33d2a6a7e1ac8e5c52404cbfee11f2d6) (simple prior art)
-- [Zendesk Priority Highlights — Extpose listing](https://extpose.com/ext/65981) (incumbent; delisting and failure evidence)
-- [Chrome — Manifest content_scripts reference](https://developer.chrome.com/docs/extensions/reference/manifest/content-scripts)
-- [Chrome — Content scripts (isolated worlds)](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts)
-- [MDN — `MutationObserver.takeRecords()`](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver/takeRecords)
-- [MDN — `MutationObserver.disconnect()`](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver/disconnect)
-- [MDN — Navigation API](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API)
-- [web.dev — Navigation API is Baseline newly available](https://web.dev/blog/baseline-navigation-api)
-- [MDN — `scripting.ExecutionWorld`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/scripting/ExecutionWorld)
-- [MDN — Use data attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/How_to/Use_data_attributes)
-- [Zendesk — Creating views to build customized lists of tickets](https://support.zendesk.com/hc/en-us/articles/4408888828570-Creating-views-to-build-customized-lists-of-tickets)
-- [Zendesk — Zendesk language support by product](https://support.zendesk.com/hc/en-us/articles/4408821324826-Zendesk-language-support-by-product)
-- [Zendesk — Configuring Zendesk Support for your locale and language](https://support.zendesk.com/hc/en-us/articles/4408887059866-Configuring-Zendesk-Support-for-your-locale-and-language)
+- **Shipped code (primary, HIGH):** `extension/content.js`, `background.js`, `popup.js`, `popup.html`, `zhroma.css`, `manifest.json`; `test/extension/runtime-contract.test.js` (palette-free and write-surface assertions, manifest key prohibitions, shipped-inventory list); `scripts/release-source.js` (`RELEASE_FILES`); `test/fixtures/zendesk-view-priority-present.html` (header/cell shapes: hidden label spans, `aria-label` cells, `<time>` cells)
+- **v1 DOM ledger (primary, HIGH within its English/light scope):** `SELECTORS.md`, in particular `painting-element`, `interaction-and-sticky-states` (row-owned hover/selection, first-cell inset selection shadow) and `stable-identifiers`
+- **v1 architecture research:** `.planning/milestones/v1.0-research/ARCHITECTURE.md` (stamp-and-style, stateless passes, the v2 seam)
+- **Zendesk Garden source (primary, HIGH):** `@zendeskgarden/react-theming@9.16.1` npm tarball, `dist/esm/elements/ThemeProvider.js` and `ColorSchemeProvider.js`. No DOM signal; `localStorage['color-scheme']`; `matchMedia` only in system mode
+- [Zendesk — Using dark mode to increase agent display options](https://support.zendesk.com/hc/en-us/articles/9011095783322-Using-dark-mode-to-increase-agent-display-options) (MEDIUM): Light/Dark/Match system, views included
+- [Zendesk — Announcing dark mode for Zendesk Support](https://support.zendesk.com/hc/en-us/articles/9235318127770-Announcing-dark-mode-for-Zendesk-Support) (MEDIUM)
+- [Internal Note — Zendesk Dark Mode](https://internalnote.com/zendesk-dark-mode/) (LOW–MEDIUM, 2025-03-24): `#151A1E` surface, profile-menu toggle
+- [Zendesk Developer Docs — Supporting dark mode (apps)](https://developer.zendesk.com/documentation/apps/app-developer-guide/dark-mode/) (MEDIUM): ZAF `colorScheme` and `colorScheme.changed` exist for apps only; they are not reachable from a content script
+- [Chrome for Developers — CSS attr() gets an upgrade](https://developer.chrome.com/blog/advanced-attr) (MEDIUM–HIGH): Chrome 133, any property including custom properties, `type(<color>)` with fallback
+- [Chrome for Developers — Options page](https://developer.chrome.com/docs/extensions/develop/ui/options-page) (HIGH): `options_ui`, `openOptionsPage`, embedded-page limits
+- [Mozilla bug 1767819](https://bugzilla.mozilla.org/show_bug.cgi?id=1767819) / [1770592](https://bugzilla.mozilla.org/show_bug.cgi?id=1770592) (LOW for Chrome relevance): adoptedStyleSheets broken from content scripts in Firefox; Chrome behaviour under-documented, so the mechanism is avoided
+- MV3 classic service worker `importScripts` only at initial evaluation (MEDIUM, [Chromium issue 40760920](https://issues.chromium.org/issues/40760920) and community references)
+
+### Gaps (need phase-specific work)
+
+- The dark-mode signal and switch mechanics (Recon 2). Nothing about it can be settled by desk research.
+- Identity location. The worst case (name only visible in the opened menu) is designed for, but not confirmed.
+- The empty-value placeholder and `aria-label`-only cells for non-Priority columns.
+- Typed `attr()` inside a custom property inheriting to `td` from an isolated-world-stamped `tr`. Spike in phase 3.
+- Whether storing the agent's display name changes the Chrome Web Store privacy disclosures (phase 8, with `release/policy-applicability.md`).
 
 ---
-*Architecture research for: Chrome MV3 content-script extension over a third-party React SPA*
-*Researched: 2026-09-02*
+*Architecture research for: Zhroma v1.1 Themes & Rules integration*
+*Researched: 2026-09-25*

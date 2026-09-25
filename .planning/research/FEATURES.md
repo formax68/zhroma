@@ -1,206 +1,217 @@
-# Feature Research
+# Feature Research: v1.1 Themes & Rules
 
-**Domain:** Browser extension that visually augments a third-party support-desk SPA (Zendesk Agent Workspace ticket views)
-**Researched:** 2026-09-02
-**Confidence:** HIGH on the competitive and Zendesk-native landscape (read directly from live Chrome Web Store listing HTML and official Zendesk documentation); MEDIUM on community sentiment and review-driven complaints (small sample sizes).
+**Domain:** A browser extension that visually augments a third-party support-desk SPA (Zendesk Agent Workspace ticket views). This milestone adds dark-mode following, preset colour themes built on named slots, and user-written conditional colouring rules.
+**Researched:** 2026-09-25
+**Confidence:** MEDIUM overall. Comparable-product behaviour (Airtable, Notion, Jira, Google Sheets, Outlook, Zendesk's own views and triggers) was cross-checked across several sources and agrees. Theme and palette hex values come from each project's official spec pages. Anything about Zendesk's *rendered* DOM for the new work is LOW and needs live recon: the dark-mode signal, the signed-in agent's name, and how non-Priority cells are formatted. Confidence tiers come from the `classify-confidence` seam: single-source web findings are LOW, cross-verified web findings are MEDIUM.
+
+**Scope:** This file covers only the v1.1 additions. Priority tinting, liveness, the three-way status, the missing-Priority hint and the off/on switch are already built (see `.planning/milestones/v1.0-research/FEATURES.md`). They appear here only as dependencies.
 
 ---
 
 ## Headline Findings (read these before the tables)
 
-**1. The space is thin but NOT empty — and the closest competitor died three weeks ago.**
+**1. Every comparable product uses the same precedence model: ordered rules, first match wins, drag to reorder.** Airtable record colouring ("the record will receive the color of the first condition it matches, starting from the top"), Notion conditional colour ("inherit the color of the highest rule that it matches"), Jira card colours ("each issue will be colored according to the first query that it matches"), Google Sheets conditional formatting (top-down, first true rule sets the format) and new Outlook conditional formatting ("the top rule prevails") all work this way. The user-confirmed "first matching replace-rule wins" is the industry norm, not a design risk. Google Sheets adds one refinement worth copying: a later rule can still set a property the first rule didn't touch. Mapped to Zhroma, that means **two independent channels, tint and mark, each resolved first-match-wins.** [MEDIUM]
 
-Two products have occupied this exact niche:
+**2. The left-edge stripe is an established "second signal", not an invention.** Jira draws its card colour as a left-edge stripe. Airtable grid views show a colour flag at the left of the primary field, and Kanban cards get a coloured line on their left side. The user-confirmed "add a mark" effect has direct precedent, and agents who use Jira will read it correctly without being told. [MEDIUM]
 
-- **Zest — The Zendesk Colour Coder** (`kohidmaedanhmmhkhkbeaonheneldfbi`) — **1,000 users, 5.0/5 from 5 ratings, v1.3, updated 2026-04-15.** Manifest V3, permissions `["storage"]` only, declares no data collection. Alive and maintained. Colour-codes rows by **any** column value, not just priority. **Requires the user to configure each category/colour pair in a popup, and requires a manual page refresh for changes to take effect.**
-- **Zendesk Priority Highlights** (`kdnlbgealinpnebnoamnabcpjkifokpk`) — **this is Zhroma's exact v1 spec**: red/orange/yellow/green for Urgent/High/Normal/Low, read from the view. **87 installs, 3.71/5 from 7 votes, last updated 2019-07-21, DELISTED on 2026-08-27** with a flagged policy violation and **no privacy policy**. Chrome Web Store's updated privacy-policy enforcement began **2026-08-01**. It also had reviews from 2019 saying it had stopped working.
-- **Boost Focus — Zendesk Highlighter** (`eghahjbmnoekjcehalmfloddcjnnedic`) — ~51 users, now paywalled and effectively abandoned: *"Subscription Required. This tool requires a monthly fee to cover server costs and maintenance. Contact Karan to reactivate access."*
+**3. Support staff already know one specific AND/OR model: Zendesk's own.** Zendesk views and triggers use two flat buckets, **"Meet ALL of the following conditions"** and **"Meet ANY of the following conditions"**, combined as *(every ALL condition) AND (at least one ANY condition)*. Team leads build views and triggers with this every week. General filter-UX research says the same from the other side: deep nested AND/OR trees intimidate casual users, who report "I have no clue where I am right now. Let me just clear everything and start over." **Recommendation:** meet the "full AND/OR groups" requirement with one level of grouping. That means a top-level ALL/ANY switch plus condition groups that each have their own ALL/ANY switch, the way Airtable does it. Do not offer arbitrary nesting depth. One level of groups expresses every realistic support rule. [MEDIUM]
 
-The wider Zendesk extension ecosystem is a graveyard of small single-developer tools: Zendesk Utils (887 users, 4.5/5, last updated 2024-04, *not* colour coding), Zendesk Plus (227 users), Zendesk Enhancer (201 users, 1 rating), Zendesk Dark Mode (849 users but **2.6/5** from 11 ratings, unmaintained since 2022), Zendesk Helper, ZenNotifier, Zendesk Tab Manager.
+**4. Zendesk exposes its colour scheme to apps but not to extensions.** Zendesk apps (ZAF) receive `colorScheme` (`"light"`/`"dark"`) and a `colorScheme.changed` event, because agents can switch modes mid-session and Zendesk says the change applies "immediately". A content script cannot use ZAF. No DOM attribute for the host scheme is documented. Agents choose from three settings: Light, Dark, or Match system appearance. So `prefers-color-scheme` covers only one of the three. **The dark-mode signal must be found by live recon.** The robust fallback is to measure the computed background luminance of the view table (dark surface is roughly `#151A1E`). [LOW for the DOM signal; MEDIUM for the behaviour]
 
-**Read the story here:** the exact product Zhroma is building already existed, reached only 87 installs, stopped working, and was delisted for a policy hygiene failure. The one that thrived did so by being *more general* (any field, not just priority) — but paid for it with configuration friction. **Zhroma's wedge is not "colour by priority"; it is "colour by priority with zero configuration and no manual refresh."** That is precisely where Zest is weak.
+**5. Editor themes are not uniform, so "named slots" needs a canonical Zhroma slot set with filled gaps.** Canonical ANSI-16 has **no orange**, yet the current palette and every priority mapping need one. Dracula has **no blue** (its spec maps AnsiBlue to purple). **Nord has no official light theme**, only community ones. Solarized uses the *same* eight accents in both modes. Gruvbox uses "bright" accents on dark and "faded" accents on light. Catppuccin (Latte, Frappé, Macchiato, Mocha) and Tokyo Night (Night, Storm, Moon, Day) ship official light flavours. Dracula now has the official light Alucard. So a preset is a hand-authored table of 8 slots × 2 modes. Where a theme lacks a value, Zhroma derives one and must label it as derived. [MEDIUM]
 
-**2. Zendesk does NOT natively tint rows. The premise survives — verified, not assumed.**
+**6. Colourblind-safe palettes are validated as opaque swatches on white. Zhroma paints 8–14% translucent tints.** Okabe-Ito, Paul Tol and the IBM palette are qualitative (unordered) schemes whose distinctness guarantees hold at full opacity. Tol's guidance is written for white backgrounds, and his qualitative schemes are to be "used as given". At 0.1.0's alpha levels (`0.08`–`0.14`), four translucent hues on `#151A1E` converge sharply. **The colourblind preset needs its own alpha (and probably its own lightness ordering) and has to be checked by simulating colour-vision deficiency (CVD) on screenshots of real tinted rows, not on swatches.** [MEDIUM]
 
-Zendesk staff have said so on the record, repeatedly, and it is still unshipped in 2026:
-
-- Zendesk employee (2019-04-03): *"Unfortunately there's not a CSS type of thing you can change."*
-- Zendesk PM (2024-03): *"Color coding tickets (or certain sections for the Ticket UI) is something we're looking into but I don't have any timelines or confirmation I can provide yet."*
-- Zendesk PM Salvador Vazquez (2024-03): logged to backlog for *"future consideration"*, with an explicit non-commitment.
-- Feature requests open since Feb 2021 (11 upvotes), Aug 2021 (8 upvotes), May 2025 (4 upvotes), with comments still arriving in **July 2026**: *"You're staring at a queue and every row looks the same, so you end up reading each one instead of just seeing what needs attention."*
-
-**3. But be honest about what Zendesk gives away free — it is more than nothing.**
-
-| Native capability | What it actually does | Why it does not solve the problem |
-|---|---|---|
-| Coloured status icon per row | Small coloured dot preceding each ticket, indicating **status** (New/Open/Pending/On-hold/Solved) | Status ≠ priority. Already consumes the row's only native colour affordance. |
-| SLA / Group SLA column badge | Badge coloured **green** (>15 min), **amber** (<15 min), **red** (breached) | Badge-level, not row-level; requires an SLA policy; **Professional+ plans only**. Still a small object in one column. |
-| View column configuration | Admin can add a Priority column to a view | This is the prerequisite Zhroma depends on, not a solution. Priority renders as plain text with no visual weight. |
-| View **Group by** priority | Clusters urgent tickets together under a header | This is the strongest "do nothing" alternative. But it costs the view's only grouping slot and is admin-controlled. |
-| View **Order by** priority / column-header sort | Urgent floats to top | Costs the sort slot — competes directly with sorting by requested date or SLA, which agents also need. |
-| Agent-side **Filter** button | Agents can filter a view by priority; filters persist until sign-out | Filtering *removes* the other tickets. Scanning a mixed queue is the actual job. |
-| Custom fields + triggers as a visual column | DIY indicator column | Heavy admin lift, produces more plain text. |
-| **Dark mode** | GA in 2026, all Suite/Support plans, covers views | See finding 5 — this is a constraint on Zhroma, not a competitor. |
-
-**4. No Zendesk Marketplace app can ever do what Zhroma does. This is a structural moat.**
-
-Zendesk Apps Framework v2 sandboxes every marketplace app inside an iframe with **no host DOM access**. A ZAF app physically cannot tint a row in Zendesk's own ticket list. The only paid Marketplace competitor, **Super Views**, works around this by **replacing** the native list with its own iframe-rendered table (1000 tickets/view, multi-column sort, colour coding, CSV export) — a different product, for a different buyer (paid, admin-installed), with a different failure mode. **Browser extension and userstyle are the only two mechanisms that can tint Zendesk's real list.** That narrows the competitive set to Zest and nothing else.
-
-**5. Dark mode is the single biggest gap in the current v1 scope.**
-
-Zendesk Agent Workspace dark mode is **generally available in 2026**, on all Suite plans (Team → Enterprise Plus) and Support plans. The admin toggle (*Admin Center > Workspaces > Agent tools > Agent interface*) is **activated by default**. Agents pick Light / Dark / **Match system appearance** from Profile > Appearance — meaning **the theme can flip mid-session without a page load**. Coverage explicitly includes **views**.
-
-PROJECT.md does not mention dark mode anywhere. A hard-coded light-surface palette will render as either invisible smudges or eye-searing blocks on a dark surface, and the extension will be uninstalled on day one by every agent who uses dark mode. **This is table stakes, not a differentiator.** The evidence that bolting on themes is unforgiving: the third-party "Zendesk Dark Mode" extension has 849 users and a **2.6/5** rating.
+**7. "Exactly like 0.1.0" and "readable in dark mode" conflict for the default theme.** 0.1.0 painted the same `rgb(... / 0.08–0.14)` tints on both surfaces. If dark mode has to be readable, the default theme's dark variant has to differ from 0.1.0 on dark surfaces. **Record the decision:** the zero-setup guarantee means byte-identical tints in *light* mode and "same hues, readable" in dark mode. Otherwise a verifier will call the milestone's own dark-mode fix a regression. [HIGH that the conflict exists, since it follows from `extension/zhroma.css`]
 
 ---
 
 ## Feature Landscape
 
+Categories: **A** Dark mode, **B** Themes and palettes, **C** Rules engine, **D** Rule editor UX, **E** Identity ("me"), **F** Storage, export and import. "Depends on (existing)" names the v1.0 feature or code the item builds on or changes.
+
 ### Table Stakes (Users Expect These)
 
-Missing any of these and the extension is uninstalled within a day.
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Tint rows by priority, all four values** | The entire product. Already in v1 scope. | MEDIUM | Already an Active requirement. Distinct tints for Urgent/High/Normal/Low. |
-| **Survive re-render (sort, refresh, view switch, scroll, tab switch)** | Zendesk is an SPA; a load-time-only tint looks broken within seconds. Already in v1 scope. | HIGH | Already an Active requirement. `MutationObserver` scoped to the list container, debounced/batched, never a global `<all_urls>` observer. This is the highest-effort table stake. |
-| **⚠️ Dark mode: correct tint on both themes, reacting to a live theme switch** | Dark mode is GA, admin-default-on, covers views, and flips without a page load. **MISSING FROM v1 SCOPE.** | MEDIUM | Detect Zendesk's theme signal (DOM class/attribute or computed background of the list surface) rather than `prefers-color-scheme` alone — Zendesk's "Match system appearance" is only one of three settings. Derive tints from the host surface (e.g. low-alpha overlay) so one hue set works on both, or ship two palettes. Re-evaluate on theme change. |
-| **⚠️ On/off toggle that is not "uninstall"** | Every DOM-modifying extension on a work tool needs a kill switch — for screen-sharing, for screenshots to customers, for the day Zendesk ships a change and tinting goes wrong. **MISSING FROM v1 SCOPE.** | LOW | Toolbar popup with one switch. Requires the `storage` permission — see the storage note below. |
-| **⚠️ Do not fight the host's own row states (hover, selected, unread/bold, status dot)** | If the tint overrides hover or selection, agents lose their place in a 200-row queue and blame the extension. **MISSING FROM v1 SCOPE.** | MEDIUM | Apply tint at a layer host states can win over (e.g. tint the row background, let Zendesk's hover/selected styles composite on top; avoid `!important` blanket rules). Do not obscure the native status dot — it is the agent's other primary signal. |
-| **⚠️ Ticket text stays legible over the tint** | If subject/requester text becomes hard to read, the extension made the job *harder*. **NOT stated in v1 scope.** | LOW | Distinct from the deferred colourblind palette. Just means: keep tints low-saturation/low-alpha so foreground text contrast survives, in both themes. Cheap. |
-| **⚠️ Fail silently — never break the page** | Zendesk owns the DOM and can change it without notice. A broken Zendesk costs an agent their day. **In PROJECT.md Context but not an Active requirement.** | MEDIUM | Wrap extraction and application in guards; on any unexpected structure, do nothing and leave the page untouched. Never throw into Zendesk's own error surface. Promote to a requirement. |
-| **⚠️ Performance budget — no perceptible slowdown** | A support agent's queue is their workday. Any lag and it goes. **NOT in v1 scope.** | MEDIUM | Batch DOM writes, avoid layout thrash, cap observer work per frame, disconnect the observer when the view is not visible. Set an explicit budget and test on a large view. |
-| **Hint when the view has no Priority column** | Turns a silent no-op into a self-service fix. Already in v1 scope. | MEDIUM | Already an Active requirement. **Must distinguish "column genuinely absent" from "extraction failed"** — otherwise the hint lies and tells agents to add a column they already have. See dependency notes. |
-| **Privacy policy + narrow, justified permissions** | Chrome Web Store privacy enforcement began **2026-08-01**. The direct competitor was delisted **2026-08-27** for exactly this. Already in v1 scope. | LOW | Already an Active requirement — and now evidenced as existential, not bureaucratic. Host permissions scoped to `*.zendesk.com`, no remote code, explicit "does not collect user data" declaration (Zest ships exactly this). |
-| **Works on any `*.zendesk.com` with no setup** | Required for a public listing. Already in v1 scope. | LOW | Already an Active requirement. |
-
-**Storage note (challenges a stated v1 constraint):** PROJECT.md's Out of Scope entry says v1 has *"no options page, no storage, and nothing to configure."* "No options page" and "nothing to configure" are correct and are the wedge. **"No storage" is an over-correction** — it costs you the on/off toggle, which is table stakes. `storage` is not a store-review risk: Zest ships with `["storage"]` as its *only* permission and still declares zero data collection. Recommend: take `storage`, use it for one boolean, keep the promise of zero configuration intact.
+| # | Feature | Why Expected | Complexity | Depends on (existing) / Notes |
+|---|---------|--------------|------------|-------------------------------|
+| A1 | **Detect Zendesk light/dark from the host page, not the OS** | Zendesk offers Light, Dark and Match-system. `prefers-color-scheme` is only correct for the third. | MEDIUM | Content-script reconcile loop. The signal needs live recon (Finding 4). Fallback: computed luminance of the table surface. |
+| A2 | **React to a mid-session switch without reload** | Zendesk applies the switch "immediately"; Match-system flips when the OS does. | LOW–MEDIUM | Existing `MutationObserver`. Add attribute observation on `html`/`body` (or whichever node carries the signal) plus a `matchMedia` change listener. |
+| A3 | **Tints and marks readable on the dark surface** | The core glance test must pass in both modes. A light-tuned alpha tint disappears on `#151A1E`. | MEDIUM | `zhroma.css` currently hard-codes one value per priority. Move to CSS custom properties with per-mode values. Dark mode needs higher alpha and/or lighter hues. |
+| A4 | **Host states still win in dark mode** (hover, selected, status dot) | Already a v1 constraint. Dark-mode host states have different colours and must be rechecked. | LOW | v1 direct-cell tint approach. Recheck only. |
+| A5 | **Zhroma never restyles Zendesk** | User-confirmed. The third-party "Zendesk Dark Mode" extension sits at 2.6/5. | — | Constraint, not a feature. Listed so it can't creep in. |
+| B1 | **Theme picker in the popup, applied live** | Every theme picker (VS Code, Dark Reader, Catppuccin userstyles) applies on selection. Zest's "refresh your page to see changes" is its weakest point. | MEDIUM | Popup (currently one switch, 17rem wide), `chrome.storage.onChanged` → content script. No refresh, ever: the same differentiator as v1. |
+| B2 | **Swatch strip per theme showing its four priority colours** | Users choose palettes by colour, not name. A name-only list is unusable. | LOW | Popup. Swatches must be the *rendered tint* for the current Zendesk mode (or split light/dark), not the raw accent hex, or the preview lies. |
+| B3 | **Default theme = 0.1.0 palette; fresh install unchanged** | User-confirmed zero-setup promise. | LOW | `zhroma.css` values become the "Zhroma Classic" preset. See Finding 7 for the dark-mode caveat. |
+| B4 | **Light and dark variants follow Zendesk automatically** | User-confirmed. VS Code's `preferredLight/DarkColorTheme` and Catppuccin's light-flavour/dark-flavour pairing set the norm: one choice, two renderings. | MEDIUM | A1 + A2. A preset is one entry with both variants, not two entries the agent pairs by hand. |
+| B5 | **Canonical named slot set** (red, orange, yellow, green, cyan, blue, purple, magenta) filled for every preset in both modes | Rules reference slots. A slot missing in one theme would leave a rule colourless after a theme switch. | MEDIUM (data authoring) | New data module. Finding 5: fill Dracula-blue and Nord-light, and mark derived values in source comments. |
+| B6 | **Colourblind-safe preset** | Carried from v1's deferred accessibility decision, now user-confirmed in scope. | MEDIUM | See the palette recommendation below. Needs CVD simulation on real tinted rows. |
+| B7 | **The Priority column text stays visible** (colour is never the only cue) | WCAG 1.4.1: colour must not be the sole means of conveying information. Zhroma already complies because it tints and never hides the text. | — | Constraint on rules: a rule effect must never hide cell content. |
+| C1 | **Conditions on any column shown in the view, keyed by header text** | User-confirmed. It's the same model as Priority: find the header, read the cell. | MEDIUM | Generalises the v1 header scan (`content.js` snapshot, which today finds only the Priority index). Header match is trimmed and case-insensitive. Duplicate headers make the column ambiguous, so the rule is inactive. |
+| C2 | **Text operators: is, is not, contains, does not contain, is empty, is not empty** | This is Zendesk's own vocabulary ("Is", "Is not", "Contains at least one/none") and the Airtable/Notion baseline. | LOW | Case-insensitive, whitespace-normalised comparison. `contains` is a substring match. |
+| C3 | **"Is me" operator on a people column (Assignee)** | User-confirmed. Jira has `currentUser()`; in Zendesk views "(current user) is the agent who is currently viewing". | LOW once E1 exists | Store it **symbolically** (`op: "is-me"`), never as the literal name. That keeps exported rules shareable (see F3). |
+| C4 | **Ordered rules; first matching replace-rule wins over the priority tint** | User-confirmed. Matches every product surveyed (Finding 1). | LOW | Priority tint becomes the bottom layer ("rule zero"). A row with no priority can still be tinted by a replace-rule. |
+| C5 | **Mark effect (left-edge stripe) that keeps the tint** | User-confirmed. Jira and Airtable precedent (Finding 2). | MEDIUM | Separate attribute/CSS channel. Must survive host hover/selected states and not shift layout, so an inset box-shadow is preferred to borders. |
+| C6 | **Two channels, each first-match-wins** (one tint, one stripe per row) | Answers "what if two mark-rules match?" predictably. Mirrors Sheets' "a later rule only fills properties not already set". | LOW | Stacking stripes is an anti-feature (see below). |
+| C7 | **Rule colour = theme slot or fixed hex** | User-confirmed. Slots re-colour on theme change; hex is the escape hatch. | LOW–MEDIUM | A fixed hex gets the same per-mode alpha treatment as slots so it stays readable in both modes. Show a contrast warning when it's poor on either surface. |
+| C8 | **A rule whose column isn't in this view is inactive, not wrong** | The missing-Priority hint set this bar: never mis-colour, and tell the agent the one-click fix. | MEDIUM | **Three-valued evaluation**: a missing column is *unknown*, not *empty*. "Is empty" and "is not X" must not match on an absent column. ANY groups can still match on other branches (Kleene logic). |
+| C9 | **Hint parity: popup names the inactive rules and the missing column** | Same self-service pattern as v1 ("Add a Priority column…"). Silently inactive rules read as "rules are broken". | MEDIUM | **Changes the existing status model.** Today a view without Priority is `missing` (hint shown, nothing tinted). With rules, such a view can legitimately be "working" (e.g. only Assignee rules apply). The three-way state and the popup copy need a redesign, not an addition. |
+| C10 | **Rules re-evaluate through liveness** (sort, refresh, pagination, view switch, scroll) | v1 liveness is table stakes; rules colouring once and going stale would look broken within seconds. | MEDIUM | Same reconcile pass as priority. Rule evaluation is cheap (≤ ~100 rows × a few conditions), but it must not add a second observer. |
+| C11 | **Group/section header rows and blank cells are never matched** | Grouped views contain spanning header rows (see the `grouped-long` fixture). | LOW | Existing row-shape guards. |
+| C12 | **Rules edited on the options page apply to an open Zendesk tab live** | Zest's refresh requirement is the gap. Edit, glance, adjust is how people tune rules. | LOW | `storage.onChanged` in the content script. |
+| D1 | **Options page listing rules in order, each as a readable sentence** | Outlook, Sheets and Airtable all show the rule list first and the editor second. A one-line summary ("Stripe **blue** when Assignee is me and Status is Open") lets agents audit rules without opening them. | MEDIUM | New `options_ui` page (no permission, no review impact). Opened from the popup via `chrome.runtime.openOptionsPage()`. |
+| D2 | **Condition rows read as a sentence: [column] [operator] [value]** | The Zendesk trigger editor pattern agents already use. | MEDIUM | Column field: free text with suggestions (see D8). Operator: a short fixed list. Value: text, or nothing for "is empty"/"is me". |
+| D3 | **Top-level Match ALL / ANY switch plus one level of groups** | Finding 3: expresses Zendesk's own ALL+ANY model and Airtable-style groups without a nesting maze. | MEDIUM | Keep "Add condition" and "Add group" visually separate (group is structure, not content). Groups cannot contain groups. |
+| D4 | **Reorder with drag *and* move up/down buttons** | Order is semantics (C4). Outlook uses Move Up/Down, Airtable uses drag. Buttons are the keyboard-accessible path. | LOW–MEDIUM | v1 popup already invested in keyboard focus handling; hold that bar. |
+| D5 | **Per-rule enable/disable toggle** | Standard in mail rule UIs. Lets agents test by elimination without deleting work. | LOW | — |
+| D6 | **Delete with undo (or confirm)** | Rules are hand-built; losing one to a stray click is a one-star review. | LOW | — |
+| D7 | **Colour picker = slot swatches from the current theme, plus a "Custom…" hex field** | Named slots are the primary path (Finding 5). Hex is the escape hatch, not the default. | LOW–MEDIUM | Swatches render in the current theme. Selecting a slot stores the slot name, never its hex. Native `<input type="color">` plus a hex text field. |
+| D8 | **Column suggestions from headers seen in the agent's views** | The options page is not inside Zendesk and can't know the columns. Free text alone invites typos that make rules silently inactive. | MEDIUM | The content script records **header names only** (view configuration, not ticket data) in `storage.local`. Never record cell values. Privacy policy text must mention it (see F5). |
+| E1 | **Auto-detect the signed-in agent's display name** | User-confirmed. Keeps "is me" zero-setup. | MEDIUM–HIGH | **Needs live recon.** No public documentation says where the name appears in the Agent Workspace DOM. `/api/v2/users/me` exists, but calling it is an API/network call, which the constraints rule out. Must match the name *as rendered in the Assignee column*, not the email. |
+| E2 | **Identity editable; a manual value always beats detection** | User-confirmed. Detection can fail or Zendesk can change the DOM. | LOW | Detection must never overwrite a manual value. |
+| E3 | **Identity stored per Zendesk subdomain** | Agents working several tenants (`acme.zendesk.com`, `acme-eu.zendesk.com`) can have different display names. One global "me" silently fails on the second tenant. | LOW | Key by `location.hostname`. |
+| E4 | **Visible "is me" state when identity is unknown** | A rule using "is me" with no identity must be shown as inactive in the options page and popup, not silently never match. | LOW | Same inactive-rule surface as C9. |
+| F1 | **All settings in `chrome.storage.local`, schema-versioned** | User-confirmed. Existing permission is `storage` only; the local quota (10 MB) is ample. | LOW | Add a `schemaVersion` and a migration from 0.1.0's single enabled key, which must be preserved on upgrade to 1.0.0. |
+| F2 | **Export to a JSON file** | User-confirmed. Dark Reader, Stylus and uBlock all export JSON. | LOW | `Blob` + `<a download>` from the options page. **No `downloads` permission needed.** |
+| F3 | **Import from a file with a summary before applying** ("5 rules, theme Nord") | Stylus shows added/updated counts with Undo. Dark Reader and uBlock both have bug trails about imports that silently drop part of the state. | MEDIUM | `<input type="file">`, no permission. Atomic: all or nothing. |
+| F4 | **Import is strictly validated untrusted input** | A file from a teammate or the internet goes straight into the rules engine. | MEDIUM | Whitelist operators and effects, validate hex format and slot names, cap string lengths and rule count, reject unknown future `version` with a clear message, migrate older versions. Never `eval`. |
+| F5 | **Privacy policy and store disclosures updated for stored names/values** | v1 established that reading page content counts as handling user data, even locally. v1.1 now *stores* an agent's own name, header names, and rule values (which may contain customer/agent names). | LOW (text) | STORE-04 policy page and the store Privacy tab need revision before 1.0.0 ships. |
+| F6 | **Reset to defaults** | The zero-setup promise implies a one-click way back to exactly 0.1.0 behaviour. | LOW | Restores the Classic theme, no rules, and keeps (or asks about) identity. |
 
 ### Differentiators (Competitive Advantage)
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Zero configuration — works the instant it is installed** | **This is the wedge.** Zest requires the agent to type a category name and pick a colour before anything happens. Zhroma should be correct on first paint. | LOW | Already the v1 thesis. Make it the headline of the store listing, not a footnote. |
-| **No manual refresh, ever** | Zest's own store copy says *"Refresh your Zendesk page to see the changes take effect."* Zhroma's mutation-driven re-application beats this outright. | — | Falls out of the re-render table stake. Free differentiation; say it explicitly in the listing. |
-| **Native-feeling dark mode** | Zest predates GA dark mode; the dedicated dark-mode extension is 2.6/5 and abandoned. Being the tinting extension that *looks right* in dark mode is a real advantage. | MEDIUM | Same work as the table stake — the differentiation is in polish, not scope. |
-| **Legend / key** | New agents (and team leads reviewing screenshots) need to know red = Urgent without guessing. Also silently teaches the palette. | LOW | Small, dismissible, mounted once near the view header. Depends on a stable mount point — the same selector-fragility risk as tinting. Strong v1.x candidate. |
-| **Counts per priority** | *"7 Urgent, 22 High"* answers a question agents ask constantly, that Zendesk answers only by filtering (which hides everything else). | LOW | Natural pairing with the legend — one component, two jobs. Caveat: only counts *loaded/paginated* rows; must be labelled honestly or it becomes a bug report. |
-| **Colourblind-safe palette** | ~8% of men have colour-vision deficiency. Red/orange/yellow/green — the palette the delisted competitor used — collapses Urgent and Low into the same colour under deuteranopia. For a product whose *entire* value is colour, this is closer to table stakes than PROJECT.md admits. | LOW | **Cheapest possible fix: no toggle, no options page — just choose hues that also vary in lightness so the four levels remain distinguishable in greyscale.** Costs nothing at v1 and removes a whole class of one-star reviews. Recommend pulling this in. |
-| **Per-view enable/disable** | Some views are already sorted by priority; tinting them is noise. Team leads want it on triage views, off elsewhere. | MEDIUM | Requires `storage` + stable view identity (view ID is in the URL) + the on/off toggle. v1.x. |
-| **Tint by SLA-breach risk instead of raw priority** | The strongest v2 idea. Zendesk already colours the SLA *badge* — proving Zendesk agrees the signal matters — but only at badge scale and only on Professional+. Community threads explicitly ask to *"highlight overdue tickets."* | HIGH | Needs a second extraction path (SLA column), plan-dependent availability, and a **mode selector** because it conflicts with priority tinting for the row background. Defer past v1, correctly. |
-| **Hover tooltip showing priority** | Marginal — the tint already says it, and the Priority column is on screen by definition. | LOW | Low value. Only worth it if the legend proves people can't learn the palette. |
-| **Graceful, honest degradation messaging** | Zendesk *will* change its DOM. The competitor that died had reviews saying "it stopped working." An extension that says *"Zhroma couldn't read this view"* instead of silently doing nothing keeps trust and converts a one-star review into a bug report. | MEDIUM | Depends on distinguishing failure modes (see dependencies). This is reputation insurance for a product whose standing risk is selector fragility. |
+| # | Feature | Value Proposition | Complexity | Notes |
+|---|---------|-------------------|------------|-------|
+| A6 | **Theme preview on both surfaces at once** in the popup (a mini light row and a mini dark row) | Shows the agent the theme will work when they switch modes, without switching. No competitor does this. | LOW | Two tiny static mock rows. Pure CSS from the same custom properties. |
+| B8 | **Well-known presets with official light *and* dark variants** (Catppuccin Latte/Mocha, Tokyo Night Day/Night, Dracula/Alucard, Solarized, Gruvbox) | Agents who live in these themes in their editor get the same colour language in Zendesk. Zest offers a colour picker and nothing more. | MEDIUM (data) | Nord needs a derived light variant. Label it "Nord (light variant by Zhroma)". |
+| C13 | **"Is any of" operator** (comma-separated values) | "Group is any of Tier 2, Escalations" replaces a whole ANY-group, which is the most common reason a non-technical user needs OR at all. | LOW | Reduces reliance on D3 groups. |
+| C14 | **"No colour" as a replace-rule colour** (mute) | "Status is Solved/Pending → no tint" de-emphasises rows so hot rows stand out more. Works with the glance test rather than against it. | LOW | It's just another replace value, so it respects first-match precedence. |
+| C15 | **"Contains word" for tag-like columns** | Substring "vip" matches "vip_pending". Tag columns need whole-token matching. | LOW | Only worth it if recon shows a Tags column renders space-separated tokens. |
+| D9 | **Live match counts per rule for the open view** ("matches 7 rows here" / "inactive here: needs Group column") | The preview pattern that makes rule builders learnable. It answers "did I write it right?" without switching tabs. | MEDIUM | The content script computes counts and publishes them through the background worker's existing tab-scoped state. No new permission, as long as the content script pushes the data rather than the options page querying tabs. |
+| D10 | **Duplicate rule** | Airtable's "duplicate a color and all its conditions" makes families of similar rules fast. | LOW | — |
+| D11 | **Starter rule templates** ("Assigned to me → stripe", "Unassigned → stripe", "Solved/Pending → mute") | Most agents will not write a rule from scratch. One click turns the feature from "configure" into "choose". It preserves the zero-config spirit. | LOW | Templates are inserted disabled or enabled at the agent's choice. They never ship pre-enabled on a fresh install (B3). |
+| D12 | **Popup legend of active rules and colours** | Once rules exist, a colour no longer means only priority. A legend answers "why is this row purple?" without touching Zendesk's DOM. | LOW–MEDIUM | Replaces the v1.x "legend" idea from v1 research. Better in the popup than injected into the page. |
+| F7 | **Import choice: Replace all / Add to my rules** | Supports the real team-lead workflow of handing a rule pack to the team without wiping each agent's personal rules. Stylus merges; Dark Reader replaces. Offering both covers both use cases. | LOW–MEDIUM | Add = append at the end, with new rule IDs. Identity is never exported by default, and "is me" stays symbolic, so a shared pack works for every importer. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Reading, storing or transmitting ticket content** | "Cache priorities", "sync settings", "count tickets across sessions" | Ticket bodies are customer PII on a support tool. Any collection triggers Chrome Web Store's Limited Use policy (enforced since 2026-08-01), requires disclosure, and makes every enterprise IT team block the extension. | Read priority from the DOM, act on it, keep nothing. Declare "does not collect user data" — the same declaration Zest carries. |
-| **Any write-back to Zendesk** (bulk-set priority, quick actions, macros) | "While I can see it's urgent, let me fix it" | Turns a cosmetic read-only extension into something that can corrupt a customer's ticket data. Catastrophic blast radius, needs write permissions, needs auth, kills the "does not modify functionality" claim that Zest leans on. | Stay strictly read-only and say so in the listing. Read-only is a *feature* for the IT team approving the install. |
-| **API token / OAuth / any credential** | "Then it works even without a Priority column" | Already correctly rejected in PROJECT.md. Adds an auth flow before first value (destroying zero-config), a heavier permissions ask, a privacy policy with teeth, and a support burden. The gap it closes is one the agent can fix themselves in 30 seconds. | The hint. Already the chosen design — hold this line. |
-| **Growing into a Zendesk "power tools" suite** (auto-refresh, tab management, notifications, pinning, copy-ticket-ID) | Every adjacent extension does one of these; it feels like easy growth | Violates Chrome Web Store **single purpose** policy, forces a permissions expansion (`tabs`, `notifications`, `scripting`), invalidates the privacy declaration, and puts you head-to-head with Zendesk Plus and Zendesk Utils — who are already there and still under 1,000 users. The niche does not reward breadth. | Stay a colour extension. Depth on tinting (SLA mode, palettes, per-view) beats breadth. |
-| **A full dark theme for Zendesk** | Historically the top Zendesk extension request | **Zendesk shipped it natively and it is on by default.** The third-party attempt sits at 2.6/5, unmaintained since 2022, and demanded `identity` + `googleapis` + the user's email for a *cosmetic* feature. Dead category. | Support Zendesk's dark mode. Do not compete with it. |
-| **Filtering / sorting / search inside the extension** (incl. keyboard-driven filtering) | "Show me only Urgent, fast" | Zendesk already gives agents a Filter button, column-header sort and persistent filters on every Suite/Support plan. Duplicating it means far more invasive DOM surgery (hiding/reordering rows), which breaks pagination, selection and Zendesk's own counts — the exact class of change that gets an extension blamed for breaking the page. | Point at Zendesk's native filter. Counts-per-priority gives the same *information* with none of the risk. |
-| **Telemetry or analytics, even anonymous** | "How would we know if it works?" | Any network call breaks the "nothing leaves the browser" promise, forces a real privacy policy with data categories, and is exactly the surface the 2026-08-01 enforcement targets. For a free extension there is no payoff. | Chrome Web Store install/uninstall counts and reviews. That is the feedback channel. |
-| **Auto-refreshing views** | "So I see new urgent tickets appear" | Occupied by three existing extensions, changes Zendesk's behaviour (not just its appearance), and can cause an agent to lose in-progress state. | Out of scope. Users who want it already have Zendesk Utils. |
-| **Broad host permissions (`<all_urls>`)** | Convenience during development | ZenNotifier ships `<all_urls>` for a Zendesk tool — a red flag to reviewers and IT. Guarantees the scariest possible install warning. | `*://*.zendesk.com/agent/*` — narrower than `*.zendesk.com/*`, and it is what both Zest-class competitors and Zendesk Utils use. |
-| **An options page in v1** | "Users will want their own colours" | Zest's 1,000 users came *despite* configuration, not because of it. An options page is a decision the user must make before getting value — it dissolves the only real differentiator Zhroma has. | Hard-coded, well-chosen palette. Revisit only if reviews demand it. |
-| **Replacing the ticket list with your own rendering** | "Then the DOM can't break us, and we could show 1000 rows" | This is Super Views' approach and it requires the API, an admin install, and a paid model. It is a different product with a different buyer. | Tint the list Zendesk renders. Fragility is the price of the zero-config, agent-installable model. |
-| **Desktop notifications / sounds for urgent tickets** | "Alert me when something urgent lands" | Needs `notifications` + polling + background work, breaks single purpose, and is the fastest route to an annoyed agent disabling the extension. | Out of scope. |
+| **Arbitrary-depth nested AND/OR groups** | "Full boolean power" | Usability research: users get lost and start over. Support staff know Zendesk's flat ALL+ANY. Deep trees also make the one-line rule summary (D1) unreadable. | One level of groups (D3) plus "is any of" (C13). |
+| **Regex / formula conditions** (Sheets "custom formula") | Power users | Unusable for non-technical agents, and a pathological pattern can stall the reconcile pass on every mutation. Imported regexes are untrusted input. | The fixed operator list. Revisit only on repeated demand. |
+| **Date/time arithmetic** ("Updated older than 4 h") in v1.1 | SLA-ish rules are the most-wanted rule type | Zendesk renders dates as display text. Current-year dates omit the year; formats depend on the profile locale; some cells may be relative ("2 hours ago"). Parsing rendered text is locale-fragile and needs recon Zhroma doesn't have (v1 fixtures sanitise every non-Priority cell). | v1.1: text operators only. Agents can add Zendesk's own "Next SLA breach" column, whose badge already carries the signal. Flag date operators for a later milestone after recon. |
+| **Stacked multiple stripes / multiple marks per row** | "Show every rule that matched" | Five stripes stop being a glanceable signal, it eats cell space, and it breaks the one-sentence precedence story. | One tint plus one stripe per row, each first-match-wins (C6). Popup legend (D12) explains the rest. |
+| **Custom theme editor** (edit all slots, save your own theme) | "Let me make my own" | 8 slots × 2 modes × contrast checking is a whole product. The fixed-hex escape hatch on rules already covers the "I need exactly this colour" case. | Presets plus per-rule hex. Revisit if reviews ask. |
+| **Syncing via `chrome.storage.sync`** | Convenience across machines | Already rejected: rule values and names would route through the user's Google account. | Export/import (F2, F3). |
+| **Rules on fields not shown as columns** | "Colour by a field I don't display" | Needs the API, auth and broader permissions. Already out of scope. | The inactive-rule hint (C9) tells the agent to add the column, the same as v1 Priority. |
+| **Recording cell values to power value suggestions** | Autocomplete for the value field | Stores ticket and customer data off-page, even if locally. It breaks the "reads, acts, keeps nothing" model and complicates the privacy disclosures. | Suggest *column names* only (D8). Live match counts (D9) give feedback without storing values. |
+| **Per-row tooltips or "why coloured" badges injected into Zendesk** | Explainability | New DOM writes inside Zendesk's rows, which is exactly where v1 worked hardest to stay minimal. Title attributes also collide with Zendesk's own. | Popup legend (D12) and match counts (D9). |
+| **A Zhroma dark mode / restyling Zendesk** | Historically the most-requested Zendesk extension feature | Zendesk ships it natively and it is on by default. Explicitly out of scope. | Follow Zendesk's mode (A1–A3). |
+| **Detecting identity by calling `/api/v2/users/me`** | Reliable, documented | An API call with session cookies is a network request, which contradicts the "no API, no network calls" constraint and the store story. | DOM detection plus manual override (E1, E2). |
+| **Pre-enabled example rules on install** | "Show off the feature" | Violates "a fresh install behaves exactly like 0.1.0". | Opt-in templates (D11). |
+| **Per-view or per-subdomain rule scoping in v1.1** | Custom fields differ per tenant | Adds a scope dimension to every rule and to import/export before anyone has asked. The inactive-rule handling already makes a rule harmless where its column doesn't exist. | Global rules. Identity alone is per-subdomain (E3). Revisit scoping later. |
+
+---
+
+## Palette Recommendations (for B5, B6, B8)
+
+**Canonical slot set:** `red, orange, yellow, green, cyan, blue, purple, magenta`. Eight slots, the ANSI set plus orange, minus black and white. Each preset stores two maps, `light` and `dark`, and a `priorities` mapping that is normally `Urgent→red, High→orange, Normal→yellow, Low→green`.
+
+| Preset | Light source | Dark source | Gaps Zhroma must fill |
+|---|---|---|---|
+| Zhroma Classic (default) | 0.1.0 values, byte-identical | Same hues, retuned for `#151A1E` | cyan/blue/purple/magenta slots are new |
+| Catppuccin | Latte (official): red `#D20F39`, peach `#FE640B`, yellow `#DF8E1D`, green `#40A02B` | Mocha (official): `#F38BA8`, `#FAB387`, `#F9E2AF`, `#A6E3A1` | none (peach = orange, mauve = purple, pink = magenta) |
+| Tokyo Night | Day (official) | Night/Storm/Moon (official): red `#f7768e`, green `#9ece6a`, yellow `#e0af68` | pick one dark flavour |
+| Dracula | Alucard (official): `#CB3A2A`, `#A34D14`, `#846E15`, `#14710A` | Dracula: `#FF5555`, `#FFB86C`, `#F1FA8C`, `#50FA7B` | **blue** (spec maps AnsiBlue to purple) |
+| Nord | **none official**, derive from Aurora on Snow Storm | Aurora: `#bf616a`, `#d08770`, `#ebcb8b`, `#a3be8c`, purple `#b48ead`, Frost blues | **light variant**, magenta |
+| Gruvbox | "faded" accents (official light) | "bright" accents: red `#FB4934`, orange `#FE8019`, yellow `#FABD2F`, green `#B8BB26` | none |
+| Solarized | same 8 accents in both modes (by design): yellow `#b58900`, orange `#cb4b16`, red `#dc322f`, green `#859900`, … | same | none. It's the easiest preset. |
+| Colourblind-safe | see below | see below | — |
+
+**Colourblind-safe preset.** Recommended: an **IBM-palette-based ordered mapping**, *Urgent → magenta `#DC267F`, High → orange `#FE6100`, Normal → gold `#FFB000`, Low → ultramarine `#648FFF`*. The reasoning: it puts Low on the blue side of the blue–orange axis, which survives deuteranopia and protanopia, and it steps lightness monotonically across the warm levels. Alternative: Okabe-Ito, *Urgent vermilion `#D55E00`, High orange `#E69F00`, Normal sky blue `#56B4E9`, Low bluish green `#009E73`*. Neither is a validated *ordered* scheme. Both are qualitative palettes being used for ordered data, so **treat the mapping as a hypothesis until checked with CVD simulation on screenshots of real translucent rows in both modes** (Finding 6). Expect this preset to need a higher alpha than the others. It is also the strongest argument for letting any theme use the stripe mark, since shape and position are a non-colour cue.
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Priority extraction from rendered Priority column]
-    ├──required by──> [Row tinting]
-    ├──required by──> [Counts per priority]
-    ├──required by──> [Legend]
-    └──required by──> [No-Priority-column hint]
+[A1 Host light/dark detection] ──requires──> [live recon of Zendesk DOM signal]
+    └──required by──> [A2 live switch] ──required by──> [B4 auto light/dark variants]
+    └──required by──> [A3 readable tints]  ──required by──> [B3 default theme = 0.1.0 (light) + retuned dark]
 
-[Re-application on DOM mutation]
-    └──required by──> [Row tinting]  (without it, tinting is cosmetically broken in seconds)
-    └──required by──> [Counts per priority]  (counts go stale on sort/scroll)
+[CSS custom-property palette seam (replaces hard-coded zhroma.css values)]
+    ├──required by──> [A3], [B1 live theme switch], [C7 slot/hex colours], [C5 stripe mark]
+    └──required by──> [A6 dual-surface preview]
 
-[Theme detection: Zendesk light vs dark, live]
-    └──required by──> [Row tinting]        (wrong palette = illegible or garish)
-    └──required by──> [Legend]             (swatches must match the applied tints)
+[B5 canonical slot set + preset data]
+    ├──required by──> [B1/B2 picker + swatches]
+    ├──required by──> [B6 colourblind preset], [B8 editor presets]
+    └──required by──> [C7 rule colour = slot], [D7 slot swatch picker]
 
-[storage permission]
-    ├──required by──> [On/off toggle]
-    ├──required by──> [Per-view enable/disable]
-    └──required by──> [User-configurable colours (v2)]
+[Generalised header scan: all columns by name]   (extends v1 Priority-only scan)
+    ├──required by──> [C1 conditions on any column]
+    ├──required by──> [C8 three-valued missing-column handling] ──required by──> [C9 hint parity]
+    └──required by──> [D8 column-name suggestions], [D9 live match counts]
 
-[On/off toggle] ──required by──> [Per-view enable/disable]
+[C1 + C2 + C4 + C6 rules engine] ──required by──> [C5 mark], [C13/C14/C15 extra operators/effects]
+[E1 identity detection] ──required by──> [C3 "is me"] <──fallback── [E2 manual override]
+[E3 per-subdomain identity] ──enhances──> [C3]
 
-[Failure-mode discrimination: "column absent" vs "extraction failed"]
-    ├──required by──> [No-Priority-column hint]  (or the hint lies)
-    └──required by──> [Graceful degradation messaging]
+[F1 schema-versioned storage + 0.1.0 migration]
+    ├──required by──> [every setting in v1.1]
+    └──required by──> [F2 export] ──required by──> [F3/F4 validated import] ──enhances──> [F7 replace/add]
 
-[Legend] ──enhances──> [Row tinting]
-[Counts per priority] ──shares a component with──> [Legend]
+[Options page (options_ui)] ──required by──> [D1–D12], [E2], [F2–F7]
+[Existing background tab-scoped state] ──required by──> [C9 popup hint], [D9 match counts], [D12 legend]
 
-[SLA-risk tinting] ──CONFLICTS with──> [Priority tinting]
-[Full-row tint]    ──CONFLICTS with──> [Host hover / selected-row / unread styling]
-[Full-row tint]    ──CONFLICTS with──> [Zest, if both installed]
+[C9 rules-aware status] ──CONFLICTS with──> [v1 "missing Priority column" state semantics]  (must be redesigned)
+[B3 "exactly like 0.1.0"] ──CONFLICTS with──> [A3 dark readability]  (resolve by scoping exactness to light mode)
+[Stacked marks] ──CONFLICTS with──> [glance test]  (hence one stripe channel)
 ```
 
 ### Dependency Notes
 
-- **Everything requires priority extraction.** It is the single root dependency, and the single point of failure. Build it as an isolated, individually testable module with a fixture set of captured view markup (light and dark), so a Zendesk DOM change is a one-file fix rather than an archaeology project.
-- **Row tinting requires theme detection, not just mutation handling.** These are two independent inputs to the same output. Treating dark mode as a later "polish pass" means the palette gets designed against light surfaces and then has to be redesigned. Decide the palette strategy (two palettes vs. one alpha-overlay set composited on the host surface) *before* picking hues.
-- **The hint requires failure-mode discrimination.** "I found the table but there is no Priority column" and "I could not find the table at all" must produce different behaviour. If they collapse, agents with a Priority column get told to add one — which reads as "this extension is broken", exactly the review the delisted competitor collected. If you cannot distinguish them reliably, the hint should stay silent on the ambiguous case.
-- **Full-row tint conflicts with the host's row states.** Zendesk's hover, selected-row and status-dot styling are load-bearing for navigation. The tint must sit at a specificity/layer where those still win. This constrains *how* the tint is applied, not whether — decide it at design time, not by adding `!important` when it looks wrong.
-- **SLA tinting conflicts with priority tinting** for the same pixels. If SLA mode ever ships, it needs a mode selector — which needs storage and an options surface. That chain is why it is correctly a v2 item.
-- **The on/off toggle unlocks the per-view feature for nearly free.** Both need `storage` and a popup. Building the toggle in v1 makes per-view a v1.x afternoon rather than a new subsystem.
+- **The palette seam comes first.** Today the colours live only in `zhroma.css` as `!important` literals keyed on `data-zhroma-priority`, and `popup.html` says "the product palette lives in zhroma.css and nowhere else". Themes, slots, hex rules, stripes and dark mode all need colours as *data* (JS preset tables for popup swatches and options-page pickers) driving *CSS custom properties* in the page. Without a build step, that means two encodings again (JS data and CSS rules), so reuse v1's agreement-test pattern (the `en`/`en-*` precedent).
+- **Dark-mode detection blocks theme work.** Every theme swatch, preview and alpha value depends on knowing which surface is live. Without the recon, palettes get designed against one surface and redesigned later. That was exactly the warning in v1's research.
+- **The rules engine changes the existing status model.** v1's `missing` state means "no Priority column, so nothing to do, show the hint". With rules, "no Priority column" can coexist with active rules. Redesign the three-way diagnosis and popup copy around this: *view readable* / *view unreadable*, plus a separate list of inactive rules and missing columns. Bolting a fourth state on will produce contradictory messages.
+- **The generalised header scan touches the v1 safety guards.** Today a row with an unrecognised Priority value marks the whole view `unsafe`. Other columns hold arbitrary text by nature, so the "unknown value → unsafe" rule must stay Priority-specific. The structural guards (one table, one header row, cell counts) apply unchanged.
+- **Fixtures can't support rule tests yet.** The v1 fixtures replace every header and cell except Priority with `TEXT-nnn`. Rule tests need fixtures that keep the *shape* of Assignee, Group, Status, Tags, date and custom-field cells (element structure, avatars, `<time>`, badges) while still sanitising names. That's a new recon and sanitiser policy, and it has to happen before the engine phase.
+- **"Is me" depends on how names render.** Detection only helps if the detected string equals the Assignee cell text. The recon must capture both the identity source and the Assignee cell rendering. Watch for things like "Me" or avatar-only cells.
+- **Export/import depends on the symbolic "is me".** If "me" were stored as the exporter's name, a team lead's shared rule pack would highlight the team lead's tickets for everyone.
+- **No new permissions are needed for any table-stakes item:** options page, file export via `<a download>`, file import via `<input type=file>`, `openOptionsPage`, `storage.onChanged`. Keep it that way; the permission surface has been frozen at `storage` since Phase 2. D9 (match counts) must push from the content script through the existing background channel. It must not query tabs from the options page, because that may need `tabs` or host permissions. Verify this during planning.
 
 ---
 
-## MVP Definition
+## MVP Definition (v1.1 → extension 1.0.0)
 
-### Launch With (v1)
+### Launch With
 
-- [x] **Tint rows by priority, all four values** — the product.
-- [x] **Priority read from the rendered Priority column** — keeps permissions narrow, no auth.
-- [x] **Re-application on DOM mutation (sort, refresh, view switch, scroll, tabs)** — without it the product is visibly broken.
-- [x] **Hint when the view has no Priority column** — converts silent failure into a self-service fix.
-- [x] **Works on any `*.zendesk.com` agent view with zero configuration** — the wedge against Zest.
-- [x] **Published listing with privacy policy and minimal permissions** — the direct competitor was delisted for missing this on 2026-08-27.
-- [ ] **➕ Dark-mode-correct palette, reacting to live theme change** — *add to v1.* Dark mode is GA and admin-default-on; shipping without it means a broken-looking product for a large share of installs.
-- [ ] **➕ On/off toggle in the toolbar popup** — *add to v1.* Costs one boolean and the `storage` permission; without it, "disable" means "uninstall".
-- [ ] **➕ Tint layered so host hover / selected-row / unread styling still wins** — *add to v1.* A design constraint on the tinting approach, not a separate feature.
-- [ ] **➕ Fail-silent guarantee as an explicit, tested requirement** — *promote from Context to Active.*
-- [ ] **➕ Stated performance budget, verified on a large view** — *add to v1.*
-- [ ] **➕ Palette that varies in lightness as well as hue** — *pull forward from the deferred accessibility item.* Zero cost at design time; removes the deuteranopia failure where Urgent-red and Low-green become indistinguishable.
+- [ ] **A1–A4 dark mode following, live** — without it every theme is half-broken.
+- [ ] **Palette seam** (custom properties + JS preset data + agreement test) — the foundation for everything else.
+- [ ] **B1–B5 theme picker with swatches, live apply, Classic default** — user-confirmed.
+- [ ] **B6 colourblind-safe preset, CVD-validated on real tinted rows** — carried-over accessibility commitment.
+- [ ] **B8 a small preset set** (Classic, Catppuccin, Tokyo Night, Dracula, Nord, Gruvbox, Solarized, Colourblind-safe) — user-named. Keep it to about eight so the popup stays one screen.
+- [ ] **C1–C12 rules engine** with text operators, symbolic "is me", ordered replace/mark in two channels, slot/hex colours, three-valued missing-column handling, liveness, live apply.
+- [ ] **C9 rules-aware status and hint redesign** — required by C1, not optional.
+- [ ] **D1–D8 options-page editor** with sentence rows, ALL/ANY plus one group level, reorder, enable/disable, undo, slot picker, column suggestions.
+- [ ] **E1–E4 identity** with detection, override, per-subdomain storage, and a visible unknown state.
+- [ ] **F1–F6 storage, migration, export, validated import, reset, updated privacy policy.**
+- [ ] **C13 "is any of"** — LOW cost, and it removes most of the need for groups.
+- [ ] **D9 live match counts** — the single feature that makes rules learnable. MEDIUM cost, but it reuses the existing tab-state channel.
 
 ### Add After Validation (v1.x)
 
-- [ ] **Legend / key** — trigger: any review or support message asking what a colour means.
-- [ ] **Counts per priority** — trigger: ships with the legend; same component.
-- [ ] **Per-view enable/disable** — trigger: users report tinting is noise on views already sorted by priority.
-- [ ] **Graceful degradation messaging** — trigger: the first Zendesk DOM change that breaks extraction. Build the hooks in v1 even if the messaging ships later.
+- [ ] **D11 starter templates** — trigger: early reviews or support mail showing agents don't know what to write.
+- [ ] **D12 popup legend of active rules** — trigger: "why is this row purple?"
+- [ ] **C14 mute effect** and **D10 duplicate rule** — trigger: rule lists growing past ~5 per agent.
+- [ ] **F7 Add-to-my-rules import mode** — trigger: team-lead sharing requests (ship Replace-only first if time is short).
+- [ ] **A6 dual-surface preview** — polish.
 
 ### Future Consideration (v2+)
 
-- [ ] **User-configurable colours** — defer. **Confirmed correct.** Zest proves configuration is the friction, not the draw. Needs storage + options UI + migration story.
-- [ ] **Alternative treatments (left-edge stripe, coloured pill)** — defer. **Confirmed, with one caveat** (see below).
-- [ ] **SLA-breach-risk tinting** — defer. Strongest v2 differentiator; needs a second extraction path, plan-awareness, and a mode selector.
-- [ ] **Open ticket page, tab strip, search results, org/user lists** — defer. **Confirmed correct**; list-scanning pain is in views.
-- [ ] **Firefox / Edge / Safari** — defer. **Confirmed correct.**
-- [ ] **Zendesk API for priority** — **do not build.** Confirmed as a permanent anti-feature, not a deferral.
-
-### Verdict on the Stated Deferrals
-
-| Deferral | Verdict | Reasoning |
-|---|---|---|
-| User-configurable colours → v2 | **Confirm — strongly** | Zest's configuration requirement is the gap Zhroma exploits. Adding config in v1 forfeits the only differentiator. |
-| Alternative treatments → v2 | **Confirm, with a caveat** | Full-row tint is the right call for the glance test. **But it is also the treatment most likely to collide with dark mode and with host hover/selected styling.** A left-edge stripe is cheaper and safer on both counts. Do not change v1 — but architect the tint behind a single "apply treatment to row" seam so that if dark mode or host-state collisions prove intractable, switching to a stripe is a contained change rather than a rewrite. |
-| Colourblind-safe palette → deferred | **Challenge — partially pull forward** | The *audit and toggle* can wait. The *hue choice* cannot: for a product whose entire value is colour, shipping red/orange/yellow/green (the palette the delisted competitor used) makes it useless to ~8% of male agents. Varying lightness across the four levels costs nothing now and is expensive to retrofit once users have learned the palette. |
-| Zendesk API for priority → rejected | **Confirm — strongly** | Would destroy zero-config, expand permissions, and complicate the privacy story that just got a competitor delisted. |
-| Colour by anything other than priority → out of scope | **Confirm for v1** | Zest's "any field" generality is what forced its configuration friction. Staying priority-only is what buys zero-config. |
-| Chrome only → v1 | **Confirm** | No evidence of Firefox demand in this niche. |
-| Views only (not ticket page/tabs) → v1 | **Confirm** | Every community complaint is about scanning a queue. |
+- [ ] **Date/relative-time operators** — needs locale-aware parsing of rendered dates and new recon.
+- [ ] **C15 whole-word tag matching** — pending recon of how Tags render.
+- [ ] **Per-subdomain or per-view rule scoping** — wait for demand.
+- [ ] **Custom theme editor** — wait for demand. The hex escape hatch covers the urgent case.
 
 ---
 
@@ -208,77 +219,110 @@ Missing any of these and the extension is uninstalled within a day.
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Tint rows by priority (4 values) | HIGH | MEDIUM | **P1** |
-| Survive DOM re-render | HIGH | HIGH | **P1** |
-| Dark-mode-correct palette + live theme reaction | HIGH | MEDIUM | **P1** *(currently missing)* |
-| Zero configuration / works on install | HIGH | LOW | **P1** |
-| Privacy policy + narrow permissions | HIGH *(existential)* | LOW | **P1** |
-| Fail silently, never break the page | HIGH | MEDIUM | **P1** |
-| On/off toggle | MEDIUM | LOW | **P1** *(currently missing)* |
-| Don't fight host hover/selected/unread | MEDIUM | MEDIUM | **P1** *(currently missing)* |
-| Text legibility over tint | MEDIUM | LOW | **P1** *(currently missing)* |
-| Performance budget | MEDIUM | MEDIUM | **P1** *(currently missing)* |
-| Lightness-varying (CVD-tolerant) palette | MEDIUM | LOW | **P1** *(recommend pulling forward)* |
-| Hint when no Priority column | MEDIUM | MEDIUM | **P1** |
-| Legend / key | MEDIUM | LOW | P2 |
-| Counts per priority | MEDIUM | LOW | P2 |
-| Per-view enable/disable | MEDIUM | MEDIUM | P2 |
-| Graceful degradation messaging | MEDIUM | MEDIUM | P2 |
-| SLA-breach-risk tinting | HIGH | HIGH | P3 |
-| User-configurable colours | MEDIUM | MEDIUM | P3 |
-| Left-edge stripe / pill treatments | LOW | MEDIUM | P3 |
-| Hover tooltip | LOW | LOW | P3 |
+| A1–A3 dark mode detect, live, readable | HIGH | MEDIUM | P1 |
+| Palette seam (custom properties + preset data) | HIGH (enabler) | MEDIUM | P1 |
+| B1–B5 theme picker, slots, Classic default | HIGH | MEDIUM | P1 |
+| B6 colourblind-safe preset (validated) | MEDIUM | MEDIUM | P1 |
+| C1–C8, C10–C12 rules engine | HIGH | MEDIUM–HIGH | P1 |
+| C9 rules-aware status/hint redesign | HIGH | MEDIUM | P1 |
+| D1–D8 rule editor | HIGH | MEDIUM–HIGH | P1 |
+| E1–E4 identity | HIGH | MEDIUM–HIGH (recon-bound) | P1 |
+| F1–F6 storage, export/import, reset, policy | MEDIUM | LOW–MEDIUM | P1 |
+| C13 "is any of" | MEDIUM | LOW | P1 |
+| D9 live match counts | HIGH | MEDIUM | P1 |
+| D11 starter templates | MEDIUM | LOW | P2 |
+| D12 popup legend | MEDIUM | LOW–MEDIUM | P2 |
+| F7 add-vs-replace import | MEDIUM | LOW–MEDIUM | P2 |
+| C14 mute effect | MEDIUM | LOW | P2 |
+| D10 duplicate rule | LOW | LOW | P2 |
+| A6 dual-surface preview | LOW | LOW | P2 |
+| Date operators | HIGH | HIGH | P3 |
+| C15 contains-word | LOW | LOW | P3 |
+| Rule scoping per view/subdomain | LOW | MEDIUM | P3 |
+| Custom theme editor | LOW | HIGH | P3 |
 
 ---
 
 ## Competitor Feature Analysis
 
-| Feature | Zest (1,000 users, live) | Zendesk Priority Highlights (delisted 2026-08-27) | Super Views (paid ZAF app) | Zendesk native | **Zhroma** |
-|---------|---|---|---|---|---|
-| Colour source | Any column value, user-defined | Priority only, fixed red/orange/yellow/green | Own rules, inside its own list | — | Priority only, fixed palette |
-| Setup required | Type a category, pick a colour, per category | Options page to pick which priorities | Admin installs the app, paid | — | **None** |
-| Applies without refresh | **No** — store copy says "Refresh your Zendesk page" | Unknown; reviews said it stopped working | N/A (own render) | — | **Yes** — mutation-driven |
-| Dark mode aware | Predates GA dark mode; unlikely | No (2019) | Its own UI | Native, GA, default-on | **Yes** |
-| Row-level colour on Zendesk's real list | Yes | Yes | No — replaces the list | **No** | **Yes** |
-| Permissions | `storage` only, MV3, no data collection | Unknown; **no privacy policy** → delisted | ZAF iframe, no host DOM access | — | `storage` + `*.zendesk.com/agent/*` |
-| Price | Free | Free | Paid | Included | **Free** |
-| Maintained | Yes (2026-04) | No (2019) | Yes | Yes | — |
-| Legend / counts | No | No | Column-based | — | v1.x opportunity |
+| Feature | Zest (Zendesk colour coder) | Airtable record colour | Notion conditional colour | Jira card colours | Outlook / Sheets | **Zhroma v1.1** |
+|---|---|---|---|---|---|---|
+| Rule condition model | Type a value, pick a colour | Field/operator/value, AND/OR, nested groups | Per-property rules | Type / priority / assignee / JQL | Conditions list / formula | Column/operator/value, ALL/ANY + one group level |
+| Precedence | Unclear | First match from top, drag reorder | Highest rule wins | First matching query | Top rule wins; Sheets fills untouched properties | First match per channel (tint, stripe) |
+| Visual effect | Row background | Left flag (grid), card stripe | Row background | Left-edge card stripe | Font colour / cell fill | Row tint (replace) or left stripe (mark) |
+| "Me" | No | Collaborator field | Person property | `currentUser()` | Outlook: sent to me / Cc | Symbolic "is me", auto-detected, editable |
+| Palette | Free colour picker | Fixed palette | Fixed palette | Fixed palette | Free | Named theme slots + hex escape hatch |
+| Dark mode | Not evident | App-managed | App-managed | App-managed | App-managed | Follows Zendesk's mode, per-slot variants |
+| Apply without refresh | **No** | Yes | Yes | Yes | Yes | **Yes** |
+| Export/import | No | N/A | N/A | N/A | N/A | JSON file, validated, replace (+ add later) |
 
-**Positioning statement this supports:** *"Zest colours anything, once you tell it what. Zhroma colours priority, correctly, the moment you install it — and it keeps up when Zendesk re-renders, in dark mode and light."*
+**Positioning update:** *"Zest colours anything once you tell it what, then asks you to refresh. Zhroma still colours priority the moment you install it, and now lets you add your own rules, in the theme you already use in your editor, in light and dark, with nothing to refresh."*
+
+---
+
+## Open Questions for Recon / Phase Research
+
+1. **Dark-mode DOM signal** (A1): which element and attribute (or class) changes when an agent switches mode, and is it the same for Match-system? Needs a live tenant. [LOW, blocking]
+2. **Signed-in agent's display name location** (E1): top-bar avatar alt/aria-label, a profile menu, or bootstrapped page data readable from the isolated world? Does it equal the Assignee cell text? [LOW, blocking for E1]
+3. **Rendered cell shapes** for Assignee, Requester, Group, Status, Tags, Updated/Requested, Next SLA breach and custom dropdown fields (text vs avatar+text, `<time>`, badges, truncation). Needs a new sanitiser policy that keeps shape but not names. [LOW, blocking for C1/C2 tests]
+4. **Header text of custom fields**: exactly the field's display title? Truncated? Localised? [LOW]
+5. **Whether content-script match patterns let an extension page find the Zendesk tab** without the `tabs` permission. If not, D9 must be push-only through the background worker. [LOW, verify in planning]
+6. **CVD validation of the colourblind preset** at real alpha on both surfaces. Tooling choice is left to phase research. [MEDIUM]
 
 ---
 
 ## Sources
 
-**Chrome Web Store — read directly from live listing HTML (includes embedded manifests). Confidence: HIGH.**
-- Zest — The Zendesk Colour Coder: https://chromewebstore.google.com/detail/zest-the-zendesk-colour-c/kohidmaedanhmmhkhkbeaonheneldfbi
-- Zendesk Utils: https://chromewebstore.google.com/detail/zendesk-utils/mdcmhkfioihfkfggfpiibohmkmnpanjh
-- Zendesk Enhancer: https://chromewebstore.google.com/detail/zendesk-enhancer/ldfmooebdhnddkbjknljafcignoflkmg
-- Zendesk Priority Highlights (now delisted): https://chromewebstore.google.com/detail/zendesk-priority-highligh/kdnlbgealinpnebnoamnabcpjkifokpk
-
-**Extension analytics (install history, delisting date, review text). Confidence: MEDIUM — third-party tracker.**
-- Zest on Extpose: https://extpose.com/ext/200580/en
-- Zendesk Priority Highlights on Extpose: https://extpose.com/ext/65981
-
-**Zendesk official documentation. Confidence: HIGH — primary source.**
+**Zendesk (official). Confidence: MEDIUM (cross-verified).**
 - Using dark mode to increase agent display options: https://support.zendesk.com/hc/en-us/articles/9011095783322-Using-dark-mode-to-increase-agent-display-options
 - Activating and deactivating dark mode: https://support.zendesk.com/hc/en-us/articles/9235063674138-Activating-and-deactivating-dark-mode-for-your-account
-- Viewing and understanding SLA targets: https://support.zendesk.com/hc/en-us/articles/4408832852122-Viewing-and-understanding-SLA-targets
-- Accessing your views of tickets: https://support.zendesk.com/hc/en-us/articles/4408829483930-Accessing-your-views-of-tickets
-- Sorting and filtering tickets in a view: https://support.zendesk.com/hc/en-us/articles/5430058226330-Sorting-and-filtering-tickets-in-a-view-to-refine-results
-- Zendesk Apps Framework (iframe sandboxing, no DOM access): https://developer.zendesk.com/documentation/apps/app-developer-guide/using-the-apps-framework/
+- Supporting dark mode (ZAF `colorScheme`, `colorScheme.changed`): https://developer.zendesk.com/documentation/apps/app-developer-guide/dark-mode/
+- Ensuring dark mode compatibility for apps: https://support.zendesk.com/hc/en-us/articles/9257152764570-Ensuring-dark-mode-compatibility-for-your-Zendesk-Support-apps
+- Creating views (columns up to 15, no multi-select columns, operators): https://support.zendesk.com/hc/en-us/articles/4408888828570-Creating-views-to-build-customized-lists-of-tickets
+- Meet all vs meet any: https://support.zendesk.com/hc/en-us/articles/4408883552282-What-is-the-difference-between-meet-all-and-meet-any-conditions
+- Zendesk glossary ("current user" in views): https://support.zendesk.com/hc/en-us/articles/4408883411354-Zendesk-glossary
+- Garden theming / ColorSchemeProvider: https://garden.zendesk.com/components/theme-provider/ , https://www.npmjs.com/package/@zendeskgarden/react-theming
+- Internal Note, Zendesk dark mode (2025-03-24; surface `#151A1E`, text `#D8DCDE`): https://internalnote.com/zendesk-dark-mode/
 
-**Zendesk community — feature requests and staff responses. Confidence: HIGH for quoted staff statements, MEDIUM for aggregate sentiment.**
-- Colour coding tickets (8 upvotes, Zendesk PM response Mar 2024, active to Jul 2026): https://community.zendesk.com/ideas/colour-coding-tickets-4601
-- Ticket views with added colours? (11 upvotes, Zendesk PM response Mar 2024): https://community.zendesk.com/fid-0/tid-5012
-- Looking for a way to track high-priority tickets visually (Zendesk staff: no CSS customisation possible): https://community.zendesk.com/support-7/looking-for-a-way-to-track-high-priority-tickets-visually-in-the-zd-support-agent-15921
-- Ability to customize the color of fields in a ticket view (4 upvotes, logged for PM review May 2025): https://community.zendesk.com/fid-0/tid-1965
+**Comparable rule-colouring products. Confidence: MEDIUM.**
+- Airtable record colouring: https://support.airtable.com/docs/record-coloring-in-airtable
+- Notion conditional colour: https://thomasjfrank.com/notion-conditional-color-formatting-everything-you-need-to-know/ , https://www.notion.com/help/views-filters-and-sorts
+- Jira card colours: https://support.atlassian.com/jira-software-cloud/docs/customize-cards/ , https://support.atlassian.com/jira-service-management-cloud/docs/add-colors-to-cards-on-your-board/
+- Google Sheets conditional formatting: https://support.google.com/docs/answer/78413
+- Outlook conditional formatting: https://support.microsoft.com/en-us/outlook/mail/use-conditional-formatting-rules-to-change-incoming-messages-in-outlook
+- Linear filters (nested groups): https://linear.app/docs/filters
+- Zest, the Zendesk Colour Coder: https://chromewebstore.google.com/detail/zest-the-zendesk-colour-c/kohidmaedanhmmhkhkbeaonheneldfbi
 
-**Chrome Web Store policy. Confidence: HIGH — primary source.**
-- Chrome Web Store policy updates: enhancing user privacy and platform integrity (enforcement from 2026-08-01): https://developer.chrome.com/blog/cws-policy-updates-2026
-- Limited Use policy: https://developer.chrome.com/docs/webstore/program-policies/limited-use
+**Filter / rule-builder UX. Confidence: LOW–MEDIUM (practitioner articles).**
+- Smart Interface Design Patterns, complex filtering (2022-12-26): https://smart-interface-design-patterns.com/articles/complex-filtering/
+- SaaS filtering UX patterns: https://www.saasui.design/blog/saas-filtering-sorting-ux-patterns
+- Filter-builder UX rethink (group is structural, not content): https://github.com/KucharczykL/timetracker/issues/126
+- Pencil & Paper, enterprise filtering: https://www.pencilandpaper.io/articles/ux-pattern-analysis-enterprise-filtering
+
+**Theme picker precedents. Confidence: MEDIUM.**
+- VS Code themes (`autoDetectColorScheme`, preferred light/dark themes): https://code.visualstudio.com/docs/configure/themes
+- Catppuccin userstyles (light flavour / dark flavour / accent): https://userstyles.catppuccin.com/getting-started/usage/
+
+**Palettes (official specs). Confidence: MEDIUM.**
+- Catppuccin palette: https://catppuccin.com/palette/
+- Dracula / Alucard spec: https://draculatheme.com/spec
+- Nord colours and palettes: https://www.nordtheme.com/docs/colors-and-palettes ; no official light theme: https://github.com/nordtheme/nord/issues/203
+- Tokyo Night palette: https://tokyonight.org/palette/ , https://github.com/folke/tokyonight.nvim
+- Gruvbox: https://github.com/morhetz/gruvbox , https://github.com/morhetz/gruvbox-contrib/blob/master/color.table
+- Solarized: https://en.wikipedia.org/wiki/Solarized
+- Paul Tol's colour schemes: https://sronpersonalpages.nl/~pault/
+- Okabe-Ito: https://easystats.github.io/see/reference/scale_color_okabeito.html
+- IBM colour-blind-safe palette: https://lospec.com/palette-list/ibm-color-blind-safe , https://davidmathlogic.com/colorblind/
+- WCAG 1.4.1 Use of Color: https://www.w3.org/TR/UNDERSTANDING-WCAG20/visual-audio-contrast-without-color.html
+
+**Export/import precedents. Confidence: MEDIUM.**
+- Stylus manager (import merges, shows counts, Undo): https://github.com/openstyles/stylus/wiki/Manager
+- Dark Reader import issues: https://github.com/darkreader/darkreader/issues/7062
+- uBlock Origin restore issues: https://github.com/uBlockOrigin/uBlock-issues/issues/3867
+
+**Project code read directly. Confidence: HIGH.**
+- `extension/zhroma.css` (hard-coded per-priority alpha tints), `extension/content.js` (Priority-only header scan, `missing`/`unsafe`/`blank` states), `extension/popup.html` / `popup.js` (single switch, status copy), `extension/manifest.json` (`storage` only), `test/fixtures/*.html` (all non-Priority text sanitised to `TEXT-nnn`).
 
 ---
-*Feature research for: Chrome extension colour-coding Zendesk agent-view ticket rows by priority*
-*Researched: 2026-09-02*
+*Feature research for: Zhroma v1.1 Themes & Rules (dark-mode-aware themes, named colour slots, conditional row-colouring rules)*
+*Researched: 2026-09-25*

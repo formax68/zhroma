@@ -1,0 +1,1 @@
+{"content":"No public documentation of where the signed-in agent's name appears in the Agent Workspace DOM; /api/v2/users/me exists but would be a network/API call. Identity detection must be derived by live recon and treated as fallible.","source":"web","provider":"websearch","confidence":"LOW","fetched_at":"2026-09-25T10:53:45.669Z","ttl":86400000,"kind":"web"}
