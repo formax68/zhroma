@@ -634,21 +634,37 @@ node scripts/sanitize-fixture.js --input "$PRIVATE/light.private.html" \
 | A8 | Standard header spellings ("Requester", "Updated", "Requested" and so on) and placeholders | Pattern 1 | The allowlist constants are edited after step 1 of the session, before sanitising |
 | A9 | Garden chrome scopes for identity candidates (`[data-garden-id^="avatars"]`, landmarks, `[role="menu"]`) | P2 | The probe misses the name; the entry ends `not observed` with the IDENT-03 fallback |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Tags as a column (RECON-06 / SC 3).**
+All five questions are settled. Each one records the decision or the plan step that settles it.
+
+1. **Tags as a column (RECON-06 / SC 3). RESOLVED.**
    - What we know: a Zendesk employee answer says "it's not possible to add Tags as a column". The help centre says "Multi-select fields are not supported" as columns.
    - What's unclear: whether this still holds on the user's tenant in 2026.
    - Recommendation: precondition step 0 checks the column picker. If Tags is absent, `referenced-cell-representation` records `tags-column: not-offered`, and the fallback states that Tags rules resolve no header (RULE-07 inactive) while RULE-F2 stays deferred. **The planner should surface this to the user as an SC 3 wording confirmation, not decide it silently.**
-2. **Evaluation persistence in Claude in Chrome.**
+   - Resolution: the question was put to the user during plan-phase, and they chose "Check live, accept not-offered". This is recorded as CONTEXT **D-26** (decided at plan time, 2026-09-25). A live-confirmed `tags-column: not-offered`, with its fallback (Tags rules resolve no header, RULE-07 inactive for Tags, RULE-F2 deferred), meets SC 3 and RECON-06 for Tags and does not block the phase. The plans carry this through:
+     - 06-02 Task 1: the gate accepts `not-offered` only with a `tags-fallback` that names both RULE-07 and RULE-F2, and requires a `tags-cell` for `observed`.
+     - 06-02 Task 2: adds the D-26 note under ROADMAP.md Phase 6 success criterion 3 and under REQUIREMENTS.md RECON-06.
+     - 06-02 Task 3: the run sheet's step 0 checks the column picker and records `tags-offered`.
+     - 06-03 Task 1: the user confirms the answer live during the session.
+2. **Evaluation persistence in Claude in Chrome. RESOLVED.**
    - Recommendation: a step-0 check. If it fails, run P4/P5 through DevTools paste.
-3. **Recon 2 fixture count when dark mode is not offered.**
+   - Resolution: 06-02 Task 3 puts the probes `P0-persistence-set` and `P0-persistence-read` in the run sheet. Together they set, then read back as booleans, a window property and a `data-zhroma-probe` attribute on `documentElement`. The result decides whether P4 and P5 run through Claude in Chrome or in DevTools. In step 0, 06-03 Task 1 records the answer as `probe-path`. When `probe-path` is `devtools`, Claude hands the user each probe to paste into DevTools.
+3. **Recon 2 fixture count when dark mode is not offered. RESOLVED.**
    - What we know: D-24 makes "not offered" a block for Phase 8 only; D-14 lists three fixtures.
    - Recommendation: the gate requires light-table plus identity-region always, and the dark table only when `dark-mode-offered: yes`.
-4. **Allowlist spellings are known only mid-session.**
+   - Resolution: 06-02 Task 1 defines which fixtures are eligible:
+     - `rules-light-table`: always.
+     - `rules-identity-region`: unless `identity-source` is `not-found`.
+     - `rules-dark-table`: only when dark mode is offered and `garden-identifiers` is `hold`.
+
+     The Recon 2 Verdict records `fixture-light-table`, `fixture-identity-region` and `fixture-dark-table`. Each is `admitted`, `rejected` or `not-required`, and `not-required` is accepted only for an ineligible scenario. With `dark-mode-offered: no`, the gate requires `block` plus `phase-8` and only the light-table and identity-region fixtures. 06-03 Task 2 fills these fields from the actual admissions.
+4. **Allowlist spellings are known only mid-session. RESOLVED.**
    - Recommendation: the session plan includes a small, reviewed edit to the `rule-column-contract.js` allowlist constants after step 1 (header labels, placeholders, each with a ledger note per D-11). Tests re-run before sanitising. Raw files stay private until admission.
-5. **Grouping by Assignee (PITFALLS 7: the Assignee value may appear only in group rows).**
+   - Resolution: after step 1, 06-03 Task 1 edits only `DEFAULT_RULE_VOCABULARY` in `scripts/rule-column-contract.js`, per D-11. That means header labels, Status values, Type values, the DATE label, and only the placeholders the session actually showed. Each change goes in `vocabulary-notes`, and `vocabulary` is set to `confirmed-from-session`. The two rule-column Vitest files are re-run before any capture is trial-sanitised. The task's verify command must print `VOCABULARY_ONLY_EDIT`, which proves nothing outside the vocabulary object changed. 06-01 Task 1 builds its synthetic test labels from `DEFAULT_RULE_VOCABULARY`, so a spelling correction needs no test edit. Raw captures stay in the private directory until 06-03 Task 2 admits them (D-20).
+5. **Grouping by Assignee (PITFALLS 7: the Assignee value may appear only in group rows). RESOLVED.**
    - Recommendation: out of scope for the one-hour budget; the recon view stays ungrouped. Optionally a one-line note if the user already has such a view.
+   - Resolution: out of scope for Phase 6. The run sheet's step 0 (06-02 Task 3) creates the recon view ungrouped, which keeps the session to one sitting. The optional note is not planned, and no group-row capture happens in this phase.
 
 ## Environment Availability
 
