@@ -717,8 +717,8 @@ describe('the registered Recon 2 block in SELECTORS.md', () => {
     ]);
     const assumptions = markdown.indexOf('## Spec-less Planning Assumptions');
     assert.ok(headings.every((match) => match.index < assumptions));
-    assert.match(markdown, /^- session-state: `[a-z-]+`$/m);
-    assert.match(markdown, /^- next-step: `\d`$/m);
+    assert.match(markdown, /^- session-state: `[a-z0-9-]+`$/m);
+    assert.match(markdown, /^- next-step: `(?:\d|admission)`$/m);
   });
 
   test('the real ledger rejects with recon-two-status-unresolved while any Recon 2 status is pending', async () => {
