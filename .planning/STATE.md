@@ -3,19 +3,19 @@ gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Themes & Rules
 current_phase: 06
-current_phase_name: live-dom-recon-2
+current_phase_name: Live DOM Recon 2
 status: executing
-stopped_at: Phase 6 context gathered
-last_updated: "2026-09-25T13:20:48.063Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-09-25T13:55:07.937Z"
 last_activity: 2026-09-25
-last_activity_desc: v1.1 roadmap created (6 phases, 62/62 requirements mapped)
-state_head: bfa218d521f7496e122f4ea0883ddfaaebe3c936
+last_activity_desc: Phase 06 execution started
+state_head: 46d5450effe77adaff6d91cfa6234951f1e39863
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 33
 ---
 
 # Project State
@@ -25,16 +25,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.
-**Current focus:** Milestone v1.1 Themes & Rules (ships as extension 1.0.0). Phase 6 (Live DOM Recon 2) and Phase 7 (Upgrade-Safe Foundation) are both ready to plan and are independent of each other
+**Current focus:** Phase 06 — Live DOM Recon 2
 
 ## Current Position
 
-Phase: 06 (live-dom-recon-2) — READY TO EXECUTE
-Plan: — (not yet planned)
+Phase: 06 (Live DOM Recon 2) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-09-25 — v1.1 roadmap created (6 phases, 62/62 requirements mapped)
+Last activity: 2026-09-25 — Phase 06 execution started
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Themes That Follow Dark Mode → 9 Colouring Rules → 10 Rule Editor, "Is Me" and Settings Files → 11 Release 1.0.0
 
@@ -89,6 +89,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 05 P01 | 25 min | 2 tasks | 3 files |
 | Phase 05 P02 | 8 min | 2 tasks | 6 files |
 | Phase 05 P03 | 14 min | 2 tasks | 11 files |
+| Phase 06 P01 | 13 min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -163,6 +164,9 @@ Recent decisions affecting current work:
 - [Phase 05]: Phase 4 live acceptance reads its source from pinned Git blobs via scripts/phase-04-source.js, so a Phase 5 shipped-byte change can neither invalidate nor silently re-earn a human observation — 05-BASELINE.json pins the observation revision, runtime revision, eleven asset hashes, aggregate digest, validator, timing harness and predecessor evidence; the adapter refuses to fall back to the working tree
 - [Phase 05]: The 128px brand icon is packaged but never projected by the worker, keeping store identity and the five diagnostic status treatments separate artwork — D-06 requires preserving meaningful toolbar status distinctions; the tests assert the five mappings unchanged and that they exclude icons/brand.png
 - [Phase 05]: manifest.version stays pinned at 0.1.0 until an actual dashboard upload requires an increment — The store rejects a re-upload with an unchanged version, but nothing has been uploaded; bumping it now would invent a release history
+- [Phase 06]: 06-01: Rule-columns fixtures live in manifest.recon2Fixtures and validate through validateRecon2Fixtures; manifest.fixtures and validateFixtureManifest stay v1-only (D-10)
+- [Phase 06]: 06-01: Header column kind resolves by whole label text or exactly one distinct known label among its text nodes; tenant headers become FIELD columns with LABEL-nnn text
+- [Phase 06]: 06-01: A denylist entry inside any vocabulary or structural word rejects denylist-entry-collides before parsing; there is no length rule
 
 ### Pending Todos
 
@@ -205,9 +209,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-25T11:41:00.220Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-live-dom-recon-2/06-CONTEXT.md
+Last session: 2026-09-25T13:55:07.924Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
 
