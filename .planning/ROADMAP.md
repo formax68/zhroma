@@ -48,7 +48,11 @@
   2. The ledger records where the signed-in agent's name renders (top-bar avatar label, profile menu only, lazily or not) and whether it equals the Assignee column text for a ticket assigned to them. Only equal true/false and the kind of difference are kept, never the name
   3. Sanitised fixtures are admitted with provenance. They show the rendered shape of Assignee, Requester, Group, Status, Type, Subject, Tags, a date column and a custom field, including empty placeholders and hidden or `aria-label`-only text, with the agent's name tokenised consistently across the header region and the Assignee cells
   4. A dark-mode table fixture confirms that the v1 Garden table identifiers still hold in dark mode. It also records the measured dark surface and text colours and the native hover, selection and focus appearance that later palette tuning depends on
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 06-01-PLAN.md — Rule-columns sanitiser mode (kind tokens, reserved self token, identity-region boundary) and the recon2Fixtures manifest validator, with the v1 corpus unchanged
+- [ ] 06-02-PLAN.md — Recon 2 ledger gate and `recon2` CLI mode, the registered Recon 2 block in SELECTORS.md, the one-sitting run sheet, and the Tags-column notes
+- [ ] 06-03-PLAN.md — The user-driven live session, fixture admission and the Recon 2 verdict (run inline in the main checkout)
 **Research**: Needed. This phase *is* the research. It is a live, user-driven, read-only session on a tenant where dark mode is allowed
 
 ### Phase 7: Upgrade-Safe Foundation
@@ -133,7 +137,7 @@
 | 3. The Tint Survives Everything | v1.0 | 3/4 | Shipped; human_needed | 2026-09-14 |
 | 4. Honest Failure and an Off Switch | v1.0 | 20/20 | Shipped; human_needed | 2026-09-14 |
 | 5. Published | v1.0 | 3/7 | Shipped outside GSD | 2026-09-14 |
-| 6. Live DOM Recon 2 | v1.1 | 0/TBD | Not started | - |
+| 6. Live DOM Recon 2 | v1.1 | 0/3 | Planned | - |
 | 7. Upgrade-Safe Foundation | v1.1 | 0/TBD | Not started | - |
 | 8. Themes That Follow Dark Mode | v1.1 | 0/TBD | Not started | - |
 | 9. Colouring Rules | v1.1 | 0/TBD | Not started | - |

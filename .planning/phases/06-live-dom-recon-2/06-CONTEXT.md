@@ -132,6 +132,11 @@ The user asked for sensible defaults on every area ("sensible defaults are fine 
 
   Everything else ends with a fallback. For example, if no name is found anywhere, Phase 10 relies on a typed name (IDENT-03). If there is no marker and no readable surface, the page falls back to light (DARK-05).
 - **D-25:** `header-label-uniqueness` records whether any two headers in the recon view share a label, and whether the tenant has two custom fields with the same title. No admin change is made to create such a case.
+- **D-26 (Tags column, decided at plan time 2026-09-25):** Research found that Zendesk views very likely cannot show Tags as a column: a Zendesk employee said so in 2022, and the help centre says multi-select fields are not supported as columns. The run sheet checks the view's column picker live.
+  - If Tags is offered, it is captured like the other rule columns.
+  - If it is not offered, `referenced-cell-representation` records `tags-column: not-offered` with a named fallback: Tags rules resolve no header (RULE-07 inactive for Tags) and RULE-F2 stays deferred.
+
+  A live-confirmed `not-offered` counts as meeting SC 3 and RECON-06 for Tags. It does not block the phase. ROADMAP.md and REQUIREMENTS.md get a note saying so.
 
 ### Claude's Discretion
 - Exact probe scripts, run-sheet wording and order within D-01.
