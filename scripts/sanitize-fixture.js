@@ -16,7 +16,11 @@ import {
 } from './sensitive-patterns.js';
 
 import {
+  DEFAULT_RULE_VOCABULARY,
+  RULE_STRUCTURAL_WORDS,
+  normaliseRuleValue,
   parseRuleColumnCapture,
+  ruleVocabularyWords,
   tokeniseRuleColumns,
   validateRuleColumnOutput,
 } from './rule-column-contract.js';
@@ -128,17 +132,41 @@ function parseDenylist(bytes) {
 }
 
 const RULE_COLUMNS_MODE = 'rule-columns';
+const RULE_BOUNDARY_VALUES = Object.freeze(['table', 'identity-region']);
 const SELF_DIRECTIVE = 'self:';
+const SELF_ALT_DIRECTIVE = 'self-alt:';
 
 /** Resolve the opt-in rule-columns options; `null` keeps the unchanged v1 default path. */
 function ruleModeOptions(options) {
   if (options.mode === undefined) {
+    if (options.boundary !== undefined) {
+      reject('boundary-invalid');
+    }
     return null;
   }
   if (options.mode !== RULE_COLUMNS_MODE) {
     reject('mode-invalid');
   }
-  return { boundary: 'table' };
+  const boundary = options.boundary ?? 'table';
+  if (!RULE_BOUNDARY_VALUES.includes(boundary)) {
+    reject('boundary-invalid');
+  }
+  return { boundary };
+}
+
+/*
+ * A denylist entry that lies inside a word every admitted output carries (kept vocabulary, token
+ * stems, element and attribute names, Garden identifiers) would make every admission fail as
+ * `sensitive-residual`. Report it before the capture is parsed; the scan itself stays unchanged.
+ */
+function assertNoDenylistCollision(scanList) {
+  const collisionWords = [...ruleVocabularyWords(DEFAULT_RULE_VOCABULARY), ...RULE_STRUCTURAL_WORDS];
+  for (const entry of scanList) {
+    const folded = normaliseRuleValue(entry).toLocaleLowerCase('en-US');
+    if (collisionWords.some((word) => word.includes(folded))) {
+      reject('denylist-entry-collides');
+    }
+  }
 }
 
 /**
@@ -157,7 +185,17 @@ function parseRuleDenylist(bytes) {
 
   const scanList = [];
   let self = null;
+  let selfAlt = null;
   for (const line of lines) {
+    if (line.startsWith(SELF_ALT_DIRECTIVE)) {
+      const value = line.slice(SELF_ALT_DIRECTIVE.length).trim();
+      if (selfAlt !== null || value.length === 0) {
+        reject('self-directive-invalid');
+      }
+      selfAlt = value;
+      scanList.push(value);
+      continue;
+    }
     if (line.startsWith(SELF_DIRECTIVE)) {
       const value = line.slice(SELF_DIRECTIVE.length).trim();
       if (self !== null || value.length === 0) {
@@ -172,7 +210,8 @@ function parseRuleDenylist(bytes) {
   if (self === null) {
     reject('self-directive-required');
   }
-  return { scanList, selfForms: { self } };
+  assertNoDenylistCollision(scanList);
+  return { scanList, selfForms: { self, selfAlt } };
 }
 
 function ruleColumnMarkup(source, ruleDenylist, ruleOptions) {
@@ -375,9 +414,14 @@ export async function sanitizeFixture(options) {
   };
 }
 
-/** The opt-in rule-columns CLI form: the three v1 flags plus `--mode rule-columns`. */
+/**
+ * The opt-in rule-columns CLI forms: the three v1 flags plus `--mode rule-columns` (8 arguments),
+ * optionally with `--boundary <table|identity-region>` (10 arguments).
+ */
 function parseRuleCliArguments(argumentsList) {
-  const allowedFlags = ['--input', '--output', '--denylist', '--mode'];
+  const allowedFlags = argumentsList.length === 10
+    ? ['--input', '--output', '--denylist', '--mode', '--boundary']
+    : ['--input', '--output', '--denylist', '--mode'];
   if (argumentsList.length !== allowedFlags.length * 2) {
     reject('cli-arguments-invalid');
   }
@@ -398,17 +442,21 @@ function parseRuleCliArguments(argumentsList) {
   if (allowedFlags.some((flag) => !values[flag]) || values['--mode'] !== RULE_COLUMNS_MODE) {
     reject('cli-arguments-invalid');
   }
+  if (values['--boundary'] !== undefined && !RULE_BOUNDARY_VALUES.includes(values['--boundary'])) {
+    reject('cli-arguments-invalid');
+  }
 
   return {
     inputPath: values['--input'],
     outputPath: values['--output'],
     denylistPath: values['--denylist'],
     mode: RULE_COLUMNS_MODE,
+    ...(values['--boundary'] === undefined ? {} : { boundary: values['--boundary'] }),
   };
 }
 
 function parseCliArguments(argumentsList) {
-  if (argumentsList.length === 8) {
+  if (argumentsList.length === 8 || argumentsList.length === 10) {
     return parseRuleCliArguments(argumentsList);
   }
   if (argumentsList.length !== 6) {

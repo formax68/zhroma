@@ -87,7 +87,7 @@ function ticketRow(cells) {
 }
 
 function ruleCapture(rows = tracerRows()) {
-  return `<div data-test-id="table-container" class="layout_hash" style="display: block" aria-label="${PRIVATE_VALUES.wrapperLabel}">
+  return `<div class="layout_hash" style="display: block" aria-label="${PRIVATE_VALUES.wrapperLabel}">
 <table data-garden-id="tables.table" data-test-id="generic-table">
 <thead data-garden-id="tables.head"><tr data-garden-id="tables.header_row">${HEADERS.map(headerCell).join('')}</tr></thead>
 <tbody data-garden-id="tables.body">${rows.map(ticketRow).join('')}</tbody>
@@ -205,10 +205,10 @@ describe('rule-columns tracer', () => {
     expect(cellTexts(document, 3)).toEqual(['GROUP-001', 'GROUP-001', 'GROUP-001']);
     expect(cellTexts(document, 4)).toEqual([STANDARD_STATUS, 'STATUS-001', SECOND_STANDARD_STATUS]);
     expect(cellTexts(document, 5)).toEqual(['SUBJECT-001', 'SUBJECT-002', 'SUBJECT-003']);
-    expect(document.querySelector('[data-test-id="table-container"]')?.getAttribute('aria-label'))
+    expect(document.querySelector('body > div')?.getAttribute('aria-label'))
       .toBe('TEXT-001');
-    expect(document.querySelector('[data-test-id="table-container"]')?.hasAttribute('class')).toBe(false);
-    expect(document.querySelector('[data-test-id="table-container"]')?.hasAttribute('style')).toBe(false);
+    expect(document.querySelector('body > div')?.hasAttribute('class')).toBe(false);
+    expect(document.querySelector('body > div')?.hasAttribute('style')).toBe(false);
     for (const value of [...denylistValues, SELF_FORM]) {
       expect(output).not.toContain(value);
     }

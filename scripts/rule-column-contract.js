@@ -3,6 +3,7 @@ import { Window } from 'happy-dom';
 import {
   PRIORITY_LABELS, PRIORITY_HEADER_LABEL, PRESERVED_ATTRIBUTES,
   TEXTUAL_ARIA_ATTRIBUTES, REFERENCE_ATTRIBUTES, REMOVABLE_ATTRIBUTES,
+  ARIA_ENUM_ATTRIBUTES, ARIA_INTEGER_ATTRIBUTES, ARIA_NUMBER_ATTRIBUTES,
   normalizedAriaValue, assertSafeToParse, resolveBoundedDocument,
   SanitizedOutputError,
 } from './sanitized-output-contract.js';
@@ -48,12 +49,22 @@ export const RESERVED_SELF_TOKENS = Object.freeze([
 const RESOURCE_ATTRIBUTE_NAMES = Object.freeze([
   'src', 'srcset', 'href', 'xlink:href', 'action', 'formaction', 'poster', 'srcdoc',
 ]);
-const RULE_BOUNDARIES = Object.freeze(['table']);
+const RULE_BOUNDARIES = Object.freeze(['table', 'identity-region']);
+const IDENTITY_ELEMENT_LIMIT = 40;
+const IDENTITY_FORBIDDEN = [
+  'table', 'tr', 'nav', 'header', 'main', 'aside',
+  '[role="table"]', '[role="grid"]', '[role="row"]', '[role="navigation"]',
+  '[role="banner"]', '[role="menubar"]', '[role="tablist"]',
+].join(', ');
 const TOKEN_PATTERN = new RegExp(`^(${RULE_TOKEN_KINDS.join('|')})-(\\d{3,})$`, 'u');
 const RESERVED_TOKEN_SET = new Set(RESERVED_SELF_TOKENS);
 
 function reject(code) {
   throw new SanitizedOutputError(code);
+}
+
+function fold(value) {
+  return normaliseRuleValue(value).toLocaleLowerCase('en-US');
 }
 
 /** NFC, every whitespace run (NBSP included) collapsed to one space, trimmed; case-sensitive. */
@@ -151,6 +162,31 @@ function resolveTableCapture(parsed, vocabulary) {
   };
 }
 
+/*
+ * D-14(b): the identity region is the smallest subtree holding the rendered name, never the top
+ * bar or navigation. The v1 opening checks are copied, then page-structure landmarks and any
+ * table or row reject, and the subtree is capped at IDENTITY_ELEMENT_LIMIT elements.
+ */
+function resolveIdentityCapture(parsed) {
+  const rootElements = [...parsed.body.children];
+  if (rootElements.length !== 1 || parsed.head.childNodes.length > 0
+    || [...parsed.body.childNodes].some((node) => node.nodeType === 3 && node.data.trim())) {
+    reject('identity-boundary-required');
+  }
+  const root = rootElements[0];
+  const elements = [root, ...root.querySelectorAll('*')];
+  if (elements.length > IDENTITY_ELEMENT_LIMIT
+    || elements.some((element) => element.matches(IDENTITY_FORBIDDEN))) {
+    reject('identity-boundary-required');
+  }
+  return {
+    boundary: 'identity-region',
+    root,
+    ticketRowCount: 0,
+    cellLocations: new Map(),
+  };
+}
+
 /** Parse a capture inertly and resolve its rule-columns boundary without changing it. */
 export function parseRuleColumnCapture(markup, options = {}) {
   const boundary = options.boundary ?? 'table';
@@ -162,7 +198,9 @@ export function parseRuleColumnCapture(markup, options = {}) {
   } catch {
     reject('parse-failed');
   }
-  return resolveTableCapture(parsed, vocabulary);
+  return boundary === 'identity-region'
+    ? resolveIdentityCapture(parsed)
+    : resolveTableCapture(parsed, vocabulary);
 }
 
 const OTHER_LOCATION = Object.freeze({ region: 'other' });
@@ -222,7 +260,15 @@ function classifyValue(raw, location, { isText, sets, selfForms }) {
     if (sets.placeholders.has(value)) return { keep: value };
   }
   if (selfForms?.self && value === selfForms.self) return { keep: 'PERSON-SELF', reserved: true };
+  if (selfForms?.selfAlt && value === selfForms.selfAlt) {
+    return { keep: 'PERSON-SELF-ALT', reserved: true };
+  }
   if (RESERVED_TOKEN_SET.has(value)) return { keep: value, reserved: true };
+  const folded = selfForms ? fold(value) : '';
+  if ((selfForms?.self && folded.includes(fold(selfForms.self)))
+    || (selfForms?.selfAlt && folded.includes(fold(selfForms.selfAlt)))) {
+    return { keep: 'PERSON-SELF-EMBEDDED', reserved: true };
+  }
   return { kind: tokenKindFor(location), value };
 }
 
@@ -257,9 +303,11 @@ export function tokeniseRuleColumns(capture, options = {}) {
   const sets = vocabularySets(vocabulary);
   const selfForms = normalisedSelfForms(options.selfForms);
   const tokenFor = createTokenMap();
+  let reservedCount = 0;
 
   function rewrite(raw, location, isText) {
     const decision = classifyValue(raw, location, { isText, sets, selfForms });
+    if (decision.reserved) reservedCount += 1;
     if ('keep' in decision) return decision.keep;
     return tokenFor(decision.kind, decision.value);
   }
@@ -310,6 +358,9 @@ export function tokeniseRuleColumns(capture, options = {}) {
   }
 
   visit(capture.root);
+  if (capture.boundary === 'identity-region' && reservedCount === 0) {
+    reject('identity-boundary-required');
+  }
   return capture;
 }
 
@@ -328,19 +379,22 @@ export function validateRuleColumnOutput(markup, options = {}) {
   const boundary = options.boundary ?? 'table';
   const vocabulary = options.vocabulary ?? DEFAULT_RULE_VOCABULARY;
   if (!RULE_BOUNDARIES.includes(boundary)) reject('boundary-invalid');
-  if (typeof markup !== 'string' || !markup.trim()) reject('table-boundary-required');
+  if (typeof markup !== 'string' || !markup.trim()) {
+    reject(boundary === 'identity-region' ? 'identity-boundary-required' : 'table-boundary-required');
+  }
   assertSafeToParse(markup);
   if (markup.includes('<!--')) reject('comment-must-be-absent');
   const capture = parseRuleColumnCapture(markup, { boundary, vocabulary });
   const sets = vocabularySets(vocabulary);
   const seen = new Map(RULE_TOKEN_KINDS.map((kind) => [kind, new Set()]));
+  let reservedCount = 0;
 
   function checkValue(raw, location, isText) {
     const value = normaliseRuleValue(raw);
     if (!value) return;
     const decision = classifyValue(raw, location, { isText, sets, selfForms: null });
     if ('keep' in decision) {
-      if (decision.reserved && location.region === 'header') reject('token-kind-mismatch');
+      if (decision.reserved) reservedCount += 1;
       return;
     }
     const parts = tokenParts(value);
@@ -391,6 +445,43 @@ export function validateRuleColumnOutput(markup, options = {}) {
   }
 
   visit(capture.root);
+  if (boundary === 'identity-region' && reservedCount === 0) reject('identity-boundary-required');
   const tokenKinds = Object.fromEntries(RULE_TOKEN_KINDS.map((kind) => [kind, seen.get(kind).size]));
   return { boundary, ticketRowCount: capture.ticketRowCount, tokenKinds };
 }
+
+/** Case-folded vocabulary words every admitted output may carry as kept text or token stems. */
+export function ruleVocabularyWords(vocabulary = DEFAULT_RULE_VOCABULARY) {
+  const words = [
+    ...RULE_TOKEN_KINDS,
+    ...RESERVED_SELF_TOKENS,
+    ...Object.keys(vocabulary.headerKinds),
+    ...vocabulary.statusValues,
+    ...vocabulary.typeValues,
+    ...PRIORITY_LABELS,
+    ...vocabulary.placeholders,
+  ].map(fold).filter(Boolean);
+  return Object.freeze([...new Set(words)]);
+}
+
+/*
+ * The structural half of the denylist collision set: case-folded words that admitted output
+ * carries as markup rather than tenant text. Element names and identifier values were collected
+ * once from the three v1 fixtures; attribute names are read (never mutated) from the v1 classes.
+ */
+export const RULE_STRUCTURAL_WORDS = Object.freeze([...new Set([
+  // Element names in the v1 fixtures, plus the rule-mode shapes (avatars, time, chips).
+  'a', 'button', 'div', 'input', 'label', 'path', 'span', 'svg', 'table', 'tbody', 'td', 'th',
+  'thead', 'time', 'tr', 'tfoot', 'img',
+  // Attribute names.
+  ...PRESERVED_ATTRIBUTES,
+  ...TEXTUAL_ARIA_ATTRIBUTES,
+  ...ARIA_ENUM_ATTRIBUTES.keys(),
+  ...ARIA_INTEGER_ATTRIBUTES.keys(),
+  ...ARIA_NUMBER_ATTRIBUTES,
+  'aria-relevant', 'title', 'alt', 'datetime',
+  // data-garden-id and data-test-id values in the v1 fixtures, plus the ticket-row predicate.
+  'generic-table', 'generic-table-body', 'generic-table-head', 'generic-table-row',
+  'generic-table-rows-group-by', 'tables.body', 'tables.cell', 'tables.group_row', 'tables.head',
+  'tables.header_cell', 'tables.header_row', 'tables.row', 'tables.table', 'ticket-row',
+].map((word) => word.toLocaleLowerCase('en-US')))]);
