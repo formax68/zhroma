@@ -6,6 +6,8 @@
 //
 // The harness models exactly the seams the shipped content script uses:
 //   * chrome.storage.local.get({enabled: true}, callback)
+//   * chrome.storage.local.get(['theme'], callback), the settings read (07-06),
+//     admitted deliberately: exactly SETTINGS_CONTRACT.keys, in order
 //   * chrome.storage.onChanged.addListener(listener)
 //   * chrome.runtime.onMessage.addListener(listener)
 //   * chrome.runtime.sendMessage({type: 'status-invalidated'}, callback?)
@@ -36,6 +38,11 @@ export const PREFERENCE_CONTRACT = Object.freeze({
   maxRequestId: 1000000,
 });
 
+// The content script's settings read (07-06, D-09): one array-form read of the
+// registry keys, in the local area, bounded by `timeoutMs`. An agreement test
+// anchors `keys` to the shipped registry and `timeoutMs` to content.js.
+export const SETTINGS_CONTRACT = Object.freeze({ keys: Object.freeze(['theme']), area: 'local', timeoutMs: 500 });
+
 export const HARNESS_EXTENSION_ID = 'zhromaharnesscontextidnotarealone';
 
 const ABSENT = Symbol('absent');
@@ -47,10 +54,22 @@ const ABSENT = Symbol('absent');
  * lets the falsy-values path produce the dormancy, so deleting the check
  * changes nothing observable (04-REVIEW WR-03).
  *
- * @param {{stored?: unknown, readMode?: 'deferred'|'rejected'|'rejected-with-values'|'throws', extensionId?: string}} [options]
+ * The settings read is a separate seam with its own stored values, its own
+ * mode and its own counters (07-06, A6). Its deliveries share the one FIFO, so
+ * delivery order is issue order, but `readCount()` and `pendingCount()` keep
+ * counting the `enabled` read alone. `hang` models a read that never answers.
+ *
+ * @param {{stored?: unknown, readMode?: 'deferred'|'rejected'|'rejected-with-values'|'throws', extensionId?: string,
+ *   settingsStored?: Record<string, unknown>,
+ *   settingsReadMode?: 'deferred'|'rejected'|'rejected-with-values'|'throws'|'hang'}} [options]
  */
-export function createChromeHarness({ stored = ABSENT, readMode = 'deferred', extensionId = HARNESS_EXTENSION_ID } = {}) {
+export function createChromeHarness({
+  stored = ABSENT, readMode = 'deferred', extensionId = HARNESS_EXTENSION_ID, settingsStored = {}, settingsReadMode = 'deferred',
+} = {}) {
   if (!['deferred', 'rejected', 'rejected-with-values', 'throws'].includes(readMode)) throw new Error(`Unknown readMode ${readMode}`);
+  if (!['deferred', 'rejected', 'rejected-with-values', 'throws', 'hang'].includes(settingsReadMode)) {
+    throw new Error(`Unknown settingsReadMode ${settingsReadMode}`);
+  }
   const violations = [];
   const messages = [];
   const storageListeners = [];
@@ -58,6 +77,9 @@ export function createChromeHarness({ stored = ABSENT, readMode = 'deferred', ex
   const pending = [];
   let storedValue = stored;
   let reads = 0;
+  const settingsValues = new Map(Object.entries(settingsStored));
+  const settingsDeliveries = new WeakSet();
+  let settingsReads = 0;
 
   const fail = (what) => {
     violations.push(what);
@@ -117,8 +139,32 @@ export function createChromeHarness({ stored = ABSENT, readMode = 'deferred', ex
     return undefined;
   };
 
+  // The settings seam: exactly SETTINGS_CONTRACT.keys, element for element.
+  // It answers only the keys stored, cloned, so the caller can never reach
+  // into the stored object, or the same two lastError shapes as the
+  // preference read.
+  function getSettings(keys, callback) {
+    if (keys.length !== SETTINGS_CONTRACT.keys.length || SETTINGS_CONTRACT.keys.some((key, index) => keys[index] !== key)) {
+      fail(`chrome.storage.local.get(${JSON.stringify(keys) ?? String(keys)})`);
+    }
+    if (typeof callback !== 'function') fail('chrome.storage.local.get(non-function callback)');
+    settingsReads += 1;
+    if (settingsReadMode === 'throws') throw new Error('Storage unavailable');
+    if (settingsReadMode === 'hang') return;
+    const values = {};
+    for (const key of keys) if (settingsValues.has(key)) values[key] = structuredClone(settingsValues.get(key));
+    const deliver = () => {
+      if (settingsReadMode === 'rejected') { withLastError('Storage read failed', callback); return; }
+      if (settingsReadMode === 'rejected-with-values') { withLastError('Storage read failed', callback, values); return; }
+      callback(values);
+    };
+    settingsDeliveries.add(deliver);
+    pending.push(deliver);
+  }
+
   const localMembers = {
     get(defaults, callback) {
+      if (Array.isArray(defaults)) { getSettings(defaults, callback); return; }
       const keys = defaults === null || typeof defaults !== 'object' || Array.isArray(defaults)
         ? null : Object.keys(defaults);
       if (keys === null || keys.length !== 1 || keys[0] !== PREFERENCE_CONTRACT.key
@@ -161,7 +207,9 @@ export function createChromeHarness({ stored = ABSENT, readMode = 'deferred', ex
     violations,
     messages,
     readCount: () => reads,
-    pendingCount: () => pending.length,
+    pendingCount: () => pending.filter((deliver) => !settingsDeliveries.has(deliver)).length,
+    settingsReadCount: () => settingsReads,
+    settingsPendingCount: () => pending.filter((deliver) => settingsDeliveries.has(deliver)).length,
     storageListenerCount: () => storageListeners.length,
     messageListenerCount: () => messageListeners.length,
     /** Release every queued Chrome delivery, in the order Chrome queued it. */
@@ -180,6 +228,8 @@ export function createChromeHarness({ stored = ABSENT, readMode = 'deferred', ex
     },
     setStored(value) { storedValue = value; },
     clearStored() { storedValue = ABSENT; },
+    setSettingsStored(key, raw) { settingsValues.set(key, raw); },
+    clearSettingsStored(key) { settingsValues.delete(key); },
     emitChange(changes, area = PREFERENCE_CONTRACT.area) {
       for (const listener of storageListeners.slice()) listener(changes, area);
     },
