@@ -49,6 +49,21 @@ function createDocument() {
   return window;
 }
 
+// ============================================================================
+// VERSIONED v1.0 PINS (07-01, D-26).
+//
+// This file holds the versioned v1.0 pins: the manifest deep-equal, the file
+// inventory, the four hues, the box-shadow ban, "no colour literals in
+// content.js" and the Chrome API allowlist. Each pin is retired or restated
+// only in its own commit, with a written reason in that commit (D-06, D-25,
+// D-26). Existing test names are load-bearing: mutants target them.
+//
+// The frozen invariants (the D-01 permission surface, no network, no remote
+// code, no sync storage, stylesheets that load nothing, packaged-only
+// importScripts, nothing exposed to pages) live in frozen-contract.test.js,
+// which later phases never edit.
+// ============================================================================
+
 // Phase 4 added an action, a popup and a service worker by decision
 // (04-DECISIONS.json). Phase 5 adds the publication identity by decision
 // (05-CONTEXT.md D-03, D-06): the approved store title, the short description
@@ -554,4 +569,46 @@ test('the content script reports only the finite status enum, and only to the pa
   expect(harness.requestStatus({ sender: { id: undefined, tab: { id: 3 } } })).toBeUndefined();
   expect(harness.requestStatus({ requestId: 0 })).toBeUndefined();
   harness.assertClean();
+});
+
+// --- the Chrome API allowlist (versioned v1.0 pin, D-26) --------------------
+//
+// Every dotted `chrome.<member>` path each shipped script names, pinned per
+// file. Each entry was reviewed by hand against its call site on 07-01. A new
+// Chrome API is a new review surface, so it must arrive as an edit of this
+// literal, in its own commit, with a written reason.
+const CHROME_API_ALLOWLIST = {
+  'background.js': [
+    'chrome.action.setIcon', 'chrome.action.setTitle',
+    'chrome.runtime.getURL', 'chrome.runtime.id', 'chrome.runtime.lastError', 'chrome.runtime.onMessage.addListener',
+    'chrome.storage.local.get', 'chrome.storage.local.set',
+    'chrome.tabs.onActivated.addListener', 'chrome.tabs.onRemoved.addListener', 'chrome.tabs.onUpdated.addListener',
+    'chrome.tabs.query', 'chrome.tabs.sendMessage',
+  ],
+  'content.js': [
+    'chrome.runtime.id', 'chrome.runtime.lastError', 'chrome.runtime.onMessage.addListener', 'chrome.runtime.sendMessage',
+    'chrome.storage.local.get', 'chrome.storage.onChanged.addListener',
+  ],
+  'popup.js': ['chrome.runtime.sendMessage'],
+};
+
+const chromePaths = (source) => [...new Set(source.match(/\bchrome(?:\s*\.\s*[A-Za-z_$][\w$]*)+/gu) ?? [])]
+  .map((path) => path.replace(/\s+/gu, '')).filter((path, index, all) => all.indexOf(path) === index).sort();
+
+test('the Chrome API allowlist is exactly the v1.0 surface of each shipped script', () => {
+  // The extractor itself: dotted paths, deduplicated and sorted, whitespace-insensitive.
+  expect(chromePaths('chrome.tabs.query(); chrome.tabs.query(); chrome . storage . local.get(); x.chrome.y'))
+    .toEqual(['chrome.storage.local.get', 'chrome.tabs.query', 'chrome.y']);
+  for (const [name, expected] of Object.entries(CHROME_API_ALLOWLIST)) {
+    const source = asset(name);
+    // A minimum count, so an extractor that silently matches nothing fails.
+    expect(chromePaths(source).length, name).toBeGreaterThanOrEqual(1);
+    expect(chromePaths(source), name).toEqual([...expected].sort());
+    // Computed access would hide a member from the allowlist entirely.
+    expect(source, name).not.toMatch(/\bchrome\s*(?:\?\.)?\s*\[/u);
+  }
+  // No other shipped script may reach Chrome at all without joining the list.
+  const scripts = shippedInventory().filter((name) => name.endsWith('.js'));
+  expect(scripts.filter((name) => !Object.hasOwn(CHROME_API_ALLOWLIST, name))
+    .filter((name) => chromePaths(asset(name)).length > 0)).toEqual([]);
 });
