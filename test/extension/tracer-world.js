@@ -34,6 +34,14 @@ export const POPUP_URL = `chrome-extension://${EXTENSION_ID}/${POPUP_PATH}`;
 export const CONTENT_URL = 'https://acme.zendesk.com/agent/filters/1';
 export const TAB_ID = 7;
 export const OTHER_TAB_ID = 9;
+// The packaged options page (D-18). With `open_in_tab: true` it is a top-frame
+// tab document, so the sender Chrome reports for it carries a tab, unlike the
+// popup's: that difference is what the worker's D-17 checks must survive.
+export const OPTIONS_PATH = 'options.html';
+export const OPTIONS_URL = `chrome-extension://${EXTENSION_ID}/${OPTIONS_PATH}`;
+export const optionsSender = (tabId = OTHER_TAB_ID) => ({
+  id: EXTENSION_ID, url: OPTIONS_URL, tab: { id: tabId }, frameId: 0, documentId: 'options-document',
+});
 export const DOCUMENT_ID = 'document-alpha';
 export const MAX_REQUEST_ID = 1000000;
 
@@ -225,7 +233,9 @@ export function createWorld({
           settled = true;
           record('response', value);
           const captured = structuredClone(value);
-          const stage = sender.url === POPUP_URL ? 'popup-response' : 'content-response';
+          // Both extension pages answer like the popup; only documents on the
+          // vendor host are content.
+          const stage = sender.url === POPUP_URL || sender.url === OPTIONS_URL ? 'popup-response' : 'content-response';
           schedule(stage, () => {
             if (responseDelay > 0) setTimeout(() => { resolve(captured); }, responseDelay);
             else resolve(captured);
