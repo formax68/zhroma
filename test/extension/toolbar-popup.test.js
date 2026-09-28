@@ -17,7 +17,7 @@ import { createContext, Script } from 'node:vm';
 import { afterEach, expect, test, vi } from 'vitest';
 import { PREFERENCE_CONTRACT, createChromeHarness } from './chrome-harness.js';
 import {
-  CONFIRMED, COPY, DOCUMENT_ID, EXTENSION_ID, ICON, MAX_REQUEST_ID, OTHER_TAB_ID, POPUP_PATH, POPUP_URL,
+  CONFIRMED, CONTENT_URL, COPY, DOCUMENT_ID, EXTENSION_ID, ICON, MAX_REQUEST_ID, OTHER_TAB_ID, POPUP_PATH, POPUP_URL,
   NAMESPACE, TAB_ID, TICKET_TOKENS, asset, bootAll, closeWindows, control, createWorld, extensionRoot as root, fixture,
   flip, inertWindow, loadContent, loadPopup, loadWorker, markers, settle, statusText, wait,
 } from './tracer-world.js';
@@ -498,12 +498,15 @@ test('no receiver reads as unavailable and never as a diagnosis about the view',
 // --- trust boundary ---------------------------------------------------------
 
 test.each([
-  ['a foreign extension id', { id: 'someotherextensionidentifier000', frameId: 0, documentId: DOCUMENT_ID, tab: { id: TAB_ID } }],
-  ['a subframe', { id: EXTENSION_ID, frameId: 3, documentId: DOCUMENT_ID, tab: { id: TAB_ID } }],
-  ['a missing document identity', { id: EXTENSION_ID, frameId: 0, tab: { id: TAB_ID } }],
-  ['an empty document identity', { id: EXTENSION_ID, frameId: 0, documentId: '', tab: { id: TAB_ID } }],
-  ['no tab at all', { id: EXTENSION_ID, frameId: 0, documentId: DOCUMENT_ID }],
-  ['a payload-selected tab', { id: EXTENSION_ID, frameId: 0, documentId: DOCUMENT_ID, tab: { id: '7' } }],
+  // Phase 7 (D-17): every sender here carries the content document's genuine
+  // URL, so each case is still refused by exactly the clause its name names and
+  // never merely by the agent-document clause the worker gained.
+  ['a foreign extension id', { id: 'someotherextensionidentifier000', url: CONTENT_URL, frameId: 0, documentId: DOCUMENT_ID, tab: { id: TAB_ID } }],
+  ['a subframe', { id: EXTENSION_ID, url: CONTENT_URL, frameId: 3, documentId: DOCUMENT_ID, tab: { id: TAB_ID } }],
+  ['a missing document identity', { id: EXTENSION_ID, url: CONTENT_URL, frameId: 0, tab: { id: TAB_ID } }],
+  ['an empty document identity', { id: EXTENSION_ID, url: CONTENT_URL, frameId: 0, documentId: '', tab: { id: TAB_ID } }],
+  ['no tab at all', { id: EXTENSION_ID, url: CONTENT_URL, frameId: 0, documentId: DOCUMENT_ID }],
+  ['a payload-selected tab', { id: EXTENSION_ID, url: CONTENT_URL, frameId: 0, documentId: DOCUMENT_ID, tab: { id: '7' } }],
 ])('the worker refuses a content invalidation from %s', async (_name, sender) => {
   const { world } = await bootAll();
   const before = world.actionLog.length;
@@ -520,13 +523,14 @@ test.each([
 ])('the worker refuses a malformed content message carrying %s', async (_name, message) => {
   const { world } = await bootAll();
   const before = world.actionLog.length;
-  await world.sendToWorker(message, { id: EXTENSION_ID, frameId: 0, documentId: DOCUMENT_ID, tab: { id: TAB_ID } });
+  // A genuine content sender (D-17), so only the message shape is at fault.
+  await world.sendToWorker(message, { id: EXTENSION_ID, url: CONTENT_URL, frameId: 0, documentId: DOCUMENT_ID, tab: { id: TAB_ID } });
   await settle();
   expect(world.actionLog.length).toBe(before);
 });
 
 test.each([
-  ['a content script rather than the packaged popup', { id: EXTENSION_ID, frameId: 0, documentId: DOCUMENT_ID, tab: { id: TAB_ID } }],
+  ['a content script rather than the packaged popup', { id: EXTENSION_ID, url: CONTENT_URL, frameId: 0, documentId: DOCUMENT_ID, tab: { id: TAB_ID } }],
   ['a page pretending to be the popup', { id: EXTENSION_ID, url: 'https://example.zendesk.com/agent/popup.html' }],
   ['a foreign extension', { id: 'someotherextensionidentifier000', url: POPUP_URL }],
 ])('the worker refuses a popup request from %s', async (_name, sender) => {
@@ -946,8 +950,16 @@ test('a navigation event only invalidates and requeries; it never reads the URL 
   await settle();
   expect(world.action()).toEqual({ icon: ICON.missing, title: COPY.missing });
   // D-09: mutation stays the discovery mechanism. No route detection.
-  expect(asset('background.js')).not.toContain('changeInfo.url');
-  expect(asset('background.js')).not.toMatch(/zendesk|agent\/|webNavigation|history/);
+  // Phase 7 (D-17) authorises exactly one sender check on a content message's
+  // own document URL and still forbids route detection. So the worker still
+  // reads no navigation URL and uses no navigation API, and the host and the
+  // agent path appear exactly once each, in the two constants that check uses.
+  const source = asset('background.js');
+  expect(source).not.toMatch(/changeInfo\.url|webNavigation|history/);
+  expect((source.match(/zendesk/g) ?? []).length).toBe(1);
+  expect((source.match(/agent\//g) ?? []).length).toBe(1);
+  expect(source).toContain("const AGENT_HOST = 'zendesk.com';");
+  expect(source).toContain("const AGENT_PATH = '/agent/';");
 });
 
 test('neither the worker nor the popup nor the content script leaks a global', async () => {
