@@ -1,0 +1,87 @@
+[
+  {
+    "id": "settings-queue-serial",
+    "file": "extension/zhroma-settings.js",
+    "find": "    if (activeJob !== null) return;",
+    "replace": "    // mutant: a second job may start while one is active",
+    "suites": [
+      "test/extension/settings-queue.test.js"
+    ],
+    "note": "The settings queue has one active job. Without the early return in drain(), every admit starts its own job, so back-to-back writes read the same stored value and overlap their physical writes (T-07-14, COMPAT-03). Measured by the peak count of concurrent physical writes.",
+    "expected_failure": {
+      "suite": "test/extension/settings-queue.test.js",
+      "test": "three back-to-back writes are applied in arrival order with no overlapping physical write",
+      "assertion": "[mutant:settings-queue-serial]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "settings-writer-ownership",
+    "file": "extension/zhroma-settings.js",
+    "find": "        if (job.physical !== null) await job.physical;",
+    "replace": "        // mutant: the next job does not wait for the issued write",
+    "suites": [
+      "test/extension/settings-queue.test.js"
+    ],
+    "note": "A deadline answers the requester unknown but does not cancel an issued write. Without awaiting the physical write before releasing the writer, the next job reads storage before the earlier write lands and can decide on a value that is about to be replaced (T-07-14). Measured by the second job reading before the first write is released.",
+    "expected_failure": {
+      "suite": "test/extension/settings-queue.test.js",
+      "test": "the next job waits for the previous physical write even after that requester was answered unknown",
+      "assertion": "[mutant:settings-writer-ownership]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "settings-cas-compare",
+    "file": "extension/zhroma-settings.js",
+    "find": "if (job.cas && revision !== current.revision)",
+    "replace": "if (job.cas && false)",
+    "suites": [
+      "test/extension/settings-queue.test.js"
+    ],
+    "note": "The compare-and-swap check runs inside the drained job, against the revision just read. Always accepting the revision lets a writer holding a stale revision overwrite a newer edit from another window (D-16, T-07-14). Measured with a test-only cas key: a stale revision must answer conflict and write nothing.",
+    "expected_failure": {
+      "suite": "test/extension/settings-queue.test.js",
+      "test": "a cas key saves with revision + 1 only when the request holds the stored revision (D-16)",
+      "assertion": "[mutant:settings-cas-compare]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "settings-skip-unchanged",
+    "file": "extension/zhroma-settings.js",
+    "find": "current.status !== 'unreadable' && registry.equal(key, current.value, value)",
+    "replace": "false",
+    "suites": [
+      "test/extension/settings-queue.test.js"
+    ],
+    "note": "Choosing the value already in effect writes nothing (D-11, COMPAT-02): on a fresh install re-selecting the default stores nothing. Without the equality skip every choice is written, so a fresh install gains a stored key the agent never changed (T-07-15). Measured with a test-only key over absent storage.",
+    "expected_failure": {
+      "suite": "test/extension/settings-queue.test.js",
+      "test": "the value already in effect writes nothing, and switching back to the default writes it explicitly (D-11)",
+      "assertion": "[mutant:settings-skip-unchanged]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "settings-local-area",
+    "file": "extension/background.js",
+    "find": "chrome.storage.local.set({ [key]: stored }",
+    "replace": "chrome.storage.sync.set({ [key]: stored }",
+    "suites": [
+      "test/extension/settings-queue.test.js"
+    ],
+    "note": "The one settings write primitive names the local area. Swapping it for sync would copy settings to Google servers, against DATA-01 and D-03 (T-07-16). The tracer world records any sync, session or managed access as a forbidden channel, and the worker-level sequence asserts none was reached.",
+    "expected_failure": {
+      "suite": "test/extension/settings-queue.test.js",
+      "test": "after a sequence of settings operations only storage.local was written, one key per write (DATA-01)",
+      "assertion": "[mutant:settings-local-area]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  }
+]
