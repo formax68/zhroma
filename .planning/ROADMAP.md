@@ -86,7 +86,7 @@ Plans:
   4. With default settings, priority detection, liveness through sort, refresh, view switch, pagination and scroll, the three-way diagnosis and the off/on switch all behave as in 0.1.0. The existing suites pass, the v1 mutants still die, and the zero-rule timing median stays at about 1.3 ms
   5. Any setting written through the new worker settings queue lands only in `chrome.storage.local`. The sync area stays empty, and the extension makes no network request
 
-**Plans**: 7 plans
+**Plans**: 9 plans
 Plans:
 **Wave 1**
 
@@ -99,19 +99,24 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 07-04-PLAN.md — Worker settings queue (single writer, serial, cas option, write only on real change, local only) and D-17 sender checks
+- [ ] 07-04-PLAN.md — Worker settings queue (single writer, serial, cas option, write only on real change, local only) and the queue mutants
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 07-05-PLAN.md — Content settings reader, bounded `settingsReady` gate and change listener, the D-14 end-to-end theme path, and COMPAT-02/DATA-01 upgrade proofs
+- [ ] 07-05-PLAN.md — D-17 sender checks: content messages only from Zendesk agent documents, settings writes only from the packaged popup or options page, and the sender mutants
+- [ ] 07-06-PLAN.md — Content settings reader, bounded `settingsReady` gate and change listener, the D-14 end-to-end theme path, and the stored-theme parity states
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 07-06-PLAN.md — Blocking dev-only `tsc --noEmit --checkJs` inside `test:recon`, with the v1 inclusion record
+- [ ] 07-07-PLAN.md — COMPAT-02/DATA-01 upgrade-state proofs (install, update, startup, restart) and the remaining content-side mutants
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 07-07-PLAN.md — Same-session timing against 0.1.0 and the full mutation run (52 mutants) on the final bytes
+- [ ] 07-08-PLAN.md — Blocking dev-only `tsc --noEmit --checkJs` inside `test:recon`, with the v1 inclusion record
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 07-09-PLAN.md — Same-session timing against 0.1.0 and the full mutation run (52 mutants) on the final bytes
 **Research**: Standard patterns (single-writer worker queue, generation counters, agreement and inventory tests already exist in the repo). Skip research-phase
 **Notes**: The contract-test split into frozen and versioned parts happens in its own commit, never with feature code. The `options_ui` manifest stub, shared IIFE namespace, settings schema/validator (absence means default) and `tsc --checkJs` adoption (with dependency approvals) land here
 
