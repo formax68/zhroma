@@ -9,8 +9,8 @@
 import { createContext, Script } from 'node:vm';
 import { afterEach, expect, test, vi } from 'vitest';
 import {
-  CONTENT_URL, DOCUMENT_ID, EXTENSION_ID, NAMESPACE, POPUP_URL, TAB_ID, asset, closeWindows, createWorld, loadContent,
-  loadWorker, settle,
+  CONTENT_URL, DOCUMENT_ID, EXTENSION_ID, NAMESPACE, OPTIONS_URL, POPUP_URL, TAB_ID, asset, closeWindows, createWorld,
+  loadContent, loadWorker, optionsSender, settle,
 } from './tracer-world.js';
 
 afterEach(async () => { vi.useRealTimers(); await closeWindows(); });
@@ -530,4 +530,58 @@ test("the worker's agent host and path agree with the manifest's single match pa
   expect(scripts).toHaveLength(1);
   expect(scripts[0].matches).toHaveLength(1);
   expect(`https://*.${host[0][1]}${path[0][1]}*`).toBe(scripts[0].matches[0]);
+});
+
+// --- D-17 / D-18: extension pages write settings but never pose as content -----
+
+const UNREADABLE_THEME = Object.freeze({ v: 99, id: 'from-a-newer-version' });
+
+test('an options page open in a tab is refused for a status hint (D-17)', async () => {
+  const world = await boot();
+  // Put the options page in the tab the tracer's content script owns, so an
+  // admitted hint would be visible as a projection of a live tab.
+  expect(await hintGrowsActionLog(world, optionsSender(TAB_ID)), '[mutant:content-sender-agent-url] options page in a tab')
+    .toBe(false);
+  expect(await hintGrowsActionLog(world, optionsSender())).toBe(false);
+  expect(world.forbidden).toEqual([]);
+});
+
+test('set-setting is admitted only from the packaged popup or the packaged options page (D-17, D-18)', async () => {
+  const refused = [
+    ['a content sender', CONTENT_SENDER],
+    ['the options URL under a foreign id', { ...optionsSender(), id: 'another-extension-id' }],
+    ['an agent document named options.html', { ...CONTENT_SENDER, url: 'https://example.zendesk.com/agent/options.html' }],
+    ['the options path without its extension origin', { ...optionsSender(), url: 'options.html' }],
+  ];
+  for (const [name, sender] of refused) {
+    const world = await boot({ stored: { theme: UNREADABLE_THEME } });
+    const answer = await world.sendToWorker(themeMessage(1), sender);
+    await settle();
+    expect(answer, `[mutant:options-sender-url] ${name} gets no reply`).toBeInstanceOf(Error);
+    expect(world.writeLog, `[mutant:options-sender-url] ${name} writes nothing`).toEqual([]);
+    expect(world.getStored('theme')).toEqual(UNREADABLE_THEME);
+    expect(world.forbidden).toEqual([]);
+  }
+  for (const [name, sender] of [['the options page', optionsSender()], ['the options page in the content tab', optionsSender(TAB_ID)],
+    ['the popup', POPUP_SENDER]]) {
+    const world = await boot({ stored: { theme: UNREADABLE_THEME } });
+    expect(await world.sendToWorker(themeMessage(2), sender), name).toEqual(reply(2, 'saved'));
+    await settle();
+    expect(world.writeLog, name).toEqual([{ theme: STORED_CLASSIC }]);
+    expect(world.forbidden).toEqual([]);
+  }
+  expect(optionsSender().url).toBe(OPTIONS_URL);
+});
+
+test('popup-status and set-enabled from the options page are refused, as in v1 (D-17)', async () => {
+  const world = await boot({ stored: { enabled: true } });
+  const before = world.actionLog.length;
+  expect(await world.sendToWorker({ type: 'popup-status', requestId: 1 }, optionsSender())).toBeInstanceOf(Error);
+  expect(await world.sendToWorker({ type: 'set-enabled', requestId: 2, enabled: false }, optionsSender())).toBeInstanceOf(Error);
+  expect(await world.sendToWorker({ type: 'set-enabled', requestId: 3, enabled: false }, optionsSender(TAB_ID))).toBeInstanceOf(Error);
+  await settle();
+  expect(world.writeLog).toEqual([]);
+  expect(world.getStored('enabled')).toBe(true);
+  expect(world.actionLog.length).toBe(before);
+  expect(world.forbidden).toEqual([]);
 });

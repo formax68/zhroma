@@ -498,6 +498,16 @@ try {
     && sender.tab === undefined
     && sender.url === chrome.runtime.getURL(POPUP_PATH);
 
+  // The packaged options page (D-18). It opens in a tab, so unlike the popup it
+  // carries `sender.tab` and is deliberately not required to lack one. Its own
+  // URL is what tells it apart, and it is admitted for settings writes only.
+  const OPTIONS_PATH = 'options.html';
+  function fromOptions(sender) {
+    return isObject(sender)
+      && sender.id === chrome.runtime.id
+      && sender.url === chrome.runtime.getURL(OPTIONS_PATH);
+  }
+
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (isExact(message, ['type']) && message.type === 'status-invalidated' && fromContent(sender)) {
       project(sender.tab.id);
@@ -518,7 +528,7 @@ try {
       admitPreference(requestId, desired, sendResponse);
       return true;
     }
-    if (settingsRequest(message) && fromPopup(sender)) {
+    if (settingsRequest(message) && (fromPopup(sender) || fromOptions(sender))) {
       if (settingsQueue === null) {
         sendResponse({ type: 'set-setting', requestId: message.requestId, outcome: 'failed', revision: null });
         return undefined;
