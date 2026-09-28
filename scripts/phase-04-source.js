@@ -134,6 +134,39 @@ function requirePinnedEvidence(baseline, path, expected) {
   reject(sha256(readWorkingCopy(path)) === expected, 'phase-04-evidence-uncommitted');
 }
 
+/** The runner file whose exported judges decide the historical timing verdicts. */
+export const TIMING_JUDGE_PATH = 'scripts/run-tint-workload.js';
+const JUDGE_LINES = ['const OPERATIONS = ', 'const requireValue = ', 'const finite = '];
+const JUDGE_FUNCTIONS = ['summarizeSamples', 'validateWorkloadReport', 'mergeReport'];
+
+/**
+ * The exact source text of the code that judges timing samples: the operation
+ * list, the two helpers the judges call, and the three exported judges. Each
+ * function runs from its `export function` line up to the next top-level
+ * declaration. A missing or repeated piece is a rejection, never an empty match.
+ *
+ * @param {string} text The runner source.
+ * @returns {string}
+ */
+export function timingJudgeSource(text) {
+  const lines = text.split('\n');
+  const parts = [];
+  for (const prefix of JUDGE_LINES) {
+    const found = lines.filter((line) => line.startsWith(prefix));
+    reject(found.length === 1, 'phase-04-timing-judge-missing');
+    parts.push(found[0]);
+  }
+  for (const name of JUDGE_FUNCTIONS) {
+    const start = lines.findIndex((line) => line.startsWith(`export function ${name}(`));
+    reject(start >= 0 && lines.filter((line) => line.startsWith(`export function ${name}(`)).length === 1,
+      'phase-04-timing-judge-missing');
+    let end = start + 1;
+    while (end < lines.length && !/^(export |async function |function |const |let |if \()/u.test(lines[end])) end++;
+    parts.push(lines.slice(start, end).join('\n'));
+  }
+  return parts.join('\n');
+}
+
 let cached = null;
 
 /**
@@ -178,13 +211,24 @@ export function readPhase04Source(options = {}) {
     requirePinnedEvidence(baseline, path, expected);
   }
 
+  // The harness that measured the Phase 4 samples is identified from Git
+  // alone, like the validator above: Phase 7 (07-09, D-29) extends the working
+  // copy of both harness files to serve the manifest's scripts and the pinned
+  // 0.1.0 bytes, and a record of which harness measured is not a claim that
+  // the same files are still on disk unchanged. What the working copy still
+  // decides is the historical verdict, through the judges imported from it, so
+  // exactly that code is held to its committed text instead.
   const harness = createHash('sha256');
   for (const path of baseline.timing_harness_files) {
-    requirePinnedEvidence(baseline, path, baseline.timing_harness_hashes[path]);
-    harness.update(blob(baseline.observation_revision, path));
+    const bytes = blob(baseline.observation_revision, path);
+    reject(sha256(bytes) === baseline.timing_harness_hashes[path], 'phase-04-evidence-mismatch');
+    harness.update(bytes);
   }
   const timingHarnessHash = harness.digest('hex');
   reject(timingHarnessHash === baseline.timing_harness_sha256, 'phase-04-timing-harness-mismatch');
+  reject(baseline.timing_harness_files.includes(TIMING_JUDGE_PATH), 'phase-04-timing-judge-missing');
+  reject(timingJudgeSource(blob(baseline.observation_revision, TIMING_JUDGE_PATH).toString('utf8'))
+    === timingJudgeSource(readWorkingCopy(TIMING_JUDGE_PATH).toString('utf8')), 'phase-04-timing-judge-changed');
 
   let manifest;
   try { manifest = JSON.parse(files['manifest.json'].toString('utf8')); }

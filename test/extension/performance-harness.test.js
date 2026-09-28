@@ -107,3 +107,20 @@ test('combined acceptance requires every enabled and disabled size with identica
   }
   expect(report.timingStatus).toBe('passed');
 });
+// 07-09: the Phase 4 adapter identifies the harness that measured its samples
+// from Git alone and holds only the judging code to its committed text. That
+// guard is only worth having if an edit to a judge actually changes the text
+// it compares, and a runner missing a judge is refused rather than matched empty.
+test('the pinned timing judge text moves with any judge edit and refuses a missing judge', async () => {
+  const { timingJudgeSource } = await import('../../scripts/phase-04-source.js');
+  const runner = readFileSync(new URL('../../scripts/run-tint-workload.js', import.meta.url), 'utf8');
+  const judged = timingJudgeSource(runner);
+  for (const name of ['summarizeSamples', 'validateWorkloadReport', 'mergeReport']) expect(judged).toContain(`export function ${name}(`);
+  expect(judged).toContain("metrics.max >= 16 || (run.size === 30 && metrics.median >= 2)");
+  expect(judged).not.toContain('parseArguments');
+  expect(timingJudgeSource(runner.replace('metrics.median >= 2', 'metrics.median >= 3'))).not.toBe(judged);
+  expect(timingJudgeSource(runner.replace("const OPERATIONS = ['edit',", "const OPERATIONS = ['typo',"))).not.toBe(judged);
+  expect(timingJudgeSource(runner.replace('Refusing stale/mixed', 'Refusing mixed'))).not.toBe(judged);
+  expect(() => timingJudgeSource(runner.replace('export function mergeReport(', 'function mergeReport('))).toThrow(/phase-04-timing-judge-missing/);
+  expect(() => timingJudgeSource(runner.replace('const finite = ', 'const finiteNumber = '))).toThrow(/phase-04-timing-judge-missing/);
+});
