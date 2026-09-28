@@ -155,5 +155,52 @@
       ],
       "priorityHeaderIndex": 6
     }
+  ],
+  "recon2Fixtures": [
+    {
+      "scenario": "rules-light-table",
+      "captureDate": "2026-09-27",
+      "workspace": {
+        "shell": "current Agent Workspace",
+        "plan": "unknown/not shared"
+      },
+      "appearance": "light",
+      "boundaryKind": "table",
+      "domBoundary": "nearest complete table container: immediate overflow wrapper and its ticket table",
+      "sanitizerMode": "rule-columns",
+      "sanitizationMethod": "Fresh live capture on 2026-09-27 through the 06-RUN-SHEET.md in-page stash projection, moved to a private directory as a browser download, and admitted by scripts/sanitize-fixture.js in rule-columns mode with a private denylist holding the self form; private inputs are deleted or encrypted after admission.",
+      "file": "zendesk-rules-light-table.html",
+      "sha256": "7c9ddb912da3390f356a83d991d56a21b4cf43e3a42ba48b75e3263ce558ff2e"
+    },
+    {
+      "scenario": "rules-identity-region",
+      "captureDate": "2026-09-27",
+      "workspace": {
+        "shell": "current Agent Workspace",
+        "plan": "unknown/not shared"
+      },
+      "appearance": "light",
+      "boundaryKind": "identity-region",
+      "domBoundary": "smallest subtree containing the rendered agent name: the top-bar profile menu button and its avatar image",
+      "sanitizerMode": "rule-columns",
+      "sanitizationMethod": "Fresh live capture on 2026-09-27 through the 06-RUN-SHEET.md in-page stash projection, moved to a private directory as a browser download, and admitted by scripts/sanitize-fixture.js in rule-columns mode with the identity-region boundary and a private denylist holding the self form; private inputs are deleted or encrypted after admission.",
+      "file": "zendesk-rules-identity-region.html",
+      "sha256": "ae561400bf7ff04e171dcffbe21b610cd5e3885dbe95acdd6179c6b833586a1b"
+    },
+    {
+      "scenario": "rules-dark-table",
+      "captureDate": "2026-09-27",
+      "workspace": {
+        "shell": "current Agent Workspace",
+        "plan": "unknown/not shared"
+      },
+      "appearance": "dark",
+      "boundaryKind": "table",
+      "domBoundary": "nearest complete table container: immediate overflow wrapper and its ticket table",
+      "sanitizerMode": "rule-columns",
+      "sanitizationMethod": "Fresh live capture on 2026-09-27 in Zendesk Dark through the 06-RUN-SHEET.md in-page stash projection, moved to a private directory as a browser download, and admitted by scripts/sanitize-fixture.js in rule-columns mode with a private denylist holding the self form; private inputs are deleted or encrypted after admission.",
+      "file": "zendesk-rules-dark-table.html",
+      "sha256": "c726244faade76c293fbe3ead63627fb310a4c6fecc24cfca3a71345a316ada6"
+    }
   ]
 }

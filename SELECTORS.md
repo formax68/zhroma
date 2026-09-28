@@ -275,9 +275,9 @@ paint chain above supplied textual evidence without retaining a visual capture.
 
 ## Recon 2 Session Handoff
 
-- session-state: `restored`
+- session-state: `admitted`
 - next-step: `admission`
-- next-action-owner: `claude`
+- next-action-owner: `user`
 - capture-date: `2026-09-27`
 - shell: `current Agent Workspace`
 - plan-label: `unknown/not shared`
@@ -431,12 +431,12 @@ paint chain above supplied textual evidence without retaining a visual capture.
 
 ## Recon 2 Verdict
 
-- recon2-verdict: `pending`
-- blocked-consumers: `pending`
-- fixture-light-table: `pending`
-- fixture-identity-region: `pending`
-- fixture-dark-table: `pending`
-- rationale: Pending the live session in Plan 03.
+- recon2-verdict: `proceed`
+- blocked-consumers: `none`
+- fixture-light-table: `admitted`
+- fixture-identity-region: `admitted`
+- fixture-dark-table: `admitted`
+- rationale: Proceed because Appearance is offered and the v1 Garden identifiers and Document root hold in dark mode (D-24). Phase 8 receives the html[data-theme] document marker, the in-place attribute swap on in-app switches, the stale-until-reload Match system behaviour, the measured light and dark surfaces and the dark native hover, selection, sticky and focus paints, plus the dark-table fixture. Phase 9 receives the rule-column cell shapes, the Ticket placeholder for an unset type, the Ticket status header, the mixed relative and absolute date text with ISO datetime and absolute title, and the light-table fixture. Phase 10 receives the top-bar avatar alt identity at load, its identical match to the Assignee text, the duplicate custom-title case for EDIT-06, and the identity-region fixture. Fallbacks in force: Tags is not offered as a column, so Tags rules resolve no header, RULE-07 keeps them inactive and RULE-F2 stays deferred (D-26); no unassigned Assignee placeholder was observed, so Phase 9 treats that unrecorded shape as not matching.
 
 ## Spec-less Planning Assumptions
 
