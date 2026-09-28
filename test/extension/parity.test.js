@@ -75,7 +75,7 @@ function loadPage(side, scenario, state) {
   const context = createContext({ document, window, chrome: harness.chrome, MutationObserver: StartupObserver, setTimeout, clearTimeout });
   for (const path of manifest.content_scripts[0].js) new Script(side.read(path), { filename: path }).runInContext(context);
   return {
-    document, window, harness, fixture,
+    document, window, harness, fixture, scratch: {},
     deliver(target = document.body, extra = {}) {
       for (const observer of observers) if (observer.active) observer.callback([{ type: 'childList', target, addedNodes: [], removedNodes: [], ...extra }]);
     },
@@ -121,8 +121,199 @@ async function trace(side, scenario, state) {
 const tinted = (value) => typeof value === 'string' && value !== '' && value !== 'transparent'
   && value !== 'rgba(0, 0, 0, 0)';
 
+// --- the matrix (D-24) -------------------------------------------------------
+//
+// Both lists are plain arrays so a later plan can append a state or a scenario
+// without editing the loop. Case names are `<scenario> under <state>` and must
+// stay stable: later mutants may target them.
+
+const STATES = [
+  { name: 'fresh install', preference: {} },
+  { name: 'upgraded, off', preference: { stored: false } },
+  { name: 'upgraded, on', preference: { stored: true } },
+];
+
+const PRIORITY = 6;
+const setPriority = (row, value) => { row.children[PRIORITY].textContent = value; };
+// Long enough for a missing-column claim to settle after the reconcile pass.
+const quiet = (p) => { vi.advanceTimersByTime(200); p.harness.flush(); };
+
+// A Next/Previous/refresh replacement arrives through incomplete markup first
+// and is completed afterwards (copied from persistent-tint.test.js L197-211).
+const replacement = (selector) => [
+  (p) => {
+    const target = p.document.querySelector(selector);
+    const copy = target.cloneNode(true);
+    for (const row of copy.querySelectorAll('[data-zhroma-priority]')) row.removeAttribute('data-zhroma-priority');
+    const last = copy.querySelector('tbody tr:last-child, tr:last-child');
+    const cell = last.lastElementChild; cell.remove();
+    p.scratch.last = last; p.scratch.cell = cell;
+    target.replaceWith(copy);
+    p.deliver(copy.parentNode, { removedNodes: [target], addedNodes: [copy] }); p.settled();
+  },
+  (p) => {
+    p.scratch.last.append(p.scratch.cell);
+    p.deliver(p.scratch.last, { addedNodes: [p.scratch.cell] }); p.settled();
+  },
+];
+
+const SCENARIOS = [
+  ...['priority-present', 'priority-absent', 'grouped-long'].map((name) => ({
+    name: `startup on ${name}`, fixture: name, steps: [quiet],
+  })),
+  { name: 'Next', fixture: 'priority-present', steps: replacement('tbody') },
+  { name: 'Previous', fixture: 'priority-present', steps: replacement('tbody') },
+  { name: 'refresh body', fixture: 'priority-present', steps: replacement('tbody') },
+  { name: 'refresh table', fixture: 'priority-present', steps: replacement('table') },
+  {
+    // persistent-tint.test.js L213-231
+    name: 'group insert and reorder', fixture: 'grouped-long',
+    mutate(d) { rows(d).forEach((row) => setPriority(row, 'Low')); },
+    steps: [
+      (p) => {
+        const body = p.document.querySelector('tbody');
+        const group = body.querySelector('[data-garden-id="tables.group_row"]');
+        const tickets = rows(p.document); p.scratch.tickets = tickets;
+        body.prepend(group.cloneNode(true)); body.append(group); body.prepend(tickets.at(-1));
+        p.deliver(body); p.settled();
+      },
+      (p) => {
+        const [first] = p.scratch.tickets;
+        first.setAttribute('data-garden-id', 'tables.group_row');
+        first.setAttribute('data-test-id', 'generic-table-rows-group-by');
+        p.deliver(p.document.querySelector('tbody')); p.settled();
+      },
+    ],
+  },
+  {
+    // persistent-tint.test.js L232-242
+    name: 'empty, group-only and single ticket', fixture: 'grouped-long',
+    mutate(d) { rows(d).forEach((row) => setPriority(row, 'High')); },
+    steps: [
+      (p) => {
+        const tickets = rows(p.document); p.scratch.tickets = tickets;
+        const body = p.document.querySelector('tbody');
+        tickets.forEach((row) => row.remove()); p.deliver(body, { removedNodes: tickets }); p.settled();
+      },
+      (p) => { const body = p.document.querySelector('tbody'); body.replaceChildren(); p.deliver(body); p.settled(); },
+      (p) => {
+        const body = p.document.querySelector('tbody');
+        body.append(p.scratch.tickets[0]); p.deliver(body, { addedNodes: [p.scratch.tickets[0]] }); p.settled();
+      },
+    ],
+  },
+  {
+    // persistent-tint.test.js L243-258: the COMPAT-04 ordering edge, rows that
+    // share a priority in a sorted view.
+    name: 'sort with equal priorities', fixture: 'priority-present',
+    mutate(d) { setPriority(rows(d)[1], 'Urgent'); },
+    steps: [
+      (p) => {
+        const tickets = rows(p.document); const body = p.document.querySelector('tbody');
+        body.prepend(tickets[1]); p.deliver(body);
+        body.prepend(tickets[3]);
+        for (const row of [p.document.querySelector('thead tr'), ...rows(p.document)]) row.prepend(row.children[PRIORITY]);
+        p.deliver(body); p.settled();
+      },
+      (p) => { p.deliver(p.document.querySelector('tbody')); p.settled(); },
+    ],
+  },
+  {
+    // persistent-tint.test.js L259-277
+    name: 'rapid present/absent/present', fixture: 'priority-present',
+    steps: [
+      (p) => {
+        for (let i = 0; i < 3; i++) {
+          const old = p.document.querySelector('table'); p.document.body.replaceChildren();
+          p.deliver(p.document.body, { removedNodes: [old] });
+          p.document.body.innerHTML = p.fixture('priority-present');
+          p.deliver(p.document.body, { addedNodes: [p.document.querySelector('table')] });
+        }
+        setPriority(rows(p.document)[0], 'Normal');
+        p.settled();
+      },
+      (p) => { for (let i = 0; i < 5; i++) { p.deliver(p.document.querySelector('tbody')); p.settled(); } },
+    ],
+  },
+  {
+    // persistent-tint.test.js L278-292
+    name: 'row recycling on scroll', fixture: 'priority-present',
+    steps: [
+      (p) => {
+        const ticket = rows(p.document)[0]; p.scratch.ticket = ticket;
+        ticket.style.transform = 'translateY(-1000px)'; p.deliver(ticket); p.settled();
+      },
+      (p) => {
+        const inserted = p.scratch.ticket.cloneNode(true); p.scratch.inserted = inserted;
+        inserted.removeAttribute('data-zhroma-priority'); setPriority(inserted, 'Low');
+        p.document.querySelector('tbody').append(inserted);
+        p.deliver(inserted.parentNode, { addedNodes: [inserted] }); p.settled();
+      },
+      (p) => { setPriority(p.scratch.inserted, 'High'); p.deliver(p.scratch.inserted); p.settled(); },
+      (p) => {
+        const { inserted } = p.scratch; const from = inserted.parentNode;
+        p.document.body.append(inserted); inserted.removeAttribute('data-test-id');
+        p.deliver(from, { removedNodes: [inserted] }); p.settled();
+      },
+    ],
+  },
+  {
+    name: 'view switch', fixture: 'priority-present',
+    steps: ['priority-absent', 'priority-present'].map((next) => (p) => {
+      const old = p.document.querySelector('table');
+      p.document.body.innerHTML = p.fixture(next);
+      p.deliver(p.document.body, { removedNodes: [old], addedNodes: [p.document.querySelector('table')] });
+      p.settled(); quiet(p);
+    }),
+  },
+  {
+    name: 'unknown priority value', fixture: 'priority-present',
+    steps: [
+      (p) => { const row = rows(p.document)[0]; setPriority(row, 'Unknown'); p.deliver(row); p.settled(); },
+      (p) => { const row = rows(p.document)[0]; setPriority(row, 'Urgent'); p.deliver(row); p.settled(); },
+    ],
+  },
+  {
+    name: 'non-English shell', fixture: 'priority-present', lang: 'fr',
+    steps: [
+      quiet,
+      (p) => {
+        p.document.documentElement.lang = 'en';
+        p.deliver(p.document.documentElement, { type: 'attributes', attributeName: 'lang' }); p.settled();
+      },
+    ],
+  },
+  {
+    // CR-01: a supported English regional shell tints and survives a re-render.
+    name: 'English regional shell', fixture: 'priority-present', lang: 'en-GB',
+    steps: [(p) => { p.deliver(p.document.querySelector('tbody')); p.settled(); }],
+  },
+  {
+    // persistent-tint.test.js L510-523 and toolbar-popup.test.js L762-799
+    name: 'visibility and bfcache', fixture: 'priority-present',
+    steps: [
+      (p) => { p.document.hidden = true; p.document.dispatchEvent(new p.window.Event('visibilitychange')); p.settled(); },
+      (p) => { p.document.hidden = false; p.document.dispatchEvent(new p.window.Event('visibilitychange')); p.settled(); },
+      (p) => { p.window.dispatchEvent(new p.window.Event('pagehide')); p.settled(); },
+      (p) => {
+        const restored = new p.window.Event('pageshow');
+        Object.defineProperty(restored, 'persisted', { value: true });
+        p.window.dispatchEvent(restored); p.settled();
+      },
+    ],
+  },
+  {
+    // The Phase 4 switch, driven through a storage change.
+    name: 'off and on', fixture: 'priority-present',
+    steps: [
+      (p) => { p.harness.setStored(false); p.harness.emitChange({ enabled: { oldValue: true, newValue: false } }); p.settled(); },
+      (p) => { p.harness.setStored(true); p.harness.emitChange({ enabled: { oldValue: false, newValue: true } }); p.settled(); },
+    ],
+  },
+];
+
 const STARTUP_PRESENT = { name: 'startup', fixture: 'priority-present', steps: [] };
-const FRESH_INSTALL = { name: 'fresh install', preference: {} };
+const FRESH_INSTALL = STATES[0];
 
 test('the pinned 0.1.0 blobs are exactly the twelve assets the candidate record names', () => {
   const record = candidate();
@@ -168,4 +359,57 @@ test('startup parity: the present fixture paints identically from the 0.1.0 blob
   expect(expected.flatMap((step) => step.markers).some((value) => value !== null)).toBe(true);
   expect(expected.flatMap((step) => step.backgrounds).some(tinted)).toBe(true);
   expect(expected[0].status).toEqual({ diagnosis: 'working', reason: null });
+});
+
+test('the matrix is the D-24 set: eighteen scenarios under three upgrade states', () => {
+  expect(STATES.map((state) => state.name)).toEqual(['fresh install', 'upgraded, off', 'upgraded, on']);
+  expect(SCENARIOS).toHaveLength(18);
+  expect(new Set(SCENARIOS.map((scenario) => scenario.name)).size).toBe(SCENARIOS.length);
+});
+
+const MATRIX = SCENARIOS.flatMap((scenario) => STATES.map((state) => [scenario.name, state.name, scenario, state]));
+
+test.each(MATRIX)('%s under %s', async (_scenarioName, _stateName, scenario, state) => {
+  const expected = await trace(baselineSide, scenario, state);
+  const actual = await trace(workingSide, scenario, state);
+  expect(actual).toEqual(expected);
+});
+
+test('the baseline traces are not vacuous: they tint, paint and reach every product diagnosis', async () => {
+  const steps = [];
+  for (const state of STATES.filter((entry) => entry.name !== 'upgraded, off')) {
+    for (const scenario of SCENARIOS) steps.push(...await trace(baselineSide, scenario, state));
+  }
+  expect(steps.flatMap((step) => step.markers).some((value) => value !== null)).toBe(true);
+  expect(steps.flatMap((step) => step.backgrounds).some(tinted)).toBe(true);
+  const diagnoses = new Set(steps.map((step) => step.status?.diagnosis));
+  for (const diagnosis of ['working', 'missing', 'cannot-read']) expect(diagnoses).toContain(diagnosis);
+});
+
+// --- negative controls: the harness must see a real difference ---------------
+
+const modified = (name, path, edit) => {
+  const original = workingRead(path);
+  const changed = edit(original);
+  // Guard the control itself: an edit that matches nothing proves nothing.
+  expect(changed).not.toBe(original);
+  return { name, read: (file) => (file === path ? changed : workingRead(file)) };
+};
+
+test('negative control: a one-character palette change is reported as a difference', async () => {
+  const side = modified('palette 0.13', 'zhroma.css', (css) => css.replace('0.14', '0.13'));
+  const expected = await trace(baselineSide, STARTUP_PRESENT, FRESH_INSTALL);
+  const actual = await trace(side, STARTUP_PRESENT, FRESH_INSTALL);
+  expect(actual).not.toEqual(expected);
+  expect(actual.map((step) => step.markers)).toEqual(expected.map((step) => step.markers));
+  expect(actual.map((step) => step.backgrounds)).not.toEqual(expected.map((step) => step.backgrounds));
+});
+
+test('negative control: a detector that no longer recognises Low is reported as a difference', async () => {
+  const side = modified('no Low', 'content.js',
+    (source) => source.replace("new Set(['Urgent', 'High', 'Normal', 'Low'])", "new Set(['Urgent', 'High', 'Normal'])"));
+  const expected = await trace(baselineSide, STARTUP_PRESENT, FRESH_INSTALL);
+  const actual = await trace(side, STARTUP_PRESENT, FRESH_INSTALL);
+  expect(actual).not.toEqual(expected);
+  expect(actual.map((step) => step.markers)).not.toEqual(expected.map((step) => step.markers));
 });
