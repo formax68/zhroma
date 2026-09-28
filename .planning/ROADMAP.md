@@ -86,7 +86,32 @@ Plans:
   4. With default settings, priority detection, liveness through sort, refresh, view switch, pagination and scroll, the three-way diagnosis and the off/on switch all behave as in 0.1.0. The existing suites pass, the v1 mutants still die, and the zero-rule timing median stays at about 1.3 ms
   5. Any setting written through the new worker settings queue lands only in `chrome.storage.local`. The sync area stays empty, and the extension makes no network request
 
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+**Wave 1**
+
+- [ ] 07-01-PLAN.md — 0.1.0 parity harness from pinned 6d3ab0b blobs, and the contract split into frozen invariants and versioned v1.0 pins (test-only)
+- [ ] 07-02-PLAN.md — Separate exact-version approvals, then install of typescript and @types/chrome (blocking-human legitimacy gate)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 07-03-PLAN.md — Shared `Zhroma` namespace and settings module (theme key, validators, versions, migrate hook, size caps), the options stub, and the packaged-shape pins restated once
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-04-PLAN.md — Worker settings queue (single writer, serial, cas option, write only on real change, local only) and D-17 sender checks
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 07-05-PLAN.md — Content settings reader, bounded `settingsReady` gate and change listener, the D-14 end-to-end theme path, and COMPAT-02/DATA-01 upgrade proofs
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 07-06-PLAN.md — Blocking dev-only `tsc --noEmit --checkJs` inside `test:recon`, with the v1 inclusion record
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 07-07-PLAN.md — Same-session timing against 0.1.0 and the full mutation run (52 mutants) on the final bytes
 **Research**: Standard patterns (single-writer worker queue, generation counters, agreement and inventory tests already exist in the repo). Skip research-phase
 **Notes**: The contract-test split into frozen and versioned parts happens in its own commit, never with feature code. The `options_ui` manifest stub, shared IIFE namespace, settings schema/validator (absence means default) and `tsc --checkJs` adoption (with dependency approvals) land here
 
