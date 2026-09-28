@@ -28,6 +28,10 @@ export const extensionRoot = root;
 export const EXTENSION_ID = 'zhromatracercontextidnotarealone';
 export const POPUP_PATH = 'popup.html';
 export const POPUP_URL = `chrome-extension://${EXTENSION_ID}/${POPUP_PATH}`;
+// The document a content script runs in, as Chrome reports it on `sender.url`.
+// A synthetic tenant, never a real one (D-17): the worker admits a content
+// message only from a `https` Zendesk agent document.
+export const CONTENT_URL = 'https://acme.zendesk.com/agent/filters/1';
 export const TAB_ID = 7;
 export const OTHER_TAB_ID = 9;
 export const DOCUMENT_ID = 'document-alpha';
@@ -245,7 +249,7 @@ export function createWorld({
       onMessage: { addListener: (listener) => { listenersFor(tabId).push(listener); } },
       sendMessage(message, callback) {
         record('to-worker', message);
-        const sender = { id: EXTENSION_ID, frameId: 0, documentId: `${DOCUMENT_ID}-${tabId}`, tab: { id: tabId } };
+        const sender = { id: EXTENSION_ID, url: CONTENT_URL, frameId: 0, documentId: `${DOCUMENT_ID}-${tabId}`, tab: { id: tabId } };
         const promise = deliver(workerListeners, message, sender);
         if (typeof callback !== 'function') return promise;
         promise.then((value) => {
@@ -676,6 +680,8 @@ export function loadWorker(world, { imports = 'admit' } = {}) {
   };
   context = createContext({ ...sentinels, chrome: epoch.chrome,
     setTimeout: epoch.setTimeout, clearTimeout: epoch.clearTimeout, Promise, Object, JSON, Map: epoch.Map, Number, Array, Date,
+    // Chrome's service worker has URL; a bare vm context does not (D-17).
+    URL,
   }, { codeGeneration: { strings: false, wasm: false } });
   const before = Object.keys(context);
   new Script(asset('background.js'), { filename: 'background.js' }).runInContext(context);
