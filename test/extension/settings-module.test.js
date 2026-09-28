@@ -46,8 +46,10 @@ test('loading the shipped file adds exactly one global, Zhroma, bound non-writab
   // members the same way; `settings` itself is frozen all the way down.
   expect(Object.isExtensible(context[NAMESPACE])).toBe(true);
   const settings = settingsOf(context);
-  expect(Object.keys(settings).sort()).toEqual(['ENTRIES', 'STATUSES', 'THEME_IDS', 'define', 'registry']);
-  for (const value of [settings, settings.STATUSES, settings.THEME_IDS, settings.ENTRIES, settings.ENTRIES[0],
+  // 07-04 adds the finite outcome vocabulary and the pure write-queue factory
+  // the worker uses; both are frozen members like the rest.
+  expect(Object.keys(settings).sort()).toEqual(['ENTRIES', 'OUTCOMES', 'STATUSES', 'THEME_IDS', 'createQueue', 'define', 'registry']);
+  for (const value of [settings, settings.STATUSES, settings.THEME_IDS, settings.OUTCOMES, settings.ENTRIES, settings.ENTRIES[0],
     settings.ENTRIES[0].migrations, settings.registry, settings.registry.keys]) expect(Object.isFrozen(value)).toBe(true);
   expect(() => new Script("'use strict'; Zhroma = {};").runInContext(context)).toThrow();
   expect(() => new Script("'use strict'; Zhroma.settings = {};").runInContext(context)).toThrow();
