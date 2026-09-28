@@ -5,16 +5,16 @@ milestone_name: Themes & Rules
 current_phase: 07
 current_phase_name: Upgrade-Safe Foundation
 status: executing
-stopped_at: Completed 07-07-PLAN.md
-last_updated: "2026-09-28T09:33:26.267Z"
+stopped_at: Completed 07-08-PLAN.md
+last_updated: "2026-09-28T09:42:58.838Z"
 last_activity: 2026-09-28
 last_activity_desc: Phase 07 execution started
-state_head: 8f9f48ffb80200239e5e4e949159e10f28015b92
+state_head: d5f4837e900358d791fcab3dbe8db8e5ce956589
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
   percent: 33
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 07 (Upgrade-Safe Foundation) — EXECUTING
-Plan: 8 of 9
+Plan: 9 of 9
 Status: Ready to execute
 Last activity: 2026-09-28 — Phase 07 execution started
 
@@ -99,6 +99,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 07 P05 | 9 min | 2 tasks | 5 files |
 | Phase 07 P06 | 9 min | 2 tasks | 4 files |
 | Phase 07 P07 | 9 min | 2 tasks | 4 files |
+| Phase 07 P08 | 7 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -194,6 +195,9 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-06: one storage listener, onStorageChanged, runs onSettingsChanged in try/catch then the unchanged onPreferenceChanged; a theme change re-resolves newValue and never re-evaluates a row (D-14, A2)
 - [Phase 07]: 07-07: settings-failure-opens-gate registers the lastError variant targeting only the rejected case; the mutation runner filters to the target test by name
 - [Phase 07]: 07-07: COMPAT-03 'requests nothing' is measured as a restarted worker's apiLog equalling its four addListener calls
+- [Phase 07]: 07-08: tsc runs first inside test:recon, so npm test and the release automated check (which runs test:recon directly) both block on a type error
+- [Phase 07]: 07-08: background.js joins the check unmodified via tsconfig.v1.json (strict false); content.js (TS2339 x1) and popup.js (TS2339 x8) stay out with the reason recorded in tsconfig.json; none is a genuine bug
+- [Phase 07]: 07-08: the public settings typedefs live at top level of zhroma-settings.js; ZhromaSettingsApi is checked against the frozen Zhroma.settings value and types/zhroma.d.ts types the global from it
 
 ### Pending Todos
 
@@ -237,8 +241,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-28T09:33:26.249Z
-Stopped at: Completed 07-07-PLAN.md
+Last session: 2026-09-28T09:42:58.820Z
+Stopped at: Completed 07-08-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
