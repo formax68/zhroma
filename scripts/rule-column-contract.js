@@ -28,7 +28,7 @@ export const DEFAULT_RULE_VOCABULARY = deepFreeze({
     Assignee: 'PERSON',
     Requester: 'PERSON',
     Group: 'GROUP',
-    Status: 'STATUS',
+    'Ticket status': 'STATUS',
     Type: 'TYPE',
     Subject: 'SUBJECT',
     Tags: 'TAG',
@@ -36,7 +36,7 @@ export const DEFAULT_RULE_VOCABULARY = deepFreeze({
   },
   statusValues: ['New', 'Open', 'Pending', 'On-hold', 'Solved', 'Closed'],
   typeValues: ['Question', 'Incident', 'Problem', 'Task'],
-  placeholders: [],
+  placeholders: ['Ticket'],
 });
 
 export const RULE_TOKEN_KINDS = Object.freeze([
