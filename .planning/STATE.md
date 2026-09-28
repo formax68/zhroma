@@ -5,16 +5,16 @@ milestone_name: Themes & Rules
 current_phase: 07
 current_phase_name: Upgrade-Safe Foundation
 status: executing
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-09-28T08:16:34.284Z"
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-09-28T08:21:45.004Z"
 last_activity: 2026-09-28
 last_activity_desc: Phase 07 execution started
-state_head: 49bab3750005e17f5539b4c3e12e25af30db5247
+state_head: 7e48d427e29ceddd358d0fbe6a51f76cd39af0f0
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 4
+  completed_plans: 5
   percent: 33
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 07 (Upgrade-Safe Foundation) — EXECUTING
-Plan: 2 of 9
+Plan: 3 of 9
 Status: Ready to execute
 Last activity: 2026-09-28 — Phase 07 execution started
 
@@ -93,6 +93,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 06 P02 | 20min | 3 tasks | 6 files |
 | Phase 06 P03 | 62h 35m | 3 tasks | 6 files |
 | Phase 07 P01 | 8 min | 3 tasks | 4 files |
+| Phase 07 P02 | 2 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -177,6 +178,7 @@ Recent decisions affecting current work:
 - [Phase 06]: Identity renders at load in the top-bar avatar alt and equals the Assignee text exactly; Phase 10 uses plain normalised equality. — Three P2 runs (load, menu open, menu closed) were all identical.
 - [Phase 07]: 07-01: The 0.1.0 parity baseline is served only by scripts/baseline-source.js from pinned 6d3ab0b blobs cross-checked against release/candidate.json; the parity matrix is 18 scenarios x 3 upgrade states (English regional shell added as the 18th)
 - [Phase 07]: 07-01: frozen-contract.test.js holds the D-01/D-26/D-27 invariants over a discovered tree and is never edited; runtime-contract.test.js holds the versioned v1.0 pins including a per-file Chrome API allowlist (13/6/1 paths) that must be restated in its own commit when zhroma-settings.js or importScripts lands
+- [Phase 07]: 07-02: typescript 7.0.2 and @types/chrome 0.3.0 installed exact-pinned after separate verbatim approvals; typescript 6.0.3 fallback approved but unused because tsc 7.0.2 runs
 
 ### Pending Todos
 
@@ -220,8 +222,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-28T08:16:34.268Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-09-28T08:21:44.987Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
