@@ -3,19 +3,19 @@ gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Themes & Rules
 current_phase: 07
-current_phase_name: upgrade-safe-foundation
+current_phase_name: Upgrade-Safe Foundation
 status: executing
-stopped_at: Phase 7 context gathered
-last_updated: "2026-09-28T07:59:02.198Z"
-last_activity: 2026-09-25
-last_activity_desc: Phase 06 execution started
-state_head: 279a4a7e559c88dde1dd71820cf14fd5e2f535b8
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-09-28T08:16:34.284Z"
+last_activity: 2026-09-28
+last_activity_desc: Phase 07 execution started
+state_head: 49bab3750005e17f5539b4c3e12e25af30db5247
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 3
-  percent: 25
+  completed_plans: 4
+  percent: 33
 ---
 
 # Project State
@@ -25,16 +25,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.
-**Current focus:** Phase 06 — Live DOM Recon 2
+**Current focus:** Phase 07 — Upgrade-Safe Foundation
 
 ## Current Position
 
-Phase: 07 (upgrade-safe-foundation) — READY TO EXECUTE
-Plan: 3 of 3
+Phase: 07 (Upgrade-Safe Foundation) — EXECUTING
+Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-09-25 — Phase 06 execution started
+Last activity: 2026-09-28 — Phase 07 execution started
 
-Progress: [███░░░░░░░] 25%
+Progress: [███░░░░░░░] 33%
 
 v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Themes That Follow Dark Mode → 9 Colouring Rules → 10 Rule Editor, "Is Me" and Settings Files → 11 Release 1.0.0
 
@@ -92,6 +92,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 06 P01 | 13 min | 3 tasks | 5 files |
 | Phase 06 P02 | 20min | 3 tasks | 6 files |
 | Phase 06 P03 | 62h 35m | 3 tasks | 6 files |
+| Phase 07 P01 | 8 min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -174,6 +175,8 @@ Recent decisions affecting current work:
 - [Phase 06]: identity-source not-found requires a fallback naming Phase 10 on both identity entries
 - [Phase 06]: Recon 2 verdict proceed: Zendesk marks its painted theme on html[data-theme]; Phase 8 follows it (document-marker branch), never prefers-color-scheme, since Match system does not follow a live OS toggle until reload. — Six-cell matrix, three switches and dark native states recorded live on 2026-09-27 with Zhroma off.
 - [Phase 06]: Identity renders at load in the top-bar avatar alt and equals the Assignee text exactly; Phase 10 uses plain normalised equality. — Three P2 runs (load, menu open, menu closed) were all identical.
+- [Phase 07]: 07-01: The 0.1.0 parity baseline is served only by scripts/baseline-source.js from pinned 6d3ab0b blobs cross-checked against release/candidate.json; the parity matrix is 18 scenarios x 3 upgrade states (English regional shell added as the 18th)
+- [Phase 07]: 07-01: frozen-contract.test.js holds the D-01/D-26/D-27 invariants over a discovered tree and is never edited; runtime-contract.test.js holds the versioned v1.0 pins including a per-file Chrome API allowlist (13/6/1 paths) that must be restated in its own commit when zhroma-settings.js or importScripts lands
 
 ### Pending Todos
 
@@ -217,9 +220,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-28T06:45:36.096Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-upgrade-safe-foundation/07-CONTEXT.md
+Last session: 2026-09-28T08:16:34.268Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
 
