@@ -1,0 +1,12 @@
+// Dev-only type check of the accepted v1 files that pass as shipped (D-21).
+// Not packaged, never shipped, emits nothing (noEmit comes from tsconfig.json).
+//
+// Non-strict, and only files that pass with no byte changed for the checker.
+// The v1 files left out, and why, are recorded in tsconfig.json.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": false
+  },
+  "include": ["extension/background.js", "types/zhroma.d.ts"]
+}

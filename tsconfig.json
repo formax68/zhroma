@@ -6,7 +6,24 @@
 // automated check), where a type error fails the suite like any test.
 //
 // The new shared settings module is checked strictly. The accepted v1 files
-// join only where they pass unmodified (D-21).
+// join only where they pass unmodified (D-21):
+//
+//   extension/background.js  checked as shipped, non-strict, by tsconfig.v1.json.
+//
+// Excluded v1 files, measured 2026-09-28 under this config with strict false
+// and nothing changed in the file:
+//
+//   extension/content.js  1 diagnostic: TS2339 x1 (hasAttribute on the Node
+//     type of a MutationRecord target, which the DOM guarantees is an Element
+//     for an attributes record). Passing would need an annotation-only byte
+//     change, so it stays out until a later phase is already rewriting it.
+//   extension/popup.js    8 diagnostics: TS2339 x8 (checked, disabled and
+//     indeterminate on the HTMLElement type getElementById returns for the
+//     popup's checkbox input). Passing would need annotation-only byte
+//     changes, so it stays out until a later phase is already rewriting it.
+//
+// Neither is a genuine bug: each is a type the checker cannot narrow, not a
+// behaviour that goes wrong at run time.
 {
   "compilerOptions": {
     "allowJs": true,

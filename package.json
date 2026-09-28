@@ -8,8 +8,8 @@
   },
   "scripts": {
     "test": "npm run test:recon",
-    "test:recon": "node node_modules/typescript/bin/tsc -p tsconfig.json && node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js",
-    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+    "test:recon": "node node_modules/typescript/bin/tsc -p tsconfig.json && node node_modules/typescript/bin/tsc -p tsconfig.v1.json && node --test test/recon/*.smoke.js && node node_modules/vitest/vitest.mjs run --config vitest.config.js",
+    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json && node node_modules/typescript/bin/tsc -p tsconfig.v1.json",
     "test:mutants": "node scripts/verify-mutation-kills.js"
   },
   "devDependencies": {
