@@ -21,9 +21,9 @@ Requirements for the 1.0.0 release. Each maps to exactly one roadmap phase.
 
 ### Live DOM recon
 
-- [ ] **RECON-04**: How Zendesk signals light vs dark mode, and what changes on a mid-session switch, is recorded with evidence from a live account
-- [ ] **RECON-05**: Where the signed-in agent's name renders, and whether it matches the Assignee column text, is recorded from a live account
-- [ ] **RECON-06**: How rule-relevant columns render (Assignee, Requester, Group, Status, Type, Subject, Tags, a date column, a custom field), including empty placeholders, is recorded and captured as sanitised fixtures
+- [x] **RECON-04**: How Zendesk signals light vs dark mode, and what changes on a mid-session switch, is recorded with evidence from a live account
+- [x] **RECON-05**: Where the signed-in agent's name renders, and whether it matches the Assignee column text, is recorded from a live account
+- [x] **RECON-06**: How rule-relevant columns render (Assignee, Requester, Group, Status, Type, Subject, Tags, a date column, a custom field), including empty placeholders, is recorded and captured as sanitised fixtures
   - Tags note (D-26, decided 2026-09-25): Zendesk views very likely cannot show Tags as a column; the live session checks the view's column picker, and a live-confirmed `tags-column: not-offered` in `referenced-cell-representation`, with its fallback (Tags rules resolve no header, so RULE-07 keeps them inactive, and RULE-F2 stays deferred), meets RECON-06 for Tags and does not block the phase.
 
 ### Dark mode
@@ -157,9 +157,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMPAT-02 | Phase 7 | Pending |
 | COMPAT-03 | Phase 7 | Pending |
 | COMPAT-04 | Phase 7 | Pending |
-| RECON-04 | Phase 6 | Pending |
-| RECON-05 | Phase 6 | Pending |
-| RECON-06 | Phase 6 | Pending |
+| RECON-04 | Phase 6 | Complete |
+| RECON-05 | Phase 6 | Complete |
+| RECON-06 | Phase 6 | Complete |
 | DARK-01 | Phase 8 | Pending |
 | DARK-02 | Phase 8 | Pending |
 | DARK-03 | Phase 8 | Pending |
@@ -217,6 +217,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STORE-11 | Phase 11 | Pending |
 
 **Coverage:**
+
 - v1.1 requirements: 62 total
 - Mapped to phases: 62
 - Unmapped: 0 ✓

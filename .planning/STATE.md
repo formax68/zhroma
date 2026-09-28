@@ -4,17 +4,17 @@ milestone: v1.1
 milestone_name: Themes & Rules
 current_phase: 06
 current_phase_name: Live DOM Recon 2
-status: executing
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-09-25T14:19:58.602Z"
+status: verifying
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-09-28T06:16:32.364Z"
 last_activity: 2026-09-25
 last_activity_desc: Phase 06 execution started
-state_head: 2ce56ee8abdc40b75c53e32a34428cf612e52ca5
+state_head: d5a64410804d100c0959b46c05dba481d6b61709
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 33
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 
 Phase: 06 (Live DOM Recon 2) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-25 — Phase 06 execution started
 
 Progress: [███░░░░░░░] 33%
@@ -91,6 +91,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 05 P03 | 14 min | 2 tasks | 11 files |
 | Phase 06 P01 | 13 min | 3 tasks | 5 files |
 | Phase 06 P02 | 20min | 3 tasks | 6 files |
+| Phase 06 P03 | 62h 35m | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -171,6 +172,8 @@ Recent decisions affecting current work:
 - [Phase 06]: Recon 2 gate: out-of-set enum values reject recon-two-field-not-structured; valid values that break a rule reject recon-two-fields-inconsistent
 - [Phase 06]: The Recon 2 block must be contiguous and before Spec-less Planning Assumptions, so no Recon 2 text escapes the whole-block sensitive scan
 - [Phase 06]: identity-source not-found requires a fallback naming Phase 10 on both identity entries
+- [Phase 06]: Recon 2 verdict proceed: Zendesk marks its painted theme on html[data-theme]; Phase 8 follows it (document-marker branch), never prefers-color-scheme, since Match system does not follow a live OS toggle until reload. — Six-cell matrix, three switches and dark native states recorded live on 2026-09-27 with Zhroma off.
+- [Phase 06]: Identity renders at load in the top-bar avatar alt and equals the Assignee text exactly; Phase 10 uses plain normalised equality. — Three P2 runs (load, menu open, menu closed) were all identical.
 
 ### Pending Todos
 
@@ -189,6 +192,7 @@ CR-01/CR-02 repairs and independent reverification are complete; 403 tests and f
 - Phase 2 product evidence now passes: user clarified both G-02-1 reports meant opening Zendesk then clicking a view, including from a fresh tab. Direct-document controls passed; no runtime repair. UAT 11 live passes and 12 explicit decisions. Independent code review clean; security reassessment 10/10 closed. Independent goal verification passed 25/25. Combined tests 301 passed and post-reconciliation evidence validator 56 passed.
 - ACK-04-01 is acknowledged as of 2026-09-11. The fourteen observations attested on 2026-09-10 remain history and do not count toward repaired-byte acceptance. The current-source walkthrough has 14 passes and 3 pending checks: language-icon-copy and structure-copy under AR-04-01, plus english-regional-locale explicitly deferred by the user as non-blocking.
 - Phase 05 submission gate: release/policy-applicability.md is UNRESOLVED on in-product prominent disclosure and affirmative consent applicability. Blocks 05-07 submission until the real Chrome install prompt and the live Privacy practices tab are observed.
+- Phase 6 custody pending on the user: delete or encrypt the Recon 2 private inputs and delete the personal recon view, then set private-inputs and recon-views-deleted in the SELECTORS.md Recon 2 handoff. Also: gsd-tools windows append rejects WINDOWS.md entry 12 (kind accepted-risk), and the recon2 smoke test pins handoff next-step to a digit or admission.
 
 ### Roadmap Evolution
 
@@ -213,8 +217,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-25T14:19:58.588Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-09-28T06:16:22.740Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
