@@ -16,7 +16,7 @@ Requirements for the 1.0.0 release. Each maps to exactly one roadmap phase.
 
 - [ ] **COMPAT-01**: In Zendesk's light interface, with the default theme and no rules, a fresh 1.0.0 install paints tints identical to 0.1.0
 - [ ] **COMPAT-02**: An agent upgrading from 0.1.0 keeps their off/on setting, and Zhroma stores nothing new until they change a setting
-- [ ] **COMPAT-03**: 1.0.0 requests no permission beyond `storage`, so the update shows no permission prompt and never disables the extension
+- [x] **COMPAT-03**: 1.0.0 requests no permission beyond `storage`, so the update shows no permission prompt and never disables the extension
 - [ ] **COMPAT-04**: With default settings, every verified 0.1.0 behaviour — priority detection, liveness, the three-way diagnosis and the off/on switch — works unchanged
 
 ### Live DOM recon
@@ -155,7 +155,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | COMPAT-01 | Phase 7 | Pending |
 | COMPAT-02 | Phase 7 | Pending |
-| COMPAT-03 | Phase 7 | Pending |
+| COMPAT-03 | Phase 7 | Complete |
 | COMPAT-04 | Phase 7 | Pending |
 | RECON-04 | Phase 6 | Gaps Found |
 | RECON-05 | Phase 6 | Gaps Found |

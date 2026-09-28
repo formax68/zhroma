@@ -86,7 +86,7 @@ Plans:
   4. With default settings, priority detection, liveness through sort, refresh, view switch, pagination and scroll, the three-way diagnosis and the off/on switch all behave as in 0.1.0. The existing suites pass, the v1 mutants still die, and the zero-rule timing median stays at about 1.3 ms
   5. Any setting written through the new worker settings queue lands only in `chrome.storage.local`. The sync area stays empty, and the extension makes no network request
 
-**Plans**: 3/9 plans executed
+**Plans**: 4/9 plans executed
 Plans:
 **Wave 1**
 
@@ -99,7 +99,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 07-04-PLAN.md — Worker settings queue (single writer, serial, cas option, write only on real change, local only) and the queue mutants
+- [x] 07-04-PLAN.md — Worker settings queue (single writer, serial, cas option, write only on real change, local only) and the queue mutants
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -202,7 +202,7 @@ Plans:
 | 4. Honest Failure and an Off Switch | v1.0 | 20/20 | Shipped; human_needed | 2026-09-14 |
 | 5. Published | v1.0 | 3/7 | Shipped outside GSD | 2026-09-14 |
 | 6. Live DOM Recon 2 | v1.1 | 3/3 | In Progress|  |
-| 7. Upgrade-Safe Foundation | v1.1 | 3/9 | In Progress|  |
+| 7. Upgrade-Safe Foundation | v1.1 | 4/9 | In Progress|  |
 | 8. Themes That Follow Dark Mode | v1.1 | 0/TBD | Not started | - |
 | 9. Colouring Rules | v1.1 | 0/TBD | Not started | - |
 | 10. Rule Editor, "Is Me" and Settings Files | v1.1 | 0/TBD | Not started | - |
