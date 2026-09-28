@@ -1,3 +1,13 @@
+// The shared settings module loads first, so every later shared file and the
+// worker below can rely on it. The load is guarded: the off switch and the
+// toolbar never depend on the settings module, so a failed load leaves this
+// worker running exactly as it did without one.
+try {
+  importScripts('zhroma-settings.js');
+} catch {
+  // Deliberately empty: the worker keeps running without the module.
+}
+
 (() => {
   'use strict';
 

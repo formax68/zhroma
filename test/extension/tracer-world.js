@@ -556,7 +556,25 @@ export function createWorld({
 
 // --- context loaders --------------------------------------------------------
 
-export function loadContent(world, { html = fixture(), tabId = TAB_ID } = {}) {
+// The one global the shared classic scripts add, in the content world and the
+// worker alike (07-03, D-13). Every other name a shipped script declares stays
+// inside its IIFE.
+export const NAMESPACE = 'Zhroma';
+
+// Every top-level packaged script the worker could import, READ FROM THE
+// DIRECTORY rather than transcribed, for the same reason as the icon list: a
+// shared file added later must not leave the admitted set stale. The worker
+// itself is never an import.
+const packagedImports = () => readdirSync(root).filter((name) => name.endsWith('.js') && name !== 'background.js').sort();
+
+/**
+ * Load the content world the way Chrome does: every file in the manifest's
+ * `content_scripts[0].js`, in order, into one isolated context. `before` is
+ * taken before the first script runs.
+ */
+export function loadContent(world, {
+  html = fixture(), tabId = TAB_ID, scripts = JSON.parse(asset('manifest.json')).content_scripts[0].js,
+} = {}) {
   const window = inertWindow(html);
   const { document } = window;
   const sentinels = {
@@ -571,19 +589,40 @@ export function loadContent(world, { html = fixture(), tabId = TAB_ID } = {}) {
     MutationObserver: window.MutationObserver, setTimeout, clearTimeout, Promise, Object, JSON,
   }, { codeGeneration: { strings: false, wasm: false } });
   const before = Object.keys(context);
-  new Script(asset('content.js'), { filename: 'content.js' }).runInContext(context);
+  for (const path of scripts) new Script(asset(path), { filename: path }).runInContext(context);
   return { window, document, context, before };
 }
 
-export function loadWorker(world) {
+/**
+ * Load the worker in a fresh epoch. `importScripts` is admitted the way Chrome
+ * admits it: synchronously, and only for packaged top-level scripts, each
+ * evaluated into the worker's own context. Any other argument is recorded as a
+ * forbidden channel and throws. `imports: 'throws'` models a failed import: an
+ * admitted call throws a plain Error and records nothing.
+ */
+export function loadWorker(world, { imports = 'admit' } = {}) {
+  if (!['admit', 'throws'].includes(imports)) throw new Error(`Unknown import mode: ${imports}`);
   const epoch = world.beginWorkerEpoch();
+  const admitted = packagedImports();
+  let context;
+  function importScripts(...paths) {
+    for (const path of paths) {
+      if (typeof path !== 'string' || !admitted.includes(path)) {
+        world.forbidden.push(`importScripts ${String(path)}`);
+        throw new Error('Forbidden import');
+      }
+    }
+    if (imports === 'throws') throw new Error('importScripts failed');
+    for (const path of paths) new Script(asset(path), { filename: path }).runInContext(context);
+  }
   const sentinels = {
     fetch: world.deny('fetch'), XMLHttpRequest: world.deny('XHR'), WebSocket: world.deny('WebSocket'),
-    importScripts: world.deny('importScripts'), localStorage: world.denyStore('localStorage'),
+    EventSource: world.deny('EventSource'),
+    importScripts, localStorage: world.denyStore('localStorage'),
     indexedDB: world.denyStore('indexedDB'), caches: world.denyStore('caches'),
     console: { log: world.deny('console.log'), warn: world.deny('console.warn'), error: world.deny('console.error'), info: world.deny('console.info') },
   };
-  const context = createContext({ ...sentinels, chrome: epoch.chrome,
+  context = createContext({ ...sentinels, chrome: epoch.chrome,
     setTimeout: epoch.setTimeout, clearTimeout: epoch.clearTimeout, Promise, Object, JSON, Map: epoch.Map, Number, Array, Date,
   }, { codeGeneration: { strings: false, wasm: false } });
   const before = Object.keys(context);

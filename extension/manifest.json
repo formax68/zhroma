@@ -15,7 +15,7 @@
   },
   "content_scripts": [{
     "matches": ["https://*.zendesk.com/agent/*"],
-    "js": ["content.js"],
+    "js": ["zhroma-settings.js", "content.js"],
     "css": ["zhroma.css"],
     "run_at": "document_idle",
     "world": "ISOLATED",
