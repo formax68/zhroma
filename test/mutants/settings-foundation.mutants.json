@@ -83,5 +83,56 @@
       "kind": "behavioral"
     },
     "count": 1
+  },
+  {
+    "id": "content-sender-agent-url",
+    "file": "extension/background.js",
+    "find": "\n    && isAgentDocument(sender.url);",
+    "replace": ";",
+    "suites": [
+      "test/extension/settings-queue.test.js"
+    ],
+    "note": "An extension page open in a tab is a top-frame tab document with the extension's own id, so v1's fromContent admits it as content. Without the isAgentDocument(sender.url) clause, a status hint from any document in a tab, whatever its URL, projects that tab (T-07-12, D-17). Measured by the action log growing for a sender identical to the content script except for its URL.",
+    "expected_failure": {
+      "suite": "test/extension/settings-queue.test.js",
+      "test": "a status hint from a sender identical to the content script except for its URL is refused (D-17)",
+      "assertion": "[mutant:content-sender-agent-url]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "agent-url-https",
+    "file": "extension/background.js",
+    "find": "url.protocol === 'https:'",
+    "replace": "url.protocol.startsWith('http')",
+    "suites": [
+      "test/extension/settings-queue.test.js"
+    ],
+    "note": "The manifest injects only into https agent documents, so a content message from a plain-http document on the same host and path did not come from the content script. Weakening the protocol comparison to any http scheme admits it (T-07-12, D-17). Measured by the plain-http case, the only refused sender that differs from the genuine one by its protocol alone.",
+    "expected_failure": {
+      "suite": "test/extension/settings-queue.test.js",
+      "test": "a status hint from a sender identical to the content script except for its URL is refused (D-17)",
+      "assertion": "[mutant:agent-url-https]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "options-sender-url",
+    "file": "extension/background.js",
+    "find": "\n      && sender.url === chrome.runtime.getURL(OPTIONS_PATH);",
+    "replace": ";",
+    "suites": [
+      "test/extension/settings-queue.test.js"
+    ],
+    "note": "fromOptions deliberately does not require sender.tab to be undefined, because an options page opened in a tab carries one. Its exact packaged URL is therefore the only thing that separates it from a content script or any other document running as this extension. Without the URL clause, every sender with the extension's own id may write settings (T-07-13, D-17). Measured by a set-setting from the genuine content sender being answered and written.",
+    "expected_failure": {
+      "suite": "test/extension/settings-queue.test.js",
+      "test": "set-setting is admitted only from the packaged popup or the packaged options page (D-17, D-18)",
+      "assertion": "[mutant:options-sender-url]",
+      "kind": "behavioral"
+    },
+    "count": 1
   }
 ]
