@@ -15,6 +15,10 @@
   // pass and far below the delay at which an agent would read the toolbar, so
   // it costs a brief neutral state and buys never accusing a mid-mount view.
   const SETTLE_MS = 100;
+  // The longest a settings read may hold the first tint back (D-09). A hung
+  // read then counts as failed: every setting is its default and tinting goes
+  // ahead under the off switch alone.
+  const SETTINGS_READ_TIMEOUT_MS = 500;
   const TABLE = 'table[data-garden-id="tables.table"][data-test-id="generic-table"]';
   const HEAD = 'thead[data-garden-id="tables.head"][data-test-id="generic-table-head"]';
   const BODY = 'tbody[data-garden-id="tables.body"][data-test-id="generic-table-body"]';
@@ -56,6 +60,24 @@
   let confirmTimer = null;
   let confirmRevision = -1;
   let missingConfirmed = false;
+
+  // Settings (D-09, D-13). The shared module is read once. When it did not
+  // load, every setting is its default and the gate is already open, so this
+  // file loaded on its own behaves exactly as 0.1.0 did. Settings never leave
+  // this isolated world: nothing here sends, stores or shows them (DATA-01).
+  const settingsApi = globalThis.Zhroma?.settings ?? null;
+  let settingsReady = settingsApi === null;
+  let settingsTimer = null;
+  // One generation per key: a change event bumps its key, so a read issued
+  // before the change cannot overwrite the value the change delivered.
+  const settingsGenerations = new Map();
+  // One frozen { value, status } per key. `status` is an internal finite fact
+  // (D-12) and is never shown or sent.
+  const settingsState = new Map();
+  for (const key of settingsApi === null ? [] : settingsApi.registry.keys) {
+    settingsGenerations.set(key, 0);
+    settingsState.set(key, Object.freeze({ value: settingsApi.registry.defaultOf(key), status: 'default' }));
+  }
 
   function inspectCandidateTable(document) {
     const result = (state, table = null, entries = []) => ({ state, table, entries });
@@ -349,7 +371,7 @@
   }
 
   function runnable() {
-    return preferenceReady && preferenceEnabled && !suspended && !document.hidden;
+    return preferenceReady && preferenceEnabled && settingsReady && !suspended && !document.hidden;
   }
 
   // Teardown returns whether ownership was actually released. A permanently
@@ -412,6 +434,9 @@
     suspended = false;
     syncController();
     readPreference();
+    // The settings gate stays open: a restored document re-reads its settings
+    // without waiting on them.
+    readSettings();
   }
 
   // Returns whether this document now reflects the value it was handed. A
@@ -465,6 +490,56 @@
     const value = change !== null && typeof change === 'object' && Object.hasOwn(change, 'newValue')
       ? change.newValue : true;
     applyPreference(value, preferenceGeneration);
+  }
+
+  function unreadableSetting(key) {
+    return Object.freeze({ value: settingsApi.registry.defaultOf(key), status: 'unreadable' });
+  }
+
+  // `holder[field]` is the stored value when `holder` owns `field`; otherwise
+  // the key is absent and resolves to its default. Anything that throws on the
+  // way is unreadable (D-08). Nothing here writes, repairs or deletes.
+  function resolveSetting(key, holder, field) {
+    try {
+      const present = holder !== null && typeof holder === 'object' && Object.hasOwn(holder, field);
+      const { value, status } = settingsApi.registry.resolve(key, present, present ? holder[field] : undefined);
+      return Object.freeze({ value, status });
+    } catch { return unreadableSetting(key); }
+  }
+
+  // Opens once. Before the preference has landed there is nothing to run, and
+  // syncing then would announce a status 0.1.0 never announced at that point.
+  function openSettingsGate() {
+    if (settingsTimer !== null) { clearTimeout(settingsTimer); settingsTimer = null; }
+    if (settingsReady) return;
+    settingsReady = true;
+    if (preferenceReady) syncController();
+  }
+
+  // `values` is null for a failed read: every key is then its default,
+  // unreadable. Success or failure, the gate opens (D-09).
+  function landSettings(values, generations) {
+    try {
+      for (const key of settingsApi.registry.keys) {
+        if (settingsGenerations.get(key) !== generations.get(key)) continue;
+        settingsState.set(key, values !== null && typeof values === 'object'
+          ? resolveSetting(key, values, key) : unreadableSetting(key));
+      }
+    } catch { /* a settings fault never holds the tint back */ }
+    openSettingsGate();
+  }
+
+  function readSettings() {
+    if (settingsApi === null) return;
+    const generations = new Map(settingsGenerations);
+    if (!settingsReady && settingsTimer === null) {
+      settingsTimer = setTimeout(() => { settingsTimer = null; openSettingsGate(); }, SETTINGS_READ_TIMEOUT_MS);
+    }
+    try {
+      chrome.storage.local.get([...settingsApi.registry.keys], (values) => {
+        landSettings(chrome.runtime.lastError ? null : values, generations);
+      });
+    } catch { landSettings(null, generations); }
   }
 
   function isRequest(message, type) {
@@ -553,6 +628,7 @@
       // slow earlier reply cannot overwrite a newer change.
       chrome.storage.onChanged.addListener(onPreferenceChanged);
       chrome.runtime.onMessage.addListener(onRuntimeMessage);
+      readSettings();
       readPreference();
     } catch { pauseController(); }
   }
