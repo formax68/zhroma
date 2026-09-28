@@ -893,12 +893,16 @@ test('a recreated worker reconstructs from a fresh handshake, never from a remem
   // no install-time or startup-time seeding of state it could later trust.
   expect(asset('background.js')).not.toMatch(/onInstalled|onStartup/);
   expect(asset('background.js')).not.toMatch(/chrome\.storage\.(sync|session|managed)/);
+  // 07-04 (restated, D-25): the worker is still the single writer and still
+  // local-only, now with one reviewed settings read and one reviewed settings
+  // write beside the preference primitives.
   expect([...asset('background.js').matchAll(/chrome\.storage\.local\.(\w+)/g)]
-    .map(([, member]) => member).sort()).toEqual(['get', 'set']);
-  // The only thing the single writer can write is the one boolean, under the
-  // one key. `toggle.test.js` proves the same thing from the write log.
+    .map(([, member]) => member).sort()).toEqual(['get', 'get', 'set', 'set']);
+  // The single writer writes the one boolean under the one key, and each
+  // validated setting under its own key. `toggle.test.js` proves the boolean
+  // from the write log; settings-queue.test.js proves the settings writes.
   expect([...asset('background.js').matchAll(/chrome\.storage\.local\.set\(([^,]+),/g)]
-    .map(([, argument]) => argument.trim())).toEqual(['{ [PREFERENCE_KEY]: enabled }']);
+    .map(([, argument]) => argument.trim())).toEqual(['{ [PREFERENCE_KEY]: enabled }', '{ [key]: stored }']);
 });
 
 test('a tab closed while its status request is in flight can no longer be painted by that reply', async () => {
