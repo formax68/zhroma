@@ -275,7 +275,7 @@ paint chain above supplied textual evidence without retaining a visual capture.
 
 ## Recon 2 Session Handoff
 
-- session-state: `admitted`
+- session-state: `closed`
 - next-step: `admission`
 - next-action-owner: `user`
 - capture-date: `2026-09-27`
@@ -287,7 +287,7 @@ paint chain above supplied textual evidence without retaining a visual capture.
 - os-appearance-original: `auto`
 - restore: `complete`
 - recon-views-deleted: `pending`
-- private-inputs: `retained-for-admission`
+- private-inputs: `awaiting-user-deletion`
 - safety: The user performs every click, menu opening, setting change, hover, checkbox selection, Tab press and view creation or deletion; Claude runs only the read-only probes in 06-RUN-SHEET.md plus temporary data-zhroma-probe markers, and nothing identifying is recorded (D-03, D-04).
 - operator-deviation: At the user's explicit request on 2026-09-26, Claude drove the Zendesk interface through Claude in Chrome (menus, the personal view, hover, selection, Tab), so D-03 was waived for this session and screenshots and page reads entered the conversation transcript (D-04 waived for the transcript only). The OS appearance and the Zhroma switch stayed with the user. Chrome ran on a different machine from the repository, so each stash reached the private directory as a browser download that the user moved across; the raw markup never passed through the conversation. At the user's request Claude wrote the private denylist outside every checkout. Beyond the run-sheet probes, Claude ran allowlist-only and count-only supplementary probes (header and value vocabulary, date titles) and reloaded the view once. Nothing identifying is recorded in this ledger, the manifest or any fixture.
 
