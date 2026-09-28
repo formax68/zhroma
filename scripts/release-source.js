@@ -38,8 +38,14 @@ export const RELEASE_FILES = Object.freeze([
   'icons/unreadable.png',
   'icons/working.png',
   'manifest.json',
+  // 07-03: the static options stub (D-18). The manifest's options_ui names it,
+  // so it is a packaged byte. It has no script, so nothing else joins it.
+  'options.html',
   'popup.html',
   'popup.js',
+  // 07-03: the shared settings module (D-13). It is listed first in the
+  // content script list and imported first by the worker, so it ships.
+  'zhroma-settings.js',
   'zhroma.css',
 ]);
 
