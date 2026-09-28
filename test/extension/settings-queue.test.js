@@ -9,12 +9,17 @@
 import { createContext, Script } from 'node:vm';
 import { afterEach, expect, test, vi } from 'vitest';
 import {
-  EXTENSION_ID, NAMESPACE, POPUP_URL, asset, closeWindows, createWorld, loadContent, loadWorker, settle,
+  CONTENT_URL, DOCUMENT_ID, EXTENSION_ID, NAMESPACE, POPUP_URL, TAB_ID, asset, closeWindows, createWorld, loadContent,
+  loadWorker, settle,
 } from './tracer-world.js';
 
 afterEach(async () => { vi.useRealTimers(); await closeWindows(); });
 
 const POPUP_SENDER = Object.freeze({ id: EXTENSION_ID, url: POPUP_URL });
+// Exactly what Chrome reports for the content script in the tracer's tab.
+const CONTENT_SENDER = Object.freeze({
+  id: EXTENSION_ID, url: CONTENT_URL, frameId: 0, documentId: `${DOCUMENT_ID}-${TAB_ID}`, tab: Object.freeze({ id: TAB_ID }),
+});
 const CLASSIC = 'zhroma-classic';
 const STORED_CLASSIC = Object.freeze({ v: 1, id: CLASSIC });
 const themeMessage = (requestId, value = CLASSIC) => ({ type: 'set-setting', requestId, key: 'theme', value });
@@ -452,7 +457,7 @@ test.each([
   ['an unregistered key', { type: 'set-setting', requestId: 1, key: 'rules', value: [] }, POPUP_SENDER],
   ['an extra member', { ...themeMessage(1), extra: true }, POPUP_SENDER],
   ['a request id out of range', themeMessage(0), POPUP_SENDER],
-  ['a content-script sender', themeMessage(1), { id: EXTENSION_ID, frameId: 0, documentId: 'document-alpha-7', tab: { id: 7 } }],
+  ['a content-script sender', themeMessage(1), CONTENT_SENDER],
   ['a foreign extension carrying the popup URL', themeMessage(1), { id: 'another-extension-id', url: POPUP_URL }],
 ])('%s gets no reply and writes nothing', async (_name, message, sender) => {
   const world = await boot({ stored: { theme: { v: 99, id: 'from-a-newer-version' } } });
@@ -474,4 +479,55 @@ test('with the settings module missing, a theme request is answered failed at on
   expect(off).toMatchObject({ type: 'set-enabled', requestId: 2, saved: true, enabled: false });
   expect(world.writeLog).toEqual([{ enabled: false }]);
   expect(world.forbidden).toEqual([]);
+});
+
+// --- D-17: content messages come only from a Zendesk agent document ------------
+
+// A status hint makes the worker project the sender's tab, so an admitted hint
+// shows up as new toolbar writes; a refused one leaves the action log alone.
+async function hintGrowsActionLog(world, sender) {
+  const before = world.actionLog.length;
+  await world.sendToWorker({ type: 'status-invalidated' }, sender);
+  await settle();
+  return world.actionLog.length > before;
+}
+
+test('a status hint from a sender identical to the content script except for its URL is refused (D-17)', async () => {
+  const world = await boot();
+  const refused = [
+    ['a foreign host', 'https://evil.example/agent/'],
+    ['a host that only ends in the name', 'https://evilzendesk.com/agent/'],
+    ['a look-alike host', 'https://acme.zendesk.com.evil.example/agent/'],
+    ['a help-centre path', 'https://acme.zendesk.com/hc/en-us'],
+    ['an empty host', 'https://'],
+    ['a non-string URL', 42],
+    ['no URL at all', undefined],
+  ];
+  for (const [name, url] of refused) {
+    const sender = { ...CONTENT_SENDER, url };
+    expect(await hintGrowsActionLog(world, sender), `[mutant:content-sender-agent-url] ${name}`).toBe(false);
+  }
+  // Plain http on the genuine host and path: only the protocol differs.
+  expect(await hintGrowsActionLog(world, { ...CONTENT_SENDER, url: 'http://acme.zendesk.com/agent/filters/1' }),
+    '[mutant:content-sender-agent-url] [mutant:agent-url-https] plain http').toBe(false);
+  expect(world.forbidden).toEqual([]);
+});
+
+test('a status hint from the genuine content sender, or from the bare host under the agent path, is accepted (D-17)', async () => {
+  const world = await boot();
+  expect(await hintGrowsActionLog(world, CONTENT_SENDER)).toBe(true);
+  expect(await hintGrowsActionLog(world, { ...CONTENT_SENDER, url: 'https://zendesk.com/agent/' })).toBe(true);
+  expect(world.forbidden).toEqual([]);
+});
+
+test("the worker's agent host and path agree with the manifest's single match pattern (D-01)", () => {
+  const source = asset('background.js');
+  const host = [...source.matchAll(/const AGENT_HOST = '([^']*)';/g)];
+  const path = [...source.matchAll(/const AGENT_PATH = '([^']*)';/g)];
+  expect(host).toHaveLength(1);
+  expect(path).toHaveLength(1);
+  const { content_scripts: scripts } = JSON.parse(asset('manifest.json'));
+  expect(scripts).toHaveLength(1);
+  expect(scripts[0].matches).toHaveLength(1);
+  expect(`https://*.${host[0][1]}${path[0][1]}*`).toBe(scripts[0].matches[0]);
 });

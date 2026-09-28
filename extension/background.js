@@ -465,11 +465,33 @@ try {
       && Number.isSafeInteger(message.revision) && message.revision >= 0;
   }
 
+  // --- sender checks (07-05, D-17) --------------------------------------------
+
+  // The host and path of the manifest's one content-script match pattern. An
+  // extension page open in a tab is a top-frame tab document too, so a content
+  // message must also come from a document that pattern could have injected
+  // into. This is a sender check, not route detection: the tab listeners below
+  // still read no URL.
+  const AGENT_HOST = 'zendesk.com';
+  const AGENT_PATH = '/agent/';
+
+  // Chrome's reading of the pattern's `*.` host: the host itself or any of its
+  // subdomains. Anything that does not parse is refused.
+  function isAgentDocument(value) {
+    if (typeof value !== 'string') return false;
+    let url;
+    try { url = new URL(value); } catch { return false; }
+    return url.protocol === 'https:'
+      && (url.hostname === AGENT_HOST || url.hostname.endsWith(`.${AGENT_HOST}`))
+      && url.pathname.startsWith(AGENT_PATH);
+  }
+
   const fromContent = (sender) => isObject(sender)
     && sender.id === chrome.runtime.id
     && sender.frameId === 0
     && typeof sender.documentId === 'string' && sender.documentId.length > 0
-    && isObject(sender.tab) && Number.isInteger(sender.tab.id);
+    && isObject(sender.tab) && Number.isInteger(sender.tab.id)
+    && isAgentDocument(sender.url);
 
   const fromPopup = (sender) => isObject(sender)
     && sender.id === chrome.runtime.id
