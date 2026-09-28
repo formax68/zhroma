@@ -412,6 +412,59 @@ try {
     project(tab.id);
   }
 
+  // --- settings (07-04) -------------------------------------------------------
+
+  // Every setting other than the off switch is written here and only here,
+  // through one serial queue (D-05, D-13). It is separate from the preference
+  // queue above, which stays exactly as it shipped (D-02). Null when the shared
+  // module failed to load: settings then fail, and nothing else changes.
+  const settingsApi = globalThis.Zhroma?.settings ?? null;
+  const MAX_PENDING_SETTINGS = 32;
+
+  // The one settings read. `ok: false` means the read failed, never absence.
+  function readSetting(key) {
+    return new Promise((resolve) => {
+      const unconfirmed = () => resolve({ ok: false });
+      try {
+        chrome.storage.local.get([key], (values) => {
+          if (chrome.runtime.lastError || !isObject(values)) unconfirmed();
+          else resolve({ ok: true, present: Object.hasOwn(values, key), raw: values[key] });
+        });
+      } catch { unconfirmed(); }
+    });
+  }
+
+  // The one settings write: one key, one validated stored form, one area. Never
+  // sync, session or managed, and never anything the agent did not choose.
+  function writeSetting(key, stored) {
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.set({ [key]: stored }, () => { resolve(!chrome.runtime.lastError); });
+      } catch { resolve(false); }
+    });
+  }
+
+  const settingsQueue = settingsApi === null ? null : settingsApi.createQueue({
+    registry: settingsApi.registry, read: readSetting, write: writeSetting,
+    timeoutMs: WORKER_REQUEST_TIMEOUT_MS, maxPending: MAX_PENDING_SETTINGS,
+    setTimer: (callback, ms) => setTimeout(callback, ms), clearTimer: (handle) => clearTimeout(handle),
+    now: () => Date.now(),
+  });
+
+  // Exact shape only: `revision` is present exactly for a cas key, as a
+  // non-negative safe integer. Without the module no key is known, so only the
+  // outer shape can be recognised, and it is answered as a failure.
+  function settingsRequest(message) {
+    if (!isObject(message) || message.type !== 'set-setting' || !isRequestId(message.requestId)) return false;
+    if (settingsApi === null) {
+      return isExact(message, ['type', 'requestId', 'key', 'value']) || isExact(message, ['type', 'requestId', 'key', 'value', 'revision']);
+    }
+    if (!settingsApi.registry.has(message.key)) return false;
+    if (!settingsApi.registry.cas(message.key)) return isExact(message, ['type', 'requestId', 'key', 'value']);
+    return isExact(message, ['type', 'requestId', 'key', 'value', 'revision'])
+      && Number.isSafeInteger(message.revision) && message.revision >= 0;
+  }
+
   const fromContent = (sender) => isObject(sender)
     && sender.id === chrome.runtime.id
     && sender.frameId === 0
@@ -441,6 +494,15 @@ try {
       const requestId = message.requestId;
       const desired = message.enabled;
       admitPreference(requestId, desired, sendResponse);
+      return true;
+    }
+    if (settingsRequest(message) && fromPopup(sender)) {
+      if (settingsQueue === null) {
+        sendResponse({ type: 'set-setting', requestId: message.requestId, outcome: 'failed', revision: null });
+        return undefined;
+      }
+      const { requestId, key, value, revision } = message;
+      settingsQueue.admit(Object.hasOwn(message, 'revision') ? { requestId, key, value, revision } : { requestId, key, value }, sendResponse);
       return true;
     }
     return undefined;

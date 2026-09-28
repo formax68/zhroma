@@ -370,8 +370,215 @@
     }),
   ]);
 
+  // --- the settings write queue (07-04) --------------------------------------
+  //
+  // The worker is the single, serial writer of settings (D-05, D-13). The queue
+  // is pure: it is handed the read, the write and the timer functions, so the
+  // same code runs in the worker and under test with keys the shipped registry
+  // does not have (D-16). The v1 `enabled` queue in background.js is its model
+  // and is not touched (D-02).
+
+  /**
+   * Every answer a settings write can receive. Finite and internal: no
+   * user-visible text is attached in Phase 7 (D-12).
+   * @typedef {'saved' | 'unchanged' | 'rejected' | 'conflict' | 'failed' | 'unknown'} Outcome
+   */
+
+  /**
+   * @typedef {object} SettingRequest
+   * @property {number} requestId
+   * @property {string} key
+   * @property {unknown} value
+   * @property {number} [revision] The revision the requester holds; present exactly for cas keys.
+   */
+
+  /**
+   * Exactly one per admitted request, always frozen. `revision` is null for a
+   * last-writer-wins key. For a cas key it is the new revision after `saved`,
+   * the current stored revision after `conflict`, and otherwise the revision
+   * the request carried (null when it carried no valid one).
+   * @typedef {object} SettingReply
+   * @property {'set-setting'} type
+   * @property {number} requestId
+   * @property {Outcome} outcome
+   * @property {number | null} revision
+   */
+
+  /**
+   * What `read(key)` resolves: whether the read succeeded, and if so whether
+   * the key is present and what it holds.
+   * @typedef {{ ok: true, present: boolean, raw?: unknown } | { ok: false }} ReadResult
+   */
+
+  /**
+   * @typedef {object} QueueOptions
+   * @property {Registry} registry
+   * @property {(key: string) => Promise<ReadResult>} read
+   * @property {(key: string, stored: Record<string, unknown>) => Promise<boolean>} write
+   * @property {number} timeoutMs Deadline of each request, from admission.
+   * @property {number} maxPending Queued plus active jobs above which a request fails at once.
+   * @property {(callback: () => void, ms: number) => unknown} setTimer
+   * @property {(handle: unknown) => void} clearTimer
+   * @property {() => number} now
+   */
+
+  /**
+   * @typedef {object} SettingsQueue
+   * @property {(request: SettingRequest, respond: (reply: SettingReply) => void) => void} admit
+   * @property {() => number} size Queued plus active jobs.
+   */
+
+  /** @type {readonly Outcome[]} */
+  const OUTCOMES = Object.freeze(/** @type {Outcome[]} */ (['saved', 'unchanged', 'rejected', 'conflict', 'failed', 'unknown']));
+
+  /** @param {unknown} value @returns {value is number} */
+  const isRevision = (value) => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+
+  /**
+   * A single serial writer. One job is active at a time, and the next job
+   * starts only once the active job's physical write has settled, even when
+   * its requester was already answered at the deadline.
+   * @param {QueueOptions} options
+   * @returns {SettingsQueue}
+   */
+  function createQueue(options) {
+    if (!isPlain(options)) refuse('queue options must be a plain object');
+    const { registry, read, write, timeoutMs, maxPending, setTimer, clearTimer, now } = options;
+    if (!isObject(registry) || typeof registry.has !== 'function') refuse('queue: registry is required');
+    for (const [name, fn] of /** @type {[string, unknown][]} */ ([['read', read], ['write', write], ['setTimer', setTimer], ['clearTimer', clearTimer], ['now', now]])) {
+      if (typeof fn !== 'function') refuse(`queue: ${name} must be a function`);
+    }
+    if (!isPositiveInteger(timeoutMs)) refuse('queue: timeoutMs must be a positive integer');
+    if (!isPositiveInteger(maxPending)) refuse('queue: maxPending must be a positive integer');
+
+    /**
+     * @typedef {object} Job
+     * @property {SettingRequest} request
+     * @property {boolean} cas
+     * @property {(reply: SettingReply) => void} respond
+     * @property {'queued' | 'reading' | 'writing'} phase
+     * @property {boolean} answered
+     * @property {boolean} expired
+     * @property {number} expires
+     * @property {unknown} timer
+     * @property {Promise<boolean> | null} physical The write that owns the writer, once issued.
+     * @property {Promise<void>} deadline Settles when the deadline passes.
+     * @property {() => void} release
+     */
+
+    /** @type {Job[]} */
+    const waiting = [];
+    /** @type {Job | null} */
+    let activeJob = null;
+
+    /** @param {Job} job @param {Outcome} outcome @param {number} [revision] */
+    function answer(job, outcome, revision) {
+      if (job.answered) return;
+      job.answered = true;
+      clearTimer(job.timer);
+      const carried = job.request.revision;
+      const echoed = !job.cas ? null : isRevision(revision) ? revision : isRevision(carried) ? carried : null;
+      /** @type {SettingReply} */
+      const reply = Object.freeze({ type: 'set-setting', requestId: job.request.requestId, outcome, revision: echoed });
+      try { job.respond(reply); } catch { /* a closed channel does not stop the queue */ }
+    }
+
+    // A read or write that throws or rejects is a failure, never an exception
+    // that could leave the queue holding a dead job.
+    /** @param {string} key @returns {Promise<ReadResult>} */
+    const readOnce = (key) => Promise.resolve().then(() => read(key)).then(
+      (result) => (isObject(result) && result.ok === true
+        ? { ok: true, present: result.present === true, raw: result.raw } : { ok: false }),
+      () => ({ ok: false }));
+    /** @param {string} key @param {Record<string, unknown>} stored @returns {Promise<boolean>} */
+    const writeOnce = (key, stored) => Promise.resolve().then(() => write(key, stored)).then(
+      (saved) => saved === true, () => false);
+
+    const late = (/** @type {Job} */ job) => job.expired || now() >= job.expires;
+
+    /** @param {Job} job */
+    async function perform(job) {
+      if (late(job)) { answer(job, 'failed'); return; }
+      const { key, value, revision } = job.request;
+      job.phase = 'reading';
+      const result = await Promise.race([readOnce(key), job.deadline.then(() => null)]);
+      // A read that ended at the deadline, or failed, never leads to a write.
+      if (result === null || late(job)) { answer(job, 'failed'); return; }
+      if (result.ok !== true) { answer(job, 'failed'); return; }
+      const current = registry.resolve(key, result.present, result.raw);
+      if (job.cas && revision !== current.revision) { answer(job, 'conflict', current.revision); return; }
+      // The value already in effect writes nothing (D-11). An unreadable stored
+      // value is not in effect: saving over it records the agent's choice (D-08).
+      if (current.status !== 'unreadable' && registry.equal(key, current.value, value)) { answer(job, 'unchanged'); return; }
+      const next = job.cas ? current.revision + 1 : undefined;
+      const stored = registry.encode(key, value, next);
+      if (stored === undefined) { answer(job, 'rejected'); return; }
+      job.phase = 'writing';
+      job.physical = writeOnce(key, stored);
+      const saved = await Promise.race([job.physical, job.deadline.then(() => null)]);
+      if (saved === null) return;
+      answer(job, saved ? 'saved' : 'failed', next);
+    }
+
+    async function drain() {
+      if (activeJob !== null) return;
+      const job = waiting.shift();
+      if (job === undefined) return;
+      activeJob = job;
+      try {
+        await perform(job);
+      } catch {
+        answer(job, 'failed');
+      } finally {
+        // The deadline answers the requester, it does not cancel the write:
+        // an issued write owns the writer until it settles.
+        if (job.physical !== null) await job.physical;
+        activeJob = null;
+        drain();
+      }
+    }
+
+    /** @type {SettingsQueue['admit']} */
+    function admit(request, respond) {
+      const valid = isObject(request) && registry.has(request.key);
+      const cas = valid && registry.cas(request.key);
+      /** @type {Job} */
+      const job = {
+        request: isObject(request) ? request : { requestId: 0, key: '', value: undefined },
+        cas, respond, phase: 'queued', answered: false, expired: false,
+        expires: now() + timeoutMs, timer: undefined, physical: null,
+        deadline: Promise.resolve(), release: () => {},
+      };
+      if (!valid) { answer(job, 'rejected'); return; }
+      const { key, value, revision } = job.request;
+      // Refused without reading or writing: an invalid value, a revision that
+      // does not fit the key, or a stored form over the size cap.
+      if ((cas ? !isRevision(revision) : revision !== undefined)
+        || registry.parseValue(key, value) === undefined
+        || registry.encode(key, value, cas ? /** @type {number} */ (revision) + 1 : undefined) === undefined) {
+        answer(job, 'rejected');
+        return;
+      }
+      if (waiting.length + (activeJob === null ? 0 : 1) >= maxPending) { answer(job, 'failed'); return; }
+      job.deadline = new Promise((resolve) => { job.release = resolve; });
+      job.timer = setTimer(() => {
+        job.expired = true;
+        const index = waiting.indexOf(job);
+        if (index >= 0) waiting.splice(index, 1);
+        // During a physical write the outcome is not known; before it, nothing
+        // was written.
+        answer(job, job.phase === 'writing' ? 'unknown' : 'failed');
+        job.release();
+      }, timeoutMs);
+      waiting.push(job);
+      drain();
+    }
+
+    return Object.freeze({ admit, size: () => waiting.length + (activeJob === null ? 0 : 1) });
+  }
+
   Object.defineProperty(namespace, 'settings', {
-    value: Object.freeze({ STATUSES, THEME_IDS, ENTRIES, define, registry: define(ENTRIES) }),
+    value: Object.freeze({ STATUSES, THEME_IDS, ENTRIES, OUTCOMES, define, createQueue, registry: define(ENTRIES) }),
     enumerable: true,
     writable: false,
     configurable: false,
