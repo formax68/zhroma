@@ -135,6 +135,13 @@ export function createWorld({
   const epochs = [];
   const actions = new Map();
   let workerListeners = [];
+  // Install, update and browser-start listeners the worker registered (07-07,
+  // D-04). Chrome delivers these events whether or not anything listens, so the
+  // double models them rather than refusing the member: a later worker that
+  // registers one is observable through the counts, not a thrown TypeError the
+  // worker might swallow.
+  let installedListeners = [];
+  let startupListeners = [];
   // One listener list per tab: a browser has more than one tab, and a per-tab
   // projection that is only ever exercised with one tab proves nothing.
   const contentListeners = new Map();
@@ -421,6 +428,8 @@ export function createWorld({
       id: EXTENSION_ID,
       getURL: (path) => `chrome-extension://${EXTENSION_ID}/${path}`,
       onMessage: { addListener: (listener) => { workerListeners.push(listener); } },
+      onInstalled: { addListener: (listener) => { installedListeners.push(listener); } },
+      onStartup: { addListener: (listener) => { startupListeners.push(listener); } },
     },
     tabs: {
       onActivated: { addListener: (listener) => { tabsEvents.activated.push(listener); } },
@@ -606,8 +615,26 @@ export function createWorld({
         epoch.timers.clear();
       }
       workerListeners = [];
+      installedListeners = [];
+      startupListeners = [];
       tabsEvents.activated.splice(0); tabsEvents.updated.splice(0); tabsEvents.removed.splice(0);
     },
+    /**
+     * Fire `runtime.onInstalled` exactly as Chrome does: asynchronously, with a
+     * copy of `details` (`{ reason: 'install' }`, or `{ reason: 'update',
+     * previousVersion }`) handed to every listener the live worker registered.
+     */
+    async emitInstalled(details) {
+      await tick();
+      for (const listener of installedListeners.slice()) listener(structuredClone(details));
+    },
+    /** Fire `runtime.onStartup` as Chrome does when a profile starts. */
+    async emitStartup() {
+      await tick();
+      for (const listener of startupListeners.slice()) listener();
+    },
+    installedListenerCount: () => installedListeners.length,
+    startupListenerCount: () => startupListeners.length,
     breakAction() { actionAvailable = false; },
     repairAction() { actionAvailable = true; },
     breakQuery() { queryAvailable = false; },
