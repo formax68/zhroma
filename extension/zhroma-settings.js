@@ -14,50 +14,116 @@
 // may have written it. Resolving a value never writes, repairs or deletes it:
 // an unreadable value resolves to the default and stays exactly as stored
 // until the agent saves that setting (D-08, D-10).
+//
+// The types below are top level, outside the function, so they are global
+// to the type checker only. A comment adds nothing at run time.
+/**
+ * How a resolved setting was obtained. A finite internal fact with no
+ * user-visible text in Phase 7 (D-12).
+ * @typedef {'default' | 'stored' | 'unreadable'} SettingStatus
+ */
+
+/**
+ * One registered setting. Adding a key means adding one of these and its
+ * tests, with no change to the reader or the queue (D-15).
+ * @typedef {object} SettingEntry
+ * @property {string} key Storage key, `^[a-z][A-Za-z0-9]{0,31}$`, never `enabled`.
+ * @property {number} version Current schema version of the stored form, a positive integer.
+ * @property {boolean} cas Whether the stored form carries a `rev` for compare-and-swap (D-16).
+ * @property {number} maxBytes Largest accepted stored form, in UTF-8 bytes of its JSON.
+ * @property {unknown} defaultValue The value in effect when the key is absent or unreadable.
+ * @property {(payload: Record<string, unknown>) => unknown} parse Returns the effective value for a
+ *   payload (the stored form without `v`, and without `rev` for cas keys), or undefined to reject it.
+ * @property {(value: any) => Record<string, unknown>} fields Returns a fresh payload for a value.
+ * @property {Record<string, (stored: Record<string, unknown>) => Record<string, unknown>>} migrations
+ *   Keyed by the version migrated FROM; each returns the stored form at the next version.
+ */
+
+/**
+ * A resolved setting. Always a fresh frozen object.
+ * @typedef {object} Resolved
+ * @property {unknown} value The value in effect.
+ * @property {SettingStatus} status How the value was obtained.
+ * @property {number} revision The stored `rev` for cas keys when valid, otherwise 0.
+ */
+
+/**
+ * @typedef {object} Registry
+ * @property {readonly string[]} keys Registered keys, sorted.
+ * @property {(key: unknown) => boolean} has
+ * @property {(key: string) => boolean} cas
+ * @property {(key: string) => unknown} defaultOf
+ * @property {(key: string, present: boolean, raw?: unknown) => Resolved} resolve
+ * @property {(key: string, value: unknown) => unknown} parseValue
+ * @property {(key: string, value: unknown, revision?: number) => Record<string, unknown> | undefined} encode
+ * @property {(key: string, a: unknown, b: unknown) => boolean} equal
+ */
+
+/**
+ * Every answer a settings write can receive. Finite and internal: no
+ * user-visible text is attached in Phase 7 (D-12).
+ * @typedef {'saved' | 'unchanged' | 'rejected' | 'conflict' | 'failed' | 'unknown'} Outcome
+ */
+
+/**
+ * @typedef {object} SettingRequest
+ * @property {number} requestId
+ * @property {string} key
+ * @property {unknown} value
+ * @property {number} [revision] The revision the requester holds; present exactly for cas keys.
+ */
+
+/**
+ * Exactly one per admitted request, always frozen. `revision` is null for a
+ * last-writer-wins key. For a cas key it is the new revision after `saved`,
+ * the current stored revision after `conflict`, and otherwise the revision
+ * the request carried (null when it carried no valid one).
+ * @typedef {object} SettingReply
+ * @property {'set-setting'} type
+ * @property {number} requestId
+ * @property {Outcome} outcome
+ * @property {number | null} revision
+ */
+
+/**
+ * What `read(key)` resolves: whether the read succeeded, and if so whether
+ * the key is present and what it holds.
+ * @typedef {{ ok: true, present: boolean, raw?: unknown } | { ok: false }} ReadResult
+ */
+
+/**
+ * @typedef {object} QueueOptions
+ * @property {Registry} registry
+ * @property {(key: string) => Promise<ReadResult>} read
+ * @property {(key: string, stored: Record<string, unknown>) => Promise<boolean>} write
+ * @property {number} timeoutMs Deadline of each request, from admission.
+ * @property {number} maxPending Queued plus active jobs above which a request fails at once.
+ * @property {(callback: () => void, ms: number) => unknown} setTimer
+ * @property {(handle: unknown) => void} clearTimer
+ * @property {() => number} now
+ */
+
+/**
+ * @typedef {object} SettingsQueue
+ * @property {(request: SettingRequest, respond: (reply: SettingReply) => void) => void} admit
+ * @property {() => number} size Queued plus active jobs.
+ */
+
+/**
+ * The frozen value of `Zhroma.settings`, the one member this file adds to the
+ * shared namespace. types/zhroma.d.ts types the global from this typedef.
+ * @typedef {object} ZhromaSettingsApi
+ * @property {readonly SettingStatus[]} STATUSES
+ * @property {readonly string[]} THEME_IDS
+ * @property {readonly SettingEntry[]} ENTRIES
+ * @property {readonly Outcome[]} OUTCOMES
+ * @property {(entries: readonly SettingEntry[]) => Registry} define
+ * @property {(options: QueueOptions) => SettingsQueue} createQueue
+ * @property {Registry} registry The registry of the shipped settings.
+ */
+
 (() => {
   'use strict';
-
-  /**
-   * How a resolved setting was obtained. A finite internal fact with no
-   * user-visible text in Phase 7 (D-12).
-   * @typedef {'default' | 'stored' | 'unreadable'} SettingStatus
-   */
-
-  /**
-   * One registered setting. Adding a key means adding one of these and its
-   * tests, with no change to the reader or the queue (D-15).
-   * @typedef {object} SettingEntry
-   * @property {string} key Storage key, `^[a-z][A-Za-z0-9]{0,31}$`, never `enabled`.
-   * @property {number} version Current schema version of the stored form, a positive integer.
-   * @property {boolean} cas Whether the stored form carries a `rev` for compare-and-swap (D-16).
-   * @property {number} maxBytes Largest accepted stored form, in UTF-8 bytes of its JSON.
-   * @property {unknown} defaultValue The value in effect when the key is absent or unreadable.
-   * @property {(payload: Record<string, unknown>) => unknown} parse Returns the effective value for a
-   *   payload (the stored form without `v`, and without `rev` for cas keys), or undefined to reject it.
-   * @property {(value: any) => Record<string, unknown>} fields Returns a fresh payload for a value.
-   * @property {Record<string, (stored: Record<string, unknown>) => Record<string, unknown>>} migrations
-   *   Keyed by the version migrated FROM; each returns the stored form at the next version.
-   */
-
-  /**
-   * A resolved setting. Always a fresh frozen object.
-   * @typedef {object} Resolved
-   * @property {unknown} value The value in effect.
-   * @property {SettingStatus} status How the value was obtained.
-   * @property {number} revision The stored `rev` for cas keys when valid, otherwise 0.
-   */
-
-  /**
-   * @typedef {object} Registry
-   * @property {readonly string[]} keys Registered keys, sorted.
-   * @property {(key: unknown) => boolean} has
-   * @property {(key: string) => boolean} cas
-   * @property {(key: string) => unknown} defaultOf
-   * @property {(key: string, present: boolean, raw?: unknown) => Resolved} resolve
-   * @property {(key: string, value: unknown) => unknown} parseValue
-   * @property {(key: string, value: unknown, revision?: number) => Record<string, unknown> | undefined} encode
-   * @property {(key: string, a: unknown, b: unknown) => boolean} equal
-   */
 
   const root = /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (globalThis));
   const NAMESPACE = 'Zhroma';
@@ -378,56 +444,6 @@
   // does not have (D-16). The v1 `enabled` queue in background.js is its model
   // and is not touched (D-02).
 
-  /**
-   * Every answer a settings write can receive. Finite and internal: no
-   * user-visible text is attached in Phase 7 (D-12).
-   * @typedef {'saved' | 'unchanged' | 'rejected' | 'conflict' | 'failed' | 'unknown'} Outcome
-   */
-
-  /**
-   * @typedef {object} SettingRequest
-   * @property {number} requestId
-   * @property {string} key
-   * @property {unknown} value
-   * @property {number} [revision] The revision the requester holds; present exactly for cas keys.
-   */
-
-  /**
-   * Exactly one per admitted request, always frozen. `revision` is null for a
-   * last-writer-wins key. For a cas key it is the new revision after `saved`,
-   * the current stored revision after `conflict`, and otherwise the revision
-   * the request carried (null when it carried no valid one).
-   * @typedef {object} SettingReply
-   * @property {'set-setting'} type
-   * @property {number} requestId
-   * @property {Outcome} outcome
-   * @property {number | null} revision
-   */
-
-  /**
-   * What `read(key)` resolves: whether the read succeeded, and if so whether
-   * the key is present and what it holds.
-   * @typedef {{ ok: true, present: boolean, raw?: unknown } | { ok: false }} ReadResult
-   */
-
-  /**
-   * @typedef {object} QueueOptions
-   * @property {Registry} registry
-   * @property {(key: string) => Promise<ReadResult>} read
-   * @property {(key: string, stored: Record<string, unknown>) => Promise<boolean>} write
-   * @property {number} timeoutMs Deadline of each request, from admission.
-   * @property {number} maxPending Queued plus active jobs above which a request fails at once.
-   * @property {(callback: () => void, ms: number) => unknown} setTimer
-   * @property {(handle: unknown) => void} clearTimer
-   * @property {() => number} now
-   */
-
-  /**
-   * @typedef {object} SettingsQueue
-   * @property {(request: SettingRequest, respond: (reply: SettingReply) => void) => void} admit
-   * @property {() => number} size Queued plus active jobs.
-   */
-
   /** @type {readonly Outcome[]} */
   const OUTCOMES = Object.freeze(/** @type {Outcome[]} */ (['saved', 'unchanged', 'rejected', 'conflict', 'failed', 'unknown']));
 
@@ -577,8 +593,10 @@
     return Object.freeze({ admit, size: () => waiting.length + (activeJob === null ? 0 : 1) });
   }
 
+  /** @type {ZhromaSettingsApi} */
+  const api = Object.freeze({ STATUSES, THEME_IDS, ENTRIES, OUTCOMES, define, createQueue, registry: define(ENTRIES) });
   Object.defineProperty(namespace, 'settings', {
-    value: Object.freeze({ STATUSES, THEME_IDS, ENTRIES, OUTCOMES, define, createQueue, registry: define(ENTRIES) }),
+    value: api,
     enumerable: true,
     writable: false,
     configurable: false,

@@ -1,0 +1,25 @@
+// Dev-only type check (D-20 to D-22). Not packaged, never shipped.
+//
+// This file lives at the repository root, never under extension/, and emits
+// nothing: `noEmit` is set, so the compiler only reads source. It runs first
+// in `npm run test:recon` (and so in `npm test` and the release candidate's
+// automated check), where a type error fails the suite like any test.
+//
+// The new shared settings module is checked strictly. The accepted v1 files
+// join only where they pass unmodified (D-21).
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    // Resolved relative to this file, so a scratch config elsewhere that
+    // extends it still finds @types/chrome (the non-vacuity proof relies on it).
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["chrome"],
+    "skipLibCheck": true
+  },
+  "include": ["extension/zhroma-settings.js", "types/zhroma.d.ts"]
+}
