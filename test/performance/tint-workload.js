@@ -37,11 +37,13 @@
   const delay = () => new Promise((resolve) => nativeTimer(resolve, 0));
   // Test-only preference/status seam. This developer page is not the extension:
   // Chrome hands `chrome.*` to a real content script, so the page has to supply
-  // it here. It exposes exactly the shipped seam — one {enabled: boolean}
-  // storage.local read, storage.onChanged, runtime.onMessage and the finite
-  // status hint — and nothing else, so what is measured is the shipped code
-  // path rather than a fallback. No such object ships; the packaged inventory
-  // is pinned by runtime-contract.test.js and toolbar-popup.test.js.
+  // it here. It exposes exactly the shipped seam — the two admitted
+  // storage.local reads (the object-form {enabled: true} preference read and
+  // the array-form settings read of the registered keys), storage.onChanged,
+  // runtime.onMessage and the finite status hint — and nothing else, so what
+  // is measured is the shipped code path rather than a fallback. No such object
+  // ships; the packaged inventory is pinned by runtime-contract.test.js and
+  // toolbar-popup.test.js.
   let confirmPreference;
   const preferenceConfirmed = new Promise((resolve) => { confirmPreference = resolve; });
   // `stored` is the storage area's actual contents. It used to be absent and
@@ -49,6 +51,7 @@
   // stored `false` — the "disabled control" was a page with no extension on it.
   function installPreferenceSeam(stored = {}) {
     const store = { ...stored };
+    let outstandingReads = 0; let preferenceLanded = false;
     const storageListeners = [];
     const seam = {
       runtime: {
@@ -69,13 +72,27 @@
       storage: {
         onChanged: { addListener(listener) { storageListeners.push(listener); } },
         local: {
-          // Asynchronous, exactly like Chrome: never resolved inside the call,
-          // and only an absent key is filled by the caller's default.
-          get(defaults, callback) {
+          // Asynchronous, exactly like Chrome: never resolved inside the call.
+          // An array names keys and answers only the stored ones among them
+          // (absent keys are omitted); an object names keys with defaults and
+          // fills only an absent key from its default. Nothing else is admitted.
+          get(keys, callback) {
+            const objectForm = keys !== null && typeof keys === 'object' && !Array.isArray(keys);
+            if (!Array.isArray(keys) && !objectForm) throw new TypeError('Workload seam admits only array or object storage.local.get keys');
+            const reading = objectForm && Object.hasOwn(keys, 'enabled');
+            outstandingReads++;
             nativeTimer(() => {
               const values = {};
-              for (const key of Object.keys(defaults)) values[key] = Object.hasOwn(store, key) ? store[key] : defaults[key];
-              callback(values); confirmPreference();
+              if (objectForm) for (const key of Object.keys(keys)) values[key] = Object.hasOwn(store, key) ? store[key] : keys[key];
+              else for (const key of keys) if (Object.hasOwn(store, key)) values[key] = store[key];
+              try { callback(values); } finally {
+                outstandingReads--;
+                if (reading) preferenceLanded = true;
+                // The controller runs only once the preference AND the settings
+                // read have landed; confirming earlier would time a controller
+                // still gated on its settings read.
+                if (preferenceLanded && outstandingReads === 0) confirmPreference();
+              }
             }, 0);
           },
         },
@@ -181,11 +198,18 @@
       // `dormant` seeds the stored preference with a real `false`, so the
       // shipped controller confirms an off preference rather than an absent one.
       installPreferenceSeam(enabled ? {} : { enabled: false });
-      await new Promise((resolve, reject) => {
-        const script = document.createElement('script'); script.src = '/extension/content.js';
-        script.onload = () => { registering = false; resolve(); }; script.onerror = () => reject(new Error('Runtime load failed'));
-        registering = true; document.head.append(script);
-      });
+      // Inject the served manifest's content scripts exactly as Chrome would:
+      // content_scripts[0].js in manifest order, each awaited before the next.
+      const manifest = await (await fetch('/extension/manifest.json')).json();
+      const scripts = manifest?.content_scripts?.[0]?.js;
+      if (!Array.isArray(scripts) || scripts.length === 0) throw new Error('Served manifest has no content_scripts[0].js');
+      for (const name of scripts) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script'); script.src = `/extension/${name}`;
+          script.onload = () => { registering = false; resolve(); }; script.onerror = () => reject(new Error(`Runtime load failed: ${name}`));
+          registering = true; document.head.append(script);
+        });
+      }
       // The controller only runs once the preference is confirmed. Measuring
       // before that would time an extension that is deliberately dormant.
       await preferenceConfirmed;

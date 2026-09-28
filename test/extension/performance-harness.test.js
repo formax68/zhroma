@@ -53,6 +53,19 @@ test('CLI validates sizes, modes, missing values and unsupported flags', () => {
   expect(parseArguments(['--size', '30', '--mode', 'enabled', '--smoke'])).toMatchObject({ size: 30, mode: 'enabled', smoke: true });
   for (const args of [['--size', '50'], ['--mode', 'maybe'], ['--output'], ['--unknown']]) expect(() => parseArguments(args)).toThrow();
 });
+// D-29: the same-session comparison times the working tree and the pinned
+// 0.1.0 bytes, so which bytes a run serves is a CLI choice that must be as
+// strict as size and mode: working by default, baseline on request, nothing else.
+test('CLI --source defaults to working, accepts working or baseline, and refuses anything else', () => {
+  expect(parseArguments([])).toMatchObject({ source: 'working' });
+  expect(parseArguments(['--source', 'working'])).toMatchObject({ source: 'working' });
+  expect(parseArguments(['--source', 'baseline', '--size', '30', '--mode', 'enabled'])).toMatchObject({ source: 'baseline', size: 30, mode: 'enabled' });
+  expect(() => parseArguments(['--source', 'baseline', '--source', 'working'])).toThrow(/Duplicate flag --source/);
+  expect(() => parseArguments(['--source'])).toThrow(/Missing value for --source/);
+  expect(() => parseArguments(['--source', '--smoke'])).toThrow(/Missing value for --source/);
+  for (const value of ['Baseline', 'head', '6d3ab0b', '']) expect(() => parseArguments(['--source', value])).toThrow();
+  expect(() => parseArguments(['--source', 'baselinee'])).toThrow(/working or baseline/);
+});
 test('CLI accepts the dormant mode and still refuses a near-miss of a real one', () => {
   expect(parseArguments(['--mode', 'dormant'])).toMatchObject({ mode: 'dormant' });
   expect(() => parseArguments(['--mode', 'enabledd'])).toThrow(/dormant/);

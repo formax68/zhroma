@@ -8,25 +8,30 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { validateFixtureManifest } from './fixture-contract.js';
+import { readBaselineSource } from './baseline-source.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OPERATIONS = ['edit', 'reorder', 'body', 'table', 'invalid-repair', 'unrelated'];
-const ASSETS = ['manifest.json', 'content.js', 'zhroma.css'];
+// `working` serves extension/ from disk; `baseline` serves the pinned 0.1.0
+// blobs through scripts/baseline-source.js and never reads extension/ (D-29).
+const SOURCES = ['working', 'baseline'];
+const ASSET_NAME = /^[a-z0-9][a-z0-9._-]*(\/[a-z0-9][a-z0-9._-]*)*$/u;
 const requireValue = (condition, message) => { if (!condition) throw new Error(message); };
 const finite = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0;
 export function parseArguments(args) {
-  const result = { size: 30, mode: 'enabled', smoke: false, headed: false, profile: false };
+  const result = { size: 30, mode: 'enabled', source: 'working', smoke: false, headed: false, profile: false };
   const seen = new Set();
   for (let i = 0; i < args.length; i++) {
     const key = args[i]; requireValue(!seen.has(key), `Duplicate flag ${key}`); seen.add(key);
     if (['--smoke', '--headed', '--profile'].includes(key)) result[key.slice(2)] = true;
-    else if (['--size', '--mode', '--output'].includes(key)) {
+    else if (['--size', '--mode', '--output', '--source'].includes(key)) {
       const value = args[++i]; requireValue(value && !value.startsWith('--'), `Missing value for ${key}`);
       result[key.slice(2)] = key === '--size' ? Number(value) : value;
     } else throw new Error(`Unsupported flag ${key}`);
   }
   requireValue([30, 200, 1000].includes(result.size), 'Size must be 30, 200 or 1000');
   requireValue(['enabled', 'disabled', 'dormant'].includes(result.mode), 'Mode must be enabled, disabled or dormant');
+  requireValue(SOURCES.includes(result.source), 'Source must be working or baseline');
   requireValue(!(result.smoke && result.profile), 'Smoke and profile must be separate runs');
   return result;
 }
@@ -150,14 +155,42 @@ async function runProfile(cdp, send, evaluate) {
     retention: { status: 'human_needed', before, after, reason: 'Post-GC snapshots collected; aggregate counts do not establish extension-controller retainer attribution. Requires DevTools retainer inspection.' },
     status: attributed.length ? 'gaps_found' : 'human_needed' };
 }
+// The served extension assets, derived from the served manifest itself: the
+// manifest, then content_scripts[0].js in order, then content_scripts[0].css.
+// Whatever the page is told to load is exactly what gets hashed, so a report
+// always names the bytes it measured.
+export async function readServedAssets(source = 'working') {
+  requireValue(SOURCES.includes(source), 'Source must be working or baseline');
+  const baseline = source === 'baseline' ? readBaselineSource() : null;
+  const read = async (name) => {
+    requireValue(typeof name === 'string' && ASSET_NAME.test(name), `Unsafe served asset name ${JSON.stringify(name)}`);
+    if (baseline) {
+      requireValue(Object.hasOwn(baseline.files, name), `Baseline source has no asset ${name}`);
+      return baseline.files[name];
+    }
+    return readFile(join(root, 'extension', name));
+  };
+  const manifestBytes = await read('manifest.json');
+  const manifest = JSON.parse(manifestBytes.toString('utf8'));
+  const script = manifest?.content_scripts?.[0];
+  requireValue(script && Array.isArray(script.js) && script.js.length > 0 && Array.isArray(script.css), 'Served manifest has no content script');
+  const names = ['manifest.json', ...script.js, ...script.css];
+  requireValue(new Set(names).size === names.length, 'Served manifest repeats an asset');
+  const assets = new Map([['manifest.json', manifestBytes]]);
+  for (const name of names.slice(1)) assets.set(name, await read(name));
+  return assets;
+}
 export async function runWorkload(options) {
   requireValue(typeof WebSocket === 'function', 'Use installed Node with built-in WebSocket (Node 22+); no package installation required');
   const chromeBin = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   try { await access(chromeBin, constants.X_OK); } catch { throw new Error('Installed Chrome not executable; set CHROME_BIN to an existing Chrome executable'); }
   await validateFixtureManifest(join(root, 'test/fixtures/manifest.json'), { requireCompleteScenarioMatrix: true });
+  const source = options.source ?? 'working';
   const routes = new Map();
-  for (const path of ['test/performance/tint-workload.html', 'test/performance/tint-workload.js', 'test/fixtures/zendesk-view-priority-present.html', ...ASSETS.map((name) => `extension/${name}`)]) routes.set(`/${path}`, await readFile(join(root, path)));
-  const hashes = Object.fromEntries(ASSETS.map((name) => [name, createHash('sha256').update(routes.get(`/extension/${name}`)).digest('hex')]));
+  for (const path of ['test/performance/tint-workload.html', 'test/performance/tint-workload.js', 'test/fixtures/zendesk-view-priority-present.html']) routes.set(`/${path}`, await readFile(join(root, path)));
+  const assets = await readServedAssets(source);
+  for (const [name, bytes] of assets) routes.set(`/extension/${name}`, bytes);
+  const hashes = Object.fromEntries([...assets].map(([name, bytes]) => [name, createHash('sha256').update(bytes).digest('hex')]));
   const server = createServer((request, response) => {
     const path = new URL(request.url, 'http://127.0.0.1').pathname;
     const data = routes.get(path);
@@ -191,7 +224,7 @@ export async function runWorkload(options) {
     const origin = `http://127.0.0.1:${server.address().port}`;
     await send('Page.navigate', { url: `${origin}/test/performance/tint-workload.html?size=${options.size}&mode=${options.mode}&profile=${options.profile}` });
     for (let i = 0; i < 200; i++) { if (await evaluate('Boolean(window.tintWorkload)')) break; if (i === 199) throw new Error('Workload page load timeout'); await delay(25); }
-    const identity = { hashes, browser: version.product, revision: version.revision, os: `${platform()} ${release()} ${arch()}`, cpu: cpus()[0]?.model || 'unknown', cpuThrottle: 1, headed: options.headed,
+    const identity = { source, hashes, browser: version.product, revision: version.revision, os: `${platform()} ${release()} ${arch()}`, cpu: cpus()[0]?.model || 'unknown', cpuThrottle: 1, headed: options.headed,
       harnessHash: createHash('sha256').update(await readFile(fileURLToPath(import.meta.url))).update(routes.get('/test/performance/tint-workload.js')).digest('hex') };
     // The six-operation matrix includes 660 batches and real settling delays.
     // Keep it bounded separately from individual setup/profile CDP commands.
