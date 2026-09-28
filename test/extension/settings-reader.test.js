@@ -20,7 +20,8 @@ import { Window } from 'happy-dom';
 import { afterEach, expect, test, vi } from 'vitest';
 import { SETTINGS_CONTRACT, createChromeHarness } from './chrome-harness.js';
 import {
-  COPY, ICON, TAB_ID, closeWindows, createWorld, loadContent, loadWorker, markers, settle, wait,
+  COPY, EXTENSION_ID, ICON, POPUP_URL, TAB_ID, closeWindows, createWorld, loadContent, loadPopup, loadWorker, markers, settle,
+  statusText, wait,
 } from './tracer-world.js';
 
 const windows = [];
@@ -309,5 +310,122 @@ test('a pagehide and pageshow round trip re-reads settings and restores the mark
   expect(markers(content.document)).toEqual(LABELS);
   expect(world.writeLog).toEqual([]);
   expectNoSettingsTraffic(world);
+  expect(world.forbidden).toEqual([]);
+});
+
+// --- the change listener and the D-14 end-to-end path ---------------------------
+
+const POPUP_SENDER = Object.freeze({ id: EXTENSION_ID, url: POPUP_URL });
+const themeMessage = (requestId) => ({ type: 'set-setting', requestId, key: 'theme', value: CLASSIC });
+const PRIORITY_ATTRIBUTE = 'data-zhroma-priority';
+
+// Every setAttribute or removeAttribute of the priority marker, on any element
+// of this window, from the moment the spy is installed.
+function spyOnMarkerWrites(window) {
+  const writes = vi.spyOn(window.Element.prototype, 'setAttribute');
+  const removals = vi.spyOn(window.Element.prototype, 'removeAttribute');
+  return () => [...writes.mock.calls, ...removals.mock.calls].filter(([name]) => name === PRIORITY_ATTRIBUTE);
+}
+
+test('a theme saved through the worker over an unreadable stored theme reaches the page and changes nothing visible (D-14)', async () => {
+  const world = createWorld({ stored: { enabled: true, theme: NEWER } });
+  // Observe what the content script's one storage listener is handed.
+  const onChanged = world.contentChromeFor(TAB_ID).storage.onChanged;
+  const addListener = onChanged.addListener;
+  const delivered = [];
+  onChanged.addListener = (listener) => addListener((changes, areaName) => {
+    delivered.push({ changes: structuredClone(changes), areaName });
+    return listener(changes, areaName);
+  });
+  loadWorker(world);
+  const content = loadContent(world);
+  await settle();
+  const popup = loadPopup(world);
+  await settle();
+  await settle();
+  expect(markers(content.document)).toEqual(LABELS);
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
+  const shown = statusText(popup.document);
+  const markerWrites = spyOnMarkerWrites(content.window);
+  // A re-evaluation would re-inspect the table; the change must not.
+  const scans = vi.spyOn(content.document, 'querySelectorAll');
+
+  const answer = await world.sendToWorker(themeMessage(41), POPUP_SENDER);
+  await settle();
+
+  expect(answer).toEqual({ type: 'set-setting', requestId: 41, outcome: 'saved', revision: null });
+  expect(world.getStored('theme')).toEqual(STORED_CLASSIC);
+  expect(world.writeLog).toEqual([{ theme: STORED_CLASSIC }]);
+  // The change reached the content script's listener, in the local area.
+  expect(delivered).toEqual([{ changes: { theme: { oldValue: NEWER, newValue: STORED_CLASSIC } }, areaName: 'local' }]);
+  // ...and it re-evaluated no row: not one marker was written or removed.
+  expect(markerWrites()).toEqual([]);
+  expect(scans).not.toHaveBeenCalled();
+  expect(markers(content.document)).toEqual(LABELS);
+  expect(world.action(TAB_ID)).toEqual({ icon: ICON.working, title: COPY.working });
+  expect(statusText(popup.document)).toBe(shown);
+  expect(world.settingsReadCount('content')).toBe(1);
+  expect(world.storageListenerCount()).toBeGreaterThanOrEqual(1);
+  expectNoSettingsTraffic(world);
+  expect(world.forbidden).toEqual([]);
+});
+
+test('a theme change in another area, an unrelated key and a removed theme change nothing visible', () => {
+  const page = loadPage({ settingsStored: { theme: STORED_CLASSIC } });
+  page.harness.flush();
+  vi.advanceTimersByTime(SETTLE_MS);
+  page.harness.flush();
+  expect(markers(page.document)).toEqual(LABELS);
+  const sent = page.harness.messages.length;
+  const markerWrites = spyOnMarkerWrites(page.window);
+  page.harness.emitChange({ theme: { oldValue: STORED_CLASSIC, newValue: NEWER } }, 'sync');
+  page.harness.emitChange({ somethingElse: { newValue: false } });
+  page.harness.emitChange({ theme: { oldValue: STORED_CLASSIC } });
+  page.harness.emitChange({ theme: { oldValue: STORED_CLASSIC, newValue: NEWER } });
+  page.harness.emitChange(null);
+  page.harness.emitChange([]);
+  vi.advanceTimersByTime(SETTLE_MS);
+  page.harness.flush();
+  expect(markerWrites()).toEqual([]);
+  expect(markers(page.document)).toEqual(LABELS);
+  expect(page.harness.messages).toHaveLength(sent);
+  expect(page.harness.requestStatus()).toMatchObject({ diagnosis: 'working', reason: null });
+  expect(page.harness.settingsReadCount()).toBe(1);
+  expect(vi.getTimerCount()).toBe(0);
+  page.harness.assertClean();
+});
+
+test('a settings change that throws on access still lets the off switch through', () => {
+  const page = loadPage();
+  page.harness.flush();
+  vi.advanceTimersByTime(SETTLE_MS);
+  page.harness.flush();
+  expect(markers(page.document)).toEqual(LABELS);
+  // emitChange hands the object over as it is, uncloned, getter and all.
+  const changes = {
+    get theme() { throw new Error('unreadable change'); },
+    enabled: { oldValue: true, newValue: false },
+  };
+  page.harness.setStored(false);
+  expect(() => page.harness.emitChange(changes)).not.toThrow();
+  vi.advanceTimersByTime(SETTLE_MS);
+  page.harness.flush();
+  expect(markers(page.document)).toEqual([]);
+  expect(page.observers.filter((observer) => observer.active)).toHaveLength(0);
+  expect(vi.getTimerCount()).toBe(0);
+  page.harness.assertClean();
+});
+
+test('the content script still registers exactly one storage listener in both doubles', async () => {
+  const page = loadPage();
+  expect(page.harness.storageListenerCount()).toBe(1);
+  page.harness.flush();
+  page.harness.assertClean();
+  // The tracer world runs on real time.
+  vi.useRealTimers();
+  const world = createWorld();
+  loadContent(world);
+  await settle();
+  expect(world.storageListenerCount()).toBe(1);
   expect(world.forbidden).toEqual([]);
 });

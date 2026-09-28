@@ -131,6 +131,12 @@ const STATES = [
   { name: 'fresh install', preference: {} },
   { name: 'upgraded, off', preference: { stored: false } },
   { name: 'upgraded, on', preference: { stored: true } },
+  // Stored-theme states (07-06, D-09, COMPAT-04). The 0.1.0 side never issues
+  // the settings read, so each compares 0.1.0 with the working tree under that
+  // stored-theme condition.
+  { name: 'theme stored Classic', preference: { stored: true, settingsStored: { theme: { v: 1, id: 'zhroma-classic' } } } },
+  { name: 'theme unreadable (newer version)', preference: { settingsStored: { theme: { v: 99, id: 'from-a-newer-version' } } } },
+  { name: 'settings read fails', preference: { settingsReadMode: 'rejected' } },
 ];
 
 const PRIORITY = 6;
@@ -361,8 +367,9 @@ test('startup parity: the present fixture paints identically from the 0.1.0 blob
   expect(expected[0].status).toEqual({ diagnosis: 'working', reason: null });
 });
 
-test('the matrix is the D-24 set: eighteen scenarios under three upgrade states', () => {
-  expect(STATES.map((state) => state.name)).toEqual(['fresh install', 'upgraded, off', 'upgraded, on']);
+test('the matrix is the D-24 set: eighteen scenarios under three upgrade states and three stored-theme states', () => {
+  expect(STATES.map((state) => state.name)).toEqual(['fresh install', 'upgraded, off', 'upgraded, on',
+    'theme stored Classic', 'theme unreadable (newer version)', 'settings read fails']);
   expect(SCENARIOS).toHaveLength(18);
   expect(new Set(SCENARIOS.map((scenario) => scenario.name)).size).toBe(SCENARIOS.length);
 });

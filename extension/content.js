@@ -542,6 +542,28 @@
     } catch { landSettings(null, generations); }
   }
 
+  // The content re-read of D-14: the value Chrome hands the listener is
+  // re-resolved through the shared validator, as the off-switch listener
+  // re-reads its own. A removed key resolves to its default. Nothing visible
+  // consumes a setting in Phase 7, so this never syncs and never touches a row.
+  function onSettingsChanged(changes, areaName) {
+    if (settingsApi === null || areaName !== PREFERENCE_AREA) return;
+    if (changes === null || typeof changes !== 'object' || Array.isArray(changes)) return;
+    for (const key of settingsApi.registry.keys) {
+      if (!Object.hasOwn(changes, key)) continue;
+      // A read still in flight must not overwrite what this change delivered.
+      settingsGenerations.set(key, settingsGenerations.get(key) + 1);
+      settingsState.set(key, resolveSetting(key, changes[key], 'newValue'));
+    }
+  }
+
+  // The one storage listener. The settings handler runs first and inside
+  // try/catch, so a settings fault can never block the off switch (D-09).
+  function onStorageChanged(changes, areaName) {
+    try { onSettingsChanged(changes, areaName); } catch { /* settings keep their last resolved values */ }
+    onPreferenceChanged(changes, areaName);
+  }
+
   function isRequest(message, type) {
     return message !== null && typeof message === 'object' && !Array.isArray(message)
       && Object.keys(message).length === 2
@@ -626,7 +648,7 @@
       // Register the change listener before starting the read, so a preference
       // written between the two cannot be lost, and use a read generation so a
       // slow earlier reply cannot overwrite a newer change.
-      chrome.storage.onChanged.addListener(onPreferenceChanged);
+      chrome.storage.onChanged.addListener(onStorageChanged);
       chrome.runtime.onMessage.addListener(onRuntimeMessage);
       readSettings();
       readPreference();
