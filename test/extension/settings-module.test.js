@@ -115,7 +115,7 @@ test('the shipped registry holds exactly the theme key, Classic only, with no ru
 test('an absent theme resolves to Classic by default, and the stored Classic form resolves as stored', () => {
   const { registry } = settingsOf(load());
   const absent = registry.resolve('theme', false);
-  expect(plain(absent)).toEqual({ value: 'zhroma-classic', status: 'default', revision: 0 });
+  expect(plain(absent), '[mutant:settings-absent-default]').toEqual({ value: 'zhroma-classic', status: 'default', revision: 0 });
   expect(Object.isFrozen(absent)).toBe(true);
   const raw = deepFreeze({ v: 1, id: 'zhroma-classic' });
   const stored = registry.resolve('theme', true, raw);
@@ -152,7 +152,7 @@ test.each(REJECTED)('%s resolves to the Classic default as unreadable, without t
   const { registry } = settingsOf(load());
   const before = JSON.stringify(raw);
   const result = registry.resolve('theme', true, raw);
-  expect(plain(result)).toEqual({ value: 'zhroma-classic', status: 'unreadable', revision: 0 });
+  expect(plain(result), '[mutant:settings-newer-version-unreadable]').toEqual({ value: 'zhroma-classic', status: 'unreadable', revision: 0 });
   expect(Object.isFrozen(result)).toBe(true);
   expect(JSON.stringify(raw)).toBe(before);
   // A deep-frozen copy resolves the same way, wherever cloning keeps every own key.

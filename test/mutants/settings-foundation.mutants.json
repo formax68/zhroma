@@ -134,5 +134,90 @@
       "kind": "behavioral"
     },
     "count": 1
+  },
+  {
+    "id": "settings-gate-bound",
+    "file": "extension/content.js",
+    "find": "{ settingsTimer = null; openSettingsGate(); }",
+    "replace": "{ settingsTimer = null; }",
+    "suites": [
+      "test/extension/settings-reader.test.js"
+    ],
+    "note": "The settings read gates the first tint, and a read whose callback never arrives must not hold rows untinted for longer than SETTINGS_READ_TIMEOUT_MS (D-09, COMPAT-04). Without the time-bound callback opening the gate, a hung settings read leaves the page untinted for the life of the document. Measured with a hung read under fake timers: the rows must be tinted once the bound has passed.",
+    "expected_failure": {
+      "suite": "test/extension/settings-reader.test.js",
+      "test": "a hung settings read holds rows untinted for at most the time bound, then tints and leaves no timer",
+      "assertion": "[mutant:settings-gate-bound]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "settings-gate-required",
+    "file": "extension/content.js",
+    "find": "preferenceReady && preferenceEnabled && settingsReady && ",
+    "replace": "preferenceReady && preferenceEnabled && ",
+    "suites": [
+      "test/extension/settings-reader.test.js"
+    ],
+    "note": "The controller runs only once the settings read has settled, so the first tint is painted with the settings in effect rather than repainted when they land (D-09, COMPAT-04). Without settingsReady in runnable(), a confirmed preference tints before the settings read has answered. Measured with the settings read held while the preference is already confirmed: no row may carry a marker yet.",
+    "expected_failure": {
+      "suite": "test/extension/settings-reader.test.js",
+      "test": "the first tint waits for the settings read even when the preference is already confirmed",
+      "assertion": "[mutant:settings-gate-required]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "settings-failure-opens-gate",
+    "file": "extension/content.js",
+    "find": "landSettings(chrome.runtime.lastError ? null : values, generations);",
+    "replace": "if (!chrome.runtime.lastError) landSettings(values, generations);",
+    "suites": [
+      "test/extension/settings-reader.test.js"
+    ],
+    "note": "A failed settings read is treated as every key at its default, and it opens the gate at once: an agent whose storage cannot be read sees 0.1.0 tinting with no wait (D-08, D-09, COMPAT-04). If a read that reports chrome.runtime.lastError no longer lands, the page waits out the whole time bound before it tints. Measured with a rejected read well inside the bound: every row must already be tinted.",
+    "expected_failure": {
+      "suite": "test/extension/settings-reader.test.js",
+      "test": "a rejected settings read tints with no wait",
+      "assertion": "[mutant:settings-failure-opens-gate]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "settings-absent-default",
+    "file": "extension/zhroma-settings.js",
+    "find": "if (present !== true) return resolved(entry.defaultValue, 'default', 0);",
+    "replace": "if (present !== true) return resolved(entry.defaultValue, 'unreadable', 0);",
+    "suites": [
+      "test/extension/settings-module.test.js"
+    ],
+    "note": "An absent key means its default, applied on read, with no install-time write (D-04, COMPAT-02). The status is what later phases use to tell a fresh or 0.1.0 install apart from a damaged value (D-12), so an absent theme must resolve as default, never as unreadable. Measured on the shipped theme key with nothing stored.",
+    "expected_failure": {
+      "suite": "test/extension/settings-module.test.js",
+      "test": "an absent theme resolves to Classic by default, and the stored Classic form resolves as stored",
+      "assertion": "[mutant:settings-absent-default]",
+      "kind": "behavioral"
+    },
+    "count": 1
+  },
+  {
+    "id": "settings-newer-version-unreadable",
+    "file": "extension/zhroma-settings.js",
+    "find": "if (!isPositiveInteger(version) || version > entry.version) return unreadable;",
+    "replace": "if (!isPositiveInteger(version)) return unreadable;",
+    "suites": [
+      "test/extension/settings-module.test.js"
+    ],
+    "note": "A value written by a newer Zhroma is unreadable here and is never migrated down (D-08): its fields may mean something this version does not know, so the agent sees the default, and the stored bytes stay for the newer version to read again. Without the upper bound on v, a newer theme form that happens to parse is accepted as stored. Measured on the shipped theme key with the newer-v row of the rejection table.",
+    "expected_failure": {
+      "suite": "test/extension/settings-module.test.js",
+      "test": "a newer v resolves to the Classic default as unreadable, without touching the stored value",
+      "assertion": "[mutant:settings-newer-version-unreadable]",
+      "kind": "behavioral"
+    },
+    "count": 1
   }
 ]
