@@ -12,7 +12,9 @@
     "test:mutants": "node scripts/verify-mutation-kills.js"
   },
   "devDependencies": {
+    "@types/chrome": "0.3.0",
     "happy-dom": "20.13.1",
+    "typescript": "7.0.2",
     "vitest": "4.1.11"
   }
 }
