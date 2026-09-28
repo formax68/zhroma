@@ -113,7 +113,7 @@ export function inertWindow(bodyHTML) {
 
 export function createWorld({
   stored = null, readMode = 'immediate', writeMode = 'immediate', replyDelays = [], responseDelays = [],
-  portCloseMs = 500,
+  portCloseMs = 500, settingsReadMode = 'immediate',
 } = {}) {
   const forbidden = [];
   const traffic = [];
@@ -145,7 +145,8 @@ export function createWorld({
   const ownerReadModes = new Map();
   const physicalWrites = new Set();
   const writeObservations = [];
-  const stageNames = ['worker-read', 'content-read', 'query', 'icon', 'title', 'popup-response', 'content-response'];
+  const stageNames = ['worker-read', 'content-read', 'worker-settings-read', 'content-settings-read', 'query', 'icon', 'title',
+    'popup-response', 'content-response'];
   function schedule(stage, work, tabId) {
     const key = holds.has(`${stage}:${tabId}`) ? `${stage}:${tabId}` : stage;
     if (!holds.has(key)) { work(); return; }
@@ -158,7 +159,16 @@ export function createWorld({
   }
   const readModes = ['immediate', 'deferred', 'rejected', 'rejected-with-values', 'throws', 'malformed'];
   const writeModes = ['immediate', 'deferred', 'callback-held', 'rejected', 'throws'];
-  checkMode(readMode, readModes); checkMode(writeMode, writeModes);
+  // The settings read is a SEPARATE seam from the preference read (07-04, A6):
+  // an array-form `get` has its own mode, its own deferred queue and its own
+  // stages, so every v1 assertion about preference reads keeps counting only
+  // preference reads. `hang` models a read whose callback never arrives.
+  const settingsReadModes = ['immediate', 'deferred', 'rejected', 'rejected-with-values', 'throws', 'hang'];
+  checkMode(readMode, readModes); checkMode(writeMode, writeModes); checkMode(settingsReadMode, settingsReadModes);
+  const pendingSettingsReads = [];
+  const ownerSettingsReadModes = new Map();
+  const settingsReads = { worker: 0, content: 0 };
+  let currentSettingsReadMode = settingsReadMode;
   const writeLog = [];
   const tabs = [{ id: TAB_ID, active: true, currentWindow: true }];
   const replyQueue = [...replyDelays];
@@ -261,8 +271,38 @@ export function createWorld({
 
   function storageFor(chromeObject, { writable = false, owner = 'unknown' } = {}) {
     const addListener = (listener) => { storageListeners.push({ owner, listener }); };
+    const kind = owner === 'worker' ? 'worker' : 'content';
+    // Only the local area exists for Zhroma (DATA-01, D-03). Touching sync,
+    // session or managed is recorded like any other forbidden channel.
+    const areas = {
+      sync: denyStore(`${kind} chrome.storage.sync`),
+      session: denyStore(`${kind} chrome.storage.session`),
+      managed: denyStore(`${kind} chrome.storage.managed`),
+    };
+    function getSettings(keys, callback) {
+      const mode = ownerSettingsReadModes.get(kind) ?? currentSettingsReadMode;
+      settingsReads[kind] += 1;
+      if (mode === 'throws') throw new Error('Storage unavailable');
+      // Only the keys storage actually holds, cloned: a caller must never be
+      // able to reach into the stored object.
+      const values = {};
+      for (const key of keys) if (storage.has(key)) values[key] = structuredClone(storage.get(key));
+      const resolveRead = () => {
+        if (mode === 'rejected' || mode === 'rejected-with-values') {
+          chromeObject.runtime.lastError = { message: 'Storage read failed' };
+          callback(mode === 'rejected' ? undefined : values);
+          chromeObject.runtime.lastError = undefined;
+          return;
+        }
+        callback(values);
+      };
+      if (mode === 'hang') return;
+      if (mode === 'deferred') pendingSettingsReads.push(resolveRead);
+      else setTimeout(() => schedule(`${kind}-settings-read`, resolveRead), 0);
+    }
     const local = {
       get(defaults, callback) {
+        if (Array.isArray(defaults)) { getSettings(defaults, callback); return; }
         const mode = ownerReadModes.get(owner === 'worker' ? 'worker' : 'content') ?? currentReadMode;
         const values = {};
         for (const key of Object.keys(defaults)) values[key] = storage.has(key) ? storage.get(key) : defaults[key];
@@ -296,7 +336,7 @@ export function createWorld({
       // writer, which is exactly what the serialized worker exists to prevent.
       local.set = function () { forbidden.push('content chrome.storage.local.set'); throw new Error('Forbidden storage write'); };
       local.remove = function () { forbidden.push('content chrome.storage.local.remove'); throw new Error('Forbidden storage write'); };
-      return { onChanged: { addListener }, local };
+      return { onChanged: { addListener }, local, ...areas };
     }
     local.set = function set(items, callback) {
       writeLog.push(structuredClone(items));
@@ -318,8 +358,11 @@ export function createWorld({
         for (const [key, value] of Object.entries(items)) {
           const had = storage.has(key);
           const oldValue = storage.get(key);
-          if (had && oldValue === value) continue;
-          storage.set(key, value);
+          // Chrome stores a copy and announces only a real change. Comparing
+          // serialisations is identical to `===` for the boolean, and also
+          // right for the object-valued settings (07-04).
+          if (had && JSON.stringify(oldValue) === JSON.stringify(value)) continue;
+          storage.set(key, structuredClone(value));
           changes[key] = had ? { oldValue, newValue: value } : { newValue: value };
         }
         if (mode === 'callback-held' || mode === 'deferred') pendingCallbacks.push(finish);
@@ -329,7 +372,7 @@ export function createWorld({
       if (mode === 'deferred') pendingWrites.push(commit);
       else setTimeout(commit, 0);
     };
-    return { onChanged: { addListener }, local };
+    return { onChanged: { addListener }, local, ...areas };
   }
 
   const contentChromes = new Map();
@@ -480,6 +523,15 @@ export function createWorld({
     action: (tabId = TAB_ID) => actions.get(tabId),
     flushReads() { for (const read of pendingReads.splice(0)) read(); },
     pendingReadCount: () => pendingReads.length,
+    flushSettingsReads() { for (const read of pendingSettingsReads.splice(0)) read(); },
+    pendingSettingsReadCount: () => pendingSettingsReads.length,
+    /** Settings reads issued so far by `worker` or `content`, or by both. */
+    settingsReadCount: (owner) => (owner === undefined ? settingsReads.worker + settingsReads.content
+      : settingsReads[checkMode(owner, ['worker', 'content'])]),
+    setSettingsReadMode(mode, owner) {
+      checkMode(mode, settingsReadModes);
+      if (owner) ownerSettingsReadModes.set(checkMode(owner, ['worker', 'content']), mode); else currentSettingsReadMode = mode;
+    },
     flushWrites() { for (const write of pendingWrites.splice(0)) write(); for (const callback of pendingCallbacks.splice(0)) callback(); },
     commitWrites() { for (const write of pendingWrites.splice(0)) write(); },
     releaseWriteCallbacks() { for (const callback of pendingCallbacks.splice(0)) callback(); },
