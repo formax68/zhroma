@@ -5,16 +5,16 @@ milestone_name: Themes & Rules
 current_phase: 07
 current_phase_name: Upgrade-Safe Foundation
 status: executing
-stopped_at: Completed 07-05-PLAN.md
-last_updated: "2026-09-28T09:06:26.359Z"
+stopped_at: Completed 07-06-PLAN.md
+last_updated: "2026-09-28T09:22:06.107Z"
 last_activity: 2026-09-28
 last_activity_desc: Phase 07 execution started
-state_head: 6911ee02b7ee881a83ca04d398ca03d02084cbe2
+state_head: 2a00e4e61159d400ca9d582aa585abc17c32b9c9
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 8
+  completed_plans: 9
   percent: 33
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 07 (Upgrade-Safe Foundation) — EXECUTING
-Plan: 6 of 9
+Plan: 7 of 9
 Status: Ready to execute
 Last activity: 2026-09-28 — Phase 07 execution started
 
@@ -97,6 +97,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 07 P03 | 12 min | 3 tasks | 10 files |
 | Phase 07 P04 | 12 min | 2 tasks | 7 files |
 | Phase 07 P05 | 9 min | 2 tasks | 5 files |
+| Phase 07 P06 | 9 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -187,6 +188,9 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-04: Zhroma.settings.createQueue is the single serial settings writer (setTimer/clearTimer/now injected, not setTimeout, to keep the module-purity pin); background.js writes only through chrome.storage.local.set({ [key]: stored }) and admits set-setting from the packaged popup only; reply { type, requestId, outcome, revision } with revision null for last-writer-wins keys
 - [Phase 07]: 07-04: an unreadable stored setting is replaced when the agent saves any valid value (A1); only a readable value equal to the choice is skipped (D-11); a deadline answers unknown during a physical write but never releases the writer before the write settles
 - [Phase 07]: 07-05: fromContent requires isAgentDocument(sender.url) (https, zendesk.com or a subdomain, path under /agent/, unparsable refused); set-setting is admitted from fromPopup || fromOptions, where fromOptions checks own id and the exact packaged options URL and does not require sender.tab to be undefined
+- [Phase 07]: 07-06: a failed settings read (lastError, thrown get, non-object values) lands as null and resolves every key to its default, unreadable; the gate opens on success or failure and never later than SETTINGS_READ_TIMEOUT_MS = 500
+- [Phase 07]: 07-06: opening the settings gate syncs the controller only when the preference has already landed, keeping the 0.1.0 startup message sequence
+- [Phase 07]: 07-06: one storage listener, onStorageChanged, runs onSettingsChanged in try/catch then the unchanged onPreferenceChanged; a theme change re-resolves newValue and never re-evaluates a row (D-14, A2)
 
 ### Pending Todos
 
@@ -230,8 +234,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-28T09:06:26.342Z
-Stopped at: Completed 07-05-PLAN.md
+Last session: 2026-09-28T09:22:06.089Z
+Stopped at: Completed 07-06-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
