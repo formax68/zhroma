@@ -64,7 +64,8 @@ test('reads the complete eleven-file release source inventory with sizes, hashes
   const source = readReleaseSource(extensionDirectory);
 
   expect(source.assets.map((asset) => asset.name)).toEqual([...RELEASE_FILES].sort());
-  expect(source.assets).toHaveLength(12);
+  // 07-03: fourteen packaged files since D-13 (zhroma-settings.js) and D-18 (options.html).
+  expect(source.assets).toHaveLength(14);
   for (const asset of source.assets) {
     expect(asset.size).toBe(statSync(join(extensionDirectory, asset.name)).size);
     expect(asset.sha256).toBe(sha256File(join(extensionDirectory, asset.name)));
@@ -100,7 +101,7 @@ test('records the archive hash separately from the source digest and re-derives 
 
   const validation = validateReleaseArchive(join(out, 'zhroma-0.1.0.zip'), readReleaseSource(extensionDirectory));
   expect(validation.sha256).toBe(candidate.zip.sha256);
-  expect(validation.entries).toHaveLength(12);
+  expect(validation.entries).toHaveLength(14);
 });
 
 // Two archives of identical source bytes can differ as archives. A matching
@@ -126,7 +127,7 @@ test('refuses to write generated artifacts into the extension source or the repo
   expect(() => packageRelease({})).toThrow(/out-dir-required/);
   // An import must not be able to produce an archive as a side effect.
   expect(readdirSync(extensionDirectory).sort()).toEqual(['background.js', 'content.js', 'icons', 'manifest.json',
-    'popup.html', 'popup.js', 'zhroma.css']);
+    'options.html', 'popup.html', 'popup.js', 'zhroma-settings.js', 'zhroma.css']);
 });
 
 test('reuses an output location only when its existing contents independently validate', () => {
@@ -323,7 +324,7 @@ test('refuses an archive packaged from the wrong root or carrying directory entr
   cpSync(extensionDirectory, tree, { recursive: true });
   const withDirectories = join(directoryEntries, 'directories.zip');
   runZip(['-X', '-q', '-r', withDirectories, 'icons', 'background.js', 'content.js', 'manifest.json',
-    'popup.html', 'popup.js', 'zhroma.css'], tree);
+    'options.html', 'popup.html', 'popup.js', 'zhroma-settings.js', 'zhroma.css'], tree);
   expect(() => validateReleaseArchive(withDirectories, source)).toThrow(/archive-nonregular-entry/);
 });
 

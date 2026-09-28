@@ -18,7 +18,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { PREFERENCE_CONTRACT, createChromeHarness } from './chrome-harness.js';
 import {
   CONFIRMED, COPY, DOCUMENT_ID, EXTENSION_ID, ICON, MAX_REQUEST_ID, OTHER_TAB_ID, POPUP_PATH, POPUP_URL,
-  TAB_ID, TICKET_TOKENS, asset, bootAll, closeWindows, control, createWorld, extensionRoot as root, fixture,
+  NAMESPACE, TAB_ID, TICKET_TOKENS, asset, bootAll, closeWindows, control, createWorld, extensionRoot as root, fixture,
   flip, inertWindow, loadContent, loadPopup, loadWorker, markers, settle, statusText, wait,
 } from './tracer-world.js';
 
@@ -259,8 +259,9 @@ test('the manifest adds action, popup, worker and icons without widening the per
   expect(Object.hasOwn(manifest, 'host_permissions')).toBe(false);
   expect(Object.hasOwn(manifest, 'optional_permissions')).toBe(false);
   expect(Object.hasOwn(manifest, 'optional_host_permissions')).toBe(false);
+  // Phase 7 (D-13): the shared settings module loads first, before content.js.
   expect(manifest.content_scripts).toEqual([{
-    matches: ['https://*.zendesk.com/agent/*'], js: ['content.js'], css: ['zhroma.css'],
+    matches: ['https://*.zendesk.com/agent/*'], js: ['zhroma-settings.js', 'content.js'], css: ['zhroma.css'],
     run_at: 'document_idle', world: 'ISOLATED', all_frames: false,
   }]);
   expect(manifest.minimum_chrome_version).toBe('106');
@@ -276,14 +277,16 @@ test('the manifest adds action, popup, worker and icons without widening the per
 test('every packaged asset the manifest names exists locally and no remote resource is referenced', () => {
   const declared = [
     ...manifest.content_scripts[0].js, ...manifest.content_scripts[0].css,
-    manifest.action.default_popup, manifest.background.service_worker,
+    manifest.action.default_popup, manifest.background.service_worker, manifest.options_ui.page,
     ...Object.values(manifest.action.default_icon), ...Object.values(manifest.icons),
   ];
   for (const name of declared) {
     expect(name).toMatch(/^[a-z]+\/?[a-z-]*\.(js|css|html|png)$/);
     expect(realpathSync(new URL(name, root))).toBe(fileURLToPath(new URL(name, root)));
   }
-  expect(readdirSync(root).sort()).toEqual(['background.js', 'content.js', 'icons', 'manifest.json', 'popup.html', 'popup.js', 'zhroma.css']);
+  // Phase 7 adds the options stub (D-18) and the shared settings module (D-13).
+  expect(readdirSync(root).sort()).toEqual(['background.js', 'content.js', 'icons', 'manifest.json', 'options.html',
+    'popup.html', 'popup.js', 'zhroma-settings.js', 'zhroma.css']);
   expect(readdirSync(new URL('icons/', root)).sort())
     .toEqual(['brand.png', 'missing.png', 'neutral.png', 'off.png', 'unreadable.png', 'working.png']);
   // Every icon the worker can project must be packaged: an icon set at runtime
@@ -295,7 +298,7 @@ test('every packaged asset the manifest names exists locally and no remote resou
   expect(new Set(projected).size).toBe(5);
   expect(projected).not.toContain('icons/brand.png');
   for (const path of new Set(projected)) expect(realpathSync(new URL(path, root))).toBe(fileURLToPath(new URL(path, root)));
-  for (const name of ['content.js', 'background.js', 'popup.js', 'popup.html']) {
+  for (const name of ['content.js', 'background.js', 'popup.js', 'popup.html', 'zhroma-settings.js', 'options.html']) {
     expect(asset(name)).not.toMatch(/https?:\/\/|@import|url\(\s*['"]?https?:/);
   }
 });
@@ -321,7 +324,7 @@ test('the five icons are five different images, so shape can carry the meaning',
 });
 
 test('shipped JavaScript carries no colour value and builds no page markup', () => {
-  for (const name of ['content.js', 'background.js', 'popup.js']) {
+  for (const name of ['content.js', 'background.js', 'popup.js', 'zhroma-settings.js']) {
     const source = asset(name);
     expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\s*\(|hsla?\s*\(/i);
     expect(source).not.toMatch(/innerHTML|outerHTML\s*=|insertAdjacentHTML|document\.write|createElement|cssText|adoptedStyleSheets|\.style\b/);
@@ -950,9 +953,12 @@ test('neither the worker nor the popup nor the content script leaks a global', a
   await settle();
   const popup = loadPopup(world);
   await settle();
-  for (const loaded of [worker, content, popup]) {
-    expect(Object.keys(loaded.context)).toEqual(loaded.before);
+  // Phase 7 (D-13): the worker and the content world each gain exactly one
+  // declared global, the shared namespace. The popup loads no shared file yet.
+  for (const loaded of [worker, content]) {
+    expect(Object.keys(loaded.context)).toEqual([...loaded.before, NAMESPACE]);
   }
+  expect(Object.keys(popup.context)).toEqual(popup.before);
 });
 
 test('the popup renders fixed copy through textContent for every reachable status', async () => {

@@ -76,6 +76,13 @@ function createDocument() {
 // their single source is release/listing.md. The version stays pinned at 0.1.0:
 // the store rejects a re-upload with an unchanged version, but no upload has
 // happened yet, so bumping it now would invent a release history.
+//
+// Phase 7 widens both pins by decision (07-CONTEXT.md D-13, D-18), in its own
+// test-only commit: the shared settings module zhroma-settings.js is listed
+// first in content_scripts[0].js, and options_ui names the static stub
+// options.html, opened in a tab. The version stays 0.1.0 (D-19) and the
+// permission surface does not move (D-01). Both are still whole-object and
+// whole-list equalities, widened by exactly those two files and one field.
 test('manifest has the exact minimal MV3 isolated top-frame static injection contract', () => {
   expect(manifest).toEqual({
     manifest_version: 3,
@@ -85,8 +92,9 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
     minimum_chrome_version: '106', permissions: ['storage'],
     action: { default_popup: 'popup.html', default_icon: { 32: 'icons/neutral.png' } },
     icons: { 32: 'icons/neutral.png', 128: 'icons/brand.png' },
+    options_ui: { page: 'options.html', open_in_tab: true },
     background: { service_worker: 'background.js' },
-    content_scripts: [{ matches: ['https://*.zendesk.com/agent/*'], js: ['content.js'], css: ['zhroma.css'],
+    content_scripts: [{ matches: ['https://*.zendesk.com/agent/*'], js: ['zhroma-settings.js', 'content.js'], css: ['zhroma.css'],
       run_at: 'document_idle', world: 'ISOLATED', all_frames: false }],
   });
   // The store's own limits, asserted rather than assumed.
@@ -105,9 +113,9 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
   }
   expect(shippedInventory()).toEqual(['background.js', 'content.js', 'icons/brand.png', 'icons/missing.png',
     'icons/neutral.png', 'icons/off.png', 'icons/unreadable.png', 'icons/working.png', 'manifest.json',
-    'popup.html', 'popup.js', 'zhroma.css']);
+    'options.html', 'popup.html', 'popup.js', 'zhroma-settings.js', 'zhroma.css']);
   const declared = [...manifest.content_scripts[0].js, ...manifest.content_scripts[0].css,
-    manifest.action.default_popup, manifest.background.service_worker,
+    manifest.action.default_popup, manifest.background.service_worker, manifest.options_ui.page,
     ...Object.values(manifest.action.default_icon), ...Object.values(manifest.icons)];
   for (const name of declared) {
     expect(name).toMatch(/^(icons\/)?[a-z-]+\.(js|css|html|png)$/);
@@ -247,7 +255,7 @@ test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every decla
   expect(forbiddenCalls).toEqual([]);
   expect(harness.violations).toEqual([]);
   expect(harness.messages.every((message) => message.type === 'status-invalidated')).toBe(true);
-  expect(Object.keys(context)).toEqual(initialGlobals);
+  expect(Object.keys(context)).toEqual([...initialGlobals, 'Zhroma']);
   expect(vi.getTimerCount()).toBe(0);
   const markers = [...document.querySelectorAll('[data-zhroma-priority]')];
   if (mode === 'success') {
@@ -280,7 +288,7 @@ test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every decla
   }
   expect(forbiddenCalls).toEqual([]);
   expect(harness.violations).toEqual([]);
-  expect(Object.keys(context)).toEqual(initialGlobals);
+  expect(Object.keys(context)).toEqual([...initialGlobals, 'Zhroma']);
 });
 
 test('runtime source remains classic, palette-free and limited to DOM reading plus marker/lifecycle writes', () => {
@@ -291,6 +299,35 @@ test('runtime source remains classic, palette-free and limited to DOM reading pl
   expect(source).not.toMatch(/https?:|\.style\b|innerHTML|outerHTML\s*=|insertAdjacentHTML|document\.write|createElement|cssText|adoptedStyleSheets|attachShadow/);
   expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\s*\(|hsla?\s*\(|getBoundingClientRect|offsetHeight|offsetWidth|getComputedStyle/);
   expect(source).toMatch(/setAttribute\(PRIORITY_ATTRIBUTE, priority\)/);
+});
+
+// Phase 7 versioned pins (07-CONTEXT.md D-13, D-18). The shared settings module
+// joins the content world and the worker, and it must stay pure: it reads no
+// page, writes no DOM, reaches no network or storage and carries no colour.
+test('the shared settings module is a classic script with no module syntax, network, storage, DOM write or colour', () => {
+  const source = asset('zhroma-settings.js');
+  expect(() => new Script(source)).not.toThrow();
+  expect(source).not.toMatch(/^\s*(import|export)\b/mu);
+  expect(source).not.toMatch(/\b(import|export|require|eval|Function|fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|localStorage|sessionStorage|indexedDB|caches|postMessage|importScripts)\s*[.(]/u);
+  expect(source).not.toMatch(/\bstorage\s*\.|\bchrome\b|\bdocument\b|\bwindow\b/u);
+  expect(source).not.toMatch(/\.style\b|innerHTML|outerHTML|insertAdjacentHTML|createElement|setAttribute|cssText|adoptedStyleSheets|attachShadow/u);
+  expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\s*\(|hsla?\s*\(/iu);
+  expect(source).not.toMatch(/http/iu);
+});
+
+// D-18: the options stub is static. Phase 10 replaces it; until then it is one
+// fixed sentence with nothing that runs, submits or loads.
+test('the options stub is a static page with exactly one fixed sentence', () => {
+  const html = asset(manifest.options_ui.page);
+  expect(manifest.options_ui).toEqual({ page: 'options.html', open_in_tab: true });
+  expect(html).not.toMatch(/<script\b/iu);
+  expect(html).not.toMatch(/\son[a-z]+\s*=/iu);
+  expect(html).not.toMatch(/<(form|input|button|select|textarea|label|iframe|object|embed|img|link|a)\b/iu);
+  expect(html).not.toMatch(/https?:|\/\/|url\s*\(|@import|\s(src|href|action)\s*=/iu);
+  const paragraphs = [...html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/giu)].map(([, text]) => text);
+  expect(paragraphs).toEqual(['Zhroma needs no setup. There is nothing to change here.']);
+  expect(html.match(/<body>([\s\S]*)<\/body>/u)[1].trim())
+    .toBe('<p>Zhroma needs no setup. There is nothing to change here.</p>');
 });
 
 test('ongoing writes target only the owned marker and skip unchanged values', () => {
