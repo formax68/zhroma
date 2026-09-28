@@ -4,17 +4,17 @@ milestone: v1.1
 milestone_name: Themes & Rules
 current_phase: 07
 current_phase_name: Upgrade-Safe Foundation
-status: executing
-stopped_at: Completed 07-08-PLAN.md
-last_updated: "2026-09-28T09:42:58.838Z"
+status: verifying
+stopped_at: Completed 07-09-PLAN.md
+last_updated: "2026-09-28T11:36:59.366Z"
 last_activity: 2026-09-28
 last_activity_desc: Phase 07 execution started
-state_head: d5f4837e900358d791fcab3dbe8db8e5ce956589
+state_head: 8baf0dea4f3ecfeb65f7519f40158e8dab48fc0d
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
   percent: 33
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 
 Phase: 07 (Upgrade-Safe Foundation) — EXECUTING
 Plan: 9 of 9
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-28 — Phase 07 execution started
 
 Progress: [███░░░░░░░] 33%
@@ -100,6 +100,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 07 P06 | 9 min | 2 tasks | 4 files |
 | Phase 07 P07 | 9 min | 2 tasks | 4 files |
 | Phase 07 P08 | 7 min | 2 tasks | 5 files |
+| Phase 07 P09 | 13 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -198,6 +199,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-08: tsc runs first inside test:recon, so npm test and the release automated check (which runs test:recon directly) both block on a type error
 - [Phase 07]: 07-08: background.js joins the check unmodified via tsconfig.v1.json (strict false); content.js (TS2339 x1) and popup.js (TS2339 x8) stay out with the reason recorded in tsconfig.json; none is a genuine bug
 - [Phase 07]: 07-08: the public settings typedefs live at top level of zhroma-settings.js; ZhromaSettingsApi is checked against the frozen Zhroma.settings value and types/zhroma.d.ts types the global from it
+- [Phase 07]: 07-09: D-29 passed in one session (Chrome 153.0.8010.53, Apple M4): Phase 7 30-row median 1.7 ms vs 0.1.0 1.8 ms, band 0.2 ms; timed source df28338; 52/52 mutants killed on the same bytes
+- [Phase 07]: 07-09: scripts/phase-04-source.js identifies the Phase 4 timing harness from Git and pins only its judging code (timingJudgeSource) to committed text, since D-29 edits both harness files
 
 ### Pending Todos
 
@@ -241,8 +244,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-28T09:42:58.820Z
-Stopped at: Completed 07-08-PLAN.md
+Last session: 2026-09-28T11:36:59.348Z
+Stopped at: Completed 07-09-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
