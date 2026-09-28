@@ -15,7 +15,7 @@ Requirements for the 1.0.0 release. Each maps to exactly one roadmap phase.
 ### Upgrade safety
 
 - [ ] **COMPAT-01**: In Zendesk's light interface, with the default theme and no rules, a fresh 1.0.0 install paints tints identical to 0.1.0
-- [ ] **COMPAT-02**: An agent upgrading from 0.1.0 keeps their off/on setting, and Zhroma stores nothing new until they change a setting
+- [x] **COMPAT-02**: An agent upgrading from 0.1.0 keeps their off/on setting, and Zhroma stores nothing new until they change a setting
 - [x] **COMPAT-03**: 1.0.0 requests no permission beyond `storage`, so the update shows no permission prompt and never disables the extension
 - [ ] **COMPAT-04**: With default settings, every verified 0.1.0 behaviour — priority detection, liveness, the three-way diagnosis and the off/on switch — works unchanged
 
@@ -86,7 +86,7 @@ Requirements for the 1.0.0 release. Each maps to exactly one roadmap phase.
 
 ### Settings data
 
-- [ ] **DATA-01**: Theme, rules and identity are stored only on this device (`chrome.storage.local`); they are never synced or sent anywhere
+- [x] **DATA-01**: Theme, rules and identity are stored only on this device (`chrome.storage.local`); they are never synced or sent anywhere
 - [ ] **DATA-02**: Agent can export their rules and theme to a JSON file, which never includes their name
 - [ ] **DATA-03**: Agent can import a settings file and preview what will change before applying it
 - [ ] **DATA-04**: On import, the agent chooses to replace their rules or add the imported rules to them; import never changes their stored name
@@ -154,7 +154,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | COMPAT-01 | Phase 7 | Pending |
-| COMPAT-02 | Phase 7 | Pending |
+| COMPAT-02 | Phase 7 | Complete |
 | COMPAT-03 | Phase 7 | Complete |
 | COMPAT-04 | Phase 7 | Pending |
 | RECON-04 | Phase 6 | Gaps Found |
@@ -203,7 +203,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IDENT-04 | Phase 10 | Pending |
 | IDENT-05 | Phase 10 | Pending |
 | IDENT-06 | Phase 10 | Pending |
-| DATA-01 | Phase 7 | Pending |
+| DATA-01 | Phase 7 | Complete |
 | DATA-02 | Phase 10 | Pending |
 | DATA-03 | Phase 10 | Pending |
 | DATA-04 | Phase 10 | Pending |
