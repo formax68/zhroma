@@ -86,7 +86,7 @@ Plans:
   4. With default settings, priority detection, liveness through sort, refresh, view switch, pagination and scroll, the three-way diagnosis and the off/on switch all behave as in 0.1.0. The existing suites pass, the v1 mutants still die, and the zero-rule 30-row timing median stays within 10% or 0.2 ms (whichever is larger) of the 0.1.0 bytes measured in the same session on the same machine, with the existing budgets still passing (D-29; this replaced the original machine-specific "about 1.3 ms")
   5. Any setting written through the new worker settings queue lands only in `chrome.storage.local`. The sync area stays empty, and the extension makes no network request
 
-**Plans**: 9/12 plans executed
+**Plans**: 10/12 plans executed
 Plans:
 **Wave 1**
 
@@ -120,7 +120,7 @@ Plans:
 
 **Wave 8** *(gap closure, UAT 07 test 4 decision A — D-31's single repair round)*
 
-- [ ] 07-10-PLAN.md — WR-06 / G-07-4b: tighten the frozen contract once, additive and test-only: string-aware comment stripping, identifier-level network and sync rules, a scheme-relative rule, negative controls
+- [x] 07-10-PLAN.md — WR-06 / G-07-4b: tighten the frozen contract once, additive and test-only: string-aware comment stripping, identifier-level network and sync rules, a scheme-relative rule, negative controls
 - [ ] 07-11-PLAN.md — WR-01 / G-07-4a: judge historical Phase 3/4 timing samples with the pinned judges in a fresh null-prototype vm context, with the M1-M5 negative controls and the live-acceptance repoint in its own commit
 
 **Wave 9** *(blocked on Wave 8 completion)*
@@ -211,7 +211,7 @@ Plans:
 | 4. Honest Failure and an Off Switch | v1.0 | 20/20 | Shipped; human_needed | 2026-09-14 |
 | 5. Published | v1.0 | 3/7 | Shipped outside GSD | 2026-09-14 |
 | 6. Live DOM Recon 2 | v1.1 | 3/3 | In Progress|  |
-| 7. Upgrade-Safe Foundation | v1.1 | 9/12 | In Progress|  |
+| 7. Upgrade-Safe Foundation | v1.1 | 10/12 | In Progress|  |
 | 8. Themes That Follow Dark Mode | v1.1 | 0/TBD | Not started | - |
 | 9. Colouring Rules | v1.1 | 0/TBD | Not started | - |
 | 10. Rule Editor, "Is Me" and Settings Files | v1.1 | 0/TBD | Not started | - |

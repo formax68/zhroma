@@ -4,17 +4,17 @@ milestone: v1.1
 milestone_name: Themes & Rules
 current_phase: 07
 current_phase_name: Upgrade-Safe Foundation
-status: verifying
-stopped_at: Completed 07-09-PLAN.md
-last_updated: "2026-09-28T11:36:59.366Z"
-last_activity: 2026-09-28
+status: executing
+stopped_at: Completed 07-10-PLAN.md
+last_updated: "2026-10-01T17:45:59.787Z"
+last_activity: 2026-10-01
 last_activity_desc: Phase 07 execution started
-state_head: 8baf0dea4f3ecfeb65f7519f40158e8dab48fc0d
+state_head: 9ab06423ce95555bb2a203a557e56211c0a646da
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
   percent: 33
 ---
 
@@ -30,9 +30,9 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 07 (Upgrade-Safe Foundation) — EXECUTING
-Plan: 9 of 9
-Status: Phase complete — ready for verification
-Last activity: 2026-09-28 — Phase 07 execution started
+Plan: 2 of 12
+Status: Ready to execute
+Last activity: 2026-10-01 — Phase 07 execution started
 
 Progress: [███░░░░░░░] 33%
 
@@ -101,6 +101,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 07 P07 | 9 min | 2 tasks | 4 files |
 | Phase 07 P08 | 7 min | 2 tasks | 5 files |
 | Phase 07 P09 | 13 min | 3 tasks | 8 files |
+| Phase 07 P10 | 3 min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -201,6 +202,7 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-08: the public settings typedefs live at top level of zhroma-settings.js; ZhromaSettingsApi is checked against the frozen Zhroma.settings value and types/zhroma.d.ts types the global from it
 - [Phase 07]: 07-09: D-29 passed in one session (Chrome 153.0.8010.53, Apple M4): Phase 7 30-row median 1.7 ms vs 0.1.0 1.8 ms, band 0.2 ms; timed source df28338; 52/52 mutants killed on the same bytes
 - [Phase 07]: 07-09: scripts/phase-04-source.js identifies the Phase 4 timing harness from Git and pins only its judging code (timingJudgeSource) to committed text, since D-29 edits both harness files
+- [Phase 07]: 07-10: frozen contract tightened once, additively, in b0ae2dc: NETWORK_NAME and SYNC_NAME over codeOf(script) for scripts only, SCHEME_RELATIVE over raw scripts, pages and stylesheets, plus STYLE_IMAGE_SET and style-attribute checks; existing patterns, extension/ and runtime-contract.test.js unchanged
 
 ### Pending Todos
 
@@ -244,8 +246,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-28T11:36:59.348Z
-Stopped at: Completed 07-09-PLAN.md
+Last session: 2026-10-01T17:45:59.765Z
+Stopped at: Completed 07-10-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
