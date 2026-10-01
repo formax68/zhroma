@@ -137,3 +137,39 @@ test('the pinned timing judge text moves with any judge edit and refuses a missi
   expect(() => timingJudgeSource(runner.replace('export function mergeReport(', 'function mergeReport('))).toThrow(/phase-04-timing-judge-missing/);
   expect(() => timingJudgeSource(runner.replace('const finite = ', 'const finiteNumber = '))).toThrow(/phase-04-timing-judge-missing/);
 });
+// 07-11 (WR-01, G-07-4a): the text equality above is only a tripwire. The
+// historical verdict itself must come from the pinned judge code read from Git,
+// executed in a fresh null-prototype context on JSON text parsed inside it, so
+// nothing in this realm — the runner's top-level code, its imports, a patched
+// built-in — can reach it. Three crafted runs straddle the budgets: `ok` passes,
+// `slow` breaks the 16 ms max, `mixed` breaks the 2 ms size-30 median (3 ms).
+const craftedRuns = () => {
+  const slow = run(); slow.operations.edit[0] = sample(10, 8);
+  const mixed = run();
+  mixed.operations.edit = [...Array.from({ length: 40 }, () => sample(0.5, 0.5)), ...Array.from({ length: 60 }, () => sample(1.5, 1.5))];
+  return { ok: run(), slow, mixed };
+};
+const HONEST = { ok: 'passed', slow: 'gaps_found', mixed: 'gaps_found' };
+const RUNNER_URL = new URL('../../scripts/run-tint-workload.js', import.meta.url);
+const recordedRuns = (path) => Object.entries(JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8')).runs)
+  .filter(([key]) => !key.endsWith('-profile')).map(([, recorded]) => recorded);
+test('every recorded Phase 4 and Phase 3 timing run is judged by the pinned judge code in a fresh context', async () => {
+  const { readPhase04Source, buildTimingJudges } = await import('../../scripts/phase-04-source.js');
+  const { judges } = readPhase04Source();
+  expect(typeof judges?.validateWorkloadReport).toBe('function');
+  expect(typeof buildTimingJudges).toBe('function');
+  const phase4 = recordedRuns('../../.planning/phases/04-honest-failure-and-an-off-switch/04-PERFORMANCE-SAMPLES.json');
+  const phase3 = recordedRuns('../../.planning/phases/03-the-tint-survives-everything/03-PERFORMANCE-SAMPLES.json');
+  expect(phase4).toHaveLength(7);
+  expect(phase3).toHaveLength(6);
+  for (const recorded of [...phase4, ...phase3]) expect(judges.validateWorkloadReport(JSON.stringify(recorded))).toBe('passed');
+  for (const [name, crafted] of Object.entries(craftedRuns())) {
+    const verdict = judges.validateWorkloadReport(JSON.stringify(crafted));
+    expect(typeof verdict).toBe('string');
+    expect(verdict).toBe(HONEST[name]);
+    expect(validateWorkloadReport(crafted)).toBe(verdict);
+  }
+  expect(() => judges.validateWorkloadReport(run())).toThrow(/phase-04-timing-judge-input/);
+  const runner = readFileSync(RUNNER_URL, 'utf8');
+  expect(() => buildTimingJudges(runner.replace('export function mergeReport(', 'function mergeReport('))).toThrow(/phase-04-timing-judge-missing/);
+});
