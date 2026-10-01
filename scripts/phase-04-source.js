@@ -23,6 +23,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createContext, Script } from 'node:vm';
 
 export class Phase04SourceError extends Error {
   constructor(code, options) {
@@ -167,6 +168,45 @@ export function timingJudgeSource(text) {
   return parts.join('\n');
 }
 
+/**
+ * The pinned timing judges, executed rather than merely compared (07-11,
+ * WR-01). Only the judge slices of `runnerText` run — never the rest of the
+ * runner, never its imports — and they run in a fresh context the caller's
+ * realm cannot reach:
+ *
+ * - The sandbox has a null prototype and nothing is injected into it. Over an
+ *   ordinary `{}` sandbox, a value planted on the caller's `Object.prototype`
+ *   under a global's name (`Math`, say) is what in-context code resolves.
+ * - Code generation from strings and wasm is off.
+ * - A run crosses as JSON text and is parsed by the context's own `JSON.parse`.
+ *   A host-realm run object would carry the caller's `Array.prototype` in with
+ *   it, so a patched `sort` or `at` would still reach the pinned judge.
+ * - The verdict comes back as a primitive string.
+ *
+ * Only `validateWorkloadReport` is exposed: it is the one judge a historical
+ * verdict calls, `summarizeSamples` runs inside it, and `mergeReport` only
+ * builds new reports.
+ *
+ * @param {string} runnerText The runner source, normally the pinned Git blob.
+ * @returns {Readonly<{ validateWorkloadReport: (json: string) => string }>}
+ */
+export function buildTimingJudges(runnerText) {
+  // A Script is not a module, so the slices lose their `export` keyword.
+  const pinned = timingJudgeSource(runnerText).replace(/^export function /gmu, 'function ');
+  const context = createContext(Object.create(null), { codeGeneration: { strings: false, wasm: false } });
+  const completion = new Script(
+    `${pinned}\n;({ validateWorkloadReport: (json) => validateWorkloadReport(JSON.parse(json)) });\n`,
+    { filename: `pinned:${TIMING_JUDGE_PATH}` },
+  ).runInContext(context);
+  const judge = completion.validateWorkloadReport;
+  return Object.freeze({
+    validateWorkloadReport(json) {
+      reject(typeof json === 'string', 'phase-04-timing-judge-input');
+      return judge(json);
+    },
+  });
+}
+
 let cached = null;
 
 /**
@@ -215,9 +255,11 @@ export function readPhase04Source(options = {}) {
   // alone, like the validator above: Phase 7 (07-09, D-29) extends the working
   // copy of both harness files to serve the manifest's scripts and the pinned
   // 0.1.0 bytes, and a record of which harness measured is not a claim that
-  // the same files are still on disk unchanged. What the working copy still
-  // decides is the historical verdict, through the judges imported from it, so
-  // exactly that code is held to its committed text instead.
+  // the same files are still on disk unchanged. The historical verdict is
+  // decided by the committed judge code itself: the judge slices of the runner
+  // at the observation revision, executed by buildTimingJudges in a fresh
+  // null-prototype context on inputs parsed inside it. The text equality below
+  // stays as a tripwire that flags a judge edit in the working copy.
   const harness = createHash('sha256');
   for (const path of baseline.timing_harness_files) {
     const bytes = blob(baseline.observation_revision, path);
@@ -227,7 +269,8 @@ export function readPhase04Source(options = {}) {
   const timingHarnessHash = harness.digest('hex');
   reject(timingHarnessHash === baseline.timing_harness_sha256, 'phase-04-timing-harness-mismatch');
   reject(baseline.timing_harness_files.includes(TIMING_JUDGE_PATH), 'phase-04-timing-judge-missing');
-  reject(timingJudgeSource(blob(baseline.observation_revision, TIMING_JUDGE_PATH).toString('utf8'))
+  const pinnedRunner = blob(baseline.observation_revision, TIMING_JUDGE_PATH).toString('utf8');
+  reject(timingJudgeSource(pinnedRunner)
     === timingJudgeSource(readWorkingCopy(TIMING_JUDGE_PATH).toString('utf8')), 'phase-04-timing-judge-changed');
 
   let manifest;
@@ -247,6 +290,7 @@ export function readPhase04Source(options = {}) {
     contentSource: files['content.js'].toString('utf8'),
     timingHarnessHash,
     evidenceHashes: { ...baseline.evidence_hashes },
+    judges: buildTimingJudges(pinnedRunner),
   });
   if (!override) cached = result;
   return result;
