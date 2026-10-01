@@ -173,3 +173,112 @@ test('every recorded Phase 4 and Phase 3 timing run is judged by the pinned judg
   const runner = readFileSync(RUNNER_URL, 'utf8');
   expect(() => buildTimingJudges(runner.replace('export function mergeReport(', 'function mergeReport('))).toThrow(/phase-04-timing-judge-missing/);
 });
+// 07-11 negative controls (WR-01, M1-M5). Each mutant below is one statement
+// OUTSIDE the judge slices. The text tripwire cannot see any of them, so the
+// pinned judges must be immune by construction: only slice text ever runs, in
+// a realm of its own, on inputs parsed inside it. Each control is also shown to
+// be live — it really moves a verdict under the old arrangement — so a pass
+// here is not a pass by a mutant that does nothing.
+//
+// Window rules for the realm patches: no `expect` inside a window (Vitest may
+// use the patched built-ins), every patch restored in `finally`, a thrown call
+// recorded as a distinct verdict, and no `await` inside a window.
+const CODEGEN_OFF = { codeGeneration: { strings: false, wasm: false } };
+const deExported = (slices) => slices.replace(/^export function /gmu, 'function ');
+const insertAfterLine = (text, prefix, statement) => {
+  const lines = text.split('\n'); lines.splice(lines.findIndex((line) => line.startsWith(prefix)) + 1, 0, statement); return lines.join('\n');
+};
+const insertBeforeLine = (text, prefix, statement) => {
+  const lines = text.split('\n'); lines.splice(lines.findIndex((line) => line.startsWith(prefix)), 0, statement); return lines.join('\n');
+};
+const M1 = 'OPERATIONS.length = 0;';
+const MUTANTS = [
+  ['M1', M1, (text) => insertAfterLine(text, 'const finite = ', M1)],
+  ['M2', 'Math.ceil = () => 1;', (text) => insertBeforeLine(text, 'export async function readServedAssets', 'Math.ceil = () => 1;')],
+  ['M3', 'Array.prototype.sort = function () { return this; };', (text) => insertBeforeLine(text, 'export async function readServedAssets', 'Array.prototype.sort = function () { return this; };')],
+  ['M4', 'Array.prototype.at = function () { return 99; };', (text) => insertBeforeLine(text, 'export async function readServedAssets', 'Array.prototype.at = function () { return 99; };')],
+];
+const verdictOf = (call) => { try { return call(); } catch (error) { return `threw ${String(error && error.message)}`; } };
+const judgeEvery = (judge, inputs) => {
+  const verdicts = {};
+  for (const name of Object.keys(inputs)) verdicts[name] = verdictOf(() => judge(inputs[name]));
+  return verdicts;
+};
+test.each(MUTANTS)('%s outside the judge slices is invisible to the text tripwire and never executed by the pinned judges', async (_id, statement, mutate) => {
+  const { timingJudgeSource, buildTimingJudges } = await import('../../scripts/phase-04-source.js');
+  const runner = readFileSync(RUNNER_URL, 'utf8');
+  const mutant = mutate(runner);
+  expect(mutant).not.toBe(runner);
+  expect(mutant).toContain(`\n${statement}\n`);
+  expect(timingJudgeSource(mutant)).toBe(timingJudgeSource(runner));
+  const judges = buildTimingJudges(mutant);
+  for (const [name, crafted] of Object.entries(craftedRuns())) expect(judges.validateWorkloadReport(JSON.stringify(crafted))).toBe(HONEST[name]);
+});
+test('M1 is live: the judge slices evaluated with OPERATIONS emptied pass runs that break the budgets', async () => {
+  const { timingJudgeSource } = await import('../../scripts/phase-04-source.js');
+  const slices = deExported(timingJudgeSource(readFileSync(RUNNER_URL, 'utf8')));
+  const emptied = new Script(`${slices}\n${M1}\n;(json) => validateWorkloadReport(JSON.parse(json));\n`)
+    .runInContext(createContext(Object.create(null), CODEGEN_OFF));
+  const { slow, mixed } = craftedRuns();
+  expect(emptied(JSON.stringify(slow))).toBe('passed');
+  expect(emptied(JSON.stringify(mixed))).toBe('passed');
+});
+test('M2, M3 and M4 are live: a patched built-in moves the working-copy verdict and never a pinned verdict', async () => {
+  const { readPhase04Source, timingJudgeSource } = await import('../../scripts/phase-04-source.js');
+  const { judges } = readPhase04Source();
+  const runs = craftedRuns();
+  const texts = Object.fromEntries(Object.entries(runs).map(([name, crafted]) => [name, JSON.stringify(crafted)]));
+  const working = (crafted) => validateWorkloadReport(crafted);
+  const pinned = (text) => judges.validateWorkloadReport(text);
+  // The reviewer's sketch: pinned slices in a null-prototype context, but the
+  // bare in-context judge called with a HOST run object. That object's arrays
+  // dispatch to this realm's Array.prototype, which is why runs cross as text.
+  const sketch = new Script(`${deExported(timingJudgeSource(readFileSync(RUNNER_URL, 'utf8')))}\n;validateWorkloadReport;\n`)
+    .runInContext(createContext(Object.create(null), CODEGEN_OFF));
+  const seen = {};
+  const originalCeil = Math.ceil;
+  try {
+    Math.ceil = () => 1;
+    seen.M2 = { working: judgeEvery(working, runs), pinned: judgeEvery(pinned, texts) };
+  } finally {
+    Math.ceil = originalCeil;
+  }
+  const originalSort = Array.prototype.sort;
+  try {
+    Array.prototype.sort = function () { return this; };
+    seen.M3 = { working: judgeEvery(working, runs), pinned: judgeEvery(pinned, texts) };
+  } finally {
+    Array.prototype.sort = originalSort;
+  }
+  const originalAt = Array.prototype.at;
+  try {
+    Array.prototype.at = function () { return 99; };
+    seen.M4 = { working: judgeEvery(working, runs), pinned: judgeEvery(pinned, texts), sketch: verdictOf(() => sketch(runs.ok)) };
+  } finally {
+    Array.prototype.at = originalAt;
+  }
+  expect(seen.M2.working.mixed).toBe('passed');
+  expect(seen.M3.working.slow).toBe('passed');
+  expect(seen.M4.working.ok).toBe('gaps_found');
+  expect(seen.M4.sketch).toBe('gaps_found');
+  for (const id of ['M2', 'M3', 'M4']) expect(seen[id].pinned).toEqual(HONEST);
+});
+test('M5 is live: a planted Object.prototype.Math reaches a judge over an ordinary sandbox and never the pinned judges', async () => {
+  const { readPhase04Source, timingJudgeSource } = await import('../../scripts/phase-04-source.js');
+  const { judges } = readPhase04Source();
+  // Exactly like buildTimingJudges, except that the sandbox is an ordinary `{}`.
+  const ordinary = new Script(`${deExported(timingJudgeSource(readFileSync(RUNNER_URL, 'utf8')))}\n;({ validateWorkloadReport: (json) => validateWorkloadReport(JSON.parse(json)) });\n`)
+    .runInContext(createContext({}, CODEGEN_OFF));
+  const mixed = JSON.stringify(craftedRuns().mixed);
+  let overOrdinary;
+  let overPinned;
+  try {
+    Object.prototype.Math = { abs: Math.abs, ceil: () => 1 };
+    overOrdinary = verdictOf(() => ordinary.validateWorkloadReport(mixed));
+    overPinned = verdictOf(() => judges.validateWorkloadReport(mixed));
+  } finally {
+    delete Object.prototype.Math;
+  }
+  expect(overOrdinary).toBe('passed');
+  expect(overPinned).toBe('gaps_found');
+});
