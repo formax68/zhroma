@@ -15,6 +15,12 @@
 // Every check runs over the tree a recursive walker discovers, never a hand
 // list, so a file added later is covered without touching this file. Every
 // pattern is proven, inside its own test, to catch a synthetic violation.
+//
+// Tightened once more in 07-10, before Phase 7 closed, under UAT 07 test 4
+// decision A (WR-06). The tightening adds identifier-level rules over
+// comment-stripped scripts and a scheme-relative rule over raw text, on top of
+// the call-shaped rules below, which still run unchanged. Nothing was widened,
+// and later phases still never edit this file.
 import { readFileSync, readdirSync } from 'node:fs';
 import { URL } from 'node:url';
 import { expect, test } from 'vitest';
@@ -169,4 +175,164 @@ test('importScripts loads only quoted, packaged, relative scripts, and only from
 
   const serviceWorker = manifest.background?.service_worker;
   expect(importScriptsViolations([...scripts, ...pages], read, serviceWorker, inventory)).toEqual([]);
+});
+
+// Names, not calls (07-10, WR-06). The call-shaped rules above miss any
+// indirection between a name and its call: fetch.call, Reflect.apply, bracket
+// access, aliasing, destructuring, optional and tagged calls, the comma
+// operator. The rules below ban the names themselves, over script text with
+// its comments removed, so prose comments stay legal and code does not.
+//
+// What these rules cannot reach:
+// - computed or concatenated names, such as 'fe' + 'tch';
+// - escape sequences in identifiers or strings;
+// - URLs assembled at run time from page data;
+// - regex literals containing a quote, /* or //, which this lexer-free
+//   stripper can mis-pair.
+// By design:
+// - prose inside template literals is scanned whole, so it must avoid the
+//   banned words;
+// - comparing a storage area name with the string 'sync' trips the sync rule
+//   (compare with 'local' instead);
+// - a string that begins with two slashes trips the scheme-relative rule.
+const NETWORK_NAMES = [
+  'fetch', 'fetchLater', 'XMLHttpRequest', 'WebSocket', 'WebSocketStream', 'EventSource', 'sendBeacon',
+  'WebTransport', 'RTCPeerConnection',
+];
+const BANNED_NAMES = [...NETWORK_NAMES, 'sync'];
+// fetchLater and WebSocketStream are listed on their own: a word boundary does
+// not split fetchLater into fetch.
+const NETWORK_NAME = /\b(?:fetch|fetchLater|XMLHttpRequest|WebSocket|WebSocketStream|EventSource|sendBeacon|WebTransport|RTCPeerConnection)\b/u;
+const SYNC_NAME = /\bsync\b/u;
+// A backtick, quote, opening parenthesis, equals sign or comma; optional
+// whitespace; two slashes; then a character that is neither whitespace nor a
+// slash. Runs on RAW text only: the stripper blanks string contents.
+const SCHEME_RELATIVE = /[`'"(=,]\s*\/\/[^\s/]/u;
+
+// Strings come before comment openers, so '/*' and '//' inside a quoted string
+// never start a comment. Quoted strings are one line and honour escapes.
+const LEXEME = /'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\[\s\S])*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*/gu;
+
+/**
+ * `source` with its comments removed, in one string-aware pass. A quoted
+ * string whose whole text is a banned name is kept, so `window['fetch']` and
+ * `Reflect.get(chrome.storage, "sync")` stay visible; every other quoted string
+ * is blanked to its two quotes, so prose in a string is not code. A template
+ * literal is kept whole and scanned whole, which fails closed. A block comment
+ * becomes whitespace that keeps its newlines; a line comment becomes nothing.
+ */
+function codeOf(source) {
+  return source.replace(LEXEME, (lexeme) => {
+    const opener = lexeme[0];
+    if (opener === "'" || opener === '"') return BANNED_NAMES.includes(lexeme.slice(1, -1)) ? lexeme : `${opener}${opener}`;
+    if (opener === '`') return lexeme;
+    if (lexeme.startsWith('/*')) return lexeme.replace(/[^\n]/gu, ' ');
+    return '';
+  });
+}
+
+// Copied verbatim from content.js and background.js: shipped prose that names
+// a banned word and must stay legal.
+const SHIPPED_PROSE = [
+  '// An invalidation hint and nothing more: the worker must fetch a fresh',
+  '// sync, session or managed, and never anything the agent did not choose.',
+];
+const CLEAN_CODE = [
+  '// prose may say fetch, WebSocket or eval without calling them',
+  ...SHIPPED_PROSE,
+  "const note = 'Settings never sync to other devices';",
+  'const note = "We do not fetch anything";',
+  '/* fetch WebSocket sync */ const a = 1;',
+  'syncController(true);',
+  'async function load() {}',
+];
+
+test('the comment stripper is string-aware and removes the shipped comments (07-10)', () => {
+  for (const [source, code] of [
+    ["window['fetch'](u);", "window['fetch'](u);"],
+    ['Reflect.get(chrome.storage, "sync");', 'Reflect.get(chrome.storage, "sync");'],
+    ["const t = 'Settings never sync to other devices';", "const t = '';"],
+    ['const t = "a \\" b";', 'const t = "";'],
+    ["const t = 'it\\'s';", "const t = '';"],
+    ['const t = `a ${b} // c /* d */`;', 'const t = `a ${b} // c /* d */`;'],
+    ['x; // line comment\ny;', 'x; \ny;'],
+    ['y; /* two\nlines */ z;', `y; ${' '.repeat(6)}\n${' '.repeat(8)} z;`],
+    ["'/*'; fetch(u); '*/'", "''; fetch(u); ''"],
+    ["'//'; fetch(u)", "''; fetch(u)"],
+  ]) expect(codeOf(source), source).toBe(code);
+
+  expect(scripts.some((name) => {
+    const source = read(name);
+    const code = codeOf(source);
+    return code !== source && code.length < source.length;
+  })).toBe(true);
+});
+
+test('no shipped script names a network API outside its comments (D-27, WR-06)', () => {
+  for (const violation of [
+    'fetch.call(null, u)', 'fetch.apply(null, [u])', 'Reflect.apply(fetch, null, [u])', "window['fetch'](u)",
+    'globalThis["fetch"](u)', 'const f = fetch; f(u)', 'const { fetch: f } = globalThis', 'fetch.bind(null)(u)',
+    'navigator.sendBeacon.call(navigator, u)', 'Reflect.construct(WebSocket, [u])',
+    'const X = XMLHttpRequest; new X()', 'new WebTransport(u)', 'new RTCPeerConnection()', 'fetch`u`',
+    '(0, fetch)(u)', 'fetch?.(u)', 'fetchLater(u)', 'new WebSocketStream(u)', 'window[`fetch`](u)',
+    'const t = `${fetch(u)}`;', "'/*'; fetch(u); '*/'", "'//'; fetch(u)",
+  ]) expect(codeOf(violation), violation).toMatch(NETWORK_NAME);
+  for (const clean of CLEAN_CODE) expect(codeOf(clean), clean).not.toMatch(NETWORK_NAME);
+
+  for (const name of scripts) expect(codeOf(read(name)), name).not.toMatch(NETWORK_NAME);
+});
+
+test('no shipped script names the sync storage area outside its comments (DATA-01, WR-06)', () => {
+  for (const violation of [
+    'const { sync } = chrome.storage', 'const s = chrome.storage; s.sync.get()',
+    "const { ['sync']: a } = chrome.storage", 'Reflect.get(chrome.storage, "sync")',
+    'const { storage: st } = chrome; st.sync', "chrome['storage'].sync", 'chrome.storage /* c */ .sync',
+    'chrome.storage[`sync`]',
+  ]) expect(codeOf(violation), violation).toMatch(SYNC_NAME);
+  for (const clean of CLEAN_CODE) expect(codeOf(clean), clean).not.toMatch(SYNC_NAME);
+
+  for (const name of scripts) expect(codeOf(read(name)), name).not.toMatch(SYNC_NAME);
+});
+
+test('no shipped script, page or stylesheet holds a scheme-relative URL (D-27, WR-06)', () => {
+  for (const violation of [
+    "new Image().src = '//t.example/p.gif'", 'new Image().src = "//t.example/p.gif"',
+    'new Image().src = `//t.example/p.gif`', '<img src="//t.example/p.gif">', '<img src=//t.example/p.gif>',
+    "el.style.background = 'url(//t.example/p.gif)'", '<p style="background:url(//t.example/p.gif)">',
+    '<img srcset="a.png 1x, //t.example/b.png 2x">', "@import '//t.example/x.css';",
+    'a { background: url(//t.example/p.gif) }',
+  ]) expect(violation, violation).toMatch(SCHEME_RELATIVE);
+  for (const clean of ['// a comment', '/* block */', 'a / b / c', 'const r = /\\/\\//u;', "const s = 'a//';"]) {
+    expect(clean, clean).not.toMatch(SCHEME_RELATIVE);
+  }
+
+  for (const name of [...scripts, ...pages, ...stylesheets]) expect(read(name), name).not.toMatch(SCHEME_RELATIVE);
+});
+
+const STYLE_IMAGE_SET = /image-set\s*\(/iu;
+
+/** The value of every `style` attribute in `html`: double-quoted, single-quoted or unquoted. */
+function styleAttributes(html) {
+  return [...html.matchAll(/[\s"'/]style\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/giu)]
+    .map(([, double, single, bare]) => double ?? single ?? bare);
+}
+
+test('stylesheets, page style blocks and page style attributes load nothing (D-26, WR-06)', () => {
+  expect(styleAttributes('<p style="a:b">x</p><div STYLE=\'c:d\'></div><span style=e:f>y</span><i data-style="g">'))
+    .toEqual(['a:b', 'c:d', 'e:f']);
+  for (const violation of ['a { background: image-set("p.png" 1x) }', '-webkit-image-set("//t/p.png" 1x)']) {
+    expect(violation, violation).toMatch(STYLE_IMAGE_SET);
+  }
+  expect('a { background-color: rgb(1 2 3 / 0.1) }').not.toMatch(STYLE_IMAGE_SET);
+  expect(styleAttributes('<p style="background:url(//t.example/p.gif)">')[0]).toMatch(STYLE_LOAD);
+
+  for (const name of stylesheets) expect(read(name), name).not.toMatch(STYLE_IMAGE_SET);
+  for (const name of pages) {
+    const html = read(name);
+    for (const block of styleBlocks(html)) expect(block, name).not.toMatch(STYLE_IMAGE_SET);
+    for (const value of styleAttributes(html)) {
+      expect(value, name).not.toMatch(STYLE_LOAD);
+      expect(value, name).not.toMatch(STYLE_IMAGE_SET);
+    }
+  }
 });
