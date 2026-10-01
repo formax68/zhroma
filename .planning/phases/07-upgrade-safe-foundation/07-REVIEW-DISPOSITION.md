@@ -9,7 +9,7 @@ findings:
     title: "The Phase 4 judge-text pin can be bypassed by top-level code outside the pinned slices"
   - id: WR-02
     severity: warning
-    disposition: open
+    disposition: skipped
     title: "`apply-preference` acknowledges `applied: true` while the settings gate is still holding the tint back"
   - id: WR-03
     severity: warning
@@ -47,7 +47,7 @@ findings:
     severity: info
     disposition: open
     title: "The `typecheck` script duplicates the two tsc commands inside `test:recon`"
-open: 11
+open: 10
 total: 11
 recorded: 2026-09-28T11:48:54.689Z
 ---
@@ -57,7 +57,7 @@ recorded: 2026-09-28T11:48:54.689Z
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
 | WR-01 | warning | open | - |
-| WR-02 | warning | open | - |
+| WR-02 | warning | skipped | UAT 07 test 1 (2026-09-30): accepted as the cost of D-09's bounded 500 ms wait; the popup may read 'Checking this view' until reopened when the settings read is slow or hung |
 | WR-03 | warning | open | - |
 | WR-04 | warning | open | - |
 | WR-05 | warning | open | - |
