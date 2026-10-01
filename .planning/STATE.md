@@ -5,16 +5,16 @@ milestone_name: Themes & Rules
 current_phase: 07
 current_phase_name: Upgrade-Safe Foundation
 status: executing
-stopped_at: Completed 07-11-PLAN.md
-last_updated: "2026-10-01T17:54:45.581Z"
+stopped_at: Completed 07-12-PLAN.md
+last_updated: "2026-10-01T18:01:58.140Z"
 last_activity: 2026-10-01
 last_activity_desc: Phase 07 execution started
-state_head: 67a797a44e4ae9a6526cf07a4b38632345f27ef3
+state_head: 93006eae850522317cdd5d804e4a2d5110de394e
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
   percent: 33
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 07 (Upgrade-Safe Foundation) — EXECUTING
-Plan: 3 of 12
+Plan: 4 of 12
 Status: Ready to execute
 Last activity: 2026-10-01 — Phase 07 execution started
 
@@ -103,6 +103,7 @@ v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Them
 | Phase 07 P09 | 13 min | 3 tasks | 8 files |
 | Phase 07 P10 | 3 min | 1 tasks | 1 files |
 | Phase 07 P11 | 6 min | 3 tasks | 4 files |
+| Phase 07 P12 | 3 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -205,6 +206,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-09: scripts/phase-04-source.js identifies the Phase 4 timing harness from Git and pins only its judging code (timingJudgeSource) to committed text, since D-29 edits both harness files; since 07-11 the historical Phase 3 and Phase 4 timing verdicts are decided by those pinned judges, run in a fresh null-prototype node:vm context on in-context-parsed JSON (WR-01), with the text equality kept as a tripwire
 - [Phase 07]: 07-10: frozen contract tightened once, additively, in b0ae2dc: NETWORK_NAME and SYNC_NAME over codeOf(script) for scripts only, SCHEME_RELATIVE over raw scripts, pages and stylesheets, plus STYLE_IMAGE_SET and style-attribute checks; existing patterns, extension/ and runtime-contract.test.js unchanged
 - [Phase 07]: WR-01: historical Phase 3/4 timing verdicts are computed by the pinned judge slices from Git in a null-prototype node:vm context on in-context-parsed JSON; the text equality stays a tripwire only
+- [Phase 07]: 07-12: WR-01 (07-11: bfd364c, 029f031, b9067c1, 6da90dc) and WR-06 (07-10: b0ae2dc) recorded as fixed in 07-REVIEW-DISPOSITION.md; 8 review findings remain open; 07-VERIFICATION.md status and score left to re-verification
+- [Phase 07]: 07-12 (D-31): the 07-10 to 07-12 gap closure is Phase 7's single repair round; any later review finding on 07-10 or 07-11 goes to the backlog or .planning/WINDOWS.md, not another repair round
 
 ### Pending Todos
 
@@ -248,8 +251,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-01T17:54:45.558Z
-Stopped at: Completed 07-11-PLAN.md
+Last session: 2026-10-01T18:01:52.206Z
+Stopped at: Completed 07-12-PLAN.md
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
