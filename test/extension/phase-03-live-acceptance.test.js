@@ -4,9 +4,18 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
-import { validateWorkloadReport } from '../../scripts/run-tint-workload.js';
+import { readPhase04Source } from '../../scripts/phase-04-source.js';
 
 const ASSETS = ['manifest.json', 'content.js', 'zhroma.css'];
+// WR-01 / G-07-4a: the Phase 3 timing samples are judged by the Phase 4 pinned
+// judges — the judge slices of scripts/run-tint-workload.js at the Phase 5
+// baseline's observation revision, executed by scripts/phase-04-source.js in a
+// fresh null-prototype context on JSON text parsed inside it. That is the same
+// judge text the working copy carried (the 04-09 dormant-mode version), it
+// returns `passed` for all six Phase 3 runs (proven in
+// performance-harness.test.js), and this file previously had no judge guard in
+// its own module graph at all: it imported the working-copy runner directly.
+const judges = readPhase04Source().judges;
 const REQUIRED_IDS = ['in-app-entry', 'delayed-entry', 'sort', 'refresh', 'view-switch', 'pagination-next', 'pagination-previous', 'scroll', 'grouped-sticky', 'native-states', 'failure-cleanup', 'ticket-isolation', 'dashboard-isolation', 'admin-isolation', 'tab-return', 'document-restoration', 'live-responsiveness', 'live-pass-budget', 'live-forced-layout', 'live-thirty-switch-memory'];
 const SCOPE = { language: 'English', html_lang: 'en', shell: 'current Agent Workspace', interface: 'light' };
 // Phase 3's observations were made against these bytes, not against whatever
@@ -123,7 +132,7 @@ function validatePhase03Acceptance(record, performance = performanceRecord, { no
     const run = performance.runs?.[`${size}-${mode}`];
     if (!run) { timingComplete = false; continue; }
     requireEvidence(run.size === size && run.mode === mode, 'performance-scope');
-    const outcome = validateWorkloadReport(run);
+    const outcome = judges.validateWorkloadReport(JSON.stringify(run));
     if (outcome === 'gaps_found') performanceFailed = true;
   }
   let profilesComplete = true;

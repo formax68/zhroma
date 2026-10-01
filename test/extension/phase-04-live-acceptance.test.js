@@ -32,7 +32,6 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
-import { validateWorkloadReport } from '../../scripts/run-tint-workload.js';
 import { BASELINE_PATH, readBaseline, readPhase04Source, readWorkingCopy } from '../../scripts/phase-04-source.js';
 
 const root = new URL('../../', import.meta.url);
@@ -347,7 +346,8 @@ export function validatePhase04Acceptance(record, performance = loadPerformance(
       requireEvidence(run.runtime === (mode === 'disabled' ? 'absent' : 'loaded'), 'performance-runtime');
       if (mode === 'dormant') requireEvidence(run.resources?.observers === 0
         && run.resources?.pendingTimers === 0, 'performance-dormant-resources');
-      if (validateWorkloadReport(run) === 'gaps_found') performanceFailed = true;
+      // The verdict comes from the pinned Phase 4 judge code, read from Git and run in its own context (WR-01).
+      if (OBSERVED_SOURCE.judges.validateWorkloadReport(JSON.stringify(run)) === 'gaps_found') performanceFailed = true;
     }
   }
 

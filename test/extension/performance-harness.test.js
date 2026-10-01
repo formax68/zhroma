@@ -282,3 +282,13 @@ test('M5 is live: a planted Object.prototype.Math reaches a judge over an ordina
   expect(overOrdinary).toBe('passed');
   expect(overPinned).toBe('gaps_found');
 });
+// 07-11 (WR-01): the historical verdicts are safe only while the live-acceptance
+// validators keep calling the pinned judges. A later re-import of the runner
+// would put its working-copy top-level code back into their module graph.
+test('the Phase 4 and Phase 3 live-acceptance validators never re-import the timing runner', () => {
+  for (const file of ['phase-04-live-acceptance.test.js', 'phase-03-live-acceptance.test.js']) {
+    const text = readFileSync(new URL(file, import.meta.url), 'utf8');
+    expect(text.split('\n').filter((line) => line.startsWith('import') && line.includes('run-tint-workload'))).toEqual([]);
+    expect(text).toContain('judges.validateWorkloadReport(');
+  }
+});
