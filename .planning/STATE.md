@@ -5,7 +5,7 @@ milestone_name: Themes & Rules
 current_phase: 6
 current_phase_name: Live DOM Recon 2
 status: planning
-stopped_at: Phase 07 complete, ready to plan Phase 6
+stopped_at: "Phase 07 complete; Phase 6 awaits user custody close-out, then plan Phase 8"
 last_updated: "2026-10-02T02:42:42.189Z"
 last_activity: 2026-10-02
 last_activity_desc: Phase 07 complete, transitioned to Phase 6
@@ -22,19 +22,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-25)
+See: .planning/PROJECT.md (updated 2026-10-02)
 
 **Core value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.
-**Current focus:** Phase 07 — Upgrade-Safe Foundation
+**Current focus:** Phase 6 — Live DOM Recon 2 (custody close-out), then Phase 8 — Themes That Follow Dark Mode
 
 ## Current Position
 
 Phase: 6 — Live DOM Recon 2
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-10-02 — Phase 07 complete, transitioned to Phase 6
+Plan: 3 of 3 executed
+Status: Verification gaps_found (14/15) — the only gap is the user custody action (delete or encrypt the Recon 2 private inputs, delete the personal recon view, then update the SELECTORS.md handoff)
+Last activity: 2026-10-02 — Phase 07 complete (re-verified passed 5/5 after gap closure 07-10 to 07-12); focus returns to Phase 6
 
-Progress: [███░░░░░░░] 27%
+Progress: [████████████████████] 15/15 planned plans (100%) — Phases 8–11 not yet planned; 1 of 6 v1.1 phases complete
 
 v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Themes That Follow Dark Mode → 9 Colouring Rules → 10 Rule Editor, "Is Me" and Settings Files → 11 Release 1.0.0
 
@@ -229,6 +229,7 @@ CR-01/CR-02 repairs and independent reverification are complete; 403 tests and f
 - ACK-04-01 is acknowledged as of 2026-09-11. The fourteen observations attested on 2026-09-10 remain history and do not count toward repaired-byte acceptance. The current-source walkthrough has 14 passes and 3 pending checks: language-icon-copy and structure-copy under AR-04-01, plus english-regional-locale explicitly deferred by the user as non-blocking.
 - Phase 05 submission gate: release/policy-applicability.md is UNRESOLVED on in-product prominent disclosure and affirmative consent applicability. Blocks 05-07 submission until the real Chrome install prompt and the live Privacy practices tab are observed.
 - Phase 6 custody pending on the user: delete or encrypt the Recon 2 private inputs and delete the personal recon view, then set private-inputs and recon-views-deleted in the SELECTORS.md Recon 2 handoff. Also: gsd-tools windows append rejects WINDOWS.md entry 12 (kind accepted-risk), and the recon2 smoke test pins handoff next-step to a digit or admission.
+- [Phase 07] Open review findings WR-03 (no-op save bumps the CAS revision), WR-04 (missing/corrupt `rev` reads as `stored`) and WR-05 (shared, unfrozen `defaultValue`) are latent while `theme` is the only key; fix them before the Phase 9/10 settings keys land (D-31 kept them out of the Phase 7 repair round). IN-01 to IN-05 also remain open in 07-REVIEW-DISPOSITION.md.
 
 ### Roadmap Evolution
 
@@ -253,8 +254,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-01T18:01:52.206Z
-Stopped at: Phase 07 complete, ready to plan Phase 6
+Last session: 2026-10-02T02:44:04Z
+Stopped at: Phase 07 complete; Phase 6 awaits the user custody close-out before re-verification, then plan Phase 8
 Resume file: None
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.

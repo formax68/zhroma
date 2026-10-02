@@ -62,6 +62,9 @@ These shipped in 0.1.0. The user reported on 2026-09-25 that all remaining v1.0 
 - ✓ Three-way diagnosis and toolbar state (FAIL-01, FAIL-03, FAIL-05) — v1.0, user-reported accepted
 - ✓ Pre-submission smoke checklist (STORE-06) — v1.0, user-reported accepted
 
+- ✓ A fresh or upgraded install behaves exactly like 0.1.0 with no setup: identical light-interface tints, the off/on setting kept with nothing new stored, no permission beyond `storage`, and every verified 0.1.0 behaviour unchanged under default settings (COMPAT-01–04) — Phase 07
+- ✓ Settings are stored only on this device in `chrome.storage.local`, never synced or sent anywhere (DATA-01) — Phase 07
+
 ### Active
 
 Milestone v1.1 Themes & Rules. Detailed REQ-IDs are in `.planning/REQUIREMENTS.md`.
@@ -73,8 +76,7 @@ Milestone v1.1 Themes & Rules. Detailed REQ-IDs are in `.planning/REQUIREMENTS.m
 - [ ] Rules test any column shown in the view, with AND/OR groups of conditions
 - [ ] Each rule's colour is a theme slot or a fixed custom hex; each rule either replaces the tint or adds a mark
 - [ ] "Assignee is me" works from an auto-detected identity the agent can correct
-- [ ] Settings are stored on the device only and can be exported to and imported from a file
-- [ ] A fresh install behaves exactly like 0.1.0, with no setup
+- [ ] Settings can be exported to and imported from a file (device-only storage validated in Phase 07)
 - [ ] Released publicly as extension 1.0.0
 
 ### Out of Scope
@@ -138,6 +140,9 @@ Milestone v1.1 Themes & Rules. Detailed REQ-IDs are in `.planning/REQUIREMENTS.m
 | Settings stay in `chrome.storage.local`, with file export/import | Rules can hold names and field values; sync would route them through the user's Google account | — Pending — v1.1 |
 | "Me" is auto-detected from the Zendesk page and editable | Keeps "assignee is me" zero-setup while surviving detection failure or DOM change | — Pending — v1.1 |
 | Planning milestone v1.1 ships as extension 1.0.0 | Milestone labels continue the planning sequence; the store version marks the first feature-complete public release | — Pending — v1.1 |
+| One worker settings queue is the only writer: serial, with an optional revision compare-and-swap; a settings failure never blocks priority tinting (D-09) | Concurrent popup and options-page writes must not lose updates, and the 0.1.0 tint must survive a broken settings read | ✓ Good — Phase 07; accepted cost: the popup briefly reports `neutral` until the 500 ms settings gate opens (WR-02) |
+| Timing parity is judged in one session on one machine, within 10% or 0.2 ms of the 0.1.0 bytes (D-29) | A machine-specific absolute figure ("about 1.3 ms") cannot be reproduced on other hardware | ✓ Good — Phase 07: 1.7 ms vs 1.8 ms; historical verdicts now come from the pinned judge code run in isolation (WR-01) |
+| Review and repair capped at one round per phase (D-31) | Endless review loops cost more than the latent findings they chase | ✓ Applied — Phase 07 gap closure 07-10 to 07-12 was the single round; WR-03/04/05 and IN-01 to IN-05 stay open for before the Phase 9/10 keys land |
 
 ## Evolution
 
@@ -158,4 +163,4 @@ This document evolves at phase transitions and milestone boundaries.
 5. Update Context with current state
 
 ---
-*Last updated: 2026-09-25 after starting milestone v1.1 Themes & Rules*
+*Last updated: 2026-10-02 after Phase 07*
