@@ -23,7 +23,7 @@
 **Milestone Goal:** An agent can pick a well-known colour theme that reads correctly in both Zendesk light and dark mode, and can write their own colouring rules on any column shown in the view. A fresh install still looks and behaves exactly like 0.1.0, with nothing to set up.
 
 - [ ] **Phase 6: Live DOM Recon 2** - Record, from a live account, how Zendesk signals dark mode, where the agent's name renders and how rule-relevant columns render (read-only, user-driven)
-- [ ] **Phase 7: Upgrade-Safe Foundation** - Add the settings layer and a 0.1.0 parity harness, so an upgraded or fresh install stays exactly 0.1.0 until the agent changes something
+- [x] **Phase 7: Upgrade-Safe Foundation** - Add the settings layer and a 0.1.0 parity harness, so an upgraded or fresh install stays exactly 0.1.0 until the agent changes something (completed 2026-10-02)
 - [ ] **Phase 8: Themes That Follow Dark Mode** - Add a popup theme picker with eight validated presets whose tints follow Zendesk's light/dark mode live
 - [ ] **Phase 9: Colouring Rules** - Colour or stripe rows from saved ordered rules on any shown column, through every re-render, with rule status in the popup
 - [ ] **Phase 10: Rule Editor, "Is Me" and Settings Files** - Add an options page to write, order and test rules, confirm-once identity for "is me", and local export/import/reset
@@ -86,7 +86,7 @@ Plans:
   4. With default settings, priority detection, liveness through sort, refresh, view switch, pagination and scroll, the three-way diagnosis and the off/on switch all behave as in 0.1.0. The existing suites pass, the v1 mutants still die, and the zero-rule 30-row timing median stays within 10% or 0.2 ms (whichever is larger) of the 0.1.0 bytes measured in the same session on the same machine, with the existing budgets still passing (D-29; this replaced the original machine-specific "about 1.3 ms")
   5. Any setting written through the new worker settings queue lands only in `chrome.storage.local`. The sync area stays empty, and the extension makes no network request
 
-**Plans**: 12/12 plans executed
+**Plans**: 12/12 plans complete
 Plans:
 **Wave 1**
 
@@ -211,7 +211,7 @@ Plans:
 | 4. Honest Failure and an Off Switch | v1.0 | 20/20 | Shipped; human_needed | 2026-09-14 |
 | 5. Published | v1.0 | 3/7 | Shipped outside GSD | 2026-09-14 |
 | 6. Live DOM Recon 2 | v1.1 | 3/3 | In Progress|  |
-| 7. Upgrade-Safe Foundation | v1.1 | 12/12 | In Progress|  |
+| 7. Upgrade-Safe Foundation | v1.1 | 12/12 | Complete    | 2026-10-02 |
 | 8. Themes That Follow Dark Mode | v1.1 | 0/TBD | Not started | - |
 | 9. Colouring Rules | v1.1 | 0/TBD | Not started | - |
 | 10. Rule Editor, "Is Me" and Settings Files | v1.1 | 0/TBD | Not started | - |

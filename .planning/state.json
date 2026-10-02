@@ -36,7 +36,7 @@
     {
       "number": "7",
       "name": "Upgrade-Safe Foundation",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "8",
@@ -61,8 +61,8 @@
   ],
   "next": {
     "command": "/gsd:progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 07 of 6 · 33% · executing"
+    "label": "Advance to the next step (plan phase 6)",
+    "reason": "Phase 6 of 6 — needs a plan"
   },
-  "updated_at": "2026-10-01T18:01:43.681Z"
+  "updated_at": "2026-10-02T02:42:42.206Z"
 }
