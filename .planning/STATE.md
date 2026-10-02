@@ -208,6 +208,7 @@ Recent decisions affecting current work:
 - [Phase 07]: WR-01: historical Phase 3/4 timing verdicts are computed by the pinned judge slices from Git in a null-prototype node:vm context on in-context-parsed JSON; the text equality stays a tripwire only
 - [Phase 07]: 07-12: WR-01 (07-11: bfd364c, 029f031, b9067c1, 6da90dc) and WR-06 (07-10: b0ae2dc) recorded as fixed in 07-REVIEW-DISPOSITION.md; 8 review findings remain open; 07-VERIFICATION.md status and score left to re-verification
 - [Phase 07]: 07-12 (D-31): the 07-10 to 07-12 gap closure is Phase 7's single repair round; any later review finding on 07-10 or 07-11 goes to the backlog or .planning/WINDOWS.md, not another repair round
+- [Phase 07]: 2026-10-02, user decision at execute-phase --gaps-only: the execute:post code-review gate was skipped for the 07-10 to 07-12 run. A re-run rewrites 07-REVIEW.md with fresh IDs, and the disposition ledger would then drop the recorded WR-01/WR-06 `fixed` and WR-02 `skipped` decisions on ID reuse. The gap code is covered by its planned controls (07-10 negative/clean controls, 07-11 M1-M5). `/gsd-code-review 07` stays available as an optional follow-up
 
 ### Pending Todos
 
