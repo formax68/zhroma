@@ -1,8 +1,8 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "UAT gap G-07-4a (Phase 07 test 4, WR-01): The Phase 4 timing-judge guard cannot be bypassed by code outside the pinned judge slices"
 created: 2026-10-01T17:00:00Z
-updated: 2026-10-01T17:20:00Z
+updated: 2026-10-02T02:42:34Z
 goal: find_root_cause_only
 symptoms_prefilled: true
 ---

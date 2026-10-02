@@ -1,8 +1,8 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "UAT gap G-07-4b (Phase 07 test 4, WR-06): test/extension/frozen-contract.test.js catches evasive network calls (fetch.call, Reflect.apply, bracket access, aliasing), quoted scheme-relative URLs and aliased or destructured chrome.storage sync access, each proven by a negative control"
 created: 2026-10-01T17:30:00Z
-updated: 2026-10-01T18:05:00Z
+updated: 2026-10-02T02:42:34Z
 goal: find_root_cause_only
 symptoms_prefilled: true
 ---

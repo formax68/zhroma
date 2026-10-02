@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 07-upgrade-safe-foundation
 source: [07-VERIFICATION.md]
 started: 2026-09-28T12:00:00Z
-updated: 2026-10-01T17:02:53Z
+updated: 2026-10-02T02:42:34Z
 ---
 
 ## Current Test
@@ -51,7 +51,7 @@ blocked: 0
 
 - gap_id: G-07-4a
   truth: "The Phase 4 timing-judge guard cannot be bypassed by code outside the pinned judge slices: historical samples are judged by the pinned judge code itself, not by the working copy of scripts/run-tint-workload.js (WR-01)"
-  status: failed
+  status: resolved
   reason: "User reported: A (fix WR-01 and WR-06 now, before Phase 8)"
   severity: minor
   test: 4
@@ -71,11 +71,11 @@ blocked: 0
     - "Point phase-04 and phase-03 live-acceptance tests at the pinned judges and drop their run-tint-workload.js imports (verdicts stay unchanged: Phase 4 pinned judges also pass all six Phase 3 runs)"
     - "Add negative controls for edits outside the slices (M1-M4 from the debug repro) proving the pinned verdict does not move while the text check still passes"
     - "Respect: exactly one readFileSync( in scripts/phase-04-source.js (phase-04-live-acceptance L741-747); keep readBaseline, timingJudgeSource and phase-04-timing-judge-* rejection codes; no new dependencies (D-23); assertion changes in their own commit with a reason (D-25/D-06); do not edit pinned evidence files or 05-BASELINE.json; do not register mutants against phase-04-live-acceptance.test.js"
-  debug_session: .planning/debug/07-wr01-judge-pin-bypass.md
+  debug_session: .planning/debug/resolved/07-wr01-judge-pin-bypass.md
 
 - gap_id: G-07-4b
   truth: "test/extension/frozen-contract.test.js catches evasive network calls (fetch.call, Reflect.apply, bracket access, aliasing), quoted scheme-relative URLs and aliased or destructured chrome.storage sync access, each proven by a negative control (WR-06)"
-  status: failed
+  status: resolved
   reason: "User reported: A (fix WR-01 and WR-06 now, before Phase 8)"
   severity: minor
   test: 4
@@ -90,4 +90,4 @@ blocked: 0
     - "Optionally add image-set( to STYLE_LOAD and apply STYLE_LOAD to page style attributes"
     - "Negative controls: every WR-06 evasion plus '/*'; fetch(u); '*/' and '//'; fetch(u) must be caught; existing prose control, the two shipped comments, 'Settings never sync to other devices', syncController() and async must pass; document remaining limits (concatenation, escapes, page-data URLs) in the file"
     - "Respect: strictly additive (no existing pattern or control loosened or removed); own test-only commit touching only this file with a Why: body (D-06/D-25), not bundled with WR-01; nothing under extension/ changes (do not reword the shipped comments); runtime-contract.test.js pins unchanged; afterwards refresh 07-VERIFICATION.md truth 3 / STATE.md wording that the file is untouched since 8e9373b"
-  debug_session: .planning/debug/07-wr06-frozen-contract-evasion.md
+  debug_session: .planning/debug/resolved/07-wr06-frozen-contract-evasion.md
