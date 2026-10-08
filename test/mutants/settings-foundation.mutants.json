@@ -53,7 +53,7 @@
   {
     "id": "settings-skip-unchanged",
     "file": "extension/zhroma-settings.js",
-    "find": "current.status !== 'unreadable' && registry.equal(key, current.value, value)",
+    "find": "(key === 'theme' || current.status !== 'unreadable') && registry.equal(key, current.value, value)",
     "replace": "false",
     "suites": [
       "test/extension/settings-queue.test.js"

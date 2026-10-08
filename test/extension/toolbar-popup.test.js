@@ -261,7 +261,7 @@ test('the manifest adds action, popup, worker and icons without widening the per
   expect(Object.hasOwn(manifest, 'optional_host_permissions')).toBe(false);
   // Phase 7 (D-13): the shared settings module loads first, before content.js.
   expect(manifest.content_scripts).toEqual([{
-    matches: ['https://*.zendesk.com/agent/*'], js: ['zhroma-settings.js', 'content.js'], css: ['zhroma.css'],
+    matches: ['https://*.zendesk.com/agent/*'], js: ['zhroma-colour.js', 'zhroma-themes.js', 'zhroma-settings.js', 'content.js'], css: ['zhroma.css'],
     run_at: 'document_idle', world: 'ISOLATED', all_frames: false,
   }]);
   expect(manifest.minimum_chrome_version).toBe('106');
@@ -286,7 +286,7 @@ test('every packaged asset the manifest names exists locally and no remote resou
   }
   // Phase 7 adds the options stub (D-18) and the shared settings module (D-13).
   expect(readdirSync(root).sort()).toEqual(['background.js', 'content.js', 'icons', 'manifest.json', 'options.html',
-    'popup.html', 'popup.js', 'zhroma-settings.js', 'zhroma.css']);
+    'popup.html', 'popup.js', 'zhroma-colour.js', 'zhroma-settings.js', 'zhroma-themes.js', 'zhroma.css']);
   expect(readdirSync(new URL('icons/', root)).sort())
     .toEqual(['brand.png', 'missing.png', 'neutral.png', 'off.png', 'unreadable.png', 'working.png']);
   // Every icon the worker can project must be packaged: an icon set at runtime
@@ -326,11 +326,19 @@ test('the five icons are five different images, so shape can carry the meaning',
 test('shipped JavaScript carries no colour value and builds no page markup', () => {
   for (const name of ['content.js', 'background.js', 'popup.js', 'zhroma-settings.js']) {
     const source = asset(name);
-    expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\s*\(|hsla?\s*\(/i);
-    expect(source).not.toMatch(/innerHTML|outerHTML\s*=|insertAdjacentHTML|document\.write|createElement|cssText|adoptedStyleSheets|\.style\b/);
+    // Word boundaries distinguish a literal rgb() from the reviewed numeric
+    // API emitRgba(). Source colour values still live only in shared data.
+    expect(source).not.toMatch(/#[\da-f]{3,8}\b|\brgba?\s*\(|\bhsla?\s*\(/i);
+    expect(source).not.toMatch(/innerHTML|outerHTML\s*=|insertAdjacentHTML|document\.write|cssText|adoptedStyleSheets/);
+    if (name !== 'popup.js') expect(source).not.toMatch(/createElement/);
+    if (!['popup.js','content.js'].includes(name)) expect(source).not.toMatch(/\.style\b/);
     expect(source).not.toMatch(/\b(eval|Function|fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|indexedDB)\s*[.(]/);
     expect(() => new Script(source)).not.toThrow();
   }
+  // Why: only the packaged popup builds its finite native theme controls;
+  // no page-derived markup or arbitrary tag is admitted.
+  expect([...asset('popup.js').matchAll(/createElement\('([^']+)'\)/g)].map(([,tag])=>tag))
+    .toEqual(['label','input','span','span','span','span','span']);
   expect(asset(POPUP_PATH)).not.toMatch(/<script(?![^>]*\ssrc=)/i);
 });
 
@@ -970,11 +978,11 @@ test('neither the worker nor the popup nor the content script leaks a global', a
   const popup = loadPopup(world);
   await settle();
   // Phase 7 (D-13): the worker and the content world each gain exactly one
-  // declared global, the shared namespace. The popup loads no shared file yet.
-  for (const loaded of [worker, content]) {
+  // declared global, the shared namespace; Phase 8 also loads it in popup.
+  for (const loaded of [worker, content, popup]) {
     expect(Object.keys(loaded.context)).toEqual([...loaded.before, NAMESPACE]);
+    expect(Object.keys(loaded.context[NAMESPACE])).toEqual(['colour','themes','settings']);
   }
-  expect(Object.keys(popup.context)).toEqual(popup.before);
 });
 
 test('the popup renders fixed copy through textContent for every reachable status', async () => {

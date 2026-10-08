@@ -404,7 +404,10 @@ const modified = (name, path, edit) => {
 };
 
 test('negative control: a one-character palette change is reported as a difference', async () => {
-  const side = modified('palette 0.13', 'zhroma.css', (css) => css.replace('0.14', '0.13'));
+  // Phase 8: the effective Classic palette is resolved into root properties.
+  // Mutate the production value rather than its now-unused CSS fallback;
+  // pinned baseline bytes and the behavioral comparison remain untouched.
+  const side = modified('palette 0.13', 'zhroma-themes.js', (source) => source.replace('[.14, .12, .09, .08', '[.13, .12, .09, .08'));
   const expected = await trace(baselineSide, STARTUP_PRESENT, FRESH_INSTALL);
   const actual = await trace(side, STARTUP_PRESENT, FRESH_INSTALL);
   expect(actual).not.toEqual(expected);

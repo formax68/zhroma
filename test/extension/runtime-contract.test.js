@@ -94,7 +94,7 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
     icons: { 32: 'icons/neutral.png', 128: 'icons/brand.png' },
     options_ui: { page: 'options.html', open_in_tab: true },
     background: { service_worker: 'background.js' },
-    content_scripts: [{ matches: ['https://*.zendesk.com/agent/*'], js: ['zhroma-settings.js', 'content.js'], css: ['zhroma.css'],
+    content_scripts: [{ matches: ['https://*.zendesk.com/agent/*'], js: ['zhroma-colour.js', 'zhroma-themes.js', 'zhroma-settings.js', 'content.js'], css: ['zhroma.css'],
       run_at: 'document_idle', world: 'ISOLATED', all_frames: false }],
   });
   // The store's own limits, asserted rather than assumed.
@@ -113,7 +113,7 @@ test('manifest has the exact minimal MV3 isolated top-frame static injection con
   }
   expect(shippedInventory()).toEqual(['background.js', 'content.js', 'icons/brand.png', 'icons/missing.png',
     'icons/neutral.png', 'icons/off.png', 'icons/unreadable.png', 'icons/working.png', 'manifest.json',
-    'options.html', 'popup.html', 'popup.js', 'zhroma-settings.js', 'zhroma.css']);
+    'options.html', 'popup.html', 'popup.js', 'zhroma-colour.js', 'zhroma-settings.js', 'zhroma-themes.js', 'zhroma.css']);
   const declared = [...manifest.content_scripts[0].js, ...manifest.content_scripts[0].css,
     manifest.action.default_popup, manifest.background.service_worker, manifest.options_ui.page,
     ...Object.values(manifest.action.default_icon), ...Object.values(manifest.icons)];
@@ -201,7 +201,7 @@ test('the brand icon is a 128x128 PNG with 96x96 of artwork inside a 16px transp
   expect(manifest.icons[128]).toBe('icons/brand.png');
   // The four priority hues the mark carries are the stylesheet's own, so the
   // brand cannot drift from the tint the product paints.
-  const hues = [...asset('zhroma.css').matchAll(/background-color: rgb\((\d+) (\d+) (\d+) \//g)]
+  const hues = [...asset('zhroma.css').matchAll(/background-color: var\(--zhroma-priority-[a-z]+, rgb\((\d+) (\d+) (\d+) \//g)]
     .map(([, r, g, b]) => [Number(r), Number(g), Number(b)]);
   expect(hues).toHaveLength(4);
   const pixels = decodeRgba(bytes);
@@ -256,6 +256,7 @@ test.each(['success', 'unknown', 'absent', 'unsupported-language'])('every decla
   expect(harness.violations).toEqual([]);
   expect(harness.messages.every((message) => message.type === 'status-invalidated')).toBe(true);
   expect(Object.keys(context)).toEqual([...initialGlobals, 'Zhroma']);
+  expect(Object.keys(context.Zhroma)).toEqual(['colour', 'themes', 'settings']);
   expect(vi.getTimerCount()).toBe(0);
   const markers = [...document.querySelectorAll('[data-zhroma-priority]')];
   if (mode === 'success') {
@@ -296,9 +297,32 @@ test('runtime source remains classic, palette-free and limited to DOM reading pl
   expect(() => new Script(source)).not.toThrow();
   // Supporting inventory checks; behavioral sentinels and DOM assertions carry the actual proof.
   expect(source).not.toMatch(/\b(import|export|require|eval|Function|fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|indexedDB|postMessage)\s*[.(]/);
-  expect(source).not.toMatch(/https?:|\.style\b|innerHTML|outerHTML\s*=|insertAdjacentHTML|document\.write|createElement|cssText|adoptedStyleSheets|attachShadow/);
+  expect(source).not.toMatch(/https?:|innerHTML|outerHTML\s*=|insertAdjacentHTML|document\.write|createElement|cssText|adoptedStyleSheets|attachShadow/);
   expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\s*\(|hsla?\s*\(|getBoundingClientRect|offsetHeight|offsetWidth|getComputedStyle/);
   expect(source).toMatch(/setAttribute\(PRIORITY_ATTRIBUTE, priority\)/);
+  // Why: palette data stays in shared modules; the content writer now owns
+  // exactly the numeric root properties needed by the narrow static rules.
+  expect([...source.matchAll(/\.style\b/g)]).toHaveLength(1);
+  expect(source).toContain('const style = document.documentElement.style;');
+  expect([...source.matchAll(/style\.setProperty\(/g)]).toHaveLength(2);
+  expect(source).toContain('`--zhroma-slot-${slot}`');
+  expect(source).toContain('`--zhroma-priority-${priority.toLowerCase()}`');
+  expect([...source.matchAll(/colourApi\.emitRgba\(tint\.rgb, tint\.alpha\)/g)]).toHaveLength(2);
+});
+
+test('shared palette dependencies load in the same packaged order in content, popup and worker', () => {
+  const shared = ['zhroma-colour.js','zhroma-themes.js','zhroma-settings.js'];
+  const popupScripts = [...asset('popup.html').matchAll(/<script src="([a-z-]+\.js)"><\/script>/g)].map(([,name])=>name);
+  expect(popupScripts).toEqual([...shared,'popup.js']);
+  expect(manifest.content_scripts[0].js).toEqual([...shared,'content.js']);
+  const imports = [...asset('background.js').matchAll(/\bimportScripts\(([^)]+)\)/g)];
+  expect(imports).toHaveLength(1);
+  expect(imports[0][1]).toBe(shared.map(name=>`'${name}'`).join(', '));
+  const context = createContext({});
+  for(const path of shared) new Script(asset(path),{filename:path}).runInContext(context);
+  expect(Object.keys(context)).toEqual(['Zhroma']);
+  expect(Object.keys(context.Zhroma)).toEqual(['colour','themes','settings']);
+  expect(context.Zhroma.settings.THEME_IDS).toEqual(context.Zhroma.themes.IDs);
 });
 
 // Phase 7 versioned pins (07-CONTEXT.md D-13, D-18). The shared settings module
@@ -379,7 +403,8 @@ test('locale selector family: four exact source heads preserve direct-cell paint
   for (const [index, [, selector, declarations]] of sourceRules.entries()) {
     expect(selector.trim().startsWith('html[lang|="en" i] '), `[locale:selector-family] head ${index + 1}`).toBe(true);
     expect(selector.trim()).toMatch(/> td\[data-garden-id="tables\.cell"\]$/);
-    expect(declarations.trim()).toMatch(/^background-color: rgb\([\d .\/]+\) !important;$/);
+    const priority = ['urgent','high','normal','low'][index];
+    expect(declarations.trim()).toMatch(new RegExp(`^background-color: var\\(--zhroma-priority-${priority}, rgb\\([\\d .\\/]+\\)\\) !important;$`));
   }
 });
 
@@ -387,6 +412,9 @@ test('happy-dom secondary model: four CSS rules map exact labels to alpha backgr
   const window = createDocument();
   const { document } = window;
   const rules = loadRules(window);
+  const paletteContext = createContext({});
+  for (const path of ['zhroma-colour.js','zhroma-themes.js']) new Script(asset(path)).runInContext(paletteContext);
+  const classic = paletteContext.Zhroma.themes.resolve('zhroma-classic','light');
   expect(rules).toHaveLength(4);
   const labels = [];
   const ticketRows = [...document.querySelectorAll('tbody > tr')];
@@ -405,6 +433,8 @@ test('happy-dom secondary model: four CSS rules map exact labels to alpha backgr
     labels.push(label);
     const numbers = rule.style.backgroundColor.match(/[\d.]+/g).map(Number);
     expect(numbers).toEqual(expectedPaint[label]);
+    const resolved = classic.slots[classic.priorities[label]];
+    expect([...resolved.rgb,resolved.alpha]).toEqual(expectedPaint[label]);
     const matching = [...document.querySelectorAll(rule.selectorText)];
     const target = ticketRows[['Urgent', 'High', 'Normal', 'Low'].indexOf(label)];
     expect(matching, '[locale:actual-selector-family]').toEqual([...target.children]);
