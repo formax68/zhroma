@@ -143,8 +143,26 @@ Plans:
   4. In dark mode, the four priority tints stay distinguishable from each other and from untinted rows, ticket text contrast stays at 4.5:1 or above, and Zendesk's native hover, selection and focus stay visible on tinted rows
   5. A palette-validator test gates every preset in both modes, and a preset that fails does not ship. The colourblind-safe preset keeps the four priorities distinguishable under simulated deuteranopia and protanopia in both modes, with lightness ordered by priority
 
-**Plans**: TBD
-**Research**: Needed. The detector design depends on which branch recon found (a stable marker, a luminance probe, or nothing). Validator thresholds (ΔE ×100, with the 0.1.0 light baseline as the floor) and the CVD tooling choice are settled here
+**Plans**: 5 plans in 4 waves — independently verified, ready to execute
+
+**Wave 1**
+
+- [ ] 08-01-PLAN.md — End-to-end theme tracer: shared colour modules, Classic plus one branded choice, worker persistence, popup previews and live light/dark paint
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 08-02-PLAN.md — Validated preset catalogue, independently authored Colourblind-safe data, fixed CVD method and bundled source notices
+- [ ] 08-04-PLAN.md — Appearance lifecycle, restoration and propagation across supported views without re-evaluating rows
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 08-03-PLAN.md — Confirmed picker outcomes, uncertain-save readback, keyboard access and actual-tint previews
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 08-05-PLAN.md — Independent Chrome paint comparison, final development checks and every-preset native-state human evidence
+
+**Research**: Completed in `08-RESEARCH.md`. Root-marker detection, Classic-light compatibility floors, new-palette thresholds, linear-light CVD simulation and pinned theme sources are settled. Final palette and browser acceptance remain execution work
 **Notes**: Colours are resolved in JavaScript and written as CSS custom properties with 0.1.0-literal fallbacks. `minimum_chrome_version` stays 106. Theme or scheme changes flip document-level properties only and never re-evaluate rows. `prefers-color-scheme` is at most a re-detect trigger, never the source of truth. The dark-mode row-state human checklist for every preset runs on dev bytes here and again on the release candidate in Phase 11
 **UI hint**: yes
 
@@ -212,7 +230,7 @@ Plans:
 | 5. Published | v1.0 | 3/7 | Shipped outside GSD | 2026-09-14 |
 | 6. Live DOM Recon 2 | v1.1 | 3/3 | In Progress|  |
 | 7. Upgrade-Safe Foundation | v1.1 | 12/12 | Complete    | 2026-10-02 |
-| 8. Themes That Follow Dark Mode | v1.1 | 0/TBD | Not started | - |
+| 8. Themes That Follow Dark Mode | v1.1 | 0/5 | Ready to execute | - |
 | 9. Colouring Rules | v1.1 | 0/TBD | Not started | - |
 | 10. Rule Editor, "Is Me" and Settings Files | v1.1 | 0/TBD | Not started | - |
 | 11. Release 1.0.0 | v1.1 | 0/TBD | Not started | - |

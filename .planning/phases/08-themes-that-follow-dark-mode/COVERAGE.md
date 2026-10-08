@@ -1,0 +1,3 @@
+No external API integration: Phase 08 extends the existing internal Chrome extension settings/messaging seam and local palette/CSS rendering; it introduces no external service, SDK, endpoint, authentication or runtime network integration.
+
+The deterministic API detector was run over the actual Phase 08 ROADMAP section plus all five written PLAN bodies. It returned detected:true from the existing Chrome API allowlist prose. Primary-source palette/science retrieval and isolated developer loopback/CDP checks are evidence tooling, not external product integration. No invented external capability matrix applies.
