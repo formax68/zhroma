@@ -5,6 +5,21 @@ import { createContext, Script } from 'node:vm';
 import { expect, test } from 'vitest';
 import { readBaselineSource } from '../../scripts/baseline-source.js';
 import { asset } from './tracer-world.js';
+const oracle = await import('./theme-validation.js').catch(() => ({}));
+
+test('settled independent severity-1 red and clipped blue golden vectors', () => {
+  expect(typeof oracle.simulateCvd).toBe('function');
+  for (const [kind, expected] of [['protanopia',[108.78516029,95.02684074,0]], ['deuteranopia',[163.21518658,144.28077001,0]]]) {
+    oracle.simulateCvd([255,0,0],kind).forEach((x,i) => expect(x).toBeCloseTo(expected[i],7));
+  }
+});
+test('palette oracle rejects missing, nonfinite and identical-priority data', () => {
+  expect(typeof oracle.validatePalette).toBe('function');
+  expect(oracle.validatePalette(null).pass).toBe(false);
+  const bad = structuredClone(themes.records[1]);
+  bad.variants.light.priorities.High = 'red';
+  expect(oracle.validatePalette(bad).pass).toBe(false);
+});
 
 const context = createContext({});
 for (const path of ['zhroma-colour.js', 'zhroma-themes.js', 'zhroma-settings.js']) new Script(asset(path)).runInContext(context);
