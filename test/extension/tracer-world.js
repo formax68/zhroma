@@ -666,10 +666,14 @@ const packagedImports = () => readdirSync(root).filter((name) => name.endsWith('
  * taken before the first script runs.
  */
 export function loadContent(world, {
-  html = fixture(), tabId = TAB_ID, scripts = JSON.parse(asset('manifest.json')).content_scripts[0].js,
+  html = fixture(), tabId = TAB_ID, scripts = JSON.parse(asset('manifest.json')).content_scripts[0].js, dataTheme, beforeScripts = () => {},
 } = {}) {
   const window = inertWindow(html);
   const { document } = window;
+  if (dataTheme !== undefined) document.documentElement.setAttribute('data-theme', dataTheme);
+  for (const path of JSON.parse(asset('manifest.json')).content_scripts[0].css) {
+    const style = document.createElement('style'); style.textContent = asset(path); document.head.append(style);
+  }
   const sentinels = {
     fetch: world.deny('fetch'), XMLHttpRequest: world.deny('XHR'), WebSocket: world.deny('WebSocket'),
     EventSource: world.deny('EventSource'), Worker: world.deny('Worker'), Image: world.deny('Image'),
@@ -682,6 +686,7 @@ export function loadContent(world, {
     MutationObserver: window.MutationObserver, setTimeout, clearTimeout, Promise, Object, JSON,
   }, { codeGeneration: { strings: false, wasm: false } });
   const before = Object.keys(context);
+  beforeScripts({window, document, context});
   for (const path of scripts) new Script(asset(path), { filename: path }).runInContext(context);
   return { window, document, context, before };
 }
@@ -737,7 +742,9 @@ export function loadPopup(world) {
     setTimeout, clearTimeout, Promise, Object, JSON, Math, Number,
   }, { codeGeneration: { strings: false, wasm: false } });
   const before = Object.keys(context);
-  new Script(asset('popup.js'), { filename: 'popup.js' }).runInContext(context);
+  const scripts = [...asset(POPUP_PATH).matchAll(/<script\s+src="([a-z-]+\.js)"\s*><\/script>/g)].map((match) => match[1]);
+  if (scripts.length === 0 || scripts.at(-1) !== 'popup.js') throw new Error('Invalid packaged popup script order');
+  for (const path of scripts) new Script(asset(path), { filename: path }).runInContext(context);
   return { window, document, context, before };
 }
 

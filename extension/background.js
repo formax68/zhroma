@@ -3,7 +3,7 @@
 // toolbar never depend on the settings module, so a failed load leaves this
 // worker running exactly as it did without one.
 try {
-  importScripts('zhroma-settings.js');
+  importScripts('zhroma-colour.js', 'zhroma-themes.js', 'zhroma-settings.js');
 } catch {
   // Deliberately empty: the worker keeps running without the module.
 }
@@ -509,6 +509,18 @@ try {
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (isExact(message, ['type', 'requestId']) && message.type === 'get-theme'
+      && isRequestId(message.requestId) && fromPopup(sender)) {
+      const unconfirmed = () => ({ type: 'get-theme', requestId: message.requestId, confirmed: false, value: null, status: null });
+      if (settingsApi === null) { sendResponse(unconfirmed()); return undefined; }
+      const expires = Date.now() + WORKER_REQUEST_TIMEOUT_MS;
+      bounded(() => readSetting('theme'), expires).then((result) => {
+        if (!result || result.ok !== true) { sendResponse(unconfirmed()); return; }
+        const resolved = settingsApi.registry.resolve('theme', result.present, result.raw);
+        sendResponse({ type: 'get-theme', requestId: message.requestId, confirmed: true, value: resolved.value, status: resolved.status });
+      }, () => sendResponse(unconfirmed()));
+      return true;
+    }
     if (isExact(message, ['type']) && message.type === 'status-invalidated' && fromContent(sender)) {
       project(sender.tab.id);
       sendResponse({ type: 'status-invalidated', accepted: true });

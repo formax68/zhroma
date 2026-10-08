@@ -22,6 +22,8 @@ const CONTENT_SENDER = Object.freeze({
 });
 const CLASSIC = 'zhroma-classic';
 const STORED_CLASSIC = Object.freeze({ v: 1, id: CLASSIC });
+const BRANDED = 'zhroma-catppuccin';
+const STORED_BRANDED = Object.freeze({ v: 1, id: BRANDED });
 const themeMessage = (requestId, value = CLASSIC) => ({ type: 'set-setting', requestId, key: 'theme', value });
 const reply = (requestId, outcome, revision = null) => ({ type: 'set-setting', requestId, outcome, revision });
 
@@ -35,7 +37,7 @@ async function boot(options) {
 
 // --- the tracer: a theme choice from the popup reaches storage.local -----------
 
-test('a theme choice from the popup over an unreadable stored theme is validated, written once to storage.local and announced', async () => {
+test('reselecting effective Classic over unreadable storage preserves exact bytes and emits no event', async () => {
   const world = await boot({ stored: { enabled: true, theme: { v: 99, id: 'from-a-newer-version' } } });
   const announced = [];
   world.workerChrome.storage.onChanged.addListener((changes, areaName) => { announced.push({ changes, areaName }); });
@@ -43,13 +45,22 @@ test('a theme choice from the popup over an unreadable stored theme is validated
   const answer = await world.sendToWorker(themeMessage(1), POPUP_SENDER);
   await settle();
 
-  expect(answer).toEqual(reply(1, 'saved'));
-  expect(world.getStored('theme')).toEqual(STORED_CLASSIC);
-  expect(world.writeLog).toEqual([{ theme: STORED_CLASSIC }]);
-  expect(announced).toEqual([{
-    changes: { theme: { oldValue: { v: 99, id: 'from-a-newer-version' }, newValue: STORED_CLASSIC } }, areaName: 'local',
-  }]);
+  expect(answer).toEqual(reply(1, 'unchanged'));
+  expect(world.getStored('theme')).toEqual({ v: 99, id: 'from-a-newer-version' });
+  expect(world.writeLog).toEqual([]);
+  expect(announced).toEqual([]);
   expect(world.getStored('enabled')).toBe(true);
+  expect(world.forbidden).toEqual([]);
+});
+
+test('a different admitted choice replaces unreadable theme once and explicit Classic return saves', async () => {
+  const world = await boot({ stored: { enabled: false, theme: { v: 99, id: 'future' } } });
+  expect(await world.sendToWorker(themeMessage(4, 'zhroma-catppuccin'), POPUP_SENDER)).toEqual(reply(4, 'saved'));
+  expect(world.getStored('theme')).toEqual({ v: 1, id: 'zhroma-catppuccin' });
+  expect(await world.sendToWorker(themeMessage(5), POPUP_SENDER)).toEqual(reply(5, 'saved'));
+  expect(world.getStored('theme')).toEqual(STORED_CLASSIC);
+  expect(world.writeLog).toHaveLength(2);
+  expect(world.getStored('enabled')).toBe(false);
   expect(world.forbidden).toEqual([]);
 });
 
@@ -402,15 +413,15 @@ test('after a sequence of settings operations only storage.local was written, on
   const answers = [];
   answers.push(await world.sendToWorker(themeMessage(1), POPUP_SENDER));
   world.setStored('theme', { v: 1, id: 'from-a-newer-version' });
-  answers.push(await world.sendToWorker(themeMessage(2), POPUP_SENDER));
-  answers.push(await world.sendToWorker(themeMessage(3), POPUP_SENDER));
+  answers.push(await world.sendToWorker(themeMessage(2, BRANDED), POPUP_SENDER));
+  answers.push(await world.sendToWorker(themeMessage(3, BRANDED), POPUP_SENDER));
   answers.push(await world.sendToWorker(themeMessage(4, 'dracula'), POPUP_SENDER));
   await settle();
   expect(world.forbidden, '[mutant:settings-local-area]').toEqual([]);
   expect(answers).toEqual([reply(1, 'unchanged'), reply(2, 'saved'), reply(3, 'unchanged'), reply(4, 'rejected')]);
-  expect(world.writeLog).toEqual([{ theme: STORED_CLASSIC }]);
+  expect(world.writeLog).toEqual([{ theme: STORED_BRANDED }]);
   for (const entry of world.writeLog) expect(Object.keys(entry)).toHaveLength(1);
-  expect(world.snapshot()).toEqual({ theme: STORED_CLASSIC });
+  expect(world.snapshot()).toEqual({ theme: STORED_BRANDED });
   // The recorded area denies exist and were never reached.
   for (const area of ['sync', 'session', 'managed']) {
     expect(() => world.workerChrome.storage[area].get).toThrow();
@@ -422,8 +433,8 @@ test('after a sequence of settings operations only storage.local was written, on
 test('two theme writes sent back to back through the worker never overlap a physical write', async () => {
   const world = await boot({ stored: { theme: { v: 1, id: 'from-a-newer-version' } } });
   world.setWriteMode('deferred');
-  const first = world.sendToWorker(themeMessage(1), POPUP_SENDER);
-  const second = world.sendToWorker(themeMessage(2), POPUP_SENDER);
+  const first = world.sendToWorker(themeMessage(1, BRANDED), POPUP_SENDER);
+  const second = world.sendToWorker(themeMessage(2, BRANDED), POPUP_SENDER);
   await settle();
   expect(world.pendingWriteCount()).toBe(1);
   world.flushWrites();
@@ -431,7 +442,7 @@ test('two theme writes sent back to back through the worker never overlap a phys
   world.flushWrites();
   await settle();
   expect(await Promise.all([first, second])).toEqual([reply(1, 'saved'), reply(2, 'unchanged')]);
-  expect(world.writeLog).toEqual([{ theme: STORED_CLASSIC }]);
+  expect(world.writeLog).toEqual([{ theme: STORED_BRANDED }]);
   expect(Math.max(...world.writeObservations)).toBe(1);
   expect(world.forbidden).toEqual([]);
 });
@@ -439,7 +450,7 @@ test('two theme writes sent back to back through the worker never overlap a phys
 test('interleaved off-switch and settings requests both succeed, and enabled writes stay the one boolean', async () => {
   const world = await boot({ stored: { theme: { v: 1, id: 'from-a-newer-version' } } });
   const off = world.sendToWorker({ type: 'set-enabled', requestId: 1, enabled: false }, POPUP_SENDER);
-  const theme = world.sendToWorker(themeMessage(2), POPUP_SENDER);
+  const theme = world.sendToWorker(themeMessage(2, BRANDED), POPUP_SENDER);
   const on = world.sendToWorker({ type: 'set-enabled', requestId: 3, enabled: true }, POPUP_SENDER);
   const [offReply, themeReply, onReply] = await Promise.all([off, theme, on]);
   await settle();
@@ -447,8 +458,8 @@ test('interleaved off-switch and settings requests both succeed, and enabled wri
   expect(onReply).toMatchObject({ type: 'set-enabled', requestId: 3, saved: true, enabled: true });
   expect(themeReply).toEqual(reply(2, 'saved'));
   expect(world.writeLog.filter((entry) => Object.hasOwn(entry, 'enabled'))).toEqual([{ enabled: false }, { enabled: true }]);
-  expect(world.writeLog.filter((entry) => !Object.hasOwn(entry, 'enabled'))).toEqual([{ theme: STORED_CLASSIC }]);
-  expect(world.snapshot()).toEqual({ enabled: true, theme: STORED_CLASSIC });
+  expect(world.writeLog.filter((entry) => !Object.hasOwn(entry, 'enabled'))).toEqual([{ theme: STORED_BRANDED }]);
+  expect(world.snapshot()).toEqual({ enabled: true, theme: STORED_BRANDED });
   expect(world.forbidden).toEqual([]);
 });
 
@@ -565,9 +576,9 @@ test('set-setting is admitted only from the packaged popup or the packaged optio
   for (const [name, sender] of [['the options page', optionsSender()], ['the options page in the content tab', optionsSender(TAB_ID)],
     ['the popup', POPUP_SENDER]]) {
     const world = await boot({ stored: { theme: UNREADABLE_THEME } });
-    expect(await world.sendToWorker(themeMessage(2), sender), name).toEqual(reply(2, 'saved'));
+    expect(await world.sendToWorker(themeMessage(2, BRANDED), sender), name).toEqual(reply(2, 'saved'));
     await settle();
-    expect(world.writeLog, name).toEqual([{ theme: STORED_CLASSIC }]);
+    expect(world.writeLog, name).toEqual([{ theme: STORED_BRANDED }]);
     expect(world.forbidden).toEqual([]);
   }
   expect(optionsSender().url).toBe(OPTIONS_URL);

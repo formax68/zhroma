@@ -14,7 +14,7 @@
  * context that did not load the module, and `settings` is absent if the
  * module stopped early (an existing non-object `Zhroma`).
  */
-declare var Zhroma: { readonly settings?: ZhromaSettingsApi } | undefined;
+declare var Zhroma: { readonly settings?: ZhromaSettingsApi; readonly colour?: ZhromaColourApi; readonly themes?: ZhromaThemesApi } | undefined;
 
 /**
  * The worker's classic-script loader. Declared here rather than by adding

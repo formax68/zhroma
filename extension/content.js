@@ -66,6 +66,38 @@
   // file loaded on its own behaves exactly as 0.1.0 did. Settings never leave
   // this isolated world: nothing here sends, stores or shows them (DATA-01).
   const settingsApi = globalThis.Zhroma?.settings ?? null;
+  const colourApi = globalThis.Zhroma?.colour ?? null;
+  const themesApi = globalThis.Zhroma?.themes ?? null;
+  let paletteIdentity = null;
+  let appearanceObserver = null;
+
+  // Palette-only work owns root properties, never rows, diagnoses or the
+  // controller. Unknown Zendesk markers select this theme's light variant.
+  function updatePalette() {
+    if (colourApi === null || themesApi === null) return;
+    const id = settingsState.get('theme')?.value ?? 'zhroma-classic';
+    const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const identity = `${id}:${mode}`;
+    if (identity === paletteIdentity) return;
+    const variant = themesApi.resolve(id, mode);
+    const style = document.documentElement.style;
+    for (const [slot, tint] of Object.entries(variant.slots)) style.setProperty(`--zhroma-slot-${slot}`, colourApi.emitRgba(tint.rgb, tint.alpha));
+    for (const priority of themesApi.priorityOrder) {
+      const tint = variant.slots[variant.priorities[priority]];
+      style.setProperty(`--zhroma-priority-${priority.toLowerCase()}`, colourApi.emitRgba(tint.rgb, tint.alpha));
+    }
+    paletteIdentity = identity;
+  }
+
+  function observeAppearance() {
+    updatePalette();
+    if (themesApi === null || colourApi === null) return;
+    if (appearanceObserver === null) appearanceObserver = new MutationObserver((records) => {
+      if (records.some((record) => record.target === document.documentElement
+        && record.type === 'attributes' && record.attributeName === 'data-theme')) updatePalette();
+    });
+    appearanceObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }
   let settingsReady = settingsApi === null;
   let settingsTimer = null;
   // One generation per key: a change event bumps its key, so a read issued
@@ -419,11 +451,13 @@
   }
 
   function onVisibilityChange() {
+    updatePalette();
     syncController();
   }
 
   function onPageHide() {
     suspended = true;
+    if (appearanceObserver !== null) appearanceObserver.disconnect();
     pauseController();
   }
 
@@ -432,6 +466,7 @@
     // value it was frozen with, and stays untinted until that read confirms.
     preferenceReady = false;
     suspended = false;
+    observeAppearance();
     syncController();
     readPreference();
     // The settings gate stays open: a restored document re-reads its settings
@@ -510,6 +545,7 @@
   // Opens once. Before the preference has landed there is nothing to run, and
   // syncing then would announce a status 0.1.0 never announced at that point.
   function openSettingsGate() {
+    updatePalette();
     if (settingsTimer !== null) { clearTimeout(settingsTimer); settingsTimer = null; }
     if (settingsReady) return;
     settingsReady = true;
@@ -555,6 +591,7 @@
       settingsGenerations.set(key, settingsGenerations.get(key) + 1);
       settingsState.set(key, resolveSetting(key, changes[key], 'newValue'));
     }
+    updatePalette();
   }
 
   // The one storage listener. The settings handler runs first and inside
@@ -650,6 +687,7 @@
       // slow earlier reply cannot overwrite a newer change.
       chrome.storage.onChanged.addListener(onStorageChanged);
       chrome.runtime.onMessage.addListener(onRuntimeMessage);
+      observeAppearance();
       readSettings();
       readPreference();
     } catch { pauseController(); }

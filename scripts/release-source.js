@@ -45,7 +45,9 @@ export const RELEASE_FILES = Object.freeze([
   'popup.js',
   // 07-03: the shared settings module (D-13). It is listed first in the
   // content script list and imported first by the worker, so it ships.
+  'zhroma-colour.js',
   'zhroma-settings.js',
+  'zhroma-themes.js',
   'zhroma.css',
 ]);
 

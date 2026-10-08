@@ -196,6 +196,110 @@
   });
 
   window.addEventListener('focus', refresh);
+  // Theme owns a separate request and confirmed state. Its finite copy reports
+  // persistence only; the Priority status above retains its own meaning.
+  const themes = globalThis.Zhroma?.themes;
+  const colour = globalThis.Zhroma?.colour;
+  const themeList = document.getElementById('zhroma-theme-choices');
+  const themeOutput = document.getElementById('zhroma-theme-status');
+  if (themes && colour && themeList && themeOutput) {
+    let themeConfirmed = null;
+    let themeStatus = null;
+    let themeBusy = false;
+    let themeOwner = 0;
+    const radios = [];
+    const themeSay = (text) => { if (themeOutput.textContent !== text) themeOutput.textContent = text; };
+    function showTheme() {
+      for (const radio of radios) { radio.checked = radio.value === themeConfirmed; radio.disabled = themeBusy; }
+    }
+    function themeCopy() {
+      themeSay(themeStatus === 'unreadable' ? 'Your saved theme could not be read. Using Classic.' : '');
+    }
+    async function readTheme() {
+      requestCounter = requestCounter % MAX_REQUEST_ID + 1;
+      const requestId = requestCounter;
+      const reply = await ask({ type: 'get-theme', requestId });
+      if (!isExact(reply, ['type', 'requestId', 'confirmed', 'value', 'status'])
+        || reply.type !== 'get-theme' || reply.requestId !== requestId || typeof reply.confirmed !== 'boolean') return false;
+      if (!reply.confirmed) {
+        // The exact unconfirmed payload carries no inferred absence or ID.
+        if (reply.value !== null || reply.status !== null) return false;
+        return false;
+      }
+      if (!themes.IDs.includes(reply.value) || !['default', 'stored', 'unreadable'].includes(reply.status)
+        || (reply.status !== 'stored' && reply.value !== 'zhroma-classic')) return false;
+      themeConfirmed = reply.value; themeStatus = reply.status;
+      return true;
+    }
+    async function refreshTheme() {
+      if (themeBusy) return;
+      const mine = ++themeOwner;
+      themeBusy = true; showTheme();
+      const confirmed = await readTheme();
+      if (mine !== themeOwner) return;
+      themeBusy = false; showTheme();
+      if (confirmed) themeCopy(); else themeSay('Theme could not be confirmed');
+    }
+    async function saveTheme(desired) {
+      if (themeBusy) { showTheme(); return; }
+      if (desired === themeConfirmed) { showTheme(); return; }
+      const mine = ++themeOwner;
+      const active = document.activeElement;
+      const hadFocus = radios.includes(active);
+      themeBusy = true; showTheme();
+      requestCounter = requestCounter % MAX_REQUEST_ID + 1;
+      const requestId = requestCounter;
+      const reply = await ask({ type: 'set-setting', requestId, key: 'theme', value: desired });
+      if (mine !== themeOwner) return;
+      const valid = isExact(reply, ['type', 'requestId', 'outcome', 'revision'])
+        && reply.type === 'set-setting' && reply.requestId === requestId && reply.revision === null
+        && ['saved', 'unchanged', 'rejected', 'failed', 'unknown'].includes(reply.outcome);
+      if (valid && (reply.outcome === 'saved' || reply.outcome === 'unchanged')) {
+        themeConfirmed = desired;
+        if (reply.outcome === 'saved') { themeStatus = 'stored'; themeSay('Theme saved'); }
+        else {
+          // An unchanged acknowledgement confirms the effective ID, but not
+          // whether it came from corrupt storage. Re-read before that claim.
+          const confirmed = await readTheme();
+          if (mine !== themeOwner) return;
+          if (confirmed) themeCopy(); else themeSay('Theme could not be confirmed');
+        }
+      } else if (valid && (reply.outcome === 'failed' || reply.outcome === 'rejected')) {
+        themeSay('Theme could not be saved. Try again.');
+      } else {
+        themeSay('Theme could not be confirmed');
+        const confirmed = await readTheme(); // one bounded readback, never a retry write.
+        if (mine !== themeOwner) return;
+        if (confirmed) themeCopy();
+      }
+      themeBusy = false; showTheme();
+      if (hadFocus) active.focus();
+    }
+    for (const record of themes.records) {
+      const label = document.createElement('label'); label.className = 'theme-choice';
+      const radio = document.createElement('input'); radio.type = 'radio'; radio.name = 'zhroma-theme';
+      radio.value = record.id; radio.disabled = true; radios.push(radio);
+      const detail = document.createElement('span');
+      const title = document.createElement('span'); title.textContent = record.label; detail.append(title);
+      for (const mode of ['light', 'dark']) {
+        const preview = document.createElement('span'); preview.className = 'theme-preview';
+        const modeLabel = document.createElement('span'); modeLabel.textContent = mode === 'light' ? 'Light' : 'Dark'; preview.append(modeLabel);
+        const variant = themes.resolve(record.id, mode);
+        for (const priority of themes.priorityOrder) {
+          const swatch = document.createElement('span'); swatch.className = 'theme-swatch'; swatch.setAttribute('aria-hidden', 'true');
+          swatch.style.backgroundColor = colour.emitRgba(colour.preview(variant.slots[variant.priorities[priority]], mode), 1);
+          preview.append(swatch);
+        }
+        detail.append(preview);
+      }
+      label.append(radio, detail); themeList.append(label);
+      radio.addEventListener('change', () => { if (radio.checked) saveTheme(radio.value); });
+    }
+    window.addEventListener('focus', refreshTheme);
+    refreshTheme();
+  } else if (themeOutput) {
+    themeOutput.textContent = 'Theme could not be confirmed';
+  }
   render('neutral', null);
   refresh();
 })();

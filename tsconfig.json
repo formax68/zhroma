@@ -38,5 +38,5 @@
     "types": ["chrome"],
     "skipLibCheck": true
   },
-  "include": ["extension/zhroma-settings.js", "types/zhroma.d.ts"]
+  "include": ["extension/zhroma-colour.js", "extension/zhroma-themes.js", "extension/zhroma-settings.js", "types/zhroma.d.ts"]
 }

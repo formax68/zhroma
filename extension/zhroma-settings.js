@@ -144,8 +144,9 @@
 
   /** @type {readonly SettingStatus[]} */
   const STATUSES = Object.freeze(/** @type {SettingStatus[]} */ (['default', 'stored', 'unreadable']));
-  // Phase 7 ships exactly one theme, the 0.1.0 palette. Phase 8 extends this.
-  const THEME_IDS = Object.freeze(['zhroma-classic']);
+  // Only admitted palette records can become stored choices. Loading this
+  // module alone retains the baseline Classic fallback.
+  const THEME_IDS = globalThis.Zhroma?.themes?.IDs ?? Object.freeze(['zhroma-classic']);
   const KEY_PATTERN = /^[a-z][A-Za-z0-9]{0,31}$/;
   // The off switch keeps its own key, boolean and path. It is never folded
   // into the settings registry (D-02).
@@ -523,9 +524,10 @@
       if (result.ok !== true) { answer(job, 'failed'); return; }
       const current = registry.resolve(key, result.present, result.raw);
       if (job.cas && revision !== current.revision) { answer(job, 'conflict', current.revision); return; }
-      // The value already in effect writes nothing (D-11). An unreadable stored
-      // value is not in effect: saving over it records the agent's choice (D-08).
-      if (current.status !== 'unreadable' && registry.equal(key, current.value, value)) { answer(job, 'unchanged'); return; }
+      // Theme compares the effective value even for unreadable storage: choosing
+      // the current Classic fallback is not permission to repair those bytes.
+      // Other keys retain their original unreadable/CAS semantics.
+      if ((key === 'theme' || current.status !== 'unreadable') && registry.equal(key, current.value, value)) { answer(job, 'unchanged'); return; }
       const next = job.cas ? current.revision + 1 : undefined;
       const stored = registry.encode(key, value, next);
       if (stored === undefined) { answer(job, 'rejected'); return; }
