@@ -2,20 +2,20 @@
 gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Themes & Rules
-current_phase: 6
-current_phase_name: Live DOM Recon 2
-status: planning
-stopped_at: "Phase 07 complete; Phase 6 awaits user custody close-out, then plan Phase 8"
-last_updated: "2026-10-02T02:42:42.189Z"
-last_activity: 2026-10-02
-last_activity_desc: Phase 07 complete, transitioned to Phase 6
-state_head: 1d3b9e247d5f4c2ed5501d603134d1f428dfffeb
+current_phase: 08
+current_phase_name: Themes That Follow Dark Mode
+status: blocked
+stopped_at: "Phase 08 halted at plan 08-05: required native hover unavailable; 4/5 plans complete"
+last_updated: "2026-10-09T07:00:14.524789Z"
+last_activity: 2026-10-09
+last_activity_desc: Phase 8: four plans complete; 08-05 halted at required native-hover browser gate
+state_head: 111d72d
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 15
-  completed_plans: 15
-  percent: 27
+  completed_phases: 1
+  total_plans: 20
+  completed_plans: 19
+  percent: 95
 ---
 
 # Project State
@@ -25,16 +25,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-02)
 
 **Core value:** Open a Zendesk view and know within one second which tickets are urgent — without reading a word.
-**Current focus:** Phase 6 — Live DOM Recon 2 (custody close-out), then Phase 8 — Themes That Follow Dark Mode
+**Current focus:** Phase 8 — four plans complete; 08-05 blocked on real Chrome native hover (5/304 pixel samples). Phase 6 custody/human and Phase 7 residuals remain open.
 
 ## Current Position
 
-Phase: 6 — Live DOM Recon 2
-Plan: 3 of 3 executed
-Status: Verification gaps_found (14/15) — the only gap is the user custody action (delete or encrypt the Recon 2 private inputs, delete the personal recon view, then update the SELECTORS.md handoff)
-Last activity: 2026-10-02 — Phase 07 complete (re-verified passed 5/5 after gap closure 07-10 to 07-12); focus returns to Phase 6
+Phase: 08 (Themes That Follow Dark Mode) — BLOCKED
+Plan: 08-05 halted; 4 of 5 plans complete (five summaries include one halted summary)
+Status: Blocked — required native-pointer hover unavailable; no phase completion
+Last activity: 2026-10-09 — final regression/review completed; browser oracle remains block at 5/304 samples
 
-Progress: [████████████████████] 15/15 planned plans (100%) — Phases 8–11 not yet planned; 1 of 6 v1.1 phases complete
+Progress: Phase 8 4/5 complete; 08-05 halted. Automated checks pass; complete Chrome and human evidence remain pending.
 
 v1.1 phase sequence: 6 Live DOM Recon 2 ∥ 7 Upgrade-Safe Foundation → 8 Themes That Follow Dark Mode → 9 Colouring Rules → 10 Rule Editor, "Is Me" and Settings Files → 11 Release 1.0.0
 
@@ -219,6 +219,8 @@ CR-01/CR-02 repairs and independent reverification are complete; 403 tests and f
 
 ### Blockers/Concerns
 
+- Phase 8 required browser gate (2026-10-09): trusted Chrome pointer events do not establish native :hover; 08-CHROME-PAINT.json is block with 5/304 samples. Do not count halted 08-05-SUMMARY.md as completed, advance to Phase 9, or substitute approval for missing evidence. Resume at 08-05-CHECKPOINT.md; one review/repair/recheck round is already exhausted.
+
 - User approved Plan 01-12 source and provenance with "yes on both"; re-admission and second-pass parity are complete. Originals remain recoverable from Git.
 
 - Phase 1 is complete: 23/24 truths verified plus one explicitly accepted historical uncertainty. All 15 plans and audit fixes are complete; code review is clean; security has zero open threats. Phase 2 is complete with 25/25 independent verification and source-bound user acceptance.
@@ -254,9 +256,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-02T02:44:04Z
-Stopped at: Phase 07 complete; Phase 6 awaits the user custody close-out before re-verification, then plan Phase 8
-Resume file: None
+Last session: 2026-10-09T06:59:31.030Z
+Stopped at: Phase 08 halted at plan 08-05: required native hover unavailable; 4/5 plans complete
+Resume file: .planning/phases/08-themes-that-follow-dark-mode/08-05-CHECKPOINT.md
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.
 

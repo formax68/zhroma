@@ -1,7 +1,7 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v1.1 — Themes & Rules",
+  "milestone": "v1.1 \u2014 Themes & Rules",
   "phases": [
     {
       "number": "1",
@@ -41,7 +41,7 @@
     {
       "number": "8",
       "name": "Themes That Follow Dark Mode",
-      "status": "pending"
+      "status": "blocked"
     },
     {
       "number": "9",
@@ -61,8 +61,8 @@
   ],
   "next": {
     "command": "/gsd:execute-phase 8",
-    "label": "Execute Phase 8 — Themes That Follow Dark Mode",
-    "reason": "Five independently verified plans in four waves; no execution started"
+    "label": "Resume native-hover checkpoint after capability is available",
+    "reason": "Phase 08 blocked: 4/5 complete; halted plan 08-05 requires native hover and 304/304 Chrome pixel cases"
   },
-  "updated_at": "2026-10-08T13:30:19.676Z"
+  "updated_at": "2026-10-09T07:00:14.524789Z"
 }
