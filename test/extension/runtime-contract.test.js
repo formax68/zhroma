@@ -304,7 +304,11 @@ test('runtime source remains classic, palette-free and limited to DOM reading pl
   // exactly the numeric root properties needed by the narrow static rules.
   expect([...source.matchAll(/\.style\b/g)]).toHaveLength(1);
   expect(source).toContain('const style = document.documentElement.style;');
-  expect([...source.matchAll(/style\.setProperty\(/g)]).toHaveLength(2);
+  // Phase 08-04 precomputes both slot/priority arrays before a single guarded
+  // emission loop, preserving the two numeric emit sites checked below.
+  expect([...source.matchAll(/style\.setProperty\(/g)]).toHaveLength(1);
+  expect(source).toContain('for (const [name, value] of properties)');
+  expect(source).toContain('if (style.getPropertyValue(name) !== value)');
   expect(source).toContain('`--zhroma-slot-${slot}`');
   expect(source).toContain('`--zhroma-priority-${priority.toLowerCase()}`');
   expect([...source.matchAll(/colourApi\.emitRgba\(tint\.rgb, tint\.alpha\)/g)]).toHaveLength(2);

@@ -28,9 +28,15 @@ test('the popup carries exactly one switch, labelled with the decided text, and 
   const { popup } = await withPopup();
   const { document } = popup;
   const box = control(document);
-  // D-11: a status panel plus ONE switch. Not an options page.
-  expect(document.querySelectorAll('input')).toHaveLength(1);
-  expect(document.querySelectorAll('select, textarea, button, a')).toHaveLength(0);
+  // One enable switch remains independent of Phase 08's eight native theme
+  // radios and its explicit uncertainty-recovery button.
+  expect(document.querySelectorAll('input[type="checkbox"]')).toHaveLength(1);
+  expect(document.querySelectorAll('input[type="radio"][name="zhroma-theme"]')).toHaveLength(8);
+  expect(document.querySelectorAll('input')).toHaveLength(9);
+  expect(document.querySelectorAll('select, textarea, a')).toHaveLength(0);
+  expect(document.querySelectorAll('button')).toHaveLength(1);
+  expect(document.getElementById('zhroma-check-theme').textContent).toBe('Check theme');
+  expect(document.getElementById('zhroma-check-theme').hidden).toBe(true);
   expect(box.type).toBe('checkbox');
   const label = document.querySelector('label');
   expect(label.textContent.trim()).toBe('Enable priority tinting');

@@ -64,8 +64,9 @@ test('reads the complete eleven-file release source inventory with sizes, hashes
   const source = readReleaseSource(extensionDirectory);
 
   expect(source.assets.map((asset) => asset.name)).toEqual([...RELEASE_FILES].sort());
-  // 07-03: fourteen packaged files since D-13 (zhroma-settings.js) and D-18 (options.html).
-  expect(source.assets).toHaveLength(14);
+  // Phase 08 deliberately packages two shared palette modules; all prior
+  // source/archive/path-safety checks still apply to every exact inventory item.
+  expect(source.assets).toHaveLength(16);
   for (const asset of source.assets) {
     expect(asset.size).toBe(statSync(join(extensionDirectory, asset.name)).size);
     expect(asset.sha256).toBe(sha256File(join(extensionDirectory, asset.name)));
@@ -101,7 +102,7 @@ test('records the archive hash separately from the source digest and re-derives 
 
   const validation = validateReleaseArchive(join(out, 'zhroma-0.1.0.zip'), readReleaseSource(extensionDirectory));
   expect(validation.sha256).toBe(candidate.zip.sha256);
-  expect(validation.entries).toHaveLength(14);
+  expect(validation.entries).toHaveLength(16);
 });
 
 // Two archives of identical source bytes can differ as archives. A matching
@@ -127,7 +128,7 @@ test('refuses to write generated artifacts into the extension source or the repo
   expect(() => packageRelease({})).toThrow(/out-dir-required/);
   // An import must not be able to produce an archive as a side effect.
   expect(readdirSync(extensionDirectory).sort()).toEqual(['background.js', 'content.js', 'icons', 'manifest.json',
-    'options.html', 'popup.html', 'popup.js', 'zhroma-settings.js', 'zhroma.css']);
+    'options.html', 'popup.html', 'popup.js', 'zhroma-colour.js', 'zhroma-settings.js', 'zhroma-themes.js', 'zhroma.css']);
 });
 
 test('reuses an output location only when its existing contents independently validate', () => {
