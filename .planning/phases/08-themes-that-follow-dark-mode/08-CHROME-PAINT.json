@@ -90,8 +90,8 @@
     "admissionDigest": "346e679b86c1370e3355a8cf24746e9fc89d37178bf03003d8869d0248847b20",
     "selectorsDigest": "6f55dd849b4d723d4eb37bc175179ffdaa41c000ad0d531bca7f72f607febd84",
     "fixtureDigest": "c726244faade76c293fbe3ead63627fb310a4c6fecc24cfca3a71345a316ada6",
-    "harnessDigest": "616a9d926c59edf6c46b4c227e5b1a767cc9b0a646e73a6f4dd1f59f643d16e8",
-    "testDigest": "3c3c828b40067bab226027988ccc49f663490fa9e741557e5aa50b0dcbdfd213"
+    "harnessDigest": "5a260896a5006686c152dabc46fcc58845f8504ea6e219044975e744c274c34a",
+    "testDigest": "2741b275371c59835c6595aa013459dddb6821c17902abf3aa5877009b4f7423"
   },
   "measurement": "CDP PNG screenshot",
   "tolerance": 1,
@@ -104,7 +104,7 @@
     "jsVersion": "15.4.80.20"
   },
   "environment": "darwin 27.0.0 arm64",
-  "timestamp": "2026-10-09T06:32:05.467Z",
+  "timestamp": "2026-10-09T06:51:21.386Z",
   "failure": "Wrong native state: {\"key\":\"zhroma-classic/light/hover/Urgent/cell\",\"hover\":false,\"selected\":\"false\",\"pointer\":{\"last\":{\"x\":20,\"y\":10,\"tag\":\"DIV\",\"row\":1,\"trust\":true,\"hover\":false,\"rowHover\":false},\"hover\":[],\"row0\":true}}",
   "cases": [
     {
@@ -119,8 +119,8 @@
         225,
         225
       ],
-      "maxError": 0,
-      "rasterMargin": 1,
+      "maxError": 0.3800000000000239,
+      "rasterMargin": 0.6199999999999761,
       "styles": {
         "x": 1092,
         "y": 34,
@@ -133,7 +133,7 @@
         "row": "rgba(0, 0, 0, 0)",
         "owners": [
           {
-            "href": "http://127.0.0.1:53431/extension/zhroma.css",
+            "href": "http://127.0.0.1:54881/extension/zhroma.css",
             "selector": "html[lang|=\"en\" i] table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > tbody[data-garden-id=\"tables.body\"][data-test-id=\"generic-table-body\"] > tr[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"][data-zhroma-priority=\"Urgent\"] > td[data-garden-id=\"tables.cell\"]",
             "value": "var(--zhroma-priority-urgent, rgb(220 38 38 / 0.14))",
             "important": "important"
@@ -165,8 +165,8 @@
         235,
         226
       ],
-      "maxError": 0,
-      "rasterMargin": 1,
+      "maxError": 0.4800000000000182,
+      "rasterMargin": 0.5199999999999818,
       "styles": {
         "x": 1092,
         "y": 74,
@@ -179,7 +179,7 @@
         "row": "rgba(0, 0, 0, 0)",
         "owners": [
           {
-            "href": "http://127.0.0.1:53431/extension/zhroma.css",
+            "href": "http://127.0.0.1:54881/extension/zhroma.css",
             "selector": "html[lang|=\"en\" i] table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > tbody[data-garden-id=\"tables.body\"][data-test-id=\"generic-table-body\"] > tr[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"][data-zhroma-priority=\"High\"] > td[data-garden-id=\"tables.cell\"]",
             "value": "var(--zhroma-priority-high, rgb(234 88 12 / 0.12))",
             "important": "important"
@@ -211,8 +211,8 @@
         244,
         232
       ],
-      "maxError": 0,
-      "rasterMargin": 1,
+      "maxError": 0.46999999999999886,
+      "rasterMargin": 0.5300000000000011,
       "styles": {
         "x": 1092,
         "y": 114,
@@ -225,7 +225,7 @@
         "row": "rgba(0, 0, 0, 0)",
         "owners": [
           {
-            "href": "http://127.0.0.1:53431/extension/zhroma.css",
+            "href": "http://127.0.0.1:54881/extension/zhroma.css",
             "selector": "html[lang|=\"en\" i] table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > tbody[data-garden-id=\"tables.body\"][data-test-id=\"generic-table-body\"] > tr[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"][data-zhroma-priority=\"Normal\"] > td[data-garden-id=\"tables.cell\"]",
             "value": "var(--zhroma-priority-normal, rgb(202 138 4 / 0.09))",
             "important": "important"
@@ -257,8 +257,8 @@
         248,
         241
       ],
-      "maxError": 0,
-      "rasterMargin": 1,
+      "maxError": 0.47999999999998977,
+      "rasterMargin": 0.5200000000000102,
       "styles": {
         "x": 1092,
         "y": 154,
@@ -271,7 +271,7 @@
         "row": "rgba(0, 0, 0, 0)",
         "owners": [
           {
-            "href": "http://127.0.0.1:53431/extension/zhroma.css",
+            "href": "http://127.0.0.1:54881/extension/zhroma.css",
             "selector": "html[lang|=\"en\" i] table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > tbody[data-garden-id=\"tables.body\"][data-test-id=\"generic-table-body\"] > tr[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"][data-zhroma-priority=\"Low\"] > td[data-garden-id=\"tables.cell\"]",
             "value": "var(--zhroma-priority-low, rgb(22 163 74 / 0.08))",
             "important": "important"
@@ -335,5 +335,5 @@
     "total": 5,
     "required": 304
   },
-  "elapsedMs": 1171
+  "elapsedMs": 1052
 }

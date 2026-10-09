@@ -30,7 +30,7 @@ export function expectedPixel(tint, mode, state) {
 export function comparePixel(measured, expected, tolerance = 1) {
   need(Number.isFinite(tolerance) && tolerance >= 0 && tolerance <= 1, 'Invalid raster tolerance');
   for (const rgb of [measured,expected]) need(Array.isArray(rgb) && rgb.length===3 && rgb.every(v=>Number.isFinite(v)&&v>=0&&v<=255), 'Invalid pixel');
-  const maxError = Math.max(...measured.map((v,i)=>Math.abs(v-Math.round(expected[i]))));
+  const maxError = Math.max(...measured.map((v,i)=>Math.abs(v-expected[i])));
   need(maxError<=tolerance, `Pixel mismatch: measured ${measured}, expected ${expected}, error ${maxError}`);
   return {maxError, rasterMargin:tolerance-maxError};
 }
@@ -97,7 +97,27 @@ export function requireCompleteReport(report,identity,records) {
   need(report.measurement==='CDP PNG screenshot'&&report.tolerance===1,'Actual pixels required');
   const keys=caseKeys(records);need(report.cases.length===keys.length&&new Set(report.cases.map(c=>c.key)).size===keys.length,'Incomplete/duplicate sample matrix');
   const got=new Set(report.cases.map(c=>c.key));need(keys.every(key=>got.has(key)),'Missing required case');
-  for(const c of report.cases) { const result=comparePixel(c.measured,c.expected);need(result.maxError===c.maxError,'False pixel success'); }
+  need(typeof report.browser?.product==='string'&&/^Chrome\/\d+/.test(report.browser.product)&&typeof report.browser.revision==='string'&&report.browser.revision.length>0&&report.browser.protocolVersion==='1.3','Missing browser identity');
+  const requiredAssets=['content.js','zhroma-settings.js','zhroma-colour.js','zhroma-themes.js','zhroma.css','popup.html','popup.js'].map(n=>'/extension/'+n).sort();
+  need(Array.isArray(report.servedAssets)&&JSON.stringify([...report.servedAssets].sort())===JSON.stringify(requiredAssets),'Missing served production inventory');
+  need(JSON.stringify(report.counts)===JSON.stringify({cells:records.length*24,previews:records.length*8,untinted:records.length*6,total:keys.length}),'Invalid case counts');
+  for(const c of report.cases) {
+    const [id,mode,state,priority,kind]=c.key.split('/'),record=records.find(r=>r.id===id);
+    const tint=kind==='control'?{rgb:[0,0,0],alpha:0}:record.variants[mode].slots[record.variants[mode].priorities[priority]];
+    const expected=expectedPixel(tint,mode,state);
+    need(JSON.stringify(c.expected)===JSON.stringify(expected),'Unbound expected pixel');
+    need(c.measured.every(v=>Number.isInteger(v)),'Non-raster measured pixel');
+    const result=comparePixel(c.measured,expected);need(result.maxError===c.maxError&&result.rasterMargin===c.rasterMargin,'False pixel success');
+    if(kind==='preview') need(typeof c.computedStyle==='string'&&/^rgb\(/.test(c.computedStyle),'Missing preview style');
+    else {
+      const s=c.styles;
+      need(s&&s.hover===(state==='hover')&&s.selected===(state==='selected'?'true':'false'),'Invalid state ownership');
+      need(s.text===`rgb(${surfaces[mode].text.join(', ')})`&&Array.isArray(s.textOwners)&&s.textOwners.some(o=>o.href==='measured-host'&&o.value===`rgb(${surfaces[mode].text.join(', ')})`),'Missing measured text ownership');
+      if(kind==='cell') {
+        need(s.textPresent===true&&s.marker===priority&&Array.isArray(s.owners)&&s.owners.some(o=>/^http:\/\/127\.0\.0\.1:\d+\/extension\/zhroma\.css$/.test(o.href)&&o.important==='important'&&o.selector.includes(`[data-zhroma-priority="${priority}"]`)&&o.value===`var(--zhroma-priority-${priority.toLowerCase()}, rgb(${({Urgent:'220 38 38 / 0.14',High:'234 88 12 / 0.12',Normal:'202 138 4 / 0.09',Low:'22 163 74 / 0.08'})[priority]}))`),'Missing production cell ownership');
+      } else need(s.marker===null&&s.cell==='rgba(0, 0, 0, 0)','Invalid untinted ownership');
+    }
+  }
   return true;
 }
 // No private profile, persistence or runtime service. This shim supplies only
