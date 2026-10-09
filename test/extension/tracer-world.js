@@ -547,6 +547,11 @@ export function createWorld({
     flushReads() { for (const read of pendingReads.splice(0)) read(); },
     pendingReadCount: () => pendingReads.length,
     flushSettingsReads() { for (const read of pendingSettingsReads.splice(0)) read(); },
+    /** Release one captured reply out of order, as real asynchronous IO can. */
+    releaseSettingsRead(index = 0) {
+      if (!Number.isInteger(index) || index < 0 || index >= pendingSettingsReads.length) throw new Error('No pending settings read at index');
+      pendingSettingsReads.splice(index, 1)[0]();
+    },
     pendingSettingsReadCount: () => pendingSettingsReads.length,
     /** Settings reads issued so far by `worker` or `content`, or by both. */
     settingsReadCount: (owner) => (owner === undefined ? settingsReads.worker + settingsReads.content
