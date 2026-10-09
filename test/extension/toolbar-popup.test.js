@@ -338,7 +338,8 @@ test('shipped JavaScript carries no colour value and builds no page markup', () 
   // Why: only the packaged popup builds its finite native theme controls;
   // no page-derived markup or arbitrary tag is admitted.
   expect([...asset('popup.js').matchAll(/createElement\('([^']+)'\)/g)].map(([,tag])=>tag))
-    .toEqual(['label','input','span','span','span','span','span']);
+    // Selected text and the dual-preview wrapper add two static spans (08-03).
+    .toEqual(['label','input','span','span','span','span','span','span','span']);
   expect(asset(POPUP_PATH)).not.toMatch(/<script(?![^>]*\ssrc=)/i);
 });
 
