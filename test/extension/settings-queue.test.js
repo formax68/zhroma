@@ -27,6 +27,33 @@ const STORED_BRANDED = Object.freeze({ v: 1, id: BRANDED });
 const themeMessage = (requestId, value = CLASSIC) => ({ type: 'set-setting', requestId, key: 'theme', value });
 const reply = (requestId, outcome, revision = null) => ({ type: 'set-setting', requestId, outcome, revision });
 
+test('get-theme refuses confirmation while the timed-out physical writer is still active', async () => {
+  vi.useFakeTimers(); const world = createWorld({ writeMode: 'deferred', portCloseMs: 20000 }); loadWorker(world);
+  const save = world.sendToWorker(themeMessage(80, BRANDED), POPUP_SENDER);
+  await vi.advanceTimersByTimeAsync(4100);
+  expect(await save).toEqual(reply(80, 'unknown'));
+  const activeRead = world.sendToWorker({ type: 'get-theme', requestId: 81 }, POPUP_SENDER);
+  await vi.advanceTimersByTimeAsync(10);
+  expect(await activeRead)
+    .toEqual({ type: 'get-theme', requestId: 81, confirmed: false, value: null, status: null });
+  world.flushWrites(); await vi.advanceTimersByTimeAsync(10);
+  const read = world.sendToWorker({ type: 'get-theme', requestId: 82 }, POPUP_SENDER);
+  await vi.advanceTimersByTimeAsync(10);
+  expect(await read).toEqual({ type: 'get-theme', requestId: 82, confirmed: true, value: BRANDED, status: 'stored' });
+});
+
+test('get-theme captured read spanning a newer theme request is unconfirmed even after the queue settles', async () => {
+  const world = createWorld({ settingsReadMode: 'deferred' }); loadWorker(world);
+  const read = world.sendToWorker({ type: 'get-theme', requestId: 83 }, POPUP_SENDER);
+  const save = world.sendToWorker(themeMessage(84, BRANDED), POPUP_SENDER);
+  await settle();
+  world.setSettingsReadMode('immediate'); world.releaseSettingsRead(1);
+  await settle(); expect(await save).toEqual(reply(84, 'saved'));
+  world.releaseSettingsRead(0);
+  expect(await read).toEqual({ type: 'get-theme', requestId: 83, confirmed: false, value: null, status: null });
+  expect(world.getStored('theme')).toEqual(STORED_BRANDED);
+});
+
 async function boot(options) {
   const world = createWorld(options);
   loadWorker(world);
