@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, expect, test, vi } from 'vitest';
-import { CONTENT_URL, DOCUMENT_ID, EXTENSION_ID, POPUP_URL, TAB_ID, bootAll, closeWindows, createWorld, loadContent, loadPopup, loadWorker, optionsSender, settle, statusText } from './tracer-world.js';
+import { createContext, Script } from 'node:vm';
+import { CONTENT_URL, DOCUMENT_ID, EXTENSION_ID, POPUP_URL, TAB_ID, asset, bootAll, closeWindows, createWorld, loadContent, loadPopup, loadWorker, optionsSender, popupBody, settle, statusText } from './tracer-world.js';
 
 afterEach(async () => { vi.useRealTimers(); await closeWindows(); });
 const sender = { id: EXTENSION_ID, url: POPUP_URL };
@@ -172,3 +173,66 @@ test('disconnected enabled view can save a theme while retaining connection copy
   expect(statusText(popup.document)).toBe('No readable view is connected');
   expect(themeText(popup)).toBe('Theme saved'); expect(world.getStored('enabled')).toBeUndefined();
 });
+
+test('full native catalog has named dual composites, selected text and bounded wrapping layout', async () => {
+  const { world, popup } = await bootAll();
+  const { themes, colour } = popup.context.Zhroma;
+  const radios = [...popup.document.querySelectorAll('input[name="zhroma-theme"]')];
+  expect(radios.map(r => r.value)).toEqual(themes.IDs);
+  expect(popup.document.querySelectorAll('.theme-title'), 'each choice needs a named title').toHaveLength(8);
+  expect(radios.map(r => r.closest('label').querySelector('.theme-title').textContent)).toEqual([
+    'Classic', 'Catppuccin', 'Tokyo Night', 'Dracula', 'Nord', 'Gruvbox', 'Solarized', 'Colourblind-safe',
+  ]);
+  expect(popup.document.querySelector('fieldset legend').textContent).toBe('Theme');
+  expect(popup.document.querySelector('.theme-selected:not([hidden])').textContent).toBe('Selected');
+  for (const radio of radios) {
+    const label = radio.closest('label');
+    expect(label.querySelector('.theme-previews')).not.toBeNull();
+    const previews = [...label.querySelectorAll('.theme-preview')];
+    expect(previews.map(p => p.querySelector('.theme-mode').textContent)).toEqual(['Light', 'Dark']);
+    for (const [index, mode] of ['light', 'dark'].entries()) {
+      const variant = themes.resolve(radio.value, mode);
+      const swatches = [...previews[index].querySelectorAll('.theme-swatch')];
+      expect(swatches).toHaveLength(4);
+      swatches.forEach((swatch, priorityIndex) => {
+        const tint = variant.slots[variant.priorities[themes.priorityOrder[priorityIndex]]];
+        const scratch = popup.document.createElement('span'); scratch.style.backgroundColor = colour.emitRgba(colour.preview(tint, mode), 1);
+        expect(swatch.style.backgroundColor).toBe(scratch.style.backgroundColor);
+        expect(swatch.getAttribute('aria-hidden')).toBe('true');
+      });
+    }
+    // Native radios own keyboard selection; change is the actual save trigger.
+    radio.focus(); await choose(popup, radio.value);
+    expect(popup.document.activeElement).toBe(radio);
+    expect(label.querySelector('.theme-selected').hidden).toBe(false);
+    expect(popup.document.querySelectorAll('.theme-selected:not([hidden])')).toHaveLength(1);
+    const reopened = loadPopup(world); await settle(); await settle();
+    expect(selected(reopened)).toBe(radio.value);
+  }
+  const html = asset('popup.html');
+  expect(html).toMatch(/\.theme-previews\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+  expect(html).toMatch(/#zhroma-theme-choices\s*\{[^}]*max-height:[^}]*overflow-y:\s*auto/);
+  expect(html).toMatch(/\.theme-choice:focus-within\s*\{[^}]*outline:/);
+  expect(popup.document.getElementById('zhroma-theme-credits').textContent).toMatch(/zhroma-themes\.js/);
+  expect(world.forbidden).toEqual([]);
+});
+
+for (const catalog of ['empty', 'missing', 'failed-preview']) {
+  test(`${catalog} catalog reports unavailable while enable and Priority remain usable`, async () => {
+    const { world, popup } = await bootAll();
+    const shared = popup.context.Zhroma;
+    popup.document.body.innerHTML = popupBody();
+    const themes = catalog === 'missing' ? undefined : { ...shared.themes,
+      ...(catalog === 'empty' ? { records: [], IDs: [] } : { resolve() { throw new Error('Unavailable palette'); } }),
+    };
+    const context = createContext({ document: popup.document, window: popup.window, chrome: world.popupChrome,
+      Zhroma: { colour: shared.colour, themes }, setTimeout, clearTimeout, Promise, Object, JSON, Number });
+    new Script(asset('popup.js'), { filename: 'popup.js' }).runInContext(context);
+    await settle(); await settle();
+    expect(themeText(popup)).toBe('Themes are unavailable');
+    expect(popup.document.querySelectorAll('input[name="zhroma-theme"]')).toHaveLength(0);
+    expect(popup.document.getElementById('zhroma-enabled').disabled).toBe(false);
+    expect(statusText(popup.document)).toBe('Priority tinting is working');
+    expect(world.writeLog).toEqual([]); expect(world.forbidden).toEqual([]);
+  });
+}
