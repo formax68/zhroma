@@ -5,18 +5,22 @@
 <title>Zhroma — priority tinting status</title>
 <style>
   /* Layout only. The product palette lives in zhroma.css and nowhere else. */
-  body { width: 22rem; margin: 0; padding: 0.9rem 1rem; font: 0.875rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  body { box-sizing: border-box; width: 22rem; max-width: 100vw; margin: 0; padding: 0.9rem 1rem; font: 0.875rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
   h1 { margin: 0 0 0.35rem; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   p { margin: 0; }
   label { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.55rem; }
   input:disabled + span { opacity: 0.55; }
-  fieldset { margin: 0.8rem 0 0; padding: 0.5rem; }
-  #zhroma-theme-choices { max-height: 20rem; overflow-y: auto; }
-  .theme-choice { display: grid; grid-template-columns: auto 1fr; align-items: start; padding: 0.4rem; }
+  fieldset { min-width: 0; margin: 0.8rem 0 0; padding: 0.5rem; }
+  #zhroma-theme-choices { max-height: 20rem; overflow-y: auto; padding: 0.2rem; }
+  .theme-choice { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; padding: 0.4rem; overflow-wrap: anywhere; }
   .theme-choice:focus-within { outline: 2px solid currentColor; outline-offset: -2px; }
-  .theme-preview { display: grid; grid-template-columns: 3rem repeat(4, 1fr); gap: 2px; margin-top: 0.2rem; }
+  .theme-selected { margin-left: 0.4rem; font-size: 0.75rem; font-weight: 600; }
+  .theme-previews { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .theme-preview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; margin-top: 0.2rem; }
+  .theme-mode { grid-column: 1 / -1; font-size: 0.75rem; }
   .theme-swatch { height: 1rem; border: 1px solid GrayText; }
   #zhroma-theme-order { margin-bottom: 0.35rem; font-size: 0.75rem; }
+  #zhroma-theme-credits { margin-top: 0.6rem; font-size: 0.75rem; }
 </style>
 </head>
 <body>
@@ -29,6 +33,7 @@
 </fieldset>
 <p id="zhroma-theme-status" role="status"></p>
 <button type="button" id="zhroma-check-theme" hidden>Check theme</button>
+<p id="zhroma-theme-credits">Palette sources, licences and adaptations: bundled zhroma-themes.js.</p>
 <script src="zhroma-colour.js"></script>
 <script src="zhroma-themes.js"></script>
 <script src="zhroma-settings.js"></script>

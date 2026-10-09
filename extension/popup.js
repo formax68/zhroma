@@ -203,7 +203,7 @@
   const themeList = document.getElementById('zhroma-theme-choices');
   const themeOutput = document.getElementById('zhroma-theme-status');
   const themeCheck = document.getElementById('zhroma-check-theme');
-  if (themes && colour && themeList && themeOutput) {
+  if (themes && colour && themeList && themeOutput && Array.isArray(themes.records) && themes.records.length > 0) {
     let themeConfirmed = null;
     let themeStatus = null;
     let themeBusy = false;
@@ -214,7 +214,10 @@
       if (themeCheck) themeCheck.hidden = text !== 'Theme could not be confirmed';
     };
     function showTheme() {
-      for (const radio of radios) { radio.checked = radio.value === themeConfirmed; radio.disabled = themeBusy; }
+      for (const radio of radios) {
+        radio.checked = radio.value === themeConfirmed; radio.disabled = themeBusy;
+        radio.closest('label').querySelector('.theme-selected').hidden = !radio.checked;
+      }
       if (themeCheck) themeCheck.disabled = themeBusy;
     }
     function themeCopy() {
@@ -284,31 +287,42 @@
       themeBusy = false; showTheme();
       if (hadFocus) active.focus();
     }
-    for (const record of themes.records) {
+    let catalogReady = true;
+    try { for (const record of themes.records) {
       const label = document.createElement('label'); label.className = 'theme-choice';
       const radio = document.createElement('input'); radio.type = 'radio'; radio.name = 'zhroma-theme';
       radio.value = record.id; radio.disabled = true; radios.push(radio);
       const detail = document.createElement('span');
-      const title = document.createElement('span'); title.textContent = record.label; detail.append(title);
+      const title = document.createElement('span'); title.className = 'theme-title'; title.textContent = record.label; detail.append(title);
+      const selected = document.createElement('span'); selected.className = 'theme-selected'; selected.textContent = 'Selected';
+      selected.hidden = true; detail.append(selected);
+      const previews = document.createElement('span'); previews.className = 'theme-previews';
       for (const mode of ['light', 'dark']) {
         const preview = document.createElement('span'); preview.className = 'theme-preview';
-        const modeLabel = document.createElement('span'); modeLabel.textContent = mode === 'light' ? 'Light' : 'Dark'; preview.append(modeLabel);
+        const modeLabel = document.createElement('span'); modeLabel.className = 'theme-mode'; modeLabel.textContent = mode === 'light' ? 'Light' : 'Dark'; preview.append(modeLabel);
         const variant = themes.resolve(record.id, mode);
         for (const priority of themes.priorityOrder) {
           const swatch = document.createElement('span'); swatch.className = 'theme-swatch'; swatch.setAttribute('aria-hidden', 'true');
           swatch.style.backgroundColor = colour.emitRgba(colour.preview(variant.slots[variant.priorities[priority]], mode), 1);
           preview.append(swatch);
         }
-        detail.append(preview);
+        previews.append(preview);
       }
+      detail.append(previews);
       label.append(radio, detail); themeList.append(label);
       radio.addEventListener('change', () => { if (radio.checked) saveTheme(radio.value); });
+    } } catch {
+      // Partial previews are not a usable catalog. The enable/status path below
+      // must still run when a packaged palette dependency cannot render.
+      catalogReady = false; themeList.replaceChildren();
     }
-    window.addEventListener('focus', refreshTheme);
-    if (themeCheck) themeCheck.addEventListener('click', refreshTheme);
-    refreshTheme();
+    if (catalogReady) {
+      window.addEventListener('focus', refreshTheme);
+      if (themeCheck) themeCheck.addEventListener('click', refreshTheme);
+      refreshTheme();
+    } else themeSay('Themes are unavailable');
   } else if (themeOutput) {
-    themeOutput.textContent = 'Theme could not be confirmed';
+    themeOutput.textContent = 'Themes are unavailable';
   }
   render('neutral', null);
   refresh();
