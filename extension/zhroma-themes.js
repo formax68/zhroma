@@ -42,16 +42,20 @@
   const slotNames = /** @type {ColourSlot[]} */ (['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'magenta']);
   const priorityOrder = Object.freeze(/** @type {Priority[]} */ (['Urgent', 'High', 'Normal', 'Low']));
   const priorities = Object.freeze({ Urgent: 'red', High: 'orange', Normal: 'yellow', Low: 'green' });
-  /** @param {RGB[]} rgbs @param {number[]} alphas @returns {ThemeVariant} */
-  function variant(rgbs, alphas) {
+  /** @param {RGB[]} rgbs @param {number[]} alphas @param {ThemeVariant['priorities']} [mapping] @returns {ThemeVariant} */
+  function variant(rgbs, alphas, mapping = priorities) {
     if (rgbs.length !== 8 || alphas.length !== 8) throw new TypeError('Incomplete palette');
     const slots = /** @type {Record<ColourSlot, Tint>} */ ({});
     slotNames.forEach((name, index) => {
       colour.emitRgba(rgbs[index], alphas[index]);
       slots[name] = Object.freeze({ rgb: Object.freeze(rgbs[index]), alpha: alphas[index] });
     });
-    return Object.freeze({ slots: Object.freeze(slots), priorities });
+    if (Object.keys(mapping).length !== 4 || priorityOrder.some((p) => !Object.hasOwn(mapping, p) || !slotNames.includes(mapping[p]))) throw new TypeError('Incomplete priorities');
+    return Object.freeze({ slots: Object.freeze(slots), priorities: Object.freeze(mapping) });
   }
+  // Classic credit: original Zhroma, baseline source revision
+  // 6d3ab0b10e9419a5c1077e59e468977c00d59d4a, extension/zhroma.css.
+  // No third-party palette or repository-wide licence is asserted.
   // Classic's first four RGB/alpha values are the 0.1.0 pinned literals.
   // Cyan/blue/purple/magenta are original Zhroma data, not another preset.
   /** @type {RGB[]} */
@@ -73,6 +77,24 @@
           [23, 146, 153], [30, 102, 245], [136, 57, 239], [234, 118, 203]], [.10, .06, .18, .12, .12, .12, .12, .12]),
         dark: variant([[243, 139, 168], [250, 179, 135], [249, 226, 175], [166, 227, 161],
           [148, 226, 213], [137, 180, 250], [203, 166, 247], [245, 194, 231]], [.14, .06, .14, .10, .14, .14, .14, .14]),
+      }) }),
+    // Colourblind-safe: independently authored Zhroma contributions, 2026.
+    // RGB-constraint xorshift32 search; light seed 1514689103, dark 1514689104.
+    // Alphas .06-.44/.02 before RGB changes; first valid ordered assignment.
+    // Historical prototype values excluded from seeds and final slots.
+    // Method: final sRGB decoded, Machado severity-1 linear matrix, clipped,
+    // encoded, original Ottosson Oklab. Developer test oracle owns simulation.
+    // Credit is authorship/method attribution, not an invented project licence.
+    // Label denotes tested protan/deutan simulations, no universal guarantee.
+    Object.freeze({ id: 'zhroma-colourblind-safe', label: 'Colourblind-safe', source: Object.freeze({
+      author: 'Zhroma', derivation: 'Independent constrained RGB search; xorshift32 seeds 1514689103/1514689104; no third-party palette inputs',
+      method: 'Machado severity-1 linear-light simulation; W3C sRGB; original Ottosson Oklab; project acceptance policy',
+      licence: 'Project-original contributions; no third-party palette licence or repository-wide licence asserted' }),
+      variants: Object.freeze({
+        light: variant([[240,49,70],[162,67,32],[111,129,42],[117,234,27],[96,212,186],[76,151,227],[219,110,231],[205,75,121]],
+          [.12,.12,.12,.10,.12,.24,.08,.44], {Urgent:'magenta',High:'blue',Normal:'purple',Low:'green'}),
+        dark: variant([[209,129,104],[132,77,26],[238,235,114],[135,195,137],[20,220,232],[99,204,252],[174,35,210],[248,113,200]],
+          [.22,.12,.12,.08,.12,.22,.14,.12], {Urgent:'blue',High:'red',Normal:'green',Low:'purple'}),
       }) }),
   ]);
   const IDs = Object.freeze(records.map((record) => record.id));

@@ -87,3 +87,61 @@ export function validatePalette(record) {
   }
   return {pass:errors.length===0,errors,checks};
 }
+
+// Reproducible project-original data search. No third-party palette is a seed.
+// Each mode gets an independent xorshift32 stream and bounded RGB constraints.
+export function generateCvdData() {
+  const variants={}; const attempts={};
+  for(const [mode,seed] of [['light',0x5a48524f],['dark',0x5a485250]]) {
+    let rng=seed;
+    const random=()=>{rng^=rng<<13;rng^=rng>>>17;rng^=rng<<5;return (rng>>>0)/4294967296;};
+    const constraints=[([r,g,b])=>r>g+40&&r>b+40,([r,g,b])=>r>g+30&&g>b+30,
+      ([r,g,b])=>Math.abs(r-g)<30&&Math.min(r,g)>b+60,([r,g,b])=>g>r+40&&g>b+40,
+      ([r,g,b])=>Math.abs(g-b)<40&&Math.min(g,b)>r+60,([r,g,b])=>b>r+40&&b>g+40,
+      ([r,g,b])=>b>r&&r>g+40,([r,g,b])=>r>b&&b>g+40];
+    // Historical prototype values are denylisted only, never copied as seeds.
+    const forbidden=new Set(['0,0,0','230,159,0','86,180,233','0,158,115','240,228,66','0,114,178','213,94,0','204,121,167']);
+    const simulations=['normal','protanopia','deuteranopia'];
+    let solution;
+    for(let batch=0;batch<128&&!solution;batch++) {
+      const rgbs=constraints.map(matches=>{
+        for(let i=0;i<4096;i++) {
+          const rgb=Array.from({length:3},()=>Math.floor(random()*256));
+          if(matches(rgb)&&!forbidden.has(rgb.join(','))) return rgb;
+        }
+        throw new Error('RGB bound exhausted');
+      });
+      const pool=[];
+      // Opacity search precedes any change to this batch's eight RGB seeds.
+      rgbs.forEach((rgb,slot)=>{
+        for(let step=3;step<=22;step++) {
+          const tint={rgb,alpha:step/50};
+          const actual=states.map(state=>colour.preview(tint,mode,state));
+          if(actual.some(a=>contrast(a,colour.surfaces[mode].text)<4.5)) continue;
+          const views=simulations.map(sim=>actual.map(a=>simulateCvd(a,sim)));
+          if(views.some((colors,s)=>colors.some((a,k)=>distance(a,simulateCvd(untinted(mode,states[k]),simulations[s]))<2)
+            || distance(colors[0],colors[1])<2 || distance(colors[1],colors[2])<2)) continue;
+          pool.push({slot,tint,views,L:lab(views[0][0])[0]});
+        }
+      });
+      for(let trial=0;trial<100000&&!solution&&pool.length>=4;trial++) {
+        const chosen=Array.from({length:4},()=>pool[Math.floor(random()*pool.length)])
+          .sort((a,b)=>mode==='light'?a.L-b.L:b.L-a.L);
+        if(new Set(chosen.map(a=>a.slot)).size!==4) continue;
+        let valid=true;
+        for(let s=0;s<3&&valid;s++) for(let k=0;k<3&&valid;k++) for(let i=0;i<4&&valid;i++) {
+          if(i && (mode==='light'?lab(chosen[i].views[s][k])[0]<=lab(chosen[i-1].views[s][k])[0]:lab(chosen[i].views[s][k])[0]>=lab(chosen[i-1].views[s][k])[0])) valid=false;
+          for(let j=i+1;j<4;j++) if(distance(chosen[i].views[s][k],chosen[j].views[s][k])<3) valid=false;
+        }
+        if(!valid) continue;
+        const recordSlots=Object.fromEntries(slots.map((name,i)=>[name,{rgb:rgbs[i],alpha:.12}]));
+        chosen.forEach(c=>recordSlots[slots[c.slot]]=c.tint);
+        solution={slots:recordSlots,priorities:Object.fromEntries(priorities.map((name,i)=>[name,slots[chosen[i].slot]]))};
+        attempts[mode]={seed,batch,trial,pool:pool.length};
+      }
+    }
+    if(!solution) throw new Error(`Required CVD search exhausted: ${mode}`);
+    variants[mode]=solution;
+  }
+  return {variants,attempts};
+}

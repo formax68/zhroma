@@ -45,6 +45,9 @@ test('required Colourblind-safe final data passes all simulations and strictly o
   expect(result.errors).toEqual([]);
   expect(result.checks.filter(c=>c.state)).toHaveLength(18);
   expect(result.checks.filter(c=>c.transition)).toHaveLength(12);
+  expect(record.variants).toEqual(oracle.generateCvdData().variants);
+  const excluded=['0,0,0','230,159,0','86,180,233','0,158,115','240,228,66','0,114,178','213,94,0','204,121,167'];
+  for(const v of Object.values(record.variants)) for(const t of Object.values(v.slots)) expect(excluded).not.toContain(t.rgb.join(','));
   const tied=structuredClone(record);
   tied.variants.dark.priorities.High=tied.variants.dark.priorities.Urgent;
   expect(oracle.validatePalette(tied).errors.some(e=>e.includes('lightness-order'))).toBe(true);
@@ -146,7 +149,7 @@ test('registry is recursively frozen, has eight exact slots and accepted storage
   function frozen(value) { if(value && typeof value === 'object') { expect(Object.isFrozen(value)).toBe(true); Object.values(value).forEach(frozen); } }
   frozen(themes); frozen(colour.surfaces);
   expect(themes.IDs).toEqual(settings.THEME_IDS);
-  expect(themes.IDs).toEqual(['zhroma-classic','zhroma-catppuccin']);
+  expect(themes.IDs).toEqual(['zhroma-classic','zhroma-catppuccin','zhroma-colourblind-safe']);
   for(const record of themes.records) for(const variant of Object.values(record.variants)) {
     expect(Object.keys(variant.slots)).toEqual(['red','orange','yellow','green','cyan','blue','purple','magenta']);
     expect(Object.keys(variant.priorities)).toEqual(['Urgent','High','Normal','Low']);
