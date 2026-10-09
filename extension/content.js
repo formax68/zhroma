@@ -16,8 +16,8 @@
   // it costs a brief neutral state and buys never accusing a mid-mount view.
   const SETTLE_MS = 100;
   // The longest a settings read may hold the first tint back (D-09). A hung
-  // read then counts as failed: every setting is its default and tinting goes
-  // ahead under the off switch alone.
+  // read releases bounded defaults, not proof of absence; a late valid reply
+  // can still update the palette without reevaluating rows.
   const SETTINGS_READ_TIMEOUT_MS = 500;
   const TABLE = 'table[data-garden-id="tables.table"][data-test-id="generic-table"]';
   const HEAD = 'thead[data-garden-id="tables.head"][data-test-id="generic-table-head"]';
@@ -75,18 +75,26 @@
   // controller. Unknown Zendesk markers select this theme's light variant.
   function updatePalette() {
     if (colourApi === null || themesApi === null) return;
-    const id = settingsState.get('theme')?.value ?? 'zhroma-classic';
-    const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-    const identity = `${id}:${mode}`;
-    if (identity === paletteIdentity) return;
-    const variant = themesApi.resolve(id, mode);
-    const style = document.documentElement.style;
-    for (const [slot, tint] of Object.entries(variant.slots)) style.setProperty(`--zhroma-slot-${slot}`, colourApi.emitRgba(tint.rgb, tint.alpha));
-    for (const priority of themesApi.priorityOrder) {
-      const tint = variant.slots[variant.priorities[priority]];
-      style.setProperty(`--zhroma-priority-${priority.toLowerCase()}`, colourApi.emitRgba(tint.rgb, tint.alpha));
-    }
-    paletteIdentity = identity;
+    try {
+      const id = settingsState.get('theme')?.value ?? 'zhroma-classic';
+      const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const identity = `${id}:${mode}`;
+      if (identity === paletteIdentity) return;
+      const variant = themesApi.resolve(id, mode);
+      const style = document.documentElement.style;
+      // Resolve every finite value before touching CSSOM, then emit only the
+      // differing properties. Neither this work nor a fault runs a row pass.
+      const properties = Object.entries(variant.slots).map(([slot, tint]) =>
+        [`--zhroma-slot-${slot}`, colourApi.emitRgba(tint.rgb, tint.alpha)]);
+      for (const priority of themesApi.priorityOrder) {
+        const tint = variant.slots[variant.priorities[priority]];
+        properties.push([`--zhroma-priority-${priority.toLowerCase()}`, colourApi.emitRgba(tint.rgb, tint.alpha)]);
+      }
+      for (const [name, value] of properties) {
+        if (style.getPropertyValue(name) !== value) style.setProperty(name, value);
+      }
+      paletteIdentity = identity;
+    } catch { /* palette faults never block preference readiness or the off switch */ }
   }
 
   function observeAppearance() {
