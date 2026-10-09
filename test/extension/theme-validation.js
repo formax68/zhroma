@@ -49,7 +49,7 @@ export const classicFloors=Object.freeze(Object.fromEntries(states.map(state=>{
 export function validatePalette(record) {
   const errors=[]; const checks=[];
   if(!record || typeof record.id!=='string' || !record.id || typeof record.label!=='string' || !record.label
-    || !record.source || !Object.keys(record.source).length || Object.values(record.source).some(v=>typeof v!=='string'||!v.trim())
+    || !record.source || typeof record.source!=='object' || Array.isArray(record.source) || !Object.keys(record.source).length || Object.values(record.source).some(v=>typeof v!=='string'||!v.trim())
     || !exactKeys(record.variants,['light','dark'])) return {pass:false,errors:['record-schema'],checks};
   for(const mode of ['light','dark']) {
     const variant=record.variants[mode];
@@ -144,4 +144,32 @@ export function generateCvdData() {
     variants[mode]=solution;
   }
   return {variants,attempts};
+}
+
+// Ordinary-source admission: RGB/semantic mapping unchanged, minimum summed
+// priority opacity on the finite .06-.40/.02 grid, lexicographic tie-break.
+export function tuneOrdinary(rgbs,mode) {
+  const options=rgbs.slice(0,4).map(rgb=>{
+    const pool=[];
+    for(let step=3;step<=20;step++) {
+      const tint={rgb,alpha:step/50};
+      const colors=states.map(state=>colour.preview(tint,mode,state));
+      if(colors.some((a,k)=>contrast(a,colour.surfaces[mode].text)<4.5 || distance(a,untinted(mode,states[k]))<2)
+        || distance(colors[0],colors[1])<2 || distance(colors[1],colors[2])<2) continue;
+      pool.push({tint,colors,step});
+    }
+    return pool;
+  });
+  let best; let bestSum=Infinity; let tried=0;
+  function visit(chosen,index,sum) {
+    if(index===4) {tried++;if(sum<bestSum){best=[...chosen];bestSum=sum;}return;}
+    for(const candidate of options[index]) {
+      if(sum+candidate.step>=bestSum) continue;
+      if(chosen.some(old=>states.some((state,k)=>distance(old.colors[k],candidate.colors[k])<3))) continue;
+      visit([...chosen,candidate],index+1,sum+candidate.step);
+    }
+  }
+  visit([],0,0);
+  if(!best) return {pass:false,reason:'No semantic mapping passes all gates on the .06-.40/.02 opacity grid',options:options.map(p=>p.length),tried};
+  return {pass:true,alphas:[...best.map(c=>c.tint.alpha),.12,.12,.12,.12],options:options.map(p=>p.length),tried};
 }

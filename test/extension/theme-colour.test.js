@@ -13,6 +13,7 @@ test('every named candidate has data-bound pass or omit accounting and packaged 
   const match=presetReport.match(/<!-- admission-manifest -->\s*```json\n([\s\S]*?)\n```\s*<!-- \/admission-manifest -->/);
   expect(match).not.toBeNull();
   const manifest=JSON.parse(match[1]);
+  expect(createHash('sha256').update(JSON.stringify(themes.records.map(r=>({id:r.id,variants:r.variants})))).digest('hex')).toBe(manifest.dataDigest);
   expect(manifest.candidates.map(c=>c.label)).toEqual(['Classic','Catppuccin','Tokyo Night','Dracula','Nord','Gruvbox','Solarized','Colourblind-safe']);
   expect(manifest.candidates.filter(c=>c.verdict==='pass').map(c=>c.id)).toEqual(themes.IDs);
   for(const candidate of manifest.candidates) {
@@ -20,17 +21,29 @@ test('every named candidate has data-bound pass or omit accounting and packaged 
       expect(candidate.reason.length).toBeGreaterThan(0);
       expect(themes.IDs).not.toContain(candidate.id);
       expect(themes.resolve(candidate.id,'dark')).toBe(themes.records[0].variants.dark);
+      expect(settings.registry.resolve('theme',true,{v:1,id:candidate.id})).toMatchObject({status:'unreadable',value:'zhroma-classic'});
       continue;
     }
     const record=themes.records.find(r=>r.id===candidate.id);
     expect(createHash('sha256').update(JSON.stringify(record.variants)).digest('hex')).toBe(candidate.variantsSha256);
     expect(oracle.validatePalette(record).pass).toBe(true);
+    expect(settings.registry.resolve('theme',true,{v:1,id:candidate.id})).toMatchObject({status:'stored',value:candidate.id});
     for(const mode of ['light','dark']) expect(themes.resolve(candidate.id,mode)).toBe(record.variants[mode]);
+    if(!['zhroma-classic','zhroma-catppuccin','zhroma-colourblind-safe'].includes(record.id)) for(const mode of ['light','dark']) {
+      const tints=Object.values(record.variants[mode].slots);
+      expect(oracle.tuneOrdinary(tints.map(t=>t.rgb),mode).alphas).toEqual(tints.map(t=>t.alpha));
+    }
     expect(record.source.author.length).toBeGreaterThan(0);
     if(candidate.licenceSha256) {
-      const notice=asset('zhroma-themes.js').match(new RegExp('\\/\\* NOTICE '+candidate.id+'\\n([\\s\\S]*?)\\nEND NOTICE \\*\\/'));
-      expect(notice).not.toBeNull();
-      expect(createHash('sha256').update(notice[1]+'\n').digest('hex')).toBe(candidate.licenceSha256);
+      let bytes;
+      if(candidate.noticeRepresentation==='decoded-registry-string') bytes=record.source.notice;
+      else {
+        const notice=asset('zhroma-themes.js').match(new RegExp('\\/\\* NOTICE '+candidate.id+'\\n([\\s\\S]*?)\\nEND NOTICE \\*\\/'));
+        expect(notice).not.toBeNull();
+        bytes=notice[1]+'\n';
+      }
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(candidate.licenceSha256);
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(candidate.bundledNoticeSha256);
       expect(record.source.paletteSha256).toBe(candidate.paletteSha256);
       expect(record.source.commit).toBe(candidate.commit);
     }
@@ -68,6 +81,16 @@ test('full precision comparisons pass equality and reject a below-floor value de
     expect((floor-1e-10).toFixed(2)).toBe(floor.toFixed(2));
     expect(oracle.atLeast(floor-1e-10,floor)).toBe(false);
   }
+});
+test('a just-below-pair-floor palette fails even when every display digit looks passing',()=>{
+  const record=structuredClone(themes.records[1]);
+  // Fixed fixture: its minimum pair is 2.999999999695065, not 3.
+  for(const name of ['red','orange','yellow','green']) record.variants.light.slots[name].alpha*=0.9877110325366414;
+  const result=oracle.validatePalette(record);
+  expect(result.errors).toContain('light:normal:normal:pair:5');
+  const minimum=Math.min(...result.checks.filter(c=>c.mode==='light'&&c.state).flatMap(c=>c.pairs));
+  expect(minimum).toBeLessThan(3);
+  expect(minimum.toFixed(8)).toBe('3.00000000');
 });
 test('required Colourblind-safe final data passes all simulations and strictly ordered states',()=>{
   const record=themes.records.find(r=>r.id==='zhroma-colourblind-safe');
@@ -180,7 +203,7 @@ test('registry is recursively frozen, has eight exact slots and accepted storage
   function frozen(value) { if(value && typeof value === 'object') { expect(Object.isFrozen(value)).toBe(true); Object.values(value).forEach(frozen); } }
   frozen(themes); frozen(colour.surfaces);
   expect(themes.IDs).toEqual(settings.THEME_IDS);
-  expect(themes.IDs).toEqual(['zhroma-classic','zhroma-catppuccin','zhroma-colourblind-safe']);
+  expect(themes.IDs).toEqual(['zhroma-classic','zhroma-catppuccin','zhroma-tokyo-night','zhroma-dracula','zhroma-nord','zhroma-gruvbox','zhroma-solarized','zhroma-colourblind-safe']);
   for(const record of themes.records) for(const variant of Object.values(record.variants)) {
     expect(Object.keys(variant.slots)).toEqual(['red','orange','yellow','green','cyan','blue','purple','magenta']);
     expect(Object.keys(variant.priorities)).toEqual(['Urgent','High','Normal','Low']);
