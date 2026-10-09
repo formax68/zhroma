@@ -65,7 +65,7 @@ function loadPage({ scripts = JSON.parse(asset('manifest.json')).content_scripts
   const observers = [];
   class StartupObserver {
     constructor(callback) { this.callback = callback; this.active = false; observers.push(this); }
-    observe() { this.active = true; }
+    observe(target, options) { this.active = true; this.target = target; this.options = options; }
     disconnect() { this.active = false; }
   }
   const harness = createChromeHarness(harnessOptions);
@@ -223,7 +223,10 @@ test('content.js loaded on its own issues no settings read and tints as 0.1.0 do
 // Nothing the content script sends or answers carries a setting, a key or a
 // status (DATA-01). Only the popup's own set-setting exchange names a key.
 function expectNoSettingsTraffic(world) {
-  const leaked = world.traffic.filter(({ payload }) => payload?.type !== 'set-setting')
+  // Why: 08-01 adds a packaged-popup-only get-theme protocol. Finite values
+  // may answer that explicit request; status/apply traffic still cannot carry
+  // settings or row text. The source sender checks have independent guardians.
+  const leaked = world.traffic.filter(({ payload }) => !['set-setting', 'get-theme'].includes(payload?.type))
     .filter(({ payload }) => /theme|zhroma-classic|from-a-newer-version|unreadable/u.test(JSON.stringify(payload) ?? ''));
   expect(leaked).toEqual([]);
 }
@@ -353,11 +356,12 @@ test('a theme saved through the worker over an unreadable stored theme reaches t
   const answer = await world.sendToWorker(themeMessage(41), POPUP_SENDER);
   await settle();
 
-  expect(answer).toEqual({ type: 'set-setting', requestId: 41, outcome: 'saved', revision: null });
-  expect(world.getStored('theme')).toEqual(STORED_CLASSIC);
-  expect(world.writeLog).toEqual([{ theme: STORED_CLASSIC }]);
-  // The change reached the content script's listener, in the local area.
-  expect(delivered).toEqual([{ changes: { theme: { oldValue: NEWER, newValue: STORED_CLASSIC } }, areaName: 'local' }]);
+  // Why: D-05 preserves unreadable bytes when their effective Classic choice
+  // is reselected. A no-op is confirmed without manufacturing a saved event.
+  expect(answer).toEqual({ type: 'set-setting', requestId: 41, outcome: 'unchanged', revision: null });
+  expect(world.getStored('theme')).toEqual(NEWER);
+  expect(world.writeLog).toEqual([]);
+  expect(delivered).toEqual([]);
   // ...and it re-evaluated no row: not one marker was written or removed.
   expect(markerWrites()).toEqual([]);
   expect(scans).not.toHaveBeenCalled();
@@ -411,7 +415,10 @@ test('a settings change that throws on access still lets the off switch through'
   vi.advanceTimersByTime(SETTLE_MS);
   page.harness.flush();
   expect(markers(page.document)).toEqual([]);
-  expect(page.observers.filter((observer) => observer.active)).toHaveLength(0);
+  expect(page.observers.filter((observer) => observer.active && observer.target === page.document)).toHaveLength(0);
+  const appearance = page.observers.filter(observer => observer.target === page.document.documentElement);
+  expect(appearance).toHaveLength(1);
+  expect(appearance[0].options).toEqual({ attributes: true, attributeFilter: ['data-theme'] });
   expect(vi.getTimerCount()).toBe(0);
   page.harness.assertClean();
 });

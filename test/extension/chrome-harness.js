@@ -45,6 +45,18 @@ export const SETTINGS_CONTRACT = Object.freeze({ keys: Object.freeze(['theme']),
 
 export const HARNESS_EXTENSION_ID = 'zhromaharnesscontextidnotarealone';
 
+/** Manual observer doubles must obey their real target/options, like Chrome. */
+export function observerReceives(observer, record) {
+  if (!observer.active || !observer.target || !observer.options) return false;
+  const { target, options } = observer;
+  if (record.target !== target && !(options.subtree && target.contains(record.target))) return false;
+  if (record.type === 'attributes') return options.attributes === true
+    && (!options.attributeFilter || options.attributeFilter.includes(record.attributeName));
+  if (record.type === 'childList') return options.childList === true;
+  if (record.type === 'characterData') return options.characterData === true;
+  return false;
+}
+
 const ABSENT = Symbol('absent');
 
 /**

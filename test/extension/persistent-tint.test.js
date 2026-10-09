@@ -5,7 +5,7 @@ import { createContext, Script } from 'node:vm';
 import { Window } from 'happy-dom';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { validateFixtureManifest } from '../../scripts/fixture-contract.js';
-import { createChromeHarness } from './chrome-harness.js';
+import { createChromeHarness, observerReceives } from './chrome-harness.js';
 
 const windows = [];
 const asset = (name) => readFileSync(new URL(`../../extension/${name}`, import.meta.url), 'utf8');
@@ -60,7 +60,7 @@ function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false,
       this.native = realObserver ? new window.MutationObserver(callback) : null;
       observers.push(this);
     }
-    observe(target, options) { this.active = true; this.options = options; this.native?.observe(target, options); }
+    observe(target, options) { this.active = true; this.target = target; this.options = options; this.native?.observe(target, options); }
     disconnect() { this.active = false; this.native?.disconnect(); onDisconnect?.(document); }
   }
   const collections = [];
@@ -74,21 +74,28 @@ function loadRuntimeFixture({ name, mutate, empty = false, realObserver = false,
   // Chrome resolves the startup read only after the script has finished
   // evaluating. Nothing may be painted before that reply lands.
   if (confirmPreference) harness.flush();
-  return { document, window, observers, context, collections, windowListeners, documentListeners, harness,
+  // Existing assertions concern the row controller. Keep the independent root
+  // observer visible separately, with its exact identity/options checked here.
+  const appearanceObservers = observers.filter(observer => observer.target === document.documentElement);
+  expect(appearanceObservers).toHaveLength(1);
+  expect(appearanceObservers[0].options).toEqual({ attributes: true, attributeFilter: ['data-theme'] });
+  const rowObservers = observers.filter(observer => !appearanceObservers.includes(observer));
+  return { document, window, observers: rowObservers, appearanceObservers, context, collections, windowListeners, documentListeners, harness,
     deliver(target = document.body, extra = {}) {
-      for (const observer of observers) if (observer.active) observer.callback([{ type: 'childList', target, addedNodes: [], removedNodes: [], ...extra }]);
+      const record = { type: 'childList', target, addedNodes: [], removedNodes: [], ...extra };
+      for (const observer of observers) if (observerReceives(observer, record)) observer.callback([record]);
     },
     settled() { harness.flush(); vi.advanceTimersByTime(100); },
     disposed() {
       harness.assertClean();
-      expect(observers.filter((observer) => observer.active)).toHaveLength(1);
+      expect(rowObservers.filter((observer) => observer.active)).toHaveLength(1);
       expect(vi.getTimerCount()).toBe(0);
     },
     // An unconfirmed or refused preference must leave no observer running and
     // no timer pending — dormant, not merely untinted.
     dormant() {
       harness.assertClean();
-      expect(observers.filter((observer) => observer.active)).toHaveLength(0);
+      expect(rowObservers.filter((observer) => observer.active)).toHaveLength(0);
       expect(vi.getTimerCount()).toBe(0);
     },
   };

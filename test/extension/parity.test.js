@@ -19,7 +19,7 @@ import { Window } from 'happy-dom';
 import { beforeAll, expect, test, vi } from 'vitest';
 import { validateFixtureManifest } from '../../scripts/fixture-contract.js';
 import { BASELINE_REVISION, BaselineSourceError, readBaselineSource } from '../../scripts/baseline-source.js';
-import { createChromeHarness } from './chrome-harness.js';
+import { createChromeHarness, observerReceives } from './chrome-harness.js';
 
 const fixture = (name) => readFileSync(new URL(`../fixtures/zendesk-view-${name}.html`, import.meta.url), 'utf8');
 const candidate = () => JSON.parse(readFileSync(new URL('../../release/candidate.json', import.meta.url), 'utf8'));
@@ -68,7 +68,7 @@ function loadPage(side, scenario, state) {
   const observers = [];
   class StartupObserver {
     constructor(callback) { this.callback = callback; this.active = false; observers.push(this); }
-    observe(target, options) { this.active = true; this.options = options; }
+    observe(target, options) { this.active = true; this.target = target; this.options = options; }
     disconnect() { this.active = false; }
   }
   const harness = createChromeHarness(state.preference);
@@ -77,7 +77,8 @@ function loadPage(side, scenario, state) {
   return {
     document, window, harness, fixture, scratch: {},
     deliver(target = document.body, extra = {}) {
-      for (const observer of observers) if (observer.active) observer.callback([{ type: 'childList', target, addedNodes: [], removedNodes: [], ...extra }]);
+      const record = { type: 'childList', target, addedNodes: [], removedNodes: [], ...extra };
+      for (const observer of observers) if (observerReceives(observer, record)) observer.callback([record]);
     },
     settled() { harness.flush(); vi.advanceTimersByTime(100); },
   };
