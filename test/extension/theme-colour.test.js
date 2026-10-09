@@ -38,6 +38,17 @@ test('full precision comparisons pass equality and reject a below-floor value de
     expect(oracle.atLeast(floor-1e-10,floor)).toBe(false);
   }
 });
+test('required Colourblind-safe final data passes all simulations and strictly ordered states',()=>{
+  const record=themes.records.find(r=>r.id==='zhroma-colourblind-safe');
+  expect(record).toBeDefined();
+  const result=oracle.validatePalette(record);
+  expect(result.errors).toEqual([]);
+  expect(result.checks.filter(c=>c.state)).toHaveLength(18);
+  expect(result.checks.filter(c=>c.transition)).toHaveLength(12);
+  const tied=structuredClone(record);
+  tied.variants.dark.priorities.High=tied.variants.dark.priorities.Urgent;
+  expect(oracle.validatePalette(tied).errors.some(e=>e.includes('lightness-order'))).toBe(true);
+});
 test('malformed records and numerical impostors cannot inherit Classic light exception',()=>{
   const mutations=[r=>delete r.variants.dark.slots.magenta,r=>r.variants.light.slots.red.rgb[0]=NaN,
     r=>r.variants.dark.slots.green.alpha=Infinity,r=>r.variants.light.slots.red.rgb[0]='220',
