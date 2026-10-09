@@ -1,0 +1,339 @@
+{
+  "schema_version": 1,
+  "status": "block",
+  "identity": {
+    "sourceDigest": "de24fbe993a2fc15fd68f620a53df50c96a6f3119648cd7c211d277ae554509b",
+    "assets": [
+      {
+        "name": "background.js",
+        "size": 27837,
+        "sha256": "ad99b4fd6d218bcb3eb38d46266a681f99dd4ecd8fe9e67575701116573fd7ef"
+      },
+      {
+        "name": "content.js",
+        "size": 33357,
+        "sha256": "b6f9781ba42b6cdebb5cb8575baa655c1e850c7577e4d2dc268249a41c8a3b11"
+      },
+      {
+        "name": "icons/brand.png",
+        "size": 1239,
+        "sha256": "5479aa7f2988ddb765e5dff4316bc7c440670d68badd311e36edfde5b1eb06a6"
+      },
+      {
+        "name": "icons/missing.png",
+        "size": 163,
+        "sha256": "68a032b0500b1ae062a455e3b1bdbf20db8dd71c8d16dee1461e6f3dbf5e8fa0"
+      },
+      {
+        "name": "icons/neutral.png",
+        "size": 420,
+        "sha256": "a13c2447cb31526e666a4e050451228480a6221efcee673a6fd30ac2d943f9d4"
+      },
+      {
+        "name": "icons/off.png",
+        "size": 344,
+        "sha256": "c1289da1a9235cba4ddb0f8bcd85ca90e355ce89ddf3c24340c6409205198638"
+      },
+      {
+        "name": "icons/unreadable.png",
+        "size": 301,
+        "sha256": "1131af46ac5cc421e7e951a4de067566c9a31bbfa032787f5346fb6db8e30c3a"
+      },
+      {
+        "name": "icons/working.png",
+        "size": 379,
+        "sha256": "28fc0380a220982d523d39564123933db92e8d492100cd690c0dd333200845bb"
+      },
+      {
+        "name": "manifest.json",
+        "size": 837,
+        "sha256": "e26800e1d07c612ec635b558647dc15a89b4c01e5b713b8055a8874c3f6cc20f"
+      },
+      {
+        "name": "options.html",
+        "size": 348,
+        "sha256": "0664b3beafda0b107dd299c7df63bb5ba1ea4b87dbc932ab8478adb115d71773"
+      },
+      {
+        "name": "popup.html",
+        "size": 2323,
+        "sha256": "25a4c8ba83b41ea105564cea9ad09b9023432e33ee9baf1475aa96b116c08cc7"
+      },
+      {
+        "name": "popup.js",
+        "size": 15513,
+        "sha256": "451748859fb35d43cc57fa8598b57bd10c136c2880c1accccab48120a0b9f592"
+      },
+      {
+        "name": "zhroma-colour.js",
+        "size": 4951,
+        "sha256": "e414252f177915588ea3307c2ac99f6d58683d7c6ceadae738297a8af4e41a7c"
+      },
+      {
+        "name": "zhroma-settings.js",
+        "size": 28526,
+        "sha256": "23a4674932b1a93f1ca4f18141f56b6e826c0f9fbda12e5710c8db51ba4d55b7"
+      },
+      {
+        "name": "zhroma-themes.js",
+        "size": 18917,
+        "sha256": "c0c4a6aa9c504e1c018d3bd5118097de38a14c66ab6d44f67c255b14ad017e13"
+      },
+      {
+        "name": "zhroma.css",
+        "size": 1521,
+        "sha256": "7d22681d6b7dbb9385644f7c0fbe7e6a3e4feb8724115570c85204db4d99cb2e"
+      }
+    ],
+    "dataDigest": "d4db43244d51bb19c0514d29988dd16a2b7334443c42f9d5ccc232272a5e84ce",
+    "methodDigest": "6726a946080677823cddeb07d7d658bcb552b636035e2bcc000477a3ea6d48bf",
+    "admissionDigest": "346e679b86c1370e3355a8cf24746e9fc89d37178bf03003d8869d0248847b20",
+    "selectorsDigest": "6f55dd849b4d723d4eb37bc175179ffdaa41c000ad0d531bca7f72f607febd84",
+    "fixtureDigest": "c726244faade76c293fbe3ead63627fb310a4c6fecc24cfca3a71345a316ada6",
+    "harnessDigest": "616a9d926c59edf6c46b4c227e5b1a767cc9b0a646e73a6f4dd1f59f643d16e8",
+    "testDigest": "3c3c828b40067bab226027988ccc49f663490fa9e741557e5aa50b0dcbdfd213"
+  },
+  "measurement": "CDP PNG screenshot",
+  "tolerance": 1,
+  "scope": "Incomplete reconstructed-host evidence; not live Zendesk or Chrome106 execution",
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.98",
+    "revision": "@b859317bf11f6be47f9b7799ec690a0a42a1fb33",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "environment": "darwin 27.0.0 arm64",
+  "timestamp": "2026-10-09T06:32:05.467Z",
+  "failure": "Wrong native state: {\"key\":\"zhroma-classic/light/hover/Urgent/cell\",\"hover\":false,\"selected\":\"false\",\"pointer\":{\"last\":{\"x\":20,\"y\":10,\"tag\":\"DIV\",\"row\":1,\"trust\":true,\"hover\":false,\"rowHover\":false},\"hover\":[],\"row0\":true}}",
+  "cases": [
+    {
+      "key": "zhroma-classic/light/normal/Urgent/cell",
+      "expected": [
+        250.1,
+        224.61999999999998,
+        224.61999999999998
+      ],
+      "measured": [
+        250,
+        225,
+        225
+      ],
+      "maxError": 0,
+      "rasterMargin": 1,
+      "styles": {
+        "x": 1092,
+        "y": 34,
+        "text": "rgb(41, 50, 57)",
+        "textPresent": true,
+        "hover": false,
+        "selected": "false",
+        "marker": "Urgent",
+        "cell": "rgba(220, 38, 38, 0.14)",
+        "row": "rgba(0, 0, 0, 0)",
+        "owners": [
+          {
+            "href": "http://127.0.0.1:53431/extension/zhroma.css",
+            "selector": "html[lang|=\"en\" i] table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > tbody[data-garden-id=\"tables.body\"][data-test-id=\"generic-table-body\"] > tr[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"][data-zhroma-priority=\"Urgent\"] > td[data-garden-id=\"tables.cell\"]",
+            "value": "var(--zhroma-priority-urgent, rgb(220 38 38 / 0.14))",
+            "important": "important"
+          }
+        ],
+        "textOwners": [
+          {
+            "href": "measured-host",
+            "selector": "table",
+            "value": "inherit"
+          },
+          {
+            "href": "measured-host",
+            "selector": "[data-garden-id=\"pane\"]",
+            "value": "rgb(41, 50, 57)"
+          }
+        ]
+      }
+    },
+    {
+      "key": "zhroma-classic/light/normal/High/cell",
+      "expected": [
+        252.48000000000002,
+        234.96,
+        225.84
+      ],
+      "measured": [
+        252,
+        235,
+        226
+      ],
+      "maxError": 0,
+      "rasterMargin": 1,
+      "styles": {
+        "x": 1092,
+        "y": 74,
+        "text": "rgb(41, 50, 57)",
+        "textPresent": true,
+        "hover": false,
+        "selected": "false",
+        "marker": "High",
+        "cell": "rgba(234, 88, 12, 0.12)",
+        "row": "rgba(0, 0, 0, 0)",
+        "owners": [
+          {
+            "href": "http://127.0.0.1:53431/extension/zhroma.css",
+            "selector": "html[lang|=\"en\" i] table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > tbody[data-garden-id=\"tables.body\"][data-test-id=\"generic-table-body\"] > tr[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"][data-zhroma-priority=\"High\"] > td[data-garden-id=\"tables.cell\"]",
+            "value": "var(--zhroma-priority-high, rgb(234 88 12 / 0.12))",
+            "important": "important"
+          }
+        ],
+        "textOwners": [
+          {
+            "href": "measured-host",
+            "selector": "table",
+            "value": "inherit"
+          },
+          {
+            "href": "measured-host",
+            "selector": "[data-garden-id=\"pane\"]",
+            "value": "rgb(41, 50, 57)"
+          }
+        ]
+      }
+    },
+    {
+      "key": "zhroma-classic/light/normal/Normal/cell",
+      "expected": [
+        250.23000000000002,
+        244.47,
+        232.41000000000003
+      ],
+      "measured": [
+        250,
+        244,
+        232
+      ],
+      "maxError": 0,
+      "rasterMargin": 1,
+      "styles": {
+        "x": 1092,
+        "y": 114,
+        "text": "rgb(41, 50, 57)",
+        "textPresent": true,
+        "hover": false,
+        "selected": "false",
+        "marker": "Normal",
+        "cell": "rgba(202, 138, 4, 0.09)",
+        "row": "rgba(0, 0, 0, 0)",
+        "owners": [
+          {
+            "href": "http://127.0.0.1:53431/extension/zhroma.css",
+            "selector": "html[lang|=\"en\" i] table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > tbody[data-garden-id=\"tables.body\"][data-test-id=\"generic-table-body\"] > tr[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"][data-zhroma-priority=\"Normal\"] > td[data-garden-id=\"tables.cell\"]",
+            "value": "var(--zhroma-priority-normal, rgb(202 138 4 / 0.09))",
+            "important": "important"
+          }
+        ],
+        "textOwners": [
+          {
+            "href": "measured-host",
+            "selector": "table",
+            "value": "inherit"
+          },
+          {
+            "href": "measured-host",
+            "selector": "[data-garden-id=\"pane\"]",
+            "value": "rgb(41, 50, 57)"
+          }
+        ]
+      }
+    },
+    {
+      "key": "zhroma-classic/light/normal/Low/cell",
+      "expected": [
+        236.36,
+        247.64000000000001,
+        240.52
+      ],
+      "measured": [
+        236,
+        248,
+        241
+      ],
+      "maxError": 0,
+      "rasterMargin": 1,
+      "styles": {
+        "x": 1092,
+        "y": 154,
+        "text": "rgb(41, 50, 57)",
+        "textPresent": true,
+        "hover": false,
+        "selected": "false",
+        "marker": "Low",
+        "cell": "rgba(22, 163, 74, 0.08)",
+        "row": "rgba(0, 0, 0, 0)",
+        "owners": [
+          {
+            "href": "http://127.0.0.1:53431/extension/zhroma.css",
+            "selector": "html[lang|=\"en\" i] table[data-garden-id=\"tables.table\"][data-test-id=\"generic-table\"] > tbody[data-garden-id=\"tables.body\"][data-test-id=\"generic-table-body\"] > tr[data-garden-id=\"tables.row\"][data-test-id=\"generic-table-row\"][data-zhroma-priority=\"Low\"] > td[data-garden-id=\"tables.cell\"]",
+            "value": "var(--zhroma-priority-low, rgb(22 163 74 / 0.08))",
+            "important": "important"
+          }
+        ],
+        "textOwners": [
+          {
+            "href": "measured-host",
+            "selector": "table",
+            "value": "inherit"
+          },
+          {
+            "href": "measured-host",
+            "selector": "[data-garden-id=\"pane\"]",
+            "value": "rgb(41, 50, 57)"
+          }
+        ]
+      }
+    },
+    {
+      "key": "zhroma-classic/light/normal/untinted/control",
+      "expected": [
+        255,
+        255,
+        255
+      ],
+      "measured": [
+        255,
+        255,
+        255
+      ],
+      "maxError": 0,
+      "rasterMargin": 1,
+      "styles": {
+        "x": 1092,
+        "y": 1234,
+        "text": "rgb(41, 50, 57)",
+        "textPresent": false,
+        "hover": false,
+        "selected": "false",
+        "marker": null,
+        "cell": "rgba(0, 0, 0, 0)",
+        "row": "rgba(0, 0, 0, 0)",
+        "owners": [],
+        "textOwners": [
+          {
+            "href": "measured-host",
+            "selector": "table",
+            "value": "inherit"
+          },
+          {
+            "href": "measured-host",
+            "selector": "[data-garden-id=\"pane\"]",
+            "value": "rgb(41, 50, 57)"
+          }
+        ]
+      }
+    }
+  ],
+  "counts": {
+    "total": 5,
+    "required": 304
+  },
+  "elapsedMs": 1171
+}

@@ -46,7 +46,7 @@ test('clean lossless image passes; known wrong pixel and invalid tolerance fail'
 });
 test('independent source-over golden rejects inverted layers and wrong alpha', () => {
   const tint = {rgb:[220,38,38],alpha:.14};
-  expect(expectedPixel(tint,'light','normal')).toEqual([250.1,224.62,224.62]);
+  expectedPixel(tint,'light','normal').forEach((v,i)=>expect(v).toBeCloseTo([250.1,224.62,224.62][i],10));
   const correct = expectedPixel(tint,'dark','selected');
   const inverse = expectedPixel(tint,'dark','normal').map((v,i)=>[102,160,205][i]*.16+v*.84);
   expect(() => comparePixel(inverse.map(Math.round),correct)).toThrow();
@@ -55,10 +55,11 @@ test('independent source-over golden rejects inverted layers and wrong alpha', (
 test('complete report rejects empty, missing, duplicate, stale identity and forged pixel success', () => {
   const {identity,records} = readIdentity();
   const cases = caseKeys(records).map(key=>({key,expected:[21,26,30],measured:[21,26,30],maxError:0}));
-  const report = {identity,cases,measurement:'CDP PNG screenshot',tolerance:1};
+  const report = {status:'passed',identity,cases,measurement:'CDP PNG screenshot',tolerance:1};
   expect(requireCompleteReport(report,identity,records)).toBe(true);
   for (const changed of [[],cases.slice(1),[...cases,cases[0]],cases.map((c,i)=>i?c:{...c,measured:[80,80,80]})])
     expect(()=>requireCompleteReport({...report,cases:changed},identity,records)).toThrow();
   expect(()=>requireCompleteReport({...report,identity:{...identity,sourceDigest:'0'.repeat(64)}},identity,records)).toThrow();
   expect(()=>requireCompleteReport({...report,measurement:'computed RGBA'},identity,records)).toThrow();
+  expect(()=>requireCompleteReport({...report,status:'block'},identity,records)).toThrow();
 });
