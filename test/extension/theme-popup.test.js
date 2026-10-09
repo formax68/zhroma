@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, expect, test, vi } from 'vitest';
-import { EXTENSION_ID, POPUP_URL, bootAll, closeWindows, createWorld, loadContent, loadPopup, loadWorker, settle, statusText } from './tracer-world.js';
+import { CONTENT_URL, DOCUMENT_ID, EXTENSION_ID, POPUP_URL, TAB_ID, bootAll, closeWindows, createWorld, loadContent, loadPopup, loadWorker, optionsSender, settle, statusText } from './tracer-world.js';
 
 afterEach(async () => { vi.useRealTimers(); await closeWindows(); });
 const sender = { id: EXTENSION_ID, url: POPUP_URL };
@@ -130,4 +130,45 @@ test('off and disconnected save persists across popup, worker and content restar
   const reopened = loadPopup(world); await settle(); await settle();
   expect(selected(reopened)).toBe('zhroma-nord'); expect(world.writeLog).toHaveLength(1);
   expect(world.forbidden).toEqual([]);
+});
+
+test('sender and exact request refusals cannot read or write settings; unknown ID is rejected', async () => {
+  const world = createWorld(); loadWorker(world);
+  const contentSender = { id: EXTENSION_ID, url: CONTENT_URL, frameId: 0, documentId: DOCUMENT_ID, tab: { id: TAB_ID } };
+  for (const refused of [contentSender, optionsSender(), { ...sender, id: 'forged' }, { ...sender, url: `${POPUP_URL}?forged` }, { ...sender, tab: { id: TAB_ID } }]) {
+    expect(await world.sendToWorker({ type: 'get-theme', requestId: 30 }, refused)).toBeInstanceOf(Error);
+  }
+  for (const message of [{ type: 'get-theme', requestId: 31, extra: true }, { type: 'get-theme', requestId: 1000001 },
+    { type: 'set-setting', requestId: 32, key: 'theme', value: 'zhroma-nord', revision: 0 },
+    { type: 'set-setting', requestId: 33, key: 'theme', value: 'zhroma-nord', extra: true }]) {
+    expect(await world.sendToWorker(message, sender)).toBeInstanceOf(Error);
+  }
+  expect(await world.sendToWorker({ type: 'set-setting', requestId: 34, key: 'theme', value: 'unknown' }, contentSender)).toBeInstanceOf(Error);
+  expect(world.settingsReadCount('worker')).toBe(0); expect(world.writeLog).toEqual([]);
+  expect(await world.sendToWorker({ type: 'set-setting', requestId: 35, key: 'theme', value: 'unknown' }, sender))
+    .toEqual({ type: 'set-setting', requestId: 35, outcome: 'rejected', revision: null });
+  expect(world.settingsReadCount('worker')).toBe(0); expect(world.writeLog).toEqual([]);
+});
+
+for (const payload of [{ confirmed: false, value: 'zhroma-classic', status: null },
+  { confirmed: true, value: 'unknown', status: 'stored' }, { confirmed: true, value: 'zhroma-nord', status: 'default' },
+  { confirmed: true, value: 'zhroma-classic', status: 'missing' }, { confirmed: true, value: 'zhroma-classic', status: 'stored', extra: true },
+  { confirmed: true, value: 'zhroma-classic', status: 'stored', requestId: 0 }]) {
+  test(`malformed read reply ${JSON.stringify(payload)} never fabricates a saved selection`, async () => {
+    const world = createWorld(); loadWorker(world);
+    const send = world.popupChrome.runtime.sendMessage.bind(world.popupChrome.runtime);
+    vi.spyOn(world.popupChrome.runtime, 'sendMessage').mockImplementation(message => message.type === 'get-theme'
+      ? Promise.resolve({ type: 'get-theme', requestId: message.requestId, ...payload }) : send(message));
+    const popup = loadPopup(world); await settle(); await settle();
+    expect(selected(popup)).toBeUndefined(); expect(themeText(popup)).toBe('Theme could not be confirmed');
+    expect(world.writeLog).toEqual([]);
+  });
+}
+
+test('disconnected enabled view can save a theme while retaining connection copy', async () => {
+  const world = createWorld(); loadWorker(world); const popup = loadPopup(world); await settle(); await settle();
+  expect(statusText(popup.document)).toBe('No readable view is connected');
+  await choose(popup, 'zhroma-nord');
+  expect(statusText(popup.document)).toBe('No readable view is connected');
+  expect(themeText(popup)).toBe('Theme saved'); expect(world.getStored('enabled')).toBeUndefined();
 });

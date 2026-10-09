@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  // A status panel plus exactly one switch (D-11). Fixed copy, written as text,
+  // Priority status and its switch stay independent of theme persistence. Fixed copy, written as text,
   // chosen by a finite enum the worker validated. The popup never renders
   // page-derived content, never builds markup, never reads or writes storage
   // itself, and never asserts that a tab is a non-Zendesk page — it can only
@@ -88,7 +88,7 @@
   }
 
   function focusDefault() {
-    // The switch is the only control on the panel, so it is the default focus
+    // The switch is the default focus
     // and the popup is operable from the keyboard the moment it opens. Focus
     // the agent has already placed somewhere themselves is never stolen.
     if (control.disabled) return;
@@ -202,15 +202,20 @@
   const colour = globalThis.Zhroma?.colour;
   const themeList = document.getElementById('zhroma-theme-choices');
   const themeOutput = document.getElementById('zhroma-theme-status');
+  const themeCheck = document.getElementById('zhroma-check-theme');
   if (themes && colour && themeList && themeOutput) {
     let themeConfirmed = null;
     let themeStatus = null;
     let themeBusy = false;
     let themeOwner = 0;
     const radios = [];
-    const themeSay = (text) => { if (themeOutput.textContent !== text) themeOutput.textContent = text; };
+    const themeSay = (text) => {
+      if (themeOutput.textContent !== text) themeOutput.textContent = text;
+      if (themeCheck) themeCheck.hidden = text !== 'Theme could not be confirmed';
+    };
     function showTheme() {
       for (const radio of radios) { radio.checked = radio.value === themeConfirmed; radio.disabled = themeBusy; }
+      if (themeCheck) themeCheck.disabled = themeBusy;
     }
     function themeCopy() {
       themeSay(themeStatus === 'unreadable' ? 'Your saved theme could not be read. Using Classic.' : '');
@@ -220,25 +225,28 @@
       const requestId = requestCounter;
       const reply = await ask({ type: 'get-theme', requestId });
       if (!isExact(reply, ['type', 'requestId', 'confirmed', 'value', 'status'])
-        || reply.type !== 'get-theme' || reply.requestId !== requestId || typeof reply.confirmed !== 'boolean') return false;
+        || reply.type !== 'get-theme' || reply.requestId !== requestId || typeof reply.confirmed !== 'boolean') return null;
       if (!reply.confirmed) {
         // The exact unconfirmed payload carries no inferred absence or ID.
-        if (reply.value !== null || reply.status !== null) return false;
-        return false;
+        return null;
       }
       if (!themes.IDs.includes(reply.value) || !['default', 'stored', 'unreadable'].includes(reply.status)
-        || (reply.status !== 'stored' && reply.value !== 'zhroma-classic')) return false;
+        || (reply.status !== 'stored' && reply.value !== 'zhroma-classic')) return null;
+      return reply;
+    }
+    function acceptTheme(reply) {
       themeConfirmed = reply.value; themeStatus = reply.status;
-      return true;
+      themeCopy();
     }
     async function refreshTheme() {
       if (themeBusy) return;
       const mine = ++themeOwner;
       themeBusy = true; showTheme();
+      themeSay('Checking theme');
       const confirmed = await readTheme();
       if (mine !== themeOwner) return;
+      if (confirmed) acceptTheme(confirmed); else themeSay('Theme could not be confirmed');
       themeBusy = false; showTheme();
-      if (confirmed) themeCopy(); else themeSay('Theme could not be confirmed');
     }
     async function saveTheme(desired) {
       if (themeBusy) { showTheme(); return; }
@@ -247,6 +255,7 @@
       const active = document.activeElement;
       const hadFocus = radios.includes(active);
       themeBusy = true; showTheme();
+      themeSay('Saving theme');
       requestCounter = requestCounter % MAX_REQUEST_ID + 1;
       const requestId = requestCounter;
       const reply = await ask({ type: 'set-setting', requestId, key: 'theme', value: desired });
@@ -262,7 +271,7 @@
           // whether it came from corrupt storage. Re-read before that claim.
           const confirmed = await readTheme();
           if (mine !== themeOwner) return;
-          if (confirmed) themeCopy(); else themeSay('Theme could not be confirmed');
+          if (confirmed) acceptTheme(confirmed); else themeSay('Theme could not be confirmed');
         }
       } else if (valid && (reply.outcome === 'failed' || reply.outcome === 'rejected')) {
         themeSay('Theme could not be saved. Try again.');
@@ -270,7 +279,7 @@
         themeSay('Theme could not be confirmed');
         const confirmed = await readTheme(); // one bounded readback, never a retry write.
         if (mine !== themeOwner) return;
-        if (confirmed) themeCopy();
+        if (confirmed) acceptTheme(confirmed);
       }
       themeBusy = false; showTheme();
       if (hadFocus) active.focus();
@@ -296,6 +305,7 @@
       radio.addEventListener('change', () => { if (radio.checked) saveTheme(radio.value); });
     }
     window.addEventListener('focus', refreshTheme);
+    if (themeCheck) themeCheck.addEventListener('click', refreshTheme);
     refreshTheme();
   } else if (themeOutput) {
     themeOutput.textContent = 'Theme could not be confirmed';

@@ -420,6 +420,9 @@ try {
   // module failed to load: settings then fail, and nothing else changes.
   const settingsApi = globalThis.Zhroma?.settings ?? null;
   const MAX_PENDING_SETTINGS = 32;
+  // Admission, rather than acknowledgement: an issued native write may outlive
+  // its requester. Reads crossing a new request cannot confirm an old snapshot.
+  let themeReadGeneration = 0;
 
   // The one settings read. `ok: false` means the read failed, never absence.
   function readSetting(key) {
@@ -512,10 +515,13 @@ try {
     if (isExact(message, ['type', 'requestId']) && message.type === 'get-theme'
       && isRequestId(message.requestId) && fromPopup(sender)) {
       const unconfirmed = () => ({ type: 'get-theme', requestId: message.requestId, confirmed: false, value: null, status: null });
-      if (settingsApi === null) { sendResponse(unconfirmed()); return undefined; }
+      if (settingsApi === null || settingsQueue.size() !== 0) { sendResponse(unconfirmed()); return undefined; }
+      const generation = themeReadGeneration;
       const expires = Date.now() + WORKER_REQUEST_TIMEOUT_MS;
       bounded(() => readSetting('theme'), expires).then((result) => {
-        if (!result || result.ok !== true) { sendResponse(unconfirmed()); return; }
+        if (!result || result.ok !== true || generation !== themeReadGeneration || settingsQueue.size() !== 0) {
+          sendResponse(unconfirmed()); return;
+        }
         const resolved = settingsApi.registry.resolve('theme', result.present, result.raw);
         sendResponse({ type: 'get-theme', requestId: message.requestId, confirmed: true, value: resolved.value, status: resolved.status });
       }, () => sendResponse(unconfirmed()));
@@ -541,6 +547,7 @@ try {
       return true;
     }
     if (settingsRequest(message) && (fromPopup(sender) || fromOptions(sender))) {
+      if (message.key === 'theme') themeReadGeneration += 1;
       if (settingsQueue === null) {
         sendResponse({ type: 'set-setting', requestId: message.requestId, outcome: 'failed', revision: null });
         return undefined;
