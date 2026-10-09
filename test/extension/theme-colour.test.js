@@ -5,7 +5,38 @@ import { createContext, Script } from 'node:vm';
 import { expect, test } from 'vitest';
 import { readBaselineSource } from '../../scripts/baseline-source.js';
 import { asset } from './tracer-world.js';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 const oracle = await import('./theme-validation.js').catch(() => ({}));
+const presetReport = readFileSync(new URL('../../.planning/phases/08-themes-that-follow-dark-mode/08-PRESET-REPORT.md',import.meta.url),'utf8');
+test('every named candidate has data-bound pass or omit accounting and packaged custody',()=>{
+  const match=presetReport.match(/<!-- admission-manifest -->\s*```json\n([\s\S]*?)\n```\s*<!-- \/admission-manifest -->/);
+  expect(match).not.toBeNull();
+  const manifest=JSON.parse(match[1]);
+  expect(manifest.candidates.map(c=>c.label)).toEqual(['Classic','Catppuccin','Tokyo Night','Dracula','Nord','Gruvbox','Solarized','Colourblind-safe']);
+  expect(manifest.candidates.filter(c=>c.verdict==='pass').map(c=>c.id)).toEqual(themes.IDs);
+  for(const candidate of manifest.candidates) {
+    if(candidate.verdict==='omit') {
+      expect(candidate.reason.length).toBeGreaterThan(0);
+      expect(themes.IDs).not.toContain(candidate.id);
+      expect(themes.resolve(candidate.id,'dark')).toBe(themes.records[0].variants.dark);
+      continue;
+    }
+    const record=themes.records.find(r=>r.id===candidate.id);
+    expect(createHash('sha256').update(JSON.stringify(record.variants)).digest('hex')).toBe(candidate.variantsSha256);
+    expect(oracle.validatePalette(record).pass).toBe(true);
+    for(const mode of ['light','dark']) expect(themes.resolve(candidate.id,mode)).toBe(record.variants[mode]);
+    expect(record.source.author.length).toBeGreaterThan(0);
+    if(candidate.licenceSha256) {
+      const notice=asset('zhroma-themes.js').match(new RegExp('\\/\\* NOTICE '+candidate.id+'\\n([\\s\\S]*?)\\nEND NOTICE \\*\\/'));
+      expect(notice).not.toBeNull();
+      expect(createHash('sha256').update(notice[1]+'\n').digest('hex')).toBe(candidate.licenceSha256);
+      expect(record.source.paletteSha256).toBe(candidate.paletteSha256);
+      expect(record.source.commit).toBe(candidate.commit);
+    }
+  }
+  expect(new Set(themes.IDs).size).toBe(themes.IDs.length);
+});
 
 test('settled independent severity-1 red and clipped blue golden vectors', () => {
   expect(typeof oracle.simulateCvd).toBe('function');
