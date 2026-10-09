@@ -575,6 +575,12 @@
 
   function readSettings() {
     if (settingsApi === null) return;
+    // A restored read owns a newer snapshot even when this frozen document
+    // missed the storage event. Late replies from an earlier read must lose
+    // ownership just as they do after a delivered per-key change.
+    for (const key of settingsApi.registry.keys) {
+      settingsGenerations.set(key, settingsGenerations.get(key) + 1);
+    }
     const generations = new Map(settingsGenerations);
     if (!settingsReady && settingsTimer === null) {
       settingsTimer = setTimeout(() => { settingsTimer = null; openSettingsGate(); }, SETTINGS_READ_TIMEOUT_MS);
