@@ -12,6 +12,17 @@ test('settled independent severity-1 red and clipped blue golden vectors', () =>
   for (const [kind, expected] of [['protanopia',[108.78516029,95.02684074,0]], ['deuteranopia',[163.21518658,144.28077001,0]]]) {
     oracle.simulateCvd([255,0,0],kind).forEach((x,i) => expect(x).toBeCloseTo(expected[i],7));
   }
+  // Independently calculated with Python Decimal, 45-digit precision, from
+  // primary matrix coefficients and transfer functions; no JS helper inputs.
+  for(const [kind, blue, white] of [
+    ['protanopia',[0,88.70604067238163,255],[255,255,255]],
+    ['deuteranopia',[0,61.49869648978854,251.47956328953418],[255,254.9998879062173,255]],
+  ]) {
+    oracle.simulateCvd([0,0,255],kind).forEach((x,i)=>expect(x).toBeCloseTo(blue[i],10));
+    oracle.simulateCvd([255,255,255],kind).forEach((x,i)=>expect(x).toBeCloseTo(white[i],10));
+    expect(oracle.simulateCvd([0,0,0],kind)).toEqual([0,0,0]);
+    expect(oracle.simulateCvd([31,67,123],kind,0)).toEqual([31,67,123]);
+  }
 });
 test('palette oracle rejects missing, nonfinite and identical-priority data', () => {
   expect(typeof oracle.validatePalette).toBe('function');
@@ -19,6 +30,20 @@ test('palette oracle rejects missing, nonfinite and identical-priority data', ()
   const bad = structuredClone(themes.records[1]);
   bad.variants.light.priorities.High = 'red';
   expect(oracle.validatePalette(bad).pass).toBe(false);
+});
+test('full precision comparisons pass equality and reject a below-floor value despite display rounding',()=>{
+  for(const floor of [2,3,4.5]) {
+    expect(oracle.atLeast(floor,floor)).toBe(true);
+    expect((floor-1e-10).toFixed(2)).toBe(floor.toFixed(2));
+    expect(oracle.atLeast(floor-1e-10,floor)).toBe(false);
+  }
+});
+test('malformed records and numerical impostors cannot inherit Classic light exception',()=>{
+  const mutations=[r=>delete r.variants.dark.slots.magenta,r=>r.variants.light.slots.red.rgb[0]=NaN,
+    r=>r.variants.dark.slots.green.alpha=Infinity,r=>r.variants.light.slots.red.rgb[0]='220',
+    r=>r.variants.light.slots.red.alpha=.1400001,r=>r.variants.light.priorities.High='Red',r=>r.source={}];
+  for(const mutate of mutations){const r=structuredClone(themes.records[0]);mutate(r);expect(oracle.validatePalette(r).pass).toBe(false);}
+  for(const record of themes.records) expect(oracle.validatePalette(record).errors).toEqual([]);
 });
 
 const context = createContext({});
