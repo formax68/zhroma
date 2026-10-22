@@ -6,9 +6,9 @@ current_phase: 08
 current_phase_name: Themes That Follow Dark Mode
 status: blocked
 stopped_at: "Phase 08 halted at plan 08-05: required native hover unavailable; 4/5 plans complete"
-last_updated: "2026-10-09T07:00:14.524789Z"
-last_activity: 2026-10-09
-last_activity_desc: Phase 8: four plans complete; 08-05 halted at required native-hover browser gate
+last_updated: "2026-10-13T06:35:57.802Z"
+last_activity: 2026-10-13
+last_activity_desc: Phase 8 native-hover retry on Chrome 155 reproduced the block at 5/304
 state_head: 111d72d
 progress:
   total_phases: 6
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-10-02)
 Phase: 08 (Themes That Follow Dark Mode) — BLOCKED
 Plan: 08-05 halted; 4 of 5 plans complete (five summaries include one halted summary)
 Status: Blocked — required native-pointer hover unavailable; no phase completion
-Last activity: 2026-10-09 — final regression/review completed; browser oracle remains block at 5/304 samples
+Last activity: 2026-10-13 — unchanged browser oracle rerun on Chrome 155 reproduced native-hover block at 5/304; regression/review not rerun
 
 Progress: Phase 8 4/5 complete; 08-05 halted. Automated checks pass; complete Chrome and human evidence remain pending.
 
@@ -231,6 +231,7 @@ CR-01/CR-02 repairs and independent reverification are complete; 403 tests and f
 - ACK-04-01 is acknowledged as of 2026-09-11. The fourteen observations attested on 2026-09-10 remain history and do not count toward repaired-byte acceptance. The current-source walkthrough has 14 passes and 3 pending checks: language-icon-copy and structure-copy under AR-04-01, plus english-regional-locale explicitly deferred by the user as non-blocking.
 - Phase 05 submission gate: release/policy-applicability.md is UNRESOLVED on in-product prominent disclosure and affirmative consent applicability. Blocks 05-07 submission until the real Chrome install prompt and the live Privacy practices tab are observed.
 - Phase 6 custody pending on the user: delete or encrypt the Recon 2 private inputs and delete the personal recon view, then set private-inputs and recon-views-deleted in the SELECTORS.md Recon 2 handoff. Also: gsd-tools windows append rejects WINDOWS.md entry 12 (kind accepted-risk), and the recon2 smoke test pins handoff next-step to a digit or admission.
+- Phase 6 close-out follow-up (2026-10-08): the user reports both cleanup actions complete. The exact private-input directory and deletion/encryption outcome are requested for the required read-only existence check; no private path is retained in the repository. The recon2 gate and full suite pass (112 Node smoke tests; 1455 Vitest tests). The six original human-verification items remain unaccepted; do not promote the phase to passed from the cleanup confirmation alone. See 06-CUSTODY-CLOSEOUT.md.
 - [Phase 07] Open review findings WR-03 (no-op save bumps the CAS revision), WR-04 (missing/corrupt `rev` reads as `stored`) and WR-05 (shared, unfrozen `defaultValue`) are latent while `theme` is the only key; fix them before the Phase 9/10 settings keys land (D-31 kept them out of the Phase 7 repair round). IN-01 to IN-05 also remain open in 07-REVIEW-DISPOSITION.md.
 
 ### Roadmap Evolution
@@ -256,8 +257,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-09T06:59:31.030Z
-Stopped at: Phase 08 halted at plan 08-05: required native hover unavailable; 4/5 plans complete
+Last session: 2026-10-13T06:35:57.802Z
+Stopped at: Resumed 08-05 Task 1; Chrome 155 native-hover retry failed at 5/304; 4/5 plans complete
 Resume file: .planning/phases/08-themes-that-follow-dark-mode/08-05-CHECKPOINT.md
 
 - [Phase 02 clarification]: Both original G-02-1 reports used in-app entry. Preserve the symptom for Phase 3; direct-document controls passed, no Phase 2 repair was made.

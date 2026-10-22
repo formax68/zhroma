@@ -2,3 +2,6 @@ node_modules/
 *.private.html
 *.denylist.txt
 private-capture/
+.DS_Store
+.gsd/dispatch-isolation-sentinel.json
+.planning/milestone.lock

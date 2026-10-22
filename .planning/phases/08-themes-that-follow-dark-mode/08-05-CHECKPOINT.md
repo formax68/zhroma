@@ -44,3 +44,11 @@ Resume with a fresh executor at **Task 1 browser capability verification**, pres
 If that capability cannot be established, retain block and obtain an explicit plan decision before changing the required verification method. Do not begin a second review/repair cycle. Record new source/harness/test identity if bytes move and invalidate affected evidence. Human Zendesk/popup checks remain pending until actual user-controlled observation; optional absence is not a skip. Phase11 must repeat full regression and every-preset/session checks on release bytes.
 
 Shared STATE/ROADMAP/REQUIREMENTS/state.json remain the orchestrator's responsibility and were not edited/committed by this executor. Preserve Phase6 gaps_found14/15/custody/six human checks, Phase7 WR-02 skipped and WR-03/04/05 plus IN-01–05 open. Do not absorb the uncommitted custody closeout or repair the inherited WINDOWS accepted-risk entry11.
+
+## Resume attempt — 2026-10-13
+
+Reran the unchanged verifier with installed Chrome 155.0.8059.40 in its isolated temporary profile. Exit 1: the same Classic/light/hover/Urgent cell receives a trusted mousemove at (20,10), but target/row native hover is false and the native hover chain is empty. The refreshed numeric report remains block at 5/304, with all source/data/harness/test identities unchanged. Work failed after 5365 ms; the runner returned through its cleanup path. No THEME_PAINT_OK.
+
+Inspected the connected browser API documentation: neither the native Target API nor the extension Playwright locator API exposes hover/mouse-move. No user tab was claimed or opened, and no private profile files were accessed. No alternate native-hover capability was established. This run did not repeat the earlier windowed experiment, rerun the regression suite, change source/harness bytes, or begin another review/repair round.
+
+Resume remains Task 1. A working native-hover environment is required; changing the verification method requires an explicit plan decision. Human/dev observations and inherited gaps remain unchanged.
